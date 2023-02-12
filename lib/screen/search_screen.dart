@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -32,8 +33,9 @@ class _SearchScreenState extends State<SearchScreen> {
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           child: const Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[AwayScreen()],
+            children: <Widget>[AwayScreen(), AirportScreen()],
           ),
         ));
   }
@@ -138,5 +140,53 @@ class _AwayScreenState extends State<AwayScreen> {
         ],
       ),
     );
+  }
+}
+
+class AirportScreen extends StatefulWidget {
+  const AirportScreen({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _AirportScreenState();
+}
+
+class _AirportScreenState extends State<AirportScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: EdgeInsets.all(15),
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        child: ListView(
+          padding: EdgeInsets.all(4),
+          children: <Widget>[
+            Divider(),
+            Row(
+              children: [
+                Expanded(
+                    child: DropdownSearch<String>(
+                  items: const ["서울/인천\nICN", "뉴욕/존F케네디\nJFK"],
+                )),
+                Padding(padding: EdgeInsets.all(4)),
+                Icon(
+                  Icons.double_arrow_rounded,
+                ),
+                Expanded(
+                    child: DropdownSearch<String>(
+                  items: const ["서울/인천\nICN", "뉴욕/존F케네디\nJFK"],
+                )),
+              ],
+            ),
+            Padding(padding: EdgeInsets.all(8)),
+            Divider(),
+            ElevatedButton(
+              onPressed: () {},
+              child: Text("검색하기", style: TextStyle(fontSize: 18),),
+              style: TextButton.styleFrom(
+                  primary: Colors.white, backgroundColor: Colors.black54,
+              minimumSize: Size.fromHeight(56.0)),
+            ),
+          ],
+        ));
   }
 }
