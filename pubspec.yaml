@@ -7,6 +7,8 @@ environment:
   sdk: '>=3.0.0-218.0.dev <4.0.0'
 dependencies:
   dropdown_search: ^5.0.5
+  dropdown_button2: ^1.9.2
+
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
