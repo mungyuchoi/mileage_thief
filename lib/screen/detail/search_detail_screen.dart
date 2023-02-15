@@ -70,7 +70,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             margin: EdgeInsets.all(8),
             child: Text(
               '아시아나 | 편도 | 전체 | 4인 | 5박',
-              style: TextStyle(fontFamily: 'Ssukssuk'),
+
             ),
           ),
           Container(
@@ -106,12 +106,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         Text(
                           '출국',
                           style: TextStyle(
-                              fontFamily: 'SsuroundAir', fontSize: 16),
+                              fontFamily: 'Roboto', fontSize: 16),
                         ),
                         // Padding(padding: EdgeInsets.all(1)),
                         Text(
                           '좌석',
-                          style: TextStyle(fontFamily: 'SsuroundAir'),
+                          style: TextStyle(fontFamily: 'Roboto'),
                         ),
                       ],
                     ),
@@ -247,7 +247,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         Text(
                           '출국일정',
                           style: TextStyle(
-                              fontFamily: 'SsuroundAir',
+                              fontFamily: 'Roboto',
                               fontSize: 14,
                               fontWeight: FontWeight.bold),
                         ),
@@ -256,6 +256,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     Padding(padding: EdgeInsets.all(4)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           '10:50',
@@ -279,6 +280,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     Padding(padding: EdgeInsets.all(4)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           '11:40',
