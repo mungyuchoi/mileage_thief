@@ -199,6 +199,7 @@ class _AirportScreenState extends State<AirportScreen> {
                     Expanded(
                       child: CustomDropdownButton2(
                         hint: '어디서 가나요?',
+                        dropdownWidth: 180,
                         dropdownItems: airportItems,
                         hintAlignment: Alignment.center,
                         value: departureSelectedValue,
@@ -217,6 +218,7 @@ class _AirportScreenState extends State<AirportScreen> {
                     Expanded(
                       child: CustomDropdownButton2(
                         hint: '어디로 가나요?',
+                        dropdownWidth: 180,
                         hintAlignment: Alignment.center,
                         dropdownItems: airportItems,
                         value: arrivalSelectedValue,

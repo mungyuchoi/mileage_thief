@@ -21,3 +21,19 @@ flutter:
   uses-material-design: true
   assets:
     - asset/img/
+  fonts:
+    - family: Ssuk
+      fonts:
+        - asset: asset/font/Cafe24Ssukssuk.ttf
+    - family: Oneprettynight
+      fonts:
+        - asset: asset/font/Cafe24Oneprettynight.ttf
+    - family: Ohsquareair
+      fonts:
+        - asset: asset/font/Cafe24Ohsquareair.ttf
+    - family: Ssuround
+      fonts:
+        - asset: asset/font/Cafe24SSurround.ttf
+    - family: SsuroundAir
+      fonts:
+        - asset: asset/font/Cafe24SSurroundAir.ttf
