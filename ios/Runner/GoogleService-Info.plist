@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDGAgbK-9qurqHVQPdDVrxlXC92N2PIcZ0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>962527268971</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.mungyu.mileageThief</string>
+	<key>PROJECT_ID</key>
+	<string>mileagethief</string>
+	<key>STORAGE_BUCKET</key>
+	<string>mileagethief.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:962527268971:ios:d6efb76824deb711e4612e</string>
+	<key>DATABASE_URL</key>
+	<string>https://mileagethief-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>

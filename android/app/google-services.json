@@ -1,0 +1,83 @@
+{
+  "project_info": {
+    "project_number": "962527268971",
+    "firebase_url": "https://mileagethief-default-rtdb.firebaseio.com",
+    "project_id": "mileagethief",
+    "storage_bucket": "mileagethief.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962527268971:android:24d3702676b151a7e4612e",
+        "android_client_info": {
+          "package_name": "com.mungyu.foodtruck"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962527268971-cuqq0s5mupi8e7spns7al27ttqd3k0h0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiCV99gNYFaTrsI-0pMBRYy6Fm_PbAzLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962527268971-cuqq0s5mupi8e7spns7al27ttqd3k0h0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mungyu.mileageThief"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962527268971:android:cf36cfc6e06f17d0e4612e",
+        "android_client_info": {
+          "package_name": "com.mungyu.mileage_thief"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962527268971-cuqq0s5mupi8e7spns7al27ttqd3k0h0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiCV99gNYFaTrsI-0pMBRYy6Fm_PbAzLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962527268971-cuqq0s5mupi8e7spns7al27ttqd3k0h0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mungyu.mileageThief"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

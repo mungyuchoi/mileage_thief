@@ -22,7 +22,41 @@ class SearchDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: const MyStatefulWidget(),
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.all(8),
+              child: const Text(
+                '아시아나 | 편도 | 전체 | 4인 | 5박',
+              ),
+            ),
+            Container(
+                padding: const EdgeInsets.all(20),
+                // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
+                color: Color(0Xffeeeeee),
+                child: FutureBuilder<List<Item>>(
+                  future: getItems(8),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<Item>> snapshot) {
+                    if(snapshot.hasData) {
+                      return MyStatefulWidget(items: snapshot.data ?? []);
+                    }
+                    else {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                  },
+                )),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -49,38 +83,31 @@ List<Item> generateItems(int numberOfItems) {
   });
 }
 
+Future<List<Item>> getItems(int numberOfItems) async {
+  var _items = List<Item>.generate(numberOfItems, (int index) {
+    return Item(
+      headerValue: 'Panel $index',
+      expandedValue: 'This is item number $index',
+    );
+  });
+  return Future<List<Item>>.delayed(const Duration(seconds: 2), () => _items);
+}
+
 class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({super.key});
+  final List<Item> items;
+  const MyStatefulWidget({Key? key, required this.items}) : super(key: key);
 
   @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState(items: items);
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final List<Item> _data = generateItems(8);
+  final List<Item> _items;
 
+  _MyStatefulWidgetState({required  List<Item> items}): _items = items;
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: EdgeInsets.all(8),
-            child: Text(
-              '아시아나 | 편도 | 전체 | 4인 | 5박',
-
-            ),
-          ),
-          Container(
-              padding: const EdgeInsets.all(20),
-              child: _buildPanel(),
-              // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
-              color: Color(0Xffeeeeee)),
-        ],
-      ),
-    );
+    return _buildPanel();
   }
 
   Widget _buildPanel() {
@@ -89,10 +116,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       expandedHeaderPadding: EdgeInsets.all(5),
       expansionCallback: (int index, bool isExpanded) {
         setState(() {
-          _data[index].isExpanded = !isExpanded;
+          _items[index].isExpanded = !isExpanded;
         });
       },
-      children: _data.map<ExpansionPanel>((Item item) {
+      children: _items.map<ExpansionPanel>((Item item) {
         return ExpansionPanel(
           headerBuilder: (BuildContext context, bool isExpanded) {
             return ListTile(
@@ -105,8 +132,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       children: [
                         Text(
                           '출국',
-                          style: TextStyle(
-                              fontFamily: 'Roboto', fontSize: 16),
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
                         ),
                         // Padding(padding: EdgeInsets.all(1)),
                         Text(
