@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mileage_thief/model/search_detail_model.dart';
 import 'package:mileage_thief/model/search_model.dart';
+import 'package:mileage_thief/repository/mileage_repository.dart';
 
 class SearchDetailScreen extends StatelessWidget {
   final SearchModel searchModel;
@@ -36,9 +38,9 @@ class SearchDetailScreen extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(20),
                 // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
-                color: Color(0Xffeeeeee),
+                color: const Color(0Xffeeeeee),
                 child: FutureBuilder<List<Item>>(
-                  future: getItems(8),
+                  future: getItems(8, searchModel),
                   builder: (BuildContext context,
                       AsyncSnapshot<List<Item>> snapshot) {
                     if(snapshot.hasData) {
@@ -83,13 +85,15 @@ List<Item> generateItems(int numberOfItems) {
   });
 }
 
-Future<List<Item>> getItems(int numberOfItems) async {
+Future<List<Item>> getItems(int numberOfItems, SearchModel searchModel) async {
   var _items = List<Item>.generate(numberOfItems, (int index) {
     return Item(
       headerValue: 'Panel $index',
       expandedValue: 'This is item number $index',
     );
   });
+  Future<List<Mileage>> mileages = MileageRepository.getMileages(searchModel);
+  print("what the fuck" + mileages.toString());
   return Future<List<Item>>.delayed(const Duration(seconds: 2), () => _items);
 }
 
