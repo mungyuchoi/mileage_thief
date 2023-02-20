@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mileage_thief/model/search_detail_model.dart';
 import 'package:mileage_thief/model/search_model.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
+import 'package:mileage_thief/util/util.dart';
 
 class SearchDetailScreen extends StatelessWidget {
   final SearchModel searchModel;
@@ -39,10 +40,10 @@ class SearchDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
                 color: const Color(0Xffeeeeee),
-                child: FutureBuilder<List<Item>>(
-                  future: getItems(8, searchModel),
+                child: FutureBuilder<List<Mileage>>(
+                  future: getItems(searchModel),
                   builder: (BuildContext context,
-                      AsyncSnapshot<List<Item>> snapshot) {
+                      AsyncSnapshot<List<Mileage>> snapshot) {
                     if(snapshot.hasData) {
                       return MyStatefulWidget(items: snapshot.data ?? []);
                     }
@@ -63,42 +64,12 @@ class SearchDetailScreen extends StatelessWidget {
   }
 }
 
-// stores ExpansionPanel state information
-class Item {
-  Item({
-    required this.expandedValue,
-    required this.headerValue,
-    this.isExpanded = false,
-  });
-
-  String expandedValue;
-  String headerValue;
-  bool isExpanded;
-}
-
-List<Item> generateItems(int numberOfItems) {
-  return List<Item>.generate(numberOfItems, (int index) {
-    return Item(
-      headerValue: 'Panel $index',
-      expandedValue: 'This is item number $index',
-    );
-  });
-}
-
-Future<List<Item>> getItems(int numberOfItems, SearchModel searchModel) async {
-  var _items = List<Item>.generate(numberOfItems, (int index) {
-    return Item(
-      headerValue: 'Panel $index',
-      expandedValue: 'This is item number $index',
-    );
-  });
-  Future<List<Mileage>> mileages = MileageRepository.getMileages(searchModel);
-  print("what the fuck" + mileages.toString());
-  return Future<List<Item>>.delayed(const Duration(seconds: 2), () => _items);
+Future<List<Mileage>> getItems(SearchModel searchModel) async {
+  return await MileageRepository.getMileages(searchModel);
 }
 
 class MyStatefulWidget extends StatefulWidget {
-  final List<Item> items;
+  final List<Mileage> items;
   const MyStatefulWidget({Key? key, required this.items}) : super(key: key);
 
   @override
@@ -106,9 +77,9 @@ class MyStatefulWidget extends StatefulWidget {
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final List<Item> _items;
+  final List<Mileage> _items;
 
-  _MyStatefulWidgetState({required  List<Item> items}): _items = items;
+  _MyStatefulWidgetState({required  List<Mileage> items}): _items = items;
   @override
   Widget build(BuildContext context) {
     return _buildPanel();
@@ -123,7 +94,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           _items[index].isExpanded = !isExpanded;
         });
       },
-      children: _items.map<ExpansionPanel>((Item item) {
+      children: _items.map<ExpansionPanel>((Mileage item) {
         return ExpansionPanel(
           headerBuilder: (BuildContext context, bool isExpanded) {
             return ListTile(
@@ -151,9 +122,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       children: [
                         Container(
                           padding: const EdgeInsets.only(top: 3),
-                          child: const Text(
-                            '2023.02.14(수)',
-                            style: TextStyle(
+                          child: Text(
+                            Util.getDepartureDate(item.departureDate),
+                            style: const TextStyle(
                                 color: Colors.red,
                                 fontFamily: 'SsuroundAir',
                                 fontSize: 16,
@@ -170,9 +141,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 scale: 30,
                               ),
                               const Padding(padding: EdgeInsets.all(1)),
-                              const Text(
-                                "3",
-                                style: TextStyle(
+                              Text(
+                                item.economySeat,
+                                style: const TextStyle(
                                     fontFamily: 'SsuroundAir',
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold),
@@ -183,9 +154,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 scale: 30,
                               ),
                               const Padding(padding: EdgeInsets.all(1)),
-                              const Text(
-                                "3",
-                                style: TextStyle(
+                              Text(
+                                item.businessSeat,
+                                style: const TextStyle(
                                     fontFamily: 'SsuroundAir',
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold),
@@ -196,9 +167,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 scale: 30,
                               ),
                               const Padding(padding: EdgeInsets.all(1)),
-                              const Text(
-                                "3",
-                                style: TextStyle(
+                              Text(
+                                item.firstSeat,
+                                style: const TextStyle(
                                     fontFamily: 'SsuroundAir',
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold),
@@ -268,38 +239,38 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               Container(
                 margin: const EdgeInsets.only(
                     left: 35, top: 10, bottom: 10, right: 35),
-                child: const Column(
+                child: Column(
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.flight_takeoff_outlined),
-                        Padding(padding: EdgeInsets.all(3)),
+                        const Icon(Icons.flight_takeoff_outlined),
+                        const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          '출국일정',
-                          style: TextStyle(
+                          Util.getDepartureAircraft(item.aircraftType),
+                          style: const TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 14,
                               fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
-                    Padding(padding: EdgeInsets.all(4)),
+                    const Padding(padding: EdgeInsets.all(4)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '10:50',
-                          style: TextStyle(
+                          Util.getDepartureDetailDate(item.departureDate),
+                          style: const TextStyle(
                               color: Colors.red,
                               fontFamily: 'Roboto',
                               fontSize: 13,
                               fontWeight: FontWeight.bold),
                         ),
-                        Padding(padding: EdgeInsets.all(3)),
+                        const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          '서울/인천(ICN) 출발 (A380)',
-                          style: TextStyle(
+                          Util.mergeDepartureAirportCity(item.departureCity, item.departureAirport),
+                          style: const TextStyle(
                               color: Color(0Xff6f6f6f),
                               fontFamily: 'Roboto',
                               fontSize: 13,
@@ -307,23 +278,23 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         ),
                       ],
                     ),
-                    Padding(padding: EdgeInsets.all(4)),
+                    const Padding(padding: EdgeInsets.all(4)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '11:40',
-                          style: TextStyle(
+                          item.arrivalDate,
+                          style: const TextStyle(
                               color: Colors.red,
                               fontFamily: 'Roboto',
                               fontSize: 13,
                               fontWeight: FontWeight.bold),
                         ),
-                        Padding(padding: EdgeInsets.all(3)),
+                        const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          '뉴욕/존F케네디(JFK) 도착',
-                          style: TextStyle(
+                          Util.mergeDepartureAirportCity(item.arrivalCity, item.arrivalAirport),
+                          style: const TextStyle(
                               color: Color(0Xff6f6f6f),
                               fontFamily: 'Roboto',
                               fontSize: 13,

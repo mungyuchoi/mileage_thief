@@ -12,15 +12,26 @@ class MileageRepository {
     arrivalAirport = arrivalAirport.substring(arrivalAirport.indexOf('-') + 1);
     var event = await FirebaseDatabase.instance
         .ref('$departureAirport-$arrivalAirport')
+        .orderByChild('departureDate')
         .once(DatabaseEventType.value);
     for (var snap in event.snapshot.children) {
       if (snap.value != null) {
         Map<dynamic, dynamic> map = snap.value as Map<dynamic, dynamic>;
         Mileage mileage = Mileage.fromJson(map);
+        // String departureDate = mileage.departureDate;
+        // departureDate = departureDate.substring(0, 4) +
+        //     "." +
+        //     departureDate.substring(4, 6) +
+        //     '.' +
+        //     departureDate.substring(6, 8);
+        // mileage.departureDate = departureDate;
+        mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
+        mileage.businessSeat = mileage.businessSeat.replaceAll(RegExp('\\D'), "");
+        mileage.firstSeat = mileage.firstSeat.replaceAll(RegExp('\\D'), "");
         mileages.add(mileage);
       }
     }
-    print('Mileage Count: ' + mileages.length.toString());
+    print('Mileage Count: ${mileages.length}');
     return mileages;
   }
 }

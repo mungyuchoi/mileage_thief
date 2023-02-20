@@ -12,7 +12,7 @@ class Mileage {
       this.businessPrice = '',
       this.businessSeat = '0석',
       this.firstPrice = '',
-      this.firstSeat = '',
+      this.firstSeat = '0석',
       this.uploadDate = '',
       this.isExpanded = false});
 
@@ -33,13 +33,20 @@ class Mileage {
   bool isExpanded;
 
   static Mileage fromJson(Map<dynamic, dynamic> json) => Mileage(
-      aircraftType: json['aircraftType'],
+      aircraftType: json['aircraftType'].toString(),
       arrivalAirport: json['arrivalAirport'],
       arrivalCity: json['arrivalCity'],
       arrivalDate: json['arrivalDate'],
       departureAirport: json['departureAirport'],
       departureCity: json['departureCity'],
       departureDate: json['departureDate'],
+      economyPrice: json['economyPrice'] ?? '',
+      economySeat: json['economySeat'] ?? '0석',
+      businessPrice: json['businessPrice'] ?? '',
+      businessSeat: json['businessSeat'] ?? '0석',
+      firstPrice: json['firstPrice'] ?? '',
+      firstSeat: json['firstSeat'] ?? '0석',
+      uploadDate: json['uploadDate'],
       isExpanded: false);
 
   Object? toPrint() {
