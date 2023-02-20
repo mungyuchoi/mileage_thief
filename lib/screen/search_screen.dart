@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mileage_thief/screen/detail/search_detail_screen.dart';
+import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
+import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 
@@ -288,19 +289,36 @@ class _AirportScreenState extends State<AirportScreen> {
                 const Padding(padding: EdgeInsets.all(8)),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                SearchDetailScreen(
-                                    SearchModel(isRoundTrip: xAlign == -1.0
-                                        ? true
-                                        : false,
-                                        departureAirport: departureSelectedValue,
-                                        arrivalAirport: arrivalSelectedValue,
-                                        seatClass: classSelectedValue,
-                                        searchDate: dateSelectedValue)
-                                )));
+                    if (xAlign == -1.0) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  SearchDetailRoundScreen(
+                                      SearchModel(isRoundTrip: xAlign == -1.0
+                                          ? true
+                                          : false,
+                                          departureAirport: departureSelectedValue,
+                                          arrivalAirport: arrivalSelectedValue,
+                                          seatClass: classSelectedValue,
+                                          searchDate: dateSelectedValue)
+                                  )));
+                    } else {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  SearchDetailScreen(
+                                      SearchModel(isRoundTrip: xAlign == -1.0
+                                          ? true
+                                          : false,
+                                          departureAirport: departureSelectedValue,
+                                          arrivalAirport: arrivalSelectedValue,
+                                          seatClass: classSelectedValue,
+                                          searchDate: dateSelectedValue)
+                                  )));
+                    }
+
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
