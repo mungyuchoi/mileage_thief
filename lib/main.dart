@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/screen/search_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:mileage_thief/screen/splash_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -16,8 +15,8 @@ void main() async {
       fontFamily: 'Ohsquareair',
     ),
     routes: {
-      '/': (context) => SplashScreen(),
-      '/search': (context) => SearchScreen(),
+      '/': (context) => SearchScreen(),
+      // '/search': (context) => SearchScreen(),
     },
   ));
 }
