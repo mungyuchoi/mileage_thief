@@ -1,3 +1,14 @@
+class RoundMileage {
+  RoundMileage(
+      {required this.departureMileage,
+      required this.arrivalMileage,
+      this.isExpanded = false});
+
+  Mileage departureMileage;
+  Mileage arrivalMileage;
+  bool isExpanded;
+}
+
 class Mileage {
   Mileage(
       {required this.aircraftType,
@@ -56,7 +67,6 @@ class Mileage {
         'arrivalAirport: $arrivalAirport' +
         'arrivalCity: $arrivalCity' +
         'arrivalDate: $arrivalDate' +
-        'aircraftType: $aircraftType'
-    );
+        'aircraftType: $aircraftType');
   }
 }

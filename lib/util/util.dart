@@ -20,6 +20,10 @@ class Util {
   }
 
   static getDepartureAircraft(String aircraft) {
-    return "출국일정 (" + aircraft + ")";
+    return "출국일정 ($aircraft)";
+  }
+  
+  static getArrivalAircraft(String aircraft) {
+    return "귀국일정 ($aircraft)";
   }
 }

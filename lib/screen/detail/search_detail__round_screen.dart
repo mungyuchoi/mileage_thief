@@ -33,21 +33,20 @@ class SearchDetailRoundScreen extends StatelessWidget {
             Container(
               margin: const EdgeInsets.all(8),
               child: const Text(
-                '아시아나 | 왕복 | 전체 | 4인 | 5박',
+                '아시아나 | 왕복 | 전체 | 6박(default)',
               ),
             ),
             Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(15),
                 // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
                 color: const Color(0Xffeeeeee),
-                child: FutureBuilder<List<Mileage>>(
+                child: FutureBuilder<List<RoundMileage>>(
                   future: getItems(searchModel),
                   builder: (BuildContext context,
-                      AsyncSnapshot<List<Mileage>> snapshot) {
-                    if(snapshot.hasData) {
+                      AsyncSnapshot<List<RoundMileage>> snapshot) {
+                    if (snapshot.hasData) {
                       return MyStatefulWidget(items: snapshot.data ?? []);
-                    }
-                    else {
+                    } else {
                       return const Center(
                         child: Padding(
                           padding: EdgeInsets.all(16),
@@ -64,12 +63,13 @@ class SearchDetailRoundScreen extends StatelessWidget {
   }
 }
 
-Future<List<Mileage>> getItems(SearchModel searchModel) async {
-  return await MileageRepository.getMileages(searchModel);
+Future<List<RoundMileage>> getItems(SearchModel searchModel) async {
+  return await MileageRepository.getRoundMileages(searchModel);
 }
 
 class MyStatefulWidget extends StatefulWidget {
-  final List<Mileage> items;
+  final List<RoundMileage> items;
+
   const MyStatefulWidget({Key? key, required this.items}) : super(key: key);
 
   @override
@@ -77,9 +77,10 @@ class MyStatefulWidget extends StatefulWidget {
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final List<Mileage> _items;
+  final List<RoundMileage> _items;
 
-  _MyStatefulWidgetState({required  List<Mileage> items}): _items = items;
+  _MyStatefulWidgetState({required List<RoundMileage> items}) : _items = items;
+
   @override
   Widget build(BuildContext context) {
     return _buildPanel();
@@ -94,7 +95,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           _items[index].isExpanded = !isExpanded;
         });
       },
-      children: _items.map<ExpansionPanel>((Mileage item) {
+      children: _items.map<ExpansionPanel>((RoundMileage item) {
         return ExpansionPanel(
           headerBuilder: (BuildContext context, bool isExpanded) {
             return ListTile(
@@ -123,7 +124,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         Container(
                           padding: const EdgeInsets.only(top: 3),
                           child: Text(
-                            Util.getDepartureDate(item.departureDate),
+                            Util.getDepartureDate(
+                                item.departureMileage.departureDate),
                             style: const TextStyle(
                                 color: Colors.red,
                                 fontFamily: 'SsuroundAir',
@@ -142,7 +144,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                               ),
                               const Padding(padding: EdgeInsets.all(1)),
                               Text(
-                                item.economySeat,
+                                item.departureMileage.economySeat,
                                 style: const TextStyle(
                                     fontFamily: 'SsuroundAir',
                                     fontSize: 16,
@@ -155,7 +157,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                               ),
                               const Padding(padding: EdgeInsets.all(1)),
                               Text(
-                                item.businessSeat,
+                                item.departureMileage.businessSeat,
                                 style: const TextStyle(
                                     fontFamily: 'SsuroundAir',
                                     fontSize: 16,
@@ -168,7 +170,86 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                               ),
                               const Padding(padding: EdgeInsets.all(1)),
                               Text(
-                                item.firstSeat,
+                                item.departureMileage.firstSeat,
+                                style: const TextStyle(
+                                    fontFamily: 'SsuroundAir',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Padding(padding: EdgeInsets.all(3)),
+                    const Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text(
+                          '귀국',
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                        ),
+                        // Padding(padding: EdgeInsets.all(1)),
+                        Text(
+                          '좌석',
+                          style: TextStyle(fontFamily: 'Roboto'),
+                        ),
+                      ],
+                    ),
+                    const Padding(padding: EdgeInsets.all(3)),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Text(
+                            Util.getDepartureDate(
+                                item.arrivalMileage.departureDate),
+                            style: const TextStyle(
+                                color: Colors.red,
+                                fontFamily: 'SsuroundAir',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Image.asset(
+                                'asset/img/letter-e.png',
+                                scale: 30,
+                              ),
+                              const Padding(padding: EdgeInsets.all(1)),
+                              Text(
+                                item.arrivalMileage.economySeat,
+                                style: const TextStyle(
+                                    fontFamily: 'SsuroundAir',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const Padding(padding: EdgeInsets.all(2)),
+                              Image.asset(
+                                'asset/img/letter-b.png',
+                                scale: 30,
+                              ),
+                              const Padding(padding: EdgeInsets.all(1)),
+                              Text(
+                                item.arrivalMileage.businessSeat,
+                                style: const TextStyle(
+                                    fontFamily: 'SsuroundAir',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const Padding(padding: EdgeInsets.all(2)),
+                              Image.asset(
+                                'asset/img/letter-f.png',
+                                scale: 30,
+                              ),
+                              const Padding(padding: EdgeInsets.all(1)),
+                              Text(
+                                item.arrivalMileage.firstSeat,
                                 style: const TextStyle(
                                     fontFamily: 'SsuroundAir',
                                     fontSize: 16,
@@ -190,21 +271,30 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 alignment: AlignmentDirectional.bottomStart,
                 child: Container(
                   width: 10,
-                  height: 100,
+                  height: 201,
                   color: const Color(0Xffeeeeee),
                 ),
               ),
               Align(
-                alignment: AlignmentDirectional.topEnd,
+                alignment: AlignmentDirectional.bottomEnd,
                 child: Container(
                   width: 10,
-                  height: 100,
+                  height: 201,
                   color: const Color(0Xffeeeeee),
                 ),
               ),
               Align(
                 alignment: AlignmentDirectional.topCenter,
                 child: Container(
+                  width: 400,
+                  height: 1,
+                  color: const Color(0Xffeeeeee),
+                ),
+              ),
+              Align(
+                alignment: AlignmentDirectional.center,
+                child: Container(
+                  margin: const EdgeInsets.only(top:100),
                   width: 400,
                   height: 1,
                   color: const Color(0Xffeeeeee),
@@ -236,6 +326,32 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       )),
                 ),
               ),
+              Align(
+                alignment: AlignmentDirectional.bottomStart,
+                child: Container(
+                  margin: const EdgeInsets.only(left: 10, top: 101),
+                  width: 20,
+                  height: 20,
+                  decoration: const BoxDecoration(
+                      color: Color(0Xffeeeeee),
+                      borderRadius: BorderRadius.only(
+                        bottomRight: Radius.circular(40),
+                      )),
+                ),
+              ),
+              Align(
+                alignment: AlignmentDirectional.bottomEnd,
+                child: Container(
+                  margin: const EdgeInsets.only(right: 10, top: 101),
+                  width: 20,
+                  height: 20,
+                  decoration: const BoxDecoration(
+                      color: Color(0Xffeeeeee),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(40),
+                      )),
+                ),
+              ),
               Container(
                 margin: const EdgeInsets.only(
                     left: 35, top: 10, bottom: 10, right: 35),
@@ -246,7 +362,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         const Icon(Icons.flight_takeoff_outlined),
                         const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          Util.getDepartureAircraft(item.aircraftType),
+                          Util.getDepartureAircraft(
+                              item.departureMileage.aircraftType),
                           style: const TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 14,
@@ -260,7 +377,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          Util.getDepartureDetailDate(item.departureDate),
+                          Util.getDepartureDetailDate(
+                              item.departureMileage.departureDate),
                           style: const TextStyle(
                               color: Colors.red,
                               fontFamily: 'Roboto',
@@ -269,7 +387,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         ),
                         const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          Util.mergeDepartureAirportCity(item.departureCity, item.departureAirport),
+                          Util.mergeDepartureAirportCity(
+                              item.departureMileage.departureCity,
+                              item.departureMileage.departureAirport),
                           style: const TextStyle(
                               color: Color(0Xff6f6f6f),
                               fontFamily: 'Roboto',
@@ -284,7 +404,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          item.arrivalDate,
+                          item.departureMileage.arrivalDate,
                           style: const TextStyle(
                               color: Colors.red,
                               fontFamily: 'Roboto',
@@ -293,7 +413,82 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         ),
                         const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          Util.mergeDepartureAirportCity(item.arrivalCity, item.arrivalAirport),
+                          Util.mergeDepartureAirportCity(
+                              item.departureMileage.arrivalCity, item.departureMileage.arrivalAirport),
+                          style: const TextStyle(
+                              color: Color(0Xff6f6f6f),
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(
+                    left: 35, top: 111, bottom: 10, right: 35),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.flight_land_outlined),
+                        const Padding(padding: EdgeInsets.all(3)),
+                        Text(
+                          Util.getArrivalAircraft(
+                              item.arrivalMileage.aircraftType),
+                          style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const Padding(padding: EdgeInsets.all(4)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          Util.getDepartureDetailDate(
+                              item.arrivalMileage.departureDate),
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        const Padding(padding: EdgeInsets.all(3)),
+                        Text(
+                          Util.mergeDepartureAirportCity(
+                              item.arrivalMileage.departureCity,
+                              item.arrivalMileage.departureAirport),
+                          style: const TextStyle(
+                              color: Color(0Xff6f6f6f),
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const Padding(padding: EdgeInsets.all(4)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          item.arrivalMileage.arrivalDate,
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        const Padding(padding: EdgeInsets.all(3)),
+                        Text(
+                          Util.mergeDepartureAirportCity(
+                              item.arrivalMileage.arrivalCity, item.arrivalMileage.arrivalAirport),
                           style: const TextStyle(
                               color: Color(0Xff6f6f6f),
                               fontFamily: 'Roboto',
