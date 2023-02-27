@@ -81,7 +81,7 @@ class _AirportScreenState extends State<AirportScreen> {
     "28박29일",
     "29박30일",
   ];
-  final List<String> classItems = ["전체", "이코노미", "비즈니스", "퍼스트"];
+  final List<String> classItems = ["전체"];
   final List<String> airportItems = ["서울/인천-ICN", "뉴욕/존F케네디-JFK"];
   String? dateSelectedValue;
   String? classSelectedValue;
@@ -246,8 +246,8 @@ class _AirportScreenState extends State<AirportScreen> {
                         const Text('클래스'),
                         const Padding(padding: EdgeInsets.all(4)),
                         CustomDropdownButton2(
-                          buttonWidth: 90,
-                          dropdownWidth: 100,
+                          buttonWidth: 100,
+                          dropdownWidth: 110,
                           valueAlignment: Alignment.center,
                           hint: '전체',
                           dropdownItems: classItems,

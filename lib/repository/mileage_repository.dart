@@ -108,10 +108,15 @@ class MileageRepository {
         day = int.parse(departureElement.departureDate.substring(6, 8)) ?? 0;
         var arrivalDateTime = DateTime(year, month, day);
         Duration difference = arrivalDateTime.difference(departureDateTime);
-        String days = searchModel.searchDate
-                ?.substring(0, searchModel.searchDate?.indexOf('박'))
-                .trim() ??
-            '0';
+        String days = '0';
+        if (searchModel.searchDate == "전체") {
+          days = '0';
+        } else {
+          days = searchModel.searchDate
+                  ?.substring(0, searchModel.searchDate?.indexOf('박'))
+                  .trim() ??
+              '0';
+        }
         int numberOfDays = int.tryParse(days) ?? 6;
         if (numberOfDays == 0) numberOfDays = 6;
         if (difference.inDays.abs() == numberOfDays + 1) {

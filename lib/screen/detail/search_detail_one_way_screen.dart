@@ -33,7 +33,7 @@ class SearchDetailScreen extends StatelessWidget {
             Container(
               margin: const EdgeInsets.all(8),
               child: const Text(
-                '아시아나 | 편도 | 전체 | 4인 | 5박',
+                '아시아나 | 편도 | 전체 |',
               ),
             ),
             Container(
