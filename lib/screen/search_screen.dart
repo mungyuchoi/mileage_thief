@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import 'package:share/share.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -36,12 +38,12 @@ class _SearchScreenState extends State<SearchScreen> {
           elevation: 1,
           actions: <Widget>[
             IconButton(
-              icon: const Icon(Icons.share,
-              color: Colors.black54),
+              icon: const Icon(Icons.share, color: Colors.black54),
               onPressed: () {
                 String appLink = '';
-                if (Platform.isAndroid){
-                  appLink = 'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
+                if (Platform.isAndroid) {
+                  appLink =
+                      'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
                 } else {
                   appLink = 'https://apps.apple.com/app/myapp/id12345678';
                 }
@@ -106,6 +108,7 @@ class _AirportScreenState extends State<AirportScreen> {
   String? classSelectedValue;
   String? departureSelectedValue;
   String? arrivalSelectedValue;
+  late BannerAd _banner;
 
   @override
   void initState() {
@@ -113,6 +116,21 @@ class _AirportScreenState extends State<AirportScreen> {
     xAlign = loginAlign;
     loginColor = selectedColor;
     signInColor = normalColor;
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {},
+        onAdLoaded: (_) {},
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _banner.dispose();
+    super.dispose();
   }
 
   @override
@@ -198,14 +216,8 @@ class _AirportScreenState extends State<AirportScreen> {
         ),
         Container(
             padding: const EdgeInsets.all(15),
-            width: MediaQuery
-                .of(context)
-                .size
-                .width,
-            height: MediaQuery
-                .of(context)
-                .size
-                .height,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
             child: ListView(
               padding: const EdgeInsets.all(4),
               children: <Widget>[
@@ -312,32 +324,27 @@ class _AirportScreenState extends State<AirportScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  SearchDetailRoundScreen(
-                                      SearchModel(isRoundTrip: xAlign == -1.0
-                                          ? true
-                                          : false,
-                                          departureAirport: departureSelectedValue,
-                                          arrivalAirport: arrivalSelectedValue,
-                                          seatClass: classSelectedValue,
-                                          searchDate: dateSelectedValue)
-                                  )));
+                              builder: (context) => SearchDetailRoundScreen(
+                                  SearchModel(
+                                      isRoundTrip:
+                                          xAlign == -1.0 ? true : false,
+                                      departureAirport: departureSelectedValue,
+                                      arrivalAirport: arrivalSelectedValue,
+                                      seatClass: classSelectedValue,
+                                      searchDate: dateSelectedValue))));
                     } else {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  SearchDetailScreen(
-                                      SearchModel(isRoundTrip: xAlign == -1.0
-                                          ? true
-                                          : false,
-                                          departureAirport: departureSelectedValue,
-                                          arrivalAirport: arrivalSelectedValue,
-                                          seatClass: classSelectedValue,
-                                          searchDate: dateSelectedValue)
-                                  )));
+                              builder: (context) => SearchDetailScreen(
+                                  SearchModel(
+                                      isRoundTrip:
+                                          xAlign == -1.0 ? true : false,
+                                      departureAirport: departureSelectedValue,
+                                      arrivalAirport: arrivalSelectedValue,
+                                      seatClass: classSelectedValue,
+                                      searchDate: dateSelectedValue))));
                     }
-
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
@@ -348,6 +355,12 @@ class _AirportScreenState extends State<AirportScreen> {
                     style: TextStyle(fontSize: 18),
                   ),
                 ),
+                Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    height: 50,
+                    child: AdWidget(
+                      ad: _banner,
+                    ))
               ],
             )),
       ],
