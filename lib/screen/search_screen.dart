@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
+import 'package:share/share.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -31,6 +34,22 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           backgroundColor: Colors.white,
           elevation: 1,
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.share,
+              color: Colors.black54),
+              onPressed: () {
+                String appLink = '';
+                if (Platform.isAndroid){
+                  appLink = 'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
+                } else {
+                  appLink = 'https://apps.apple.com/app/myapp/id12345678';
+                }
+                String description = "마일리지 항공 앱을 공유해보세요! $appLink";
+                Share.share(description);
+              },
+            )
+          ],
         ),
         body: const SingleChildScrollView(
           child: AirportScreen(),
