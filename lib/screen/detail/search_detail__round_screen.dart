@@ -32,8 +32,8 @@ class SearchDetailRoundScreen extends StatelessWidget {
           children: [
             Container(
               margin: const EdgeInsets.all(8),
-              child: const Text(
-                '아시아나 | 왕복 | 전체 | 6박(default)',
+              child: Text(
+                Util.getRoundHeader(searchModel.searchDate)
               ),
             ),
             Container(
@@ -96,414 +96,426 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         });
       },
       children: _items.map<ExpansionPanel>((RoundMileage item) {
-        return ExpansionPanel(
-          headerBuilder: (BuildContext context, bool isExpanded) {
-            return ListTile(
-              title: Container(
-                height: 60,
-                child: Row(
-                  children: [
-                    const Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text(
-                          '출국',
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
-                        ),
-                        // Padding(padding: EdgeInsets.all(1)),
-                        Text(
-                          '좌석',
-                          style: TextStyle(fontFamily: 'Roboto'),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(3)),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(
-                            Util.getDepartureDate(
+        if (item == null) {
+          return ExpansionPanel(
+              headerBuilder: (BuildContext context, bool isExpanded) {
+                return const Text("검색된 데이터가 없습니다.");
+              },
+              body: const Center(child: Text("검색된 데이터가없습니다.")));
+        } else {
+          return ExpansionPanel(
+            headerBuilder: (BuildContext context, bool isExpanded) {
+              return ListTile(
+                title: Container(
+                  height: 60,
+                  child: Row(
+                    children: [
+                      const Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text(
+                            '출국',
+                            style:
+                                TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                          ),
+                          // Padding(padding: EdgeInsets.all(1)),
+                          Text(
+                            '좌석',
+                            style: TextStyle(fontFamily: 'Roboto'),
+                          ),
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(3)),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Text(
+                              Util.getDepartureDate(
+                                  item.departureMileage.departureDate),
+                              style: const TextStyle(
+                                  color: Colors.red,
+                                  fontFamily: 'SsuroundAir',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Image.asset(
+                                  'asset/img/letter-e.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.departureMileage.economySeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Padding(padding: EdgeInsets.all(2)),
+                                Image.asset(
+                                  'asset/img/letter-b.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.departureMileage.businessSeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Padding(padding: EdgeInsets.all(2)),
+                                Image.asset(
+                                  'asset/img/letter-f.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.departureMileage.firstSeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(3)),
+                      const Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text(
+                            '귀국',
+                            style:
+                                TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                          ),
+                          // Padding(padding: EdgeInsets.all(1)),
+                          Text(
+                            '좌석',
+                            style: TextStyle(fontFamily: 'Roboto'),
+                          ),
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(3)),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Text(
+                              Util.getDepartureDate(
+                                  item.arrivalMileage.departureDate),
+                              style: const TextStyle(
+                                  color: Colors.red,
+                                  fontFamily: 'SsuroundAir',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Image.asset(
+                                  'asset/img/letter-e.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.arrivalMileage.economySeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Padding(padding: EdgeInsets.all(2)),
+                                Image.asset(
+                                  'asset/img/letter-b.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.arrivalMileage.businessSeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Padding(padding: EdgeInsets.all(2)),
+                                Image.asset(
+                                  'asset/img/letter-f.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.arrivalMileage.firstSeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              );
+            },
+            body: Stack(
+              children: [
+                Align(
+                  alignment: AlignmentDirectional.bottomStart,
+                  child: Container(
+                    width: 10,
+                    height: 201,
+                    color: const Color(0Xffeeeeee),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  child: Container(
+                    width: 10,
+                    height: 201,
+                    color: const Color(0Xffeeeeee),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.topCenter,
+                  child: Container(
+                    width: 400,
+                    height: 1,
+                    color: const Color(0Xffeeeeee),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.center,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 100),
+                    width: 400,
+                    height: 1,
+                    color: const Color(0Xffeeeeee),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.bottomStart,
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 10, top: 80),
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                        color: Color(0Xffeeeeee),
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(40),
+                        )),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 10, top: 80),
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                        color: Color(0Xffeeeeee),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(40),
+                        )),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.bottomStart,
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 10, top: 101),
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                        color: Color(0Xffeeeeee),
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(40),
+                        )),
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 10, top: 101),
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                        color: Color(0Xffeeeeee),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(40),
+                        )),
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(
+                      left: 35, top: 10, bottom: 10, right: 35),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.flight_takeoff_outlined),
+                          const Padding(padding: EdgeInsets.all(3)),
+                          Text(
+                            Util.getDepartureAircraft(
+                                item.departureMileage.aircraftType),
+                            style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(4)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            Util.getDepartureDetailDate(
                                 item.departureMileage.departureDate),
                             style: const TextStyle(
                                 color: Colors.red,
-                                fontFamily: 'SsuroundAir',
-                                fontSize: 16,
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Image.asset(
-                                'asset/img/letter-e.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.departureMileage.economySeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const Padding(padding: EdgeInsets.all(2)),
-                              Image.asset(
-                                'asset/img/letter-b.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.departureMileage.businessSeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const Padding(padding: EdgeInsets.all(2)),
-                              Image.asset(
-                                'asset/img/letter-f.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.departureMileage.firstSeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                          const Padding(padding: EdgeInsets.all(3)),
+                          Text(
+                            Util.mergeDepartureAirportCity(
+                                item.departureMileage.departureCity,
+                                item.departureMileage.departureAirport),
+                            style: const TextStyle(
+                                color: Color(0Xff6f6f6f),
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(3)),
-                    const Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text(
-                          '귀국',
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
-                        ),
-                        // Padding(padding: EdgeInsets.all(1)),
-                        Text(
-                          '좌석',
-                          style: TextStyle(fontFamily: 'Roboto'),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(3)),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(
-                            Util.getDepartureDate(
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(4)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            item.departureMileage.arrivalDate,
+                            style: const TextStyle(
+                                color: Colors.red,
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          const Padding(padding: EdgeInsets.all(3)),
+                          Text(
+                            Util.mergeDepartureAirportCity(
+                                item.departureMileage.arrivalCity,
+                                item.departureMileage.arrivalAirport),
+                            style: const TextStyle(
+                                color: Color(0Xff6f6f6f),
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(
+                      left: 35, top: 111, bottom: 10, right: 35),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.flight_land_outlined),
+                          const Padding(padding: EdgeInsets.all(3)),
+                          Text(
+                            Util.getArrivalAircraft(
+                                item.arrivalMileage.aircraftType),
+                            style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(4)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            Util.getDepartureDetailDate(
                                 item.arrivalMileage.departureDate),
                             style: const TextStyle(
                                 color: Colors.red,
-                                fontFamily: 'SsuroundAir',
-                                fontSize: 16,
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Image.asset(
-                                'asset/img/letter-e.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.arrivalMileage.economySeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const Padding(padding: EdgeInsets.all(2)),
-                              Image.asset(
-                                'asset/img/letter-b.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.arrivalMileage.businessSeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const Padding(padding: EdgeInsets.all(2)),
-                              Image.asset(
-                                'asset/img/letter-f.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.arrivalMileage.firstSeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                          const Padding(padding: EdgeInsets.all(3)),
+                          Text(
+                            Util.mergeDepartureAirportCity(
+                                item.arrivalMileage.departureCity,
+                                item.arrivalMileage.departureAirport),
+                            style: const TextStyle(
+                                color: Color(0Xff6f6f6f),
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ),
-                      ],
-                    )
-                  ],
+                        ],
+                      ),
+                      const Padding(padding: EdgeInsets.all(4)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            item.arrivalMileage.arrivalDate,
+                            style: const TextStyle(
+                                color: Colors.red,
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          const Padding(padding: EdgeInsets.all(3)),
+                          Text(
+                            Util.mergeDepartureAirportCity(
+                                item.arrivalMileage.arrivalCity,
+                                item.arrivalMileage.arrivalAirport),
+                            style: const TextStyle(
+                                color: Color(0Xff6f6f6f),
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-          body: Stack(
-            children: [
-              Align(
-                alignment: AlignmentDirectional.bottomStart,
-                child: Container(
-                  width: 10,
-                  height: 201,
-                  color: const Color(0Xffeeeeee),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.bottomEnd,
-                child: Container(
-                  width: 10,
-                  height: 201,
-                  color: const Color(0Xffeeeeee),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.topCenter,
-                child: Container(
-                  width: 400,
-                  height: 1,
-                  color: const Color(0Xffeeeeee),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.center,
-                child: Container(
-                  margin: const EdgeInsets.only(top:100),
-                  width: 400,
-                  height: 1,
-                  color: const Color(0Xffeeeeee),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.bottomStart,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 10, top: 80),
-                  width: 20,
-                  height: 20,
-                  decoration: const BoxDecoration(
-                      color: Color(0Xffeeeeee),
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(40),
-                      )),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.bottomEnd,
-                child: Container(
-                  margin: const EdgeInsets.only(right: 10, top: 80),
-                  width: 20,
-                  height: 20,
-                  decoration: const BoxDecoration(
-                      color: Color(0Xffeeeeee),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(40),
-                      )),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.bottomStart,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 10, top: 101),
-                  width: 20,
-                  height: 20,
-                  decoration: const BoxDecoration(
-                      color: Color(0Xffeeeeee),
-                      borderRadius: BorderRadius.only(
-                        bottomRight: Radius.circular(40),
-                      )),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.bottomEnd,
-                child: Container(
-                  margin: const EdgeInsets.only(right: 10, top: 101),
-                  width: 20,
-                  height: 20,
-                  decoration: const BoxDecoration(
-                      color: Color(0Xffeeeeee),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(40),
-                      )),
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(
-                    left: 35, top: 10, bottom: 10, right: 35),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.flight_takeoff_outlined),
-                        const Padding(padding: EdgeInsets.all(3)),
-                        Text(
-                          Util.getDepartureAircraft(
-                              item.departureMileage.aircraftType),
-                          style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(4)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          Util.getDepartureDetailDate(
-                              item.departureMileage.departureDate),
-                          style: const TextStyle(
-                              color: Colors.red,
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const Padding(padding: EdgeInsets.all(3)),
-                        Text(
-                          Util.mergeDepartureAirportCity(
-                              item.departureMileage.departureCity,
-                              item.departureMileage.departureAirport),
-                          style: const TextStyle(
-                              color: Color(0Xff6f6f6f),
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(4)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item.departureMileage.arrivalDate,
-                          style: const TextStyle(
-                              color: Colors.red,
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const Padding(padding: EdgeInsets.all(3)),
-                        Text(
-                          Util.mergeDepartureAirportCity(
-                              item.departureMileage.arrivalCity, item.departureMileage.arrivalAirport),
-                          style: const TextStyle(
-                              color: Color(0Xff6f6f6f),
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(
-                    left: 35, top: 111, bottom: 10, right: 35),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.flight_land_outlined),
-                        const Padding(padding: EdgeInsets.all(3)),
-                        Text(
-                          Util.getArrivalAircraft(
-                              item.arrivalMileage.aircraftType),
-                          style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(4)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          Util.getDepartureDetailDate(
-                              item.arrivalMileage.departureDate),
-                          style: const TextStyle(
-                              color: Colors.red,
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const Padding(padding: EdgeInsets.all(3)),
-                        Text(
-                          Util.mergeDepartureAirportCity(
-                              item.arrivalMileage.departureCity,
-                              item.arrivalMileage.departureAirport),
-                          style: const TextStyle(
-                              color: Color(0Xff6f6f6f),
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const Padding(padding: EdgeInsets.all(4)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item.arrivalMileage.arrivalDate,
-                          style: const TextStyle(
-                              color: Colors.red,
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const Padding(padding: EdgeInsets.all(3)),
-                        Text(
-                          Util.mergeDepartureAirportCity(
-                              item.arrivalMileage.arrivalCity, item.arrivalMileage.arrivalAirport),
-                          style: const TextStyle(
-                              color: Color(0Xff6f6f6f),
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          isExpanded: item.isExpanded,
-        );
+              ],
+            ),
+            isExpanded: item.isExpanded,
+          );
+        }
       }).toList(),
     );
   }

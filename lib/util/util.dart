@@ -26,4 +26,14 @@ class Util {
   static getArrivalAircraft(String aircraft) {
     return "귀국일정 ($aircraft)";
   }
+
+  static getRoundHeader(String? searchDate) {
+    String date = "";
+    if(searchDate == null || searchDate == "전체") {
+      date = "6박(default)";
+    } else {
+      date = searchDate;
+    }
+    return '아시아나 | 왕복 | 전체 | ' + date;
+  }
 }

@@ -100,13 +100,13 @@ class MileageRepository {
       int year = int.parse(arrivalElement.departureDate.substring(0, 4)) ?? 0;
       int month = int.parse(arrivalElement.departureDate.substring(4, 6)) ?? 0;
       int day = int.parse(arrivalElement.departureDate.substring(6, 8)) ?? 0;
-      var departureDateTime = DateTime(year, month, day);
+      var arrivalDateTime = DateTime(year, month, day);
 
       for (var departureElement in departureMileages) {
         year = int.parse(departureElement.departureDate.substring(0, 4)) ?? 0;
         month = int.parse(departureElement.departureDate.substring(4, 6)) ?? 0;
         day = int.parse(departureElement.departureDate.substring(6, 8)) ?? 0;
-        var arrivalDateTime = DateTime(year, month, day);
+        var departureDateTime = DateTime(year, month, day);
         Duration difference = arrivalDateTime.difference(departureDateTime);
         String days = '0';
         if (searchModel.searchDate == "전체") {
@@ -119,7 +119,7 @@ class MileageRepository {
         }
         int numberOfDays = int.tryParse(days) ?? 6;
         if (numberOfDays == 0) numberOfDays = 6;
-        if (difference.inDays.abs() == numberOfDays + 1) {
+        if (difference.inDays == numberOfDays + 1) {
           roundMileages.add(RoundMileage(
               departureMileage: departureElement,
               arrivalMileage: arrivalElement));
