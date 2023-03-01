@@ -32,9 +32,7 @@ class SearchDetailRoundScreen extends StatelessWidget {
           children: [
             Container(
               margin: const EdgeInsets.all(8),
-              child: Text(
-                Util.getRoundHeader(searchModel.searchDate)
-              ),
+              child: Text(Util.getRoundHeader(searchModel.searchDate)),
             ),
             Container(
                 padding: const EdgeInsets.all(15),
@@ -44,9 +42,17 @@ class SearchDetailRoundScreen extends StatelessWidget {
                   future: getItems(searchModel),
                   builder: (BuildContext context,
                       AsyncSnapshot<List<RoundMileage>> snapshot) {
-                    if (snapshot.hasData) {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return MyStatefulWidget(items: snapshot.data ?? []);
-                    } else {
+                    } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text("검색된 결과가 없습니다."),
+                        ),
+                      );
+                    }
+                    else {
                       return const Center(
                         child: Padding(
                           padding: EdgeInsets.all(16),
@@ -116,7 +122,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           Text(
                             '출국',
                             style:
-                                TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                            TextStyle(fontFamily: 'Roboto', fontSize: 16),
                           ),
                           // Padding(padding: EdgeInsets.all(1)),
                           Text(
@@ -196,7 +202,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           Text(
                             '귀국',
                             style:
-                                TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                            TextStyle(fontFamily: 'Roboto', fontSize: 16),
                           ),
                           // Padding(padding: EdgeInsets.all(1)),
                           Text(

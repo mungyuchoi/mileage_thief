@@ -109,6 +109,7 @@ class _AirportScreenState extends State<AirportScreen> {
   String? departureSelectedValue;
   String? arrivalSelectedValue;
   late BannerAd _banner;
+  late RewardedAd _rewardedAd;
 
   @override
   void initState() {
@@ -116,6 +117,30 @@ class _AirportScreenState extends State<AirportScreen> {
     xAlign = loginAlign;
     loginColor = selectedColor;
     signInColor = normalColor;
+    RewardedAd.load(
+        adUnitId: "ca-app-pub-3940256099942544/5354046379",
+        request: AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            print('$ad loaded.');
+            // Keep a reference to the ad so you can show it later.
+            this._rewardedAd = ad;
+            ad.fullScreenContentCallback = FullScreenContentCallback(
+              onAdDismissedFullScreenContent: (RewardedAd ad) {
+                ad.dispose();
+              },
+              onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+                ad.dispose();
+              },
+            );
+            ad.show(onUserEarnedReward: (ad, reward) {
+              movePage();
+            });
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('RewardedAd failed to load: $error');
+          },
+        ));
     _banner = BannerAd(
       listener: BannerAdListener(
         onAdFailedToLoad: (Ad ad, LoadAdError error) {},
@@ -130,7 +155,12 @@ class _AirportScreenState extends State<AirportScreen> {
   @override
   void dispose() {
     _banner.dispose();
+    _rewardedAd?.dispose();
     super.dispose();
+  }
+
+  void movePage() {
+    print("movePage");
   }
 
   @override
@@ -320,31 +350,36 @@ class _AirportScreenState extends State<AirportScreen> {
                 const Padding(padding: EdgeInsets.all(8)),
                 ElevatedButton(
                   onPressed: () {
-                    if (xAlign == -1.0) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SearchDetailRoundScreen(
-                                  SearchModel(
-                                      isRoundTrip:
-                                          xAlign == -1.0 ? true : false,
-                                      departureAirport: departureSelectedValue,
-                                      arrivalAirport: arrivalSelectedValue,
-                                      seatClass: classSelectedValue,
-                                      searchDate: dateSelectedValue))));
-                    } else {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SearchDetailScreen(
-                                  SearchModel(
-                                      isRoundTrip:
-                                          xAlign == -1.0 ? true : false,
-                                      departureAirport: departureSelectedValue,
-                                      arrivalAirport: arrivalSelectedValue,
-                                      seatClass: classSelectedValue,
-                                      searchDate: dateSelectedValue))));
-                    }
+                    print("_rewardedad:$_rewardedAd");
+                    _rewardedAd?.show(onUserEarnedReward: (ad, rewardItem) {
+                      // Reward the user for watching an ad.
+                      print("show");
+                    });
+                    // if (xAlign == -1.0) {
+                    //   Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //           builder: (context) => SearchDetailRoundScreen(
+                    //               SearchModel(
+                    //                   isRoundTrip:
+                    //                       xAlign == -1.0 ? true : false,
+                    //                   departureAirport: departureSelectedValue,
+                    //                   arrivalAirport: arrivalSelectedValue,
+                    //                   seatClass: classSelectedValue,
+                    //                   searchDate: dateSelectedValue))));
+                    // } else {
+                    //   Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //           builder: (context) => SearchDetailScreen(
+                    //               SearchModel(
+                    //                   isRoundTrip:
+                    //                       xAlign == -1.0 ? true : false,
+                    //                   departureAirport: departureSelectedValue,
+                    //                   arrivalAirport: arrivalSelectedValue,
+                    //                   seatClass: classSelectedValue,
+                    //                   searchDate: dateSelectedValue))));
+                    // }
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
