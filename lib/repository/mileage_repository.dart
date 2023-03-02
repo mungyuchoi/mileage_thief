@@ -11,7 +11,8 @@ class MileageRepository {
     String arrivalAirport = searchModel.arrivalAirport.toString();
     arrivalAirport = arrivalAirport.substring(arrivalAirport.indexOf('-') + 1);
     var event = await FirebaseDatabase.instance
-        .ref('$departureAirport-$arrivalAirport')
+        .ref('ASIANA')
+        .child('$departureAirport-$arrivalAirport')
         .orderByChild('departureDate')
         .once(DatabaseEventType.value);
     for (var snap in event.snapshot.children) {
@@ -47,7 +48,8 @@ class MileageRepository {
     String arrivalAirport = searchModel.arrivalAirport.toString();
     arrivalAirport = arrivalAirport.substring(arrivalAirport.indexOf('-') + 1);
     var event = await FirebaseDatabase.instance
-        .ref('$departureAirport-$arrivalAirport')
+        .ref('ASIANA')
+        .child('$departureAirport-$arrivalAirport')
         .orderByChild('departureDate')
         .once(DatabaseEventType.value);
     for (var snap in event.snapshot.children) {
@@ -70,7 +72,8 @@ class MileageRepository {
     }
     print('Mileage Count: ${departureMileages.length}');
     event = await FirebaseDatabase.instance
-        .ref('$arrivalAirport-$departureAirport')
+        .ref('ASIANA')
+        .child('$arrivalAirport-$departureAirport')
         .orderByChild('departureDate')
         .once(DatabaseEventType.value);
     for (var snap in event.snapshot.children) {
