@@ -43,7 +43,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 String appLink = '';
                 if (Platform.isAndroid) {
                   appLink =
-                      'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
+                  'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
                 } else {
                   appLink = 'https://apps.apple.com/app/myapp/id12345678';
                 }
@@ -53,9 +53,18 @@ class _SearchScreenState extends State<SearchScreen> {
             )
           ],
         ),
-        body: const SingleChildScrollView(
-          child: AirportScreen(),
+        body: FutureBuilder<InitializationStatus>(
+          future: _initGoogleMobileAds(),
+          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+            return const SingleChildScrollView(
+              child: AirportScreen(),
+            );
+          },
         ));
+  }
+
+  Future<InitializationStatus> _initGoogleMobileAds() {
+    return MobileAds.instance.initialize();
   }
 }
 
@@ -109,7 +118,7 @@ class _AirportScreenState extends State<AirportScreen> {
   String? departureSelectedValue;
   String? arrivalSelectedValue;
   late BannerAd _banner;
-  late RewardedAd _rewardedAd;
+  RewardedAd? _rewardedAd;
 
   @override
   void initState() {
@@ -117,30 +126,6 @@ class _AirportScreenState extends State<AirportScreen> {
     xAlign = loginAlign;
     loginColor = selectedColor;
     signInColor = normalColor;
-    RewardedAd.load(
-        adUnitId: "ca-app-pub-3940256099942544/5354046379",
-        request: AdRequest(),
-        rewardedAdLoadCallback: RewardedAdLoadCallback(
-          onAdLoaded: (RewardedAd ad) {
-            print('$ad loaded.');
-            // Keep a reference to the ad so you can show it later.
-            this._rewardedAd = ad;
-            ad.fullScreenContentCallback = FullScreenContentCallback(
-              onAdDismissedFullScreenContent: (RewardedAd ad) {
-                ad.dispose();
-              },
-              onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-                ad.dispose();
-              },
-            );
-            ad.show(onUserEarnedReward: (ad, reward) {
-              movePage();
-            });
-          },
-          onAdFailedToLoad: (LoadAdError error) {
-            print('RewardedAd failed to load: $error');
-          },
-        ));
     _banner = BannerAd(
       listener: BannerAdListener(
         onAdFailedToLoad: (Ad ad, LoadAdError error) {},
@@ -149,7 +134,36 @@ class _AirportScreenState extends State<AirportScreen> {
       size: AdSize.banner,
       adUnitId: AdHelper.bannerAdUnitId,
       request: const AdRequest(),
-    )..load();
+    )
+      ..load();
+    _loadRewardedAd();
+  }
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              setState(() {
+                ad.dispose();
+                _rewardedAd = null;
+              });
+              _loadRewardedAd();
+            },
+          );
+
+          setState(() {
+            _rewardedAd = ad;
+          });
+        },
+        onAdFailedToLoad: (err) {
+          print('Failed to load a rewarded ad: ${err.message}');
+        },
+      ),
+    );
   }
 
   @override
@@ -246,8 +260,14 @@ class _AirportScreenState extends State<AirportScreen> {
         ),
         Container(
             padding: const EdgeInsets.all(15),
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
+            width: MediaQuery
+                .of(context)
+                .size
+                .width,
+            height: MediaQuery
+                .of(context)
+                .size
+                .height,
             child: ListView(
               padding: const EdgeInsets.all(4),
               children: <Widget>[
@@ -350,36 +370,34 @@ class _AirportScreenState extends State<AirportScreen> {
                 const Padding(padding: EdgeInsets.all(8)),
                 ElevatedButton(
                   onPressed: () {
-                    print("_rewardedad:$_rewardedAd");
-                    _rewardedAd?.show(onUserEarnedReward: (ad, rewardItem) {
-                      // Reward the user for watching an ad.
-                      print("show");
+                    print("pressed MQ!! _rewardedAd: $_rewardedAd");
+                    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+                      if (xAlign == -1.0) {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SearchDetailRoundScreen(
+                                    SearchModel(
+                                        isRoundTrip:
+                                            xAlign == -1.0 ? true : false,
+                                        departureAirport: departureSelectedValue,
+                                        arrivalAirport: arrivalSelectedValue,
+                                        seatClass: classSelectedValue,
+                                        searchDate: dateSelectedValue))));
+                      } else {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SearchDetailScreen(
+                                    SearchModel(
+                                        isRoundTrip:
+                                            xAlign == -1.0 ? true : false,
+                                        departureAirport: departureSelectedValue,
+                                        arrivalAirport: arrivalSelectedValue,
+                                        seatClass: classSelectedValue,
+                                        searchDate: dateSelectedValue))));
+                      }
                     });
-                    // if (xAlign == -1.0) {
-                    //   Navigator.push(
-                    //       context,
-                    //       MaterialPageRoute(
-                    //           builder: (context) => SearchDetailRoundScreen(
-                    //               SearchModel(
-                    //                   isRoundTrip:
-                    //                       xAlign == -1.0 ? true : false,
-                    //                   departureAirport: departureSelectedValue,
-                    //                   arrivalAirport: arrivalSelectedValue,
-                    //                   seatClass: classSelectedValue,
-                    //                   searchDate: dateSelectedValue))));
-                    // } else {
-                    //   Navigator.push(
-                    //       context,
-                    //       MaterialPageRoute(
-                    //           builder: (context) => SearchDetailScreen(
-                    //               SearchModel(
-                    //                   isRoundTrip:
-                    //                       xAlign == -1.0 ? true : false,
-                    //                   departureAirport: departureSelectedValue,
-                    //                   arrivalAirport: arrivalSelectedValue,
-                    //                   seatClass: classSelectedValue,
-                    //                   searchDate: dateSelectedValue))));
-                    // }
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
