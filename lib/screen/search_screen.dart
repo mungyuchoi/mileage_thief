@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
@@ -8,6 +9,7 @@ import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import 'package:share/share.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -43,12 +45,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 String appLink = '';
                 if (Platform.isAndroid) {
                   appLink =
-                  'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
+                      'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
                 } else {
                   appLink = 'https://apps.apple.com/app/myapp/id12345678';
                 }
                 String description = "마일리지 항공 앱을 공유해보세요! $appLink";
                 Share.share(description);
+              },
+            ),
+            IconButton(
+              icon:Icon(Icons.chat, color: Colors.black54),
+              onPressed: () {
+                _launchOpenChat();
               },
             )
           ],
@@ -65,6 +73,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<InitializationStatus> _initGoogleMobileAds() {
     return MobileAds.instance.initialize();
+  }
+
+  void _launchOpenChat() async {
+    const url = 'https://open.kakao.com/o/grMdcJ7e';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 }
 
@@ -112,17 +129,20 @@ class _AirportScreenState extends State<AirportScreen> {
     "29박30일",
   ];
   final List<String> classItems = ["전체"];
-  final List<String> airportItems = ["서울/인천-ICN", "뉴욕/존F케네디-JFK"];
+  List<String> airportItems = [];
   String? dateSelectedValue;
   String? classSelectedValue;
   String? departureSelectedValue;
   String? arrivalSelectedValue;
   late BannerAd _banner;
   RewardedAd? _rewardedAd;
+  final DatabaseReference _countryReference =
+      FirebaseDatabase.instance.ref("COUNTRY");
 
   @override
   void initState() {
     super.initState();
+    _loadCountryFirebase();
     xAlign = loginAlign;
     loginColor = selectedColor;
     signInColor = normalColor;
@@ -134,8 +154,7 @@ class _AirportScreenState extends State<AirportScreen> {
       size: AdSize.banner,
       adUnitId: AdHelper.bannerAdUnitId,
       request: const AdRequest(),
-    )
-      ..load();
+    )..load();
     _loadRewardedAd();
   }
 
@@ -166,15 +185,27 @@ class _AirportScreenState extends State<AirportScreen> {
     );
   }
 
+  void _loadCountryFirebase() {
+    print("loadCountryFirebase!!!!");
+    _countryReference.once().then((event) {
+      final snapshot = event.snapshot;
+      Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
+      if(values != null){
+        airportItems.clear();
+        values.forEach((key, value) {
+          airportItems.add(key);
+        });
+        setState(() {
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _banner.dispose();
     _rewardedAd?.dispose();
     super.dispose();
-  }
-
-  void movePage() {
-    print("movePage");
   }
 
   @override
@@ -260,14 +291,8 @@ class _AirportScreenState extends State<AirportScreen> {
         ),
         Container(
             padding: const EdgeInsets.all(15),
-            width: MediaQuery
-                .of(context)
-                .size
-                .width,
-            height: MediaQuery
-                .of(context)
-                .size
-                .height,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
             child: ListView(
               padding: const EdgeInsets.all(4),
               children: <Widget>[
@@ -380,7 +405,8 @@ class _AirportScreenState extends State<AirportScreen> {
                                     SearchModel(
                                         isRoundTrip:
                                             xAlign == -1.0 ? true : false,
-                                        departureAirport: departureSelectedValue,
+                                        departureAirport:
+                                            departureSelectedValue,
                                         arrivalAirport: arrivalSelectedValue,
                                         seatClass: classSelectedValue,
                                         searchDate: dateSelectedValue))));
@@ -392,7 +418,8 @@ class _AirportScreenState extends State<AirportScreen> {
                                     SearchModel(
                                         isRoundTrip:
                                             xAlign == -1.0 ? true : false,
-                                        departureAirport: departureSelectedValue,
+                                        departureAirport:
+                                            departureSelectedValue,
                                         arrivalAirport: arrivalSelectedValue,
                                         seatClass: classSelectedValue,
                                         searchDate: dateSelectedValue))));
