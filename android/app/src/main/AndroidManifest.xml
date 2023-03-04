@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mungyu.mileage_thief">
+    <uses-permission android:name="android.permission.INTERNET" />
    <application
         android:label="마일리지 도둑"
         android:name="${applicationName}"
