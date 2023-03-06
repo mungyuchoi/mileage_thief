@@ -45,7 +45,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 String appLink = '';
                 if (Platform.isAndroid) {
                   appLink =
-                      'https://play.google.com/store/appls/details?id=com.mungyu.mileage_thief';
+                      'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
                 } else {
                   appLink = 'https://apps.apple.com/app/myapp/id12345678';
                 }
