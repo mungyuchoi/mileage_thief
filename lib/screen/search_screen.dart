@@ -47,7 +47,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   appLink =
                       'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
                 } else {
-                  appLink = 'https://apps.apple.com/app/myapp/id12345678';
+                  appLink = 'https://apps.apple.com/app/myapp/6446247689';
                 }
                 String description = "마일리지 항공 앱을 공유해보세요! $appLink";
                 Share.share(description);
