@@ -20,6 +20,7 @@ dependencies:
   url_launcher: ^6.0.6
   firebase_analytics: ^10.1.5
   shared_preferences: ^2.0.18
+  fluttertoast: ^8.2.1
 
 dev_dependencies:
   flutter_test:

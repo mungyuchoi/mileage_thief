@@ -12,6 +12,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -47,6 +48,15 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       _counter = (prefs.getInt('counter') ?? 0) + 2;
       prefs.setInt('counter', _counter);
+      Fluttertoast.showToast(
+        msg: "포인트가 2점 추가되었습니다.",
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.black38,
+        fontSize: 20,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_SHORT,
+      );
     });
   }
 
@@ -59,14 +69,20 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   bool useCounter() {
-    print("useCounter1 :$_counter");
     if (_counter <= 0) {
-      // TODO toast 우측 상단위 광고 버튼을 클릭하여 포인트를 쌓으세요.
+      Fluttertoast.showToast(
+        msg: "우측 상단위 \$ 버튼을 선택하여 포인트를 쌓으세요!",
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black38,
+        fontSize: 13,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_SHORT,
+      );
       return false;
     }
     setState(() {
       _decrementCounter();
-      print("useCounter2 :$_counter");
     });
     return true;
   }
@@ -469,8 +485,6 @@ class _AirportScreenState extends State<AirportScreen> {
                     bool isUseCounter = widget.useCounter();
                     print("onPressed search isUserCounter:$isUseCounter");
                     if (!isUseCounter) return;
-
-                    // TODO Toast 1 포인트를 사용하여 검색합니다.
                     if (xAlign == -1.0) {
                       Navigator.push(
                           context,
