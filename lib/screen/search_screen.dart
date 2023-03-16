@@ -11,6 +11,7 @@ import 'package:share/share.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -25,13 +26,58 @@ const Color selectedColor = Colors.white;
 const Color normalColor = Colors.white;
 
 class _SearchScreenState extends State<SearchScreen> {
+  GlobalKey<_AirportScreenState> airportScreenKey = GlobalKey();
+  int _counter = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounter();
+  }
+
+  _loadCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = (prefs.getInt('counter') ?? 3);
+    });
+  }
+
+  _incrementCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = (prefs.getInt('counter') ?? 0) + 2;
+      prefs.setInt('counter', _counter);
+    });
+  }
+
+  _decrementCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter--;
+      prefs.setInt('counter', _counter);
+    });
+  }
+
+  bool useCounter() {
+    print("useCounter1 :$_counter");
+    if (_counter <= 0) {
+      // TODO toast 우측 상단위 광고 버튼을 클릭하여 포인트를 쌓으세요.
+      return false;
+    }
+    setState(() {
+      _decrementCounter();
+      print("useCounter2 :$_counter");
+    });
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            '마일리지 도둑',
-            style: TextStyle(color: Colors.black),
+          title: Text(
+            '마일리지 도둑 \$$_counter',
+            style: const TextStyle(color: Colors.black),
           ),
           leading: Image.asset(
             'asset/img/airplane.png',
@@ -40,6 +86,11 @@ class _SearchScreenState extends State<SearchScreen> {
           backgroundColor: Colors.white,
           elevation: 1,
           actions: <Widget>[
+            IconButton(
+                icon: const Icon(Icons.attach_money, color: Colors.black54),
+                onPressed: () {
+                  airportScreenKey.currentState?.showRewardsAd();
+                }),
             IconButton(
               icon: const Icon(Icons.share, color: Colors.black54),
               onPressed: () {
@@ -55,7 +106,7 @@ class _SearchScreenState extends State<SearchScreen> {
               },
             ),
             IconButton(
-              icon:Icon(Icons.chat, color: Colors.black54),
+              icon: const Icon(Icons.chat, color: Colors.black54),
               onPressed: () {
                 _launchOpenChat();
               },
@@ -65,8 +116,11 @@ class _SearchScreenState extends State<SearchScreen> {
         body: FutureBuilder<InitializationStatus>(
           future: _initGoogleMobileAds(),
           builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-            return const SingleChildScrollView(
-              child: AirportScreen(),
+            return SingleChildScrollView(
+              child: AirportScreen(
+                  key: airportScreenKey,
+                  useCounter: useCounter,
+                  increatementCounter: _incrementCounter),
             );
           },
         ));
@@ -87,7 +141,12 @@ class _SearchScreenState extends State<SearchScreen> {
 }
 
 class AirportScreen extends StatefulWidget {
-  const AirportScreen({Key? key}) : super(key: key);
+  const AirportScreen(
+      {super.key, required this.useCounter, required this.increatementCounter});
+
+  final Function useCounter;
+
+  final Function increatementCounter;
 
   @override
   State<StatefulWidget> createState() => _AirportScreenState();
@@ -150,9 +209,8 @@ class _AirportScreenState extends State<AirportScreen> {
     _banner = BannerAd(
       listener: BannerAdListener(
         onAdFailedToLoad: (Ad ad, LoadAdError err) {
-          FirebaseAnalytics.instance.logEvent(name: "banner", parameters: {
-            'error' : err.message
-          });
+          FirebaseAnalytics.instance
+              .logEvent(name: "banner", parameters: {'error': err.message});
         },
         onAdLoaded: (_) {},
       ),
@@ -185,9 +243,8 @@ class _AirportScreenState extends State<AirportScreen> {
         },
         onAdFailedToLoad: (err) {
           print('Failed to load a rewarded ad: ${err.message}');
-          FirebaseAnalytics.instance.logEvent(name: "rewards", parameters: {
-            'error' : err.message
-          });
+          FirebaseAnalytics.instance
+              .logEvent(name: "rewards", parameters: {'error': err.message});
         },
       ),
     );
@@ -198,14 +255,20 @@ class _AirportScreenState extends State<AirportScreen> {
     _countryReference.once().then((event) {
       final snapshot = event.snapshot;
       Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
-      if(values != null){
+      if (values != null) {
         airportItems.clear();
         values.forEach((key, value) {
           airportItems.add(key);
         });
-        setState(() {
-        });
+        setState(() {});
       }
+    });
+  }
+
+  void showRewardsAd() {
+    print("showRewardsAd _rewardedAd:$_rewardedAd");
+    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+      widget.increatementCounter();
     });
   }
 
@@ -403,36 +466,36 @@ class _AirportScreenState extends State<AirportScreen> {
                 const Padding(padding: EdgeInsets.all(8)),
                 ElevatedButton(
                   onPressed: () {
-                    print("pressed MQ!! _rewardedAd: $_rewardedAd");
-                    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-                      if (xAlign == -1.0) {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SearchDetailRoundScreen(
-                                    SearchModel(
-                                        isRoundTrip:
-                                            xAlign == -1.0 ? true : false,
-                                        departureAirport:
-                                            departureSelectedValue,
-                                        arrivalAirport: arrivalSelectedValue,
-                                        seatClass: classSelectedValue,
-                                        searchDate: dateSelectedValue))));
-                      } else {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SearchDetailScreen(
-                                    SearchModel(
-                                        isRoundTrip:
-                                            xAlign == -1.0 ? true : false,
-                                        departureAirport:
-                                            departureSelectedValue,
-                                        arrivalAirport: arrivalSelectedValue,
-                                        seatClass: classSelectedValue,
-                                        searchDate: dateSelectedValue))));
-                      }
-                    });
+                    bool isUseCounter = widget.useCounter();
+                    print("onPressed search isUserCounter:$isUseCounter");
+                    if (!isUseCounter) return;
+
+                    // TODO Toast 1 포인트를 사용하여 검색합니다.
+                    if (xAlign == -1.0) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SearchDetailRoundScreen(
+                                  SearchModel(
+                                      isRoundTrip:
+                                          xAlign == -1.0 ? true : false,
+                                      departureAirport: departureSelectedValue,
+                                      arrivalAirport: arrivalSelectedValue,
+                                      seatClass: classSelectedValue,
+                                      searchDate: dateSelectedValue))));
+                    } else {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SearchDetailScreen(
+                                  SearchModel(
+                                      isRoundTrip:
+                                          xAlign == -1.0 ? true : false,
+                                      departureAirport: departureSelectedValue,
+                                      arrivalAirport: arrivalSelectedValue,
+                                      seatClass: classSelectedValue,
+                                      searchDate: dateSelectedValue))));
+                    }
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
