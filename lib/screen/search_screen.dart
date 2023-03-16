@@ -10,6 +10,7 @@ import '../model/search_model.dart';
 import 'package:share/share.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -148,7 +149,11 @@ class _AirportScreenState extends State<AirportScreen> {
     signInColor = normalColor;
     _banner = BannerAd(
       listener: BannerAdListener(
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {},
+        onAdFailedToLoad: (Ad ad, LoadAdError err) {
+          FirebaseAnalytics.instance.logEvent(name: "banner", parameters: {
+            'error' : err.message
+          });
+        },
         onAdLoaded: (_) {},
       ),
       size: AdSize.banner,
@@ -180,6 +185,9 @@ class _AirportScreenState extends State<AirportScreen> {
         },
         onAdFailedToLoad: (err) {
           print('Failed to load a rewarded ad: ${err.message}');
+          FirebaseAnalytics.instance.logEvent(name: "rewards", parameters: {
+            'error' : err.message
+          });
         },
       ),
     );
