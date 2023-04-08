@@ -44,8 +44,15 @@ class SearchDetailScreen extends StatelessWidget {
                   future: getItems(searchModel),
                   builder: (BuildContext context,
                       AsyncSnapshot<List<Mileage>> snapshot) {
-                    if(snapshot.hasData) {
+                    if(snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return MyStatefulWidget(items: snapshot.data ?? []);
+                    } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text("검색된 결과가 없습니다."),
+                        ),
+                      );
                     }
                     else {
                       return const Center(

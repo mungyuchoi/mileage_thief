@@ -405,8 +405,15 @@ class _AirportScreenState extends State<AirportScreen> {
                       ),
                     ),
                     const Padding(padding: EdgeInsets.all(4)),
-                    const Icon(
-                      Icons.double_arrow_rounded,
+                    IconButton(
+                      icon: const Icon(Icons.loop_sharp, color: Colors.black54),
+                      onPressed: () {
+                        setState(() {
+                          var tempValue = departureSelectedValue;
+                          departureSelectedValue = arrivalSelectedValue;
+                          arrivalSelectedValue = tempValue;
+                        });
+                      },
                     ),
                     const Padding(padding: EdgeInsets.all(4)),
                     Expanded(
