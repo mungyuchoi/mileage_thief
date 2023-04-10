@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class SearchScreen extends StatefulWidget {
   @override

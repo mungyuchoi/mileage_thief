@@ -21,6 +21,7 @@ dependencies:
   firebase_analytics: ^10.1.5
   shared_preferences: ^2.0.18
   fluttertoast: ^8.2.1
+  firebase_messaging: ^14.4.0
 
 dev_dependencies:
   flutter_test:
