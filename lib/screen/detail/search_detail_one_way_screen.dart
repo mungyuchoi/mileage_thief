@@ -32,8 +32,8 @@ class SearchDetailScreen extends StatelessWidget {
           children: [
             Container(
               margin: const EdgeInsets.all(8),
-              child: const Text(
-                '아시아나 | 편도 | 전체 |',
+              child: Text(
+                '아시아나 | 편도 | 전체 | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!})',
               ),
             ),
             Container(

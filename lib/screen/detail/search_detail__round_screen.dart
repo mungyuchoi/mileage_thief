@@ -32,7 +32,8 @@ class SearchDetailRoundScreen extends StatelessWidget {
           children: [
             Container(
               margin: const EdgeInsets.all(8),
-              child: Text(Util.getRoundHeader(searchModel.searchDate)),
+              child: Text(Util.getRoundHeader(searchModel.searchDate) +
+                  "\n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}"),
             ),
             Container(
                 padding: const EdgeInsets.all(15),

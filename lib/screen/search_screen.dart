@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -205,7 +204,7 @@ class _AirportScreenState extends State<AirportScreen> {
     "28박29일",
     "29박30일",
   ];
-  final List<String> classItems = ["전체"];
+  final List<String> classItems = ["비즈니스, 퍼스트"];
   List<String> airportItems = [];
   String? dateSelectedValue;
   String? classSelectedValue;
@@ -447,10 +446,10 @@ class _AirportScreenState extends State<AirportScreen> {
                         const Text('클래스'),
                         const Padding(padding: EdgeInsets.all(4)),
                         CustomDropdownButton2(
-                          buttonWidth: 100,
-                          dropdownWidth: 110,
+                          buttonWidth: 140,
+                          dropdownWidth: 140,
                           valueAlignment: Alignment.center,
-                          hint: '전체',
+                          hint: '비즈니스, 퍼스트',
                           dropdownItems: classItems,
                           value: classSelectedValue,
                           onChanged: (value) {
