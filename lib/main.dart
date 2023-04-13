@@ -8,11 +8,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  print(fcmToken);
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
