@@ -340,7 +340,7 @@ class _AirportScreenState extends State<AirportScreen> {
                     color: Colors.transparent,
                     alignment: Alignment.center,
                     child: Text(
-                      '왕복',
+                      '편도',
                       style: TextStyle(
                         color: loginColor,
                         fontWeight: FontWeight.bold,
@@ -364,7 +364,7 @@ class _AirportScreenState extends State<AirportScreen> {
                     color: Colors.transparent,
                     alignment: Alignment.center,
                     child: Text(
-                      '편도',
+                      '왕복',
                       style: TextStyle(
                         color: signInColor,
                         fontWeight: FontWeight.bold,
@@ -496,10 +496,10 @@ class _AirportScreenState extends State<AirportScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SearchDetailRoundScreen(
+                              builder: (context) => SearchDetailScreen(
                                   SearchModel(
                                       isRoundTrip:
-                                          xAlign == -1.0 ? true : false,
+                                      xAlign == -1.0 ? true : false,
                                       departureAirport: departureSelectedValue,
                                       arrivalAirport: arrivalSelectedValue,
                                       seatClass: classSelectedValue,
@@ -508,14 +508,15 @@ class _AirportScreenState extends State<AirportScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SearchDetailScreen(
+                              builder: (context) => SearchDetailRoundScreen(
                                   SearchModel(
                                       isRoundTrip:
-                                          xAlign == -1.0 ? true : false,
+                                      xAlign == -1.0 ? true : false,
                                       departureAirport: departureSelectedValue,
                                       arrivalAirport: arrivalSelectedValue,
                                       seatClass: classSelectedValue,
                                       searchDate: dateSelectedValue))));
+
                     }
                   },
                   style: TextButton.styleFrom(
