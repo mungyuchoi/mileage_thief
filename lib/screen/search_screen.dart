@@ -28,71 +28,13 @@ const Color normalColor = Colors.white;
 
 class _SearchScreenState extends State<SearchScreen> {
   GlobalKey<_AirportScreenState> airportScreenKey = GlobalKey();
-  int _counter = 3;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCounter();
-  }
-
-  _loadCounter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _counter = (prefs.getInt('counter') ?? 3);
-    });
-  }
-
-  _incrementCounter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _counter = (prefs.getInt('counter') ?? 0) + 2;
-      prefs.setInt('counter', _counter);
-      Fluttertoast.showToast(
-        msg: "포인트가 2점 추가되었습니다.",
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 5,
-        backgroundColor: Colors.black38,
-        fontSize: 20,
-        textColor: Colors.white,
-        toastLength: Toast.LENGTH_SHORT,
-      );
-    });
-  }
-
-  _decrementCounter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _counter--;
-      prefs.setInt('counter', _counter);
-    });
-  }
-
-  bool useCounter() {
-    if (_counter <= 0) {
-      Fluttertoast.showToast(
-        msg: "우측 상단위 \$ 버튼을 선택하여 포인트를 쌓으세요!",
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black38,
-        fontSize: 13,
-        textColor: Colors.white,
-        toastLength: Toast.LENGTH_SHORT,
-      );
-      return false;
-    }
-    setState(() {
-      _decrementCounter();
-    });
-    return true;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Text(
-            '마일리지 도둑 \$$_counter',
+            '마일리지 도둑',
             style: const TextStyle(color: Colors.black),
           ),
           leading: Image.asset(
@@ -133,10 +75,7 @@ class _SearchScreenState extends State<SearchScreen> {
           future: _initGoogleMobileAds(),
           builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
             return SingleChildScrollView(
-              child: AirportScreen(
-                  key: airportScreenKey,
-                  useCounter: useCounter,
-                  increatementCounter: _incrementCounter),
+              child: AirportScreen(key: airportScreenKey),
             );
           },
         ));
@@ -157,12 +96,7 @@ class _SearchScreenState extends State<SearchScreen> {
 }
 
 class AirportScreen extends StatefulWidget {
-  const AirportScreen(
-      {super.key, required this.useCounter, required this.increatementCounter});
-
-  final Function useCounter;
-
-  final Function increatementCounter;
+  const AirportScreen({super.key});
 
   @override
   State<StatefulWidget> createState() => _AirportScreenState();
@@ -215,9 +149,12 @@ class _AirportScreenState extends State<AirportScreen> {
   final DatabaseReference _countryReference =
       FirebaseDatabase.instance.ref("COUNTRY");
 
+  int _counter = 3;
+
   @override
   void initState() {
     super.initState();
+    _loadCounter();
     _loadCountryFirebase();
     xAlign = loginAlign;
     loginColor = selectedColor;
@@ -235,6 +172,13 @@ class _AirportScreenState extends State<AirportScreen> {
       request: const AdRequest(),
     )..load();
     _loadRewardedAd();
+  }
+
+  _loadCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = (prefs.getInt('counter') ?? 3);
+    });
   }
 
   void _loadRewardedAd() {
@@ -267,7 +211,7 @@ class _AirportScreenState extends State<AirportScreen> {
   }
 
   void _loadCountryFirebase() {
-    print("loadCountryFirebase!!!!");
+    print("loadCountryFirebase!");
     _countryReference.once().then((event) {
       final snapshot = event.snapshot;
       Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
@@ -284,8 +228,52 @@ class _AirportScreenState extends State<AirportScreen> {
   void showRewardsAd() {
     print("showRewardsAd _rewardedAd:$_rewardedAd");
     _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-      widget.increatementCounter();
+      _incrementCounter();
     });
+  }
+
+  _incrementCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = (prefs.getInt('counter') ?? 0) + 2;
+      prefs.setInt('counter', _counter);
+      Fluttertoast.showToast(
+        msg: "포인트가 2점 추가되었습니다.",
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.black38,
+        fontSize: 20,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_SHORT,
+      );
+    });
+  }
+
+  _decrementCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter--;
+      prefs.setInt('counter', _counter);
+    });
+  }
+
+  bool useCounter() {
+    if (_counter <= 0) {
+      Fluttertoast.showToast(
+        msg: "우측 상단위 \$ 버튼을 선택하여 포인트를 쌓으세요!",
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black38,
+        fontSize: 13,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_SHORT,
+      );
+      return false;
+    }
+    setState(() {
+      _decrementCounter();
+    });
+    return true;
   }
 
   @override
@@ -487,9 +475,15 @@ class _AirportScreenState extends State<AirportScreen> {
                   thickness: 2,
                 ),
                 const Padding(padding: EdgeInsets.all(8)),
+                Text(
+                  '포인트: \$ $_counter',
+                  style: TextStyle(fontSize: 18, color: Colors.indigo),
+                  textAlign: TextAlign.center,
+                ),
+                const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () {
-                    bool isUseCounter = widget.useCounter();
+                    bool isUseCounter = useCounter();
                     print("onPressed search isUserCounter:$isUseCounter");
                     if (!isUseCounter) return;
                     if (xAlign == -1.0) {
@@ -499,7 +493,7 @@ class _AirportScreenState extends State<AirportScreen> {
                               builder: (context) => SearchDetailScreen(
                                   SearchModel(
                                       isRoundTrip:
-                                      xAlign == -1.0 ? true : false,
+                                          xAlign == -1.0 ? true : false,
                                       departureAirport: departureSelectedValue,
                                       arrivalAirport: arrivalSelectedValue,
                                       seatClass: classSelectedValue,
@@ -511,12 +505,11 @@ class _AirportScreenState extends State<AirportScreen> {
                               builder: (context) => SearchDetailRoundScreen(
                                   SearchModel(
                                       isRoundTrip:
-                                      xAlign == -1.0 ? true : false,
+                                          xAlign == -1.0 ? true : false,
                                       departureAirport: departureSelectedValue,
                                       arrivalAirport: arrivalSelectedValue,
                                       seatClass: classSelectedValue,
                                       searchDate: dateSelectedValue))));
-
                     }
                   },
                   style: TextButton.styleFrom(
