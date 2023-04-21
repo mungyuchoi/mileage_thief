@@ -40,8 +40,8 @@ Future<void> main() async {
       print('Message also contained a notification: ${message.notification}');
     }
   });
-  // final fcmToken = await FirebaseMessaging.instance.getToken();
-  // print('MQ! TOKEN: ${fcmToken!!}');
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  print('MQ! TOKEN: ${fcmToken!!}');
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
