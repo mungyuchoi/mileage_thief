@@ -142,7 +142,7 @@ class _AirportScreenState extends State<AirportScreen> {
   List<String> airportItems = [];
   String? dateSelectedValue;
   String? classSelectedValue;
-  String? departureSelectedValue;
+  String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
   late BannerAd _banner;
   RewardedAd? _rewardedAd;
@@ -220,6 +220,8 @@ class _AirportScreenState extends State<AirportScreen> {
         values.forEach((key, value) {
           airportItems.add(key);
         });
+        airportItems.remove("서울|인천-ICN");
+        airportItems.insert(0, "서울|인천-ICN");
         setState(() {});
       }
     });
