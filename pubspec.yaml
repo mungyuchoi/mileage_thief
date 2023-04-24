@@ -23,6 +23,8 @@ dependencies:
   fluttertoast: ^8.2.1
   firebase_messaging: ^14.4.0
   flutter_local_notifications: ^8.2.0
+  table_calendar: ^3.0.9
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:

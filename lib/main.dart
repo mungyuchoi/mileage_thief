@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -42,6 +43,7 @@ Future<void> main() async {
   });
   final fcmToken = await FirebaseMessaging.instance.getToken();
   print('MQ! TOKEN: ${fcmToken!!}');
+  await initializeDateFormatting();
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: ThemeData(

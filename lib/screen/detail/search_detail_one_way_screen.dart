@@ -3,6 +3,8 @@ import 'package:mileage_thief/model/search_detail_model.dart';
 import 'package:mileage_thief/model/search_model.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
 import 'package:mileage_thief/util/util.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
 class SearchDetailScreen extends StatelessWidget {
   final SearchModel searchModel;
@@ -39,7 +41,7 @@ class SearchDetailScreen extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(20),
                 // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
-                color: const Color(0Xffeeeeee),
+                //color: const Color(0Xffeeeeee),
                 child: FutureBuilder<List<Mileage>>(
                   future: getItems(searchModel),
                   builder: (BuildContext context,
@@ -93,7 +95,37 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Widget _buildPanel() {
-    return ExpansionPanelList(
+
+    return Column(
+      children: [
+        TableCalendar<Mileage>(
+          locale: 'ko_KR',
+          firstDay: DateTime.now(),
+          lastDay: DateTime(DateTime.now().year+1),
+          focusedDay: DateTime.now(),
+          headerStyle: HeaderStyle(
+            titleCentered: true,
+            titleTextFormatter: (date, locale) =>
+                DateFormat.yMMMMd(locale).format(date),
+            formatButtonVisible: false,
+            titleTextStyle: const TextStyle(
+              fontSize: 20.0,
+              color: Colors.black,
+            ),
+            headerPadding: const EdgeInsets.symmetric(vertical: 4.0),
+            leftChevronIcon: const Icon(
+              Icons.arrow_left,
+              size: 40.0,
+            ),
+            rightChevronIcon: const Icon(
+              Icons.arrow_right,
+              size: 40.0,
+            ),
+          ),
+        )
+      ],
+    );
+      ExpansionPanelList(
       elevation: 0,
       expandedHeaderPadding: EdgeInsets.all(5),
       expansionCallback: (int index, bool isExpanded) {
