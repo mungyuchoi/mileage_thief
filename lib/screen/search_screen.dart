@@ -45,11 +45,6 @@ class _SearchScreenState extends State<SearchScreen> {
           elevation: 1,
           actions: <Widget>[
             IconButton(
-                icon: const Icon(Icons.attach_money, color: Colors.black54),
-                onPressed: () {
-                  airportScreenKey.currentState?.showRewardsAd();
-                }),
-            IconButton(
               icon: const Icon(Icons.share, color: Colors.black54),
               onPressed: () {
                 String appLink = '';
@@ -145,6 +140,7 @@ class _AirportScreenState extends State<AirportScreen> {
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
   late BannerAd _banner;
+  InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
   final DatabaseReference _countryReference =
       FirebaseDatabase.instance.ref("COUNTRY");
@@ -172,6 +168,44 @@ class _AirportScreenState extends State<AirportScreen> {
       request: const AdRequest(),
     )..load();
     _loadRewardedAd();
+    // _loadFullScreenAd();
+  }
+
+  _loadFullScreenAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          this._interstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+        },
+      ),
+    );
+    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (InterstitialAd ad) {
+        _loadFullScreenAd();
+        print('%ad onAdShowedFullScreenContent.');
+      },
+      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        _incrementCounter(2);
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
+    );
+    _interstitialAd?.show();
   }
 
   _loadCounter() async {
@@ -227,20 +261,27 @@ class _AirportScreenState extends State<AirportScreen> {
     });
   }
 
+  void showFrontAd() {
+    _loadFullScreenAd();
+    // print("showFrontAd _:$_interstitialAd");
+    // _interstitialAd?.show();
+    // _incrementCounter(2);
+  }
+
   void showRewardsAd() {
     print("showRewardsAd _rewardedAd:$_rewardedAd");
     _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-      _incrementCounter();
+      _incrementCounter(10);
     });
   }
 
-  _incrementCounter() async {
+  _incrementCounter(int peanuts) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _counter = (prefs.getInt('counter') ?? 0) + 2;
+      _counter = (prefs.getInt('counter') ?? 0) + peanuts;
       prefs.setInt('counter', _counter);
       Fluttertoast.showToast(
-        msg: "포인트가 2점 추가되었습니다.",
+        msg: "포인트가 $peanuts 점 추가되었습니다.",
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 5,
         backgroundColor: Colors.black38,
@@ -479,8 +520,40 @@ class _AirportScreenState extends State<AirportScreen> {
                 const Padding(padding: EdgeInsets.all(8)),
                 Text(
                   '포인트: \$ $_counter',
-                  style: TextStyle(fontSize: 18, color: Colors.indigo),
+                  style: const TextStyle(fontSize: 18, color: Colors.black87),
                   textAlign: TextAlign.center,
+                ),
+                const Padding(padding: EdgeInsets.all(3)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FloatingActionButton.extended(
+                      onPressed: () {
+                        showFrontAd();
+                      },
+                      label: const Text("+ 2",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanut.png',
+                        scale: 19,
+                      ),
+                    ),
+                    FloatingActionButton.extended(
+                      onPressed: () {
+                        showRewardsAd();
+                      },
+                      label: const Text("+ 10",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanuts.png',
+                        scale: 19,
+                      ),
+                    ),
+                  ],
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(

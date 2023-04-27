@@ -22,6 +22,26 @@ class AdHelper {
     }
   }
 
+  static String get frontBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/9941114138';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/7314950794';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/1033173712';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/4411468910';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
+
   static String get rewardedAdUnitId {
     if (kReleaseMode) {
       if (Platform.isAndroid) {
