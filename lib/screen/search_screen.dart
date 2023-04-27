@@ -281,7 +281,7 @@ class _AirportScreenState extends State<AirportScreen> {
       _counter = (prefs.getInt('counter') ?? 0) + peanuts;
       prefs.setInt('counter', _counter);
       Fluttertoast.showToast(
-        msg: "포인트가 $peanuts 점 추가되었습니다.",
+        msg: "땅콩 $peanuts개를 얻었습니다.",
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 5,
         backgroundColor: Colors.black38,
