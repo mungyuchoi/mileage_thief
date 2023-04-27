@@ -519,7 +519,7 @@ class _AirportScreenState extends State<AirportScreen> {
                 ),
                 const Padding(padding: EdgeInsets.all(8)),
                 Text(
-                  '포인트: \$ $_counter',
+                  '땅콩: $_counter개',
                   style: const TextStyle(fontSize: 18, color: Colors.black87),
                   textAlign: TextAlign.center,
                 ),
