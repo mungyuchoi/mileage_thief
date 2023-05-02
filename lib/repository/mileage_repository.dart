@@ -19,18 +19,26 @@ class MileageRepository {
       if (snap.value != null) {
         Map<dynamic, dynamic> map = snap.value as Map<dynamic, dynamic>;
         Mileage mileage = Mileage.fromJson(map);
-        // String departureDate = mileage.departureDate;
-        // departureDate = departureDate.substring(0, 4) +
-        //     "." +
-        //     departureDate.substring(4, 6) +
-        //     '.' +
-        //     departureDate.substring(6, 8);
-        // mileage.departureDate = departureDate;
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
         mileage.firstSeat = mileage.firstSeat.replaceAll(RegExp('\\D'), "");
-        mileages.add(mileage);
+
+        switch (searchModel.seatClass) {
+          case "이코노미":
+            if (mileage.economySeat != "0") {
+              mileages.add(mileage);
+            }
+            break;
+          case "비즈니스":
+            if (mileage.businessSeat != "0") {
+              mileages.add(mileage);
+            }
+            break;
+          default: //"이코노미+비즈니스"
+            mileages.add(mileage);
+            break;
+        }
       }
     }
     print('Mileage Count: ${mileages.length}');
@@ -56,18 +64,25 @@ class MileageRepository {
       if (snap.value != null) {
         Map<dynamic, dynamic> map = snap.value as Map<dynamic, dynamic>;
         Mileage mileage = Mileage.fromJson(map);
-        // String departureDate = mileage.departureDate;
-        // departureDate = departureDate.substring(0, 4) +
-        //     "." +
-        //     departureDate.substring(4, 6) +
-        //     '.' +
-        //     departureDate.substring(6, 8);
-        // mileage.departureDate = departureDate;
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
         mileage.firstSeat = mileage.firstSeat.replaceAll(RegExp('\\D'), "");
-        departureMileages.add(mileage);
+        switch (searchModel.seatClass) {
+          case "이코노미":
+            if (mileage.economySeat != "0") {
+              departureMileages.add(mileage);
+            }
+            break;
+          case "비즈니스":
+            if (mileage.businessSeat != "0") {
+              departureMileages.add(mileage);
+            }
+            break;
+          default: //"이코노미+비즈니스"
+            departureMileages.add(mileage);
+            break;
+        }
       }
     }
     print('Mileage Count: ${departureMileages.length}');
@@ -80,18 +95,25 @@ class MileageRepository {
       if (snap.value != null) {
         Map<dynamic, dynamic> map = snap.value as Map<dynamic, dynamic>;
         Mileage mileage = Mileage.fromJson(map);
-        // String departureDate = mileage.departureDate;
-        // departureDate = departureDate.substring(0, 4) +
-        //     "." +ㅊ
-        //     departureDate.substring(4, 6) +
-        //     '.' +
-        //     departureDate.substring(6, 8);
-        // mileage.departureDate = departureDate;
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
         mileage.firstSeat = mileage.firstSeat.replaceAll(RegExp('\\D'), "");
-        arrivalMileages.add(mileage);
+        switch (searchModel.seatClass) {
+          case "이코노미":
+            if (mileage.economySeat != "0") {
+              arrivalMileages.add(mileage);
+            }
+            break;
+          case "비즈니스":
+            if (mileage.businessSeat != "0") {
+              arrivalMileages.add(mileage);
+            }
+            break;
+          default: //"이코노미+비즈니스"
+            arrivalMileages.add(mileage);
+            break;
+        }
       }
     }
     print('Mileage Count: ${arrivalMileages.length}');
