@@ -136,7 +136,7 @@ class _AirportScreenState extends State<AirportScreen> {
   final List<String> classItems = ["이코노미", "비즈니스", "이코노미+비즈니스"];
   List<String> airportItems = [];
   String? dateSelectedValue;
-  String? classSelectedValue = "이코노미";
+  String? classSelectedValue = "비즈니스";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
   late BannerAd _banner;
