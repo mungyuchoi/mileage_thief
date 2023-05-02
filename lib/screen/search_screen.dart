@@ -133,15 +133,17 @@ class _AirportScreenState extends State<AirportScreen> {
     "28박29일",
     "29박30일",
   ];
-  final List<String> classItems = ["비즈니스, 퍼스트"];
+  final List<String> classItems = ["이코노미", "비즈니스", "이코노미+비즈니스"];
   List<String> airportItems = [];
   String? dateSelectedValue;
-  String? classSelectedValue;
+  String? classSelectedValue = "이코노미";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
   late BannerAd _banner;
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
+  final DatabaseReference _classReference =
+      FirebaseDatabase.instance.ref("CLASS");
   final DatabaseReference _countryReference =
       FirebaseDatabase.instance.ref("COUNTRY");
 
@@ -256,6 +258,20 @@ class _AirportScreenState extends State<AirportScreen> {
         });
         airportItems.remove("서울|인천-ICN");
         airportItems.insert(0, "서울|인천-ICN");
+        setState(() {});
+      }
+    });
+    _classReference.once().then((event) {
+      final snapshot = event.snapshot;
+      Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
+      if (values != null) {
+        classItems.clear();
+        values.forEach((key, value) {
+          classItems.add(key);
+        });
+        classItems.sort();
+        classItems.remove("이코노미");
+        classItems.insert(0, "이코노미");
         setState(() {});
       }
     });
