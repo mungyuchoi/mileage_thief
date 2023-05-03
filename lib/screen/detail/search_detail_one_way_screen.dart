@@ -33,7 +33,8 @@ class SearchDetailScreen extends StatelessWidget {
             Container(
               margin: const EdgeInsets.all(8),
               child: Text(
-                '아시아나 | 편도 | 전체 | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!})',
+                '아시아나 | 편도 | ${searchModel.seatClass} | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}) | '
+                    '\n\n성수기에는 마일리지가 50% 추가됩니다.',
               ),
             ),
             Container(
