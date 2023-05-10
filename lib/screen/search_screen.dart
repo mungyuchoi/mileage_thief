@@ -181,8 +181,7 @@ class _AirportScreenState extends State<AirportScreen> {
         onAdLoaded: (InterstitialAd ad) {
           this._interstitialAd = ad;
         },
-        onAdFailedToLoad: (LoadAdError error) {
-        },
+        onAdFailedToLoad: (LoadAdError error) {},
       ),
     );
     _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
@@ -444,6 +443,8 @@ class _AirportScreenState extends State<AirportScreen> {
                         dropdownItems: airportItems,
                         hintAlignment: Alignment.center,
                         value: departureSelectedValue,
+                        scrollbarAlwaysShow: true,
+                        scrollbarThickness: 10,
                         onChanged: (value) {
                           setState(() {
                             departureSelectedValue = value;
@@ -470,6 +471,8 @@ class _AirportScreenState extends State<AirportScreen> {
                         hintAlignment: Alignment.center,
                         dropdownItems: airportItems,
                         value: arrivalSelectedValue,
+                        scrollbarAlwaysShow: true,
+                        scrollbarThickness: 10,
                         onChanged: (value) {
                           setState(() {
                             arrivalSelectedValue = value;
@@ -499,6 +502,7 @@ class _AirportScreenState extends State<AirportScreen> {
                           hint: '비즈니스, 퍼스트',
                           dropdownItems: classItems,
                           value: classSelectedValue,
+                          scrollbarAlwaysShow: true,
                           onChanged: (value) {
                             setState(() {
                               classSelectedValue = value;
@@ -518,6 +522,7 @@ class _AirportScreenState extends State<AirportScreen> {
                           hint: '전체',
                           dropdownItems: dateItems,
                           value: dateSelectedValue,
+                          scrollbarAlwaysShow: true,
                           onChanged: (value) {
                             setState(() {
                               dateSelectedValue = value;
