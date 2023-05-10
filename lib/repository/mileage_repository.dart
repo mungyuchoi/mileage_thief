@@ -33,7 +33,7 @@ class MileageRepository {
             break;
           case "비즈니스":
             if (mileage.businessSeat != "0") {
-              mileage.businessSeat = "+1석 이상";
+              mileage.businessSeat = "+1석";
               mileages.add(mileage);
             }
             break;
@@ -42,7 +42,7 @@ class MileageRepository {
               mileage.economySeat = "N석";
             }
             if (mileage.businessSeat != "0") {
-              mileage.businessSeat = "+1석 이상";
+              mileage.businessSeat = "+1석";
             }
             mileages.add(mileage);
             break;
@@ -94,7 +94,7 @@ class MileageRepository {
               mileage.economySeat = "N석";
             }
             if (mileage.businessSeat != "0") {
-              mileage.businessSeat = "+1석 이상";
+              mileage.businessSeat = "+1석";
             }
             departureMileages.add(mileage);
             break;
@@ -133,7 +133,7 @@ class MileageRepository {
               mileage.economySeat = "N석";
             }
             if (mileage.businessSeat != "0") {
-              mileage.businessSeat = "+1석 이상";
+              mileage.businessSeat = "+1석";
             }
             arrivalMileages.add(mileage);
             break;

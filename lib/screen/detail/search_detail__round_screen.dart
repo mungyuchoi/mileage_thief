@@ -178,19 +178,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),
                                 ),
-                                const Padding(padding: EdgeInsets.all(2)),
-                                Image.asset(
-                                  'asset/img/letter-f.png',
-                                  scale: 30,
-                                ),
-                                const Padding(padding: EdgeInsets.all(1)),
-                                Text(
-                                  item.departureMileage.firstSeat,
-                                  style: const TextStyle(
-                                      fontFamily: 'SsuroundAir',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
                               ],
                             ),
                           ),
@@ -215,6 +202,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       const Padding(padding: EdgeInsets.all(3)),
                       Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.only(top: 3),
@@ -253,19 +241,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 const Padding(padding: EdgeInsets.all(1)),
                                 Text(
                                   item.arrivalMileage.businessSeat,
-                                  style: const TextStyle(
-                                      fontFamily: 'SsuroundAir',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const Padding(padding: EdgeInsets.all(2)),
-                                Image.asset(
-                                  'asset/img/letter-f.png',
-                                  scale: 30,
-                                ),
-                                const Padding(padding: EdgeInsets.all(1)),
-                                Text(
-                                  item.arrivalMileage.firstSeat,
                                   style: const TextStyle(
                                       fontFamily: 'SsuroundAir',
                                       fontSize: 16,

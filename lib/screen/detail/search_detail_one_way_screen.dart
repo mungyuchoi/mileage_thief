@@ -169,19 +169,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold),
                               ),
-                              const Padding(padding: EdgeInsets.all(2)),
-                              Image.asset(
-                                'asset/img/letter-f.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.firstSeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
                             ],
                           ),
                         ),
