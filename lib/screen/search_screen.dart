@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_custom_month_picker/flutter_custom_month_picker.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -135,7 +136,7 @@ class _AirportScreenState extends State<AirportScreen> {
   ];
   final List<String> classItems = ["이코노미", "비즈니스", "이코노미+비즈니스"];
   List<String> airportItems = [];
-  String? dateSelectedValue;
+  String? dateSelectedValue = "전체";
   String? classSelectedValue = "비즈니스";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
@@ -146,7 +147,9 @@ class _AirportScreenState extends State<AirportScreen> {
       FirebaseDatabase.instance.ref("CLASS");
   final DatabaseReference _countryReference =
       FirebaseDatabase.instance.ref("COUNTRY");
-
+  int startMonth = DateTime.now().month, startYear = DateTime.now().year;
+  int endMonth = DateTime.now().month, endYear = DateTime.now().year + 1;
+  int firstEnableMonth = DateTime.now().month, lastEnableMonth = DateTime.now().month;
   int _counter = 3;
 
   @override
@@ -318,7 +321,7 @@ class _AirportScreenState extends State<AirportScreen> {
   bool useCounter() {
     if (_counter <= 0) {
       Fluttertoast.showToast(
-        msg: "우측 상단위 \$ 버튼을 선택하여 포인트를 쌓으세요!",
+        msg: "땅콩 버튼을 선택하여 땅콩을 얻으세요!",
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
         backgroundColor: Colors.black38,
@@ -489,7 +492,7 @@ class _AirportScreenState extends State<AirportScreen> {
                 ),
                 const Padding(padding: EdgeInsets.all(8)),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Column(
                       children: [
@@ -511,12 +514,13 @@ class _AirportScreenState extends State<AirportScreen> {
                         ),
                       ],
                     ),
+                    SizedBox(width: 10),
                     Column(
                       children: [
                         const Text('검색박수'),
                         const Padding(padding: EdgeInsets.all(4)),
                         CustomDropdownButton2(
-                          buttonWidth: 100,
+                          buttonWidth: 140,
                           dropdownWidth: 100,
                           valueAlignment: Alignment.center,
                           hint: '전체',
@@ -539,6 +543,76 @@ class _AirportScreenState extends State<AirportScreen> {
                   thickness: 2,
                 ),
                 const Padding(padding: EdgeInsets.all(8)),
+                Row(
+                  children: [
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                        onPressed: () {
+                          showMonthPicker(context, onSelected: (month, year) {
+                            setState(() {
+                              startMonth = month;
+                              startYear = year;
+                            });
+                          },
+                              initialSelectedMonth: startMonth,
+                              initialSelectedYear: startYear,
+                              firstEnabledMonth: firstEnableMonth,
+                              lastEnabledMonth: lastEnableMonth,
+                              firstYear: DateTime.now().year,
+                              lastYear: DateTime.now().year + 1,
+                              selectButtonText: 'OK',
+                              cancelButtonText: 'Cancel',
+                              highlightColor: Colors.black54,
+                              textColor: Colors.black,
+                              contentBackgroundColor: Colors.white,
+                              dialogBackgroundColor: Colors.grey[200]);
+                        },
+                        style: TextButton.styleFrom(
+                            primary: Colors.white,
+                            backgroundColor: Colors.black54,
+                            minimumSize: const Size(110, 40)),
+                        child: Text(
+                          "시작일 $startYear년 $startMonth월",
+                          style: const TextStyle(fontSize: 16),
+                        )),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                        onPressed: () {
+                          showMonthPicker(context, onSelected: (month, year) {
+                            setState(() {
+                              endMonth = month;
+                              endYear = year;
+                            });
+                          },
+                              initialSelectedMonth: endMonth,
+                              initialSelectedYear: endYear,
+                              firstEnabledMonth: firstEnableMonth,
+                              lastEnabledMonth: lastEnableMonth,
+                              firstYear: DateTime.now().year,
+                              lastYear: DateTime.now().year + 1,
+                              selectButtonText: '확인',
+                              cancelButtonText: '취소',
+                              highlightColor: Colors.black54,
+                              textColor: Colors.black,
+                              contentBackgroundColor: Colors.white,
+                              dialogBackgroundColor: Colors.grey[200]);
+                        },
+                        style: TextButton.styleFrom(
+                            primary: Colors.white,
+                            backgroundColor: Colors.black54,
+                            minimumSize: const Size(110, 40)),
+                        child: Text(
+                          "종료일 $endYear년 $endMonth월",
+                          style: const TextStyle(fontSize: 16),
+                        )),
+                  ],
+                ),
+
+                const Padding(padding: EdgeInsets.all(8)),
+                const Divider(
+                  color: Colors.black,
+                  thickness: 2,
+                ),
                 Text(
                   '땅콩: $_counter개',
                   style: const TextStyle(fontSize: 18, color: Colors.black87),
@@ -586,14 +660,18 @@ class _AirportScreenState extends State<AirportScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SearchDetailScreen(
-                                  SearchModel(
-                                      isRoundTrip:
-                                          xAlign == -1.0 ? true : false,
-                                      departureAirport: departureSelectedValue,
-                                      arrivalAirport: arrivalSelectedValue,
-                                      seatClass: classSelectedValue,
-                                      searchDate: dateSelectedValue))));
+                              builder: (context) =>
+                                  SearchDetailScreen(SearchModel(
+                                    isRoundTrip: xAlign == -1.0 ? true : false,
+                                    departureAirport: departureSelectedValue,
+                                    arrivalAirport: arrivalSelectedValue,
+                                    seatClass: classSelectedValue,
+                                    searchDate: dateSelectedValue,
+                                    startMonth: startMonth.toString().padLeft(2, '0'),
+                                    startYear: startYear.toString(),
+                                    endMonth: endMonth.toString().padLeft(2, '0'),
+                                    endYear: endYear.toString(),
+                                  ))));
                     } else {
                       Navigator.push(
                           context,
@@ -605,7 +683,11 @@ class _AirportScreenState extends State<AirportScreen> {
                                       departureAirport: departureSelectedValue,
                                       arrivalAirport: arrivalSelectedValue,
                                       seatClass: classSelectedValue,
-                                      searchDate: dateSelectedValue))));
+                                      searchDate: dateSelectedValue,
+                                      startMonth: startMonth.toString().padLeft(2, '0'),
+                                      startYear: startYear.toString(),
+                                      endMonth: endMonth.toString().padLeft(2, '0'),
+                                      endYear: endYear.toString()))));
                     }
                   },
                   style: TextButton.styleFrom(

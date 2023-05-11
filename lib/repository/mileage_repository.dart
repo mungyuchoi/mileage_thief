@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:mileage_thief/model/search_detail_model.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../model/search_model.dart';
@@ -19,6 +20,19 @@ class MileageRepository {
       if (snap.value != null) {
         Map<dynamic, dynamic> map = snap.value as Map<dynamic, dynamic>;
         Mileage mileage = Mileage.fromJson(map);
+        String departureDate =
+            DateFormat('yyyyMMddHHmm').format(DateTime.now());
+        if (int.parse(departureDate) > int.parse(mileage.departureDate)) {
+          continue;
+        }
+        departureDate = '${searchModel.startYear}${searchModel.startMonth}000000';
+        if(int.parse(departureDate) > int.parse(mileage.departureDate)){
+          continue;
+        }
+        departureDate = '${searchModel.endYear}${searchModel.endMonth}999999';
+        if(int.parse(departureDate) < int.parse(mileage.departureDate)){
+          continue;
+        }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
@@ -72,6 +86,19 @@ class MileageRepository {
       if (snap.value != null) {
         Map<dynamic, dynamic> map = snap.value as Map<dynamic, dynamic>;
         Mileage mileage = Mileage.fromJson(map);
+        String departureDate =
+        DateFormat('yyyyMMddHHmm').format(DateTime.now());
+        if (int.parse(departureDate) > int.parse(mileage.departureDate)) {
+          continue;
+        }
+        departureDate = '${searchModel.startYear}${searchModel.startMonth}000000';
+        if(int.parse(departureDate) > int.parse(mileage.departureDate)){
+          continue;
+        }
+        departureDate = '${searchModel.endYear}${searchModel.endMonth}999999';
+        if(int.parse(departureDate) < int.parse(mileage.departureDate)){
+          continue;
+        }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
