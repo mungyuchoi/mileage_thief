@@ -2,6 +2,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class AdHelper {
+  static String get asianaMarketUrl {
+    if(Platform.isAndroid) {
+      return 'market://details?id=com.ssm.asiana';
+    } else {
+      return 'itms-apps://itunes.apple.com/app/373932237';
+    }
+  }
+
   static String get bannerAdUnitId {
     if (kReleaseMode) {
       if (Platform.isAndroid) {

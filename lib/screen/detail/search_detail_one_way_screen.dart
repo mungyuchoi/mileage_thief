@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/model/search_detail_model.dart';
 import 'package:mileage_thief/model/search_model.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
 import 'package:mileage_thief/util/util.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SearchDetailScreen extends StatelessWidget {
   final SearchModel searchModel;
@@ -30,12 +32,29 @@ class SearchDetailScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              margin: const EdgeInsets.all(8),
-              child: Text(
-                '아시아나 | 편도 | ${searchModel.seatClass} | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}) | '
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(8),
+                  child: Text(
+                    '아시아나 | 편도 | ${searchModel.seatClass} | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}) | '
                     '\n\n성수기에는 마일리지가 50% 추가됩니다.',
-              ),
+                  ),
+                ),
+                Container(
+                  width: 80,
+                  height: 80,
+                  child: IconButton(
+                    onPressed: () {
+                      _launchMarketURL(AdHelper.asianaMarketUrl);
+                    },
+                    icon: Image.asset(
+                      'asset/img/app_asiana.png',
+                    ),
+                  ),
+                ),
+              ],
             ),
             Container(
                 padding: const EdgeInsets.all(20),
@@ -69,6 +88,14 @@ class SearchDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _launchMarketURL(String asianaMarketUrl) async {
+    if (await canLaunch(asianaMarketUrl)) {
+      await launch(asianaMarketUrl);
+    } else {
+      throw '마켓을 열 수 없습니다: $asianaMarketUrl';
+    }
   }
 }
 
