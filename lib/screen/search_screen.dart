@@ -42,41 +42,42 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            '마일리지 도둑',
-            style: TextStyle(color: Colors.black),
-          ),
-          leading: Image.asset(
-            'asset/img/airplane.png',
-            scale: 2,
-          ),
-          backgroundColor: Colors.white,
-          elevation: 1,
-          actions: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.share, color: Colors.black54),
-              onPressed: () {
-                String appLink = '';
-                if (Platform.isAndroid) {
-                  appLink =
-                      'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
-                } else {
-                  appLink = 'https://apps.apple.com/app/myapp/6446247689';
-                }
-                String description = "마일리지 항공 앱을 공유해보세요! $appLink";
-                Share.share(description);
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.chat, color: Colors.black54),
-              onPressed: () {
-                _launchOpenChat();
-              },
-            )
-          ],
+      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+      appBar: AppBar(
+        title: const Text(
+          '마일리지 도둑',
+          style: TextStyle(color: Colors.black),
         ),
-        body: buildPage(_currentIndex),
+        leading: Image.asset(
+          'asset/img/airplane.png',
+          scale: 2,
+        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.black54),
+            onPressed: () {
+              String appLink = '';
+              if (Platform.isAndroid) {
+                appLink =
+                    'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
+              } else {
+                appLink = 'https://apps.apple.com/app/myapp/6446247689';
+              }
+              String description = "마일리지 항공 앱을 공유해보세요! $appLink";
+              Share.share(description);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat, color: Colors.black54),
+            onPressed: () {
+              _launchOpenChat();
+            },
+          )
+        ],
+      ),
+      body: buildPage(_currentIndex),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: Colors.black54,
@@ -131,13 +132,12 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget buildDanWidget() {
-    return const Center(
-      child: Text('곧 업데이트 예정입니다.')
-    );
+    return const Center(child: Text('곧 업데이트 예정입니다.'));
   }
 
   bool _notificationToggle = true;
   String _version = '';
+
   Widget buildSettingsWidget() {
     return Scaffold(
       body: SettingsList(
@@ -273,7 +273,8 @@ class _AirportScreenState extends State<AirportScreen> {
       FirebaseDatabase.instance.ref("COUNTRY");
   int startMonth = DateTime.now().month, startYear = DateTime.now().year;
   int endMonth = DateTime.now().month, endYear = DateTime.now().year + 1;
-  int firstEnableMonth = DateTime.now().month, lastEnableMonth = DateTime.now().month;
+  int firstEnableMonth = DateTime.now().month,
+      lastEnableMonth = DateTime.now().month;
   int _counter = 3;
 
   @override
@@ -731,7 +732,6 @@ class _AirportScreenState extends State<AirportScreen> {
                         )),
                   ],
                 ),
-
                 const Padding(padding: EdgeInsets.all(8)),
                 const Divider(
                   color: Colors.black,
@@ -791,9 +791,11 @@ class _AirportScreenState extends State<AirportScreen> {
                                     arrivalAirport: arrivalSelectedValue,
                                     seatClass: classSelectedValue,
                                     searchDate: dateSelectedValue,
-                                    startMonth: startMonth.toString().padLeft(2, '0'),
+                                    startMonth:
+                                        startMonth.toString().padLeft(2, '0'),
                                     startYear: startYear.toString(),
-                                    endMonth: endMonth.toString().padLeft(2, '0'),
+                                    endMonth:
+                                        endMonth.toString().padLeft(2, '0'),
                                     endYear: endYear.toString(),
                                   ))));
                     } else {
@@ -808,9 +810,11 @@ class _AirportScreenState extends State<AirportScreen> {
                                       arrivalAirport: arrivalSelectedValue,
                                       seatClass: classSelectedValue,
                                       searchDate: dateSelectedValue,
-                                      startMonth: startMonth.toString().padLeft(2, '0'),
+                                      startMonth:
+                                          startMonth.toString().padLeft(2, '0'),
                                       startYear: startYear.toString(),
-                                      endMonth: endMonth.toString().padLeft(2, '0'),
+                                      endMonth:
+                                          endMonth.toString().padLeft(2, '0'),
                                       endYear: endYear.toString()))));
                     }
                   },
