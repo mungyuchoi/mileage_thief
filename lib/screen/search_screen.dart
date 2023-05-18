@@ -165,7 +165,25 @@ class _SearchScreenState extends State<SearchScreen> {
                 leading: const Icon(Icons.quiz_outlined),
               ),
               SettingsTile(
-                onPressed: (context) => {},
+                onPressed: (context) => {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('로그인 / 로그아웃'),
+                        content: const Text('추후 기능으로 제공 예정 입니다.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('닫기'),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                },
                 title: const Text('로그인 / 로그아웃'),
                 description: const Text('로그인을 통해 다양한 기능을 사용해 보세요'),
                 leading: const Icon(Icons.login),
