@@ -148,6 +148,7 @@ class _SearchScreenState extends State<SearchScreen> {
               SettingsTile.switchTile(
                 initialValue: _notificationToggle,
                 onToggle: (bool value) {
+                  setNotificationToggle(value);
                   setState(() {
                     _notificationToggle = value;
                   });
@@ -206,6 +207,11 @@ class _SearchScreenState extends State<SearchScreen> {
     } else {
       throw 'Could not launch $url';
     }
+  }
+
+  void setNotificationToggle(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notification', value);
   }
 }
 
