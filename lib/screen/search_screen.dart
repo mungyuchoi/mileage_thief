@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_custom_month_picker/flutter_custom_month_picker.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:package_info/package_info.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -31,6 +32,12 @@ const Color normalColor = Colors.white;
 class _SearchScreenState extends State<SearchScreen> {
   GlobalKey<_AirportScreenState> airportScreenKey = GlobalKey();
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    getVersion();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +137,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   bool _notificationToggle = true;
+  String _version = '';
   Widget buildSettingsWidget() {
     return Scaffold(
       body: SettingsList(
@@ -144,7 +152,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     _notificationToggle = value;
                   });
                 },
-                title: const Text('Notifications'),
+                title: const Text('알림'),
                 description: const Text('마일리지 도둑 알림'),
                 leading: const Icon(Icons.notifications_none),
                 activeSwitchColor: Colors.black54,
@@ -158,20 +166,20 @@ class _SearchScreenState extends State<SearchScreen> {
               SettingsTile(
                 onPressed: (context) => {},
                 title: const Text('로그인 / 로그아웃'),
-                description: const Text('로그인을 통해 다양한 기능을 사용해보세요.'),
+                description: const Text('로그인을 통해 다양한 기능을 사용해 보세요'),
                 leading: const Icon(Icons.login),
               ),
               SettingsTile(
                 onPressed: (context) => {},
-                title: const Text('기부하기'),
-                description: const Text('마일리지 도둑 알림'),
-                leading: Icon(Icons.attach_money_outlined),
+                title: const Text('기부 하기'),
+                description: const Text('"Make a small donation" (소소한 기부하기)'),
+                leading: const Icon(Icons.attach_money_outlined),
               ),
               SettingsTile(
                 onPressed: (context) => {},
-                title: const Text('Version Info'),
-                description: const Text('15 (1.0.14)'),
-                leading: Icon(Icons.info_outline),
+                title: const Text('버전 정보'),
+                description: Text('Version: $_version'),
+                leading: const Icon(Icons.info_outline),
               ),
             ],
           ),
@@ -182,6 +190,13 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<InitializationStatus> _initGoogleMobileAds() {
     return MobileAds.instance.initialize();
+  }
+
+  Future<void> getVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = packageInfo.version;
+    });
   }
 
   void _launchOpenChat() async {
