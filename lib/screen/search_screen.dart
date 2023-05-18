@@ -29,14 +29,15 @@ const Color normalColor = Colors.white;
 
 class _SearchScreenState extends State<SearchScreen> {
   GlobalKey<_AirportScreenState> airportScreenKey = GlobalKey();
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             '마일리지 도둑',
-            style: const TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.black),
           ),
           leading: Image.asset(
             'asset/img/airplane.png',
@@ -67,14 +68,70 @@ class _SearchScreenState extends State<SearchScreen> {
             )
           ],
         ),
-        body: FutureBuilder<InitializationStatus>(
-          future: _initGoogleMobileAds(),
-          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-            return SingleChildScrollView(
-              child: AirportScreen(key: airportScreenKey),
-            );
-          },
-        ));
+        body: buildPage(_currentIndex),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.black54,
+        unselectedItemColor: Colors.black38,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.airlines),
+            label: '아시아나',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.airlines),
+            label: '대한항공',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: '설정',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildPage(int index) {
+    switch (index) {
+      case 0:
+        return buildAsianaWidget();
+      case 1:
+        return buildDanWidget();
+      case 2:
+        return buildSettingsWidget();
+      default:
+        return buildAsianaWidget();
+    }
+  }
+
+  Widget buildAsianaWidget() {
+    return FutureBuilder<InitializationStatus>(
+      future: _initGoogleMobileAds(),
+      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+        return SingleChildScrollView(
+          child: AirportScreen(key: airportScreenKey),
+        );
+      },
+    );
+  }
+
+  Widget buildDanWidget() {
+    return const Center(
+      child: Text('곧 업데이트 예정입니다.')
+    );
+  }
+
+  Widget buildSettingsWidget() {
+    return const Center(
+      child: Text('Settings'),
+    );
   }
 
   Future<InitializationStatus> _initGoogleMobileAds() {
