@@ -14,6 +14,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_custom_month_picker/flutter_custom_month_picker.dart';
+import 'package:settings_ui/settings_ui.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -128,9 +129,54 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  bool _notificationToggle = true;
   Widget buildSettingsWidget() {
-    return const Center(
-      child: Text('Settings'),
+    return Scaffold(
+      body: SettingsList(
+        platform: DevicePlatform.iOS,
+        sections: [
+          SettingsSection(
+            tiles: [
+              SettingsTile.switchTile(
+                initialValue: _notificationToggle,
+                onToggle: (bool value) {
+                  setState(() {
+                    _notificationToggle = value;
+                  });
+                },
+                title: const Text('Notifications'),
+                description: const Text('마일리지 도둑 알림'),
+                leading: const Icon(Icons.notifications_none),
+                activeSwitchColor: Colors.black54,
+              ),
+              SettingsTile(
+                onPressed: (context) => {},
+                title: const Text('Q & A'),
+                description: const Text('자주 하는 질문 및 답변'),
+                leading: const Icon(Icons.quiz_outlined),
+              ),
+              SettingsTile(
+                onPressed: (context) => {},
+                title: const Text('로그인 / 로그아웃'),
+                description: const Text('로그인을 통해 다양한 기능을 사용해보세요.'),
+                leading: const Icon(Icons.login),
+              ),
+              SettingsTile(
+                onPressed: (context) => {},
+                title: const Text('기부하기'),
+                description: const Text('마일리지 도둑 알림'),
+                leading: Icon(Icons.attach_money_outlined),
+              ),
+              SettingsTile(
+                onPressed: (context) => {},
+                title: const Text('Version Info'),
+                description: const Text('15 (1.0.14)'),
+                leading: Icon(Icons.info_outline),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
