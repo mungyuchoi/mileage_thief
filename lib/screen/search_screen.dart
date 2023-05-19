@@ -158,42 +158,42 @@ class _SearchScreenState extends State<SearchScreen> {
                 leading: const Icon(Icons.notifications_none),
                 activeSwitchColor: Colors.black54,
               ),
-              SettingsTile(
-                onPressed: (context) => {},
-                title: const Text('Q & A'),
-                description: const Text('자주 하는 질문 및 답변'),
-                leading: const Icon(Icons.quiz_outlined),
-              ),
-              SettingsTile(
-                onPressed: (context) => {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('로그인 / 로그아웃'),
-                        content: const Text('추후 기능으로 제공 예정 입니다.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('닫기'),
-                          ),
-                        ],
-                      );
-                    },
-                  )
-                },
-                title: const Text('로그인 / 로그아웃'),
-                description: const Text('로그인을 통해 다양한 기능을 사용해 보세요'),
-                leading: const Icon(Icons.login),
-              ),
-              SettingsTile(
-                onPressed: (context) => {},
-                title: const Text('기부 하기'),
-                description: const Text('"Make a small donation" (소소한 기부하기)'),
-                leading: const Icon(Icons.attach_money_outlined),
-              ),
+              // SettingsTile(
+              //   onPressed: (context) => {},
+              //   title: const Text('Q & A'),
+              //   description: const Text('자주 하는 질문 및 답변'),
+              //   leading: const Icon(Icons.quiz_outlined),
+              // ),
+              // SettingsTile(
+              //   onPressed: (context) => {
+              //     showDialog(
+              //       context: context,
+              //       builder: (BuildContext context) {
+              //         return AlertDialog(
+              //           title: const Text('로그인 / 로그아웃'),
+              //           content: const Text('추후 기능으로 제공 예정 입니다.'),
+              //           actions: [
+              //             TextButton(
+              //               onPressed: () {
+              //                 Navigator.of(context).pop();
+              //               },
+              //               child: const Text('닫기'),
+              //             ),
+              //           ],
+              //         );
+              //       },
+              //     )
+              //   },
+              //   title: const Text('로그인 / 로그아웃'),
+              //   description: const Text('로그인을 통해 다양한 기능을 사용해 보세요'),
+              //   leading: const Icon(Icons.login),
+              // ),
+              // SettingsTile(
+              //   onPressed: (context) => {},
+              //   title: const Text('기부 하기'),
+              //   description: const Text('"Make a small donation" (소소한 기부하기)'),
+              //   leading: const Icon(Icons.attach_money_outlined),
+              // ),
               SettingsTile(
                 onPressed: (context) => {},
                 title: const Text('버전 정보'),
@@ -230,6 +230,15 @@ class _SearchScreenState extends State<SearchScreen> {
   void setNotificationToggle(bool value) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notification', value);
+    Fluttertoast.showToast(
+      msg: value ? "알림을 켰습니다." : "알림을 껐습니다.",
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 5,
+      backgroundColor: Colors.black38,
+      fontSize: 20,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_SHORT,
+    );
   }
 }
 
@@ -464,7 +473,7 @@ class _AirportScreenState extends State<AirportScreen> {
   bool useCounter() {
     if (_counter <= 0) {
       Fluttertoast.showToast(
-        msg: "땅콩 버튼을 선택하여 땅콩을 얻으세요!",
+        msg: "땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!",
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
         backgroundColor: Colors.black38,
@@ -579,7 +588,7 @@ class _AirportScreenState extends State<AirportScreen> {
                   color: Colors.black,
                   thickness: 2,
                 ),
-                const Padding(padding: EdgeInsets.all(8)),
+                const Padding(padding: EdgeInsets.all(4)),
                 Row(
                   children: [
                     Expanded(
@@ -628,12 +637,12 @@ class _AirportScreenState extends State<AirportScreen> {
                     ),
                   ],
                 ),
-                const Padding(padding: EdgeInsets.all(8)),
+                const Padding(padding: EdgeInsets.all(4)),
                 const Divider(
                   color: Colors.black,
                   thickness: 2,
                 ),
-                const Padding(padding: EdgeInsets.all(8)),
+                const Padding(padding: EdgeInsets.all(4)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -680,12 +689,12 @@ class _AirportScreenState extends State<AirportScreen> {
                     ),
                   ],
                 ),
-                const Padding(padding: EdgeInsets.all(8)),
+                const Padding(padding: EdgeInsets.all(4)),
                 const Divider(
                   color: Colors.black,
                   thickness: 2,
                 ),
-                const Padding(padding: EdgeInsets.all(8)),
+                const Padding(padding: EdgeInsets.all(4)),
                 Row(
                   children: [
                     SizedBox(width: 10),
@@ -750,7 +759,7 @@ class _AirportScreenState extends State<AirportScreen> {
                         )),
                   ],
                 ),
-                const Padding(padding: EdgeInsets.all(8)),
+                const Padding(padding: EdgeInsets.all(4)),
                 const Divider(
                   color: Colors.black,
                   thickness: 2,
@@ -792,6 +801,8 @@ class _AirportScreenState extends State<AirportScreen> {
                     ),
                   ],
                 ),
+                const Padding(padding: EdgeInsets.all(3)),
+                const Text("땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!", textAlign: TextAlign.center),
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () {
