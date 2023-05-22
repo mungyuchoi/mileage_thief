@@ -6,6 +6,14 @@ class AdHelper {
     if(Platform.isAndroid) {
       return 'market://details?id=com.ssm.asiana';
     } else {
+      return 'https://apps.apple.com/kr/app/%EB%A7%88%EC%9D%BC%EB%A6%AC%EC%A7%80-%EB%8F%84%EB%91%91/id6446247689';
+    }
+  }
+
+  static String get mileageTheifMarketUrl {
+    if(Platform.isAndroid) {
+      return 'market://details?id=com.mungyu.mileage_thief';
+    } else {
       return 'https://apps.apple.com/kr/app/%EC%95%84%EC%8B%9C%EC%95%84%EB%82%98%ED%95%AD%EA%B3%B5/id373932237';
     }
   }

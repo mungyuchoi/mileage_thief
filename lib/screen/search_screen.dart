@@ -32,11 +32,14 @@ const Color normalColor = Colors.white;
 class _SearchScreenState extends State<SearchScreen> {
   GlobalKey<_AirportScreenState> airportScreenKey = GlobalKey();
   int _currentIndex = 0;
+  final DatabaseReference _versionReference =
+  FirebaseDatabase.instance.ref("VERSION");
 
   @override
   void initState() {
     super.initState();
     getVersion();
+    _loadVersionFirebase();
   }
 
   @override
@@ -137,6 +140,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   bool _notificationToggle = true;
   String _version = '';
+  String _latestVersion = '';
 
   Widget buildSettingsWidget() {
     return Scaffold(
@@ -195,9 +199,38 @@ class _SearchScreenState extends State<SearchScreen> {
               //   leading: const Icon(Icons.attach_money_outlined),
               // ),
               SettingsTile(
-                onPressed: (context) => {},
+                onPressed: (context) => {
+                  _launchMileageThief(AdHelper.mileageTheifMarketUrl)
+                },
+                title: const Text("스토어로 이동"),
+                leading: const Icon(Icons.info_outline),
+              ),
+              SettingsTile(
+                onPressed: (context) => {
+                  _version == _latestVersion
+                      ? Fluttertoast.showToast(
+                          msg: "최신버전입니다.",
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 5,
+                          backgroundColor: Colors.black38,
+                          fontSize: 20,
+                          textColor: Colors.white,
+                          toastLength: Toast.LENGTH_SHORT,
+                        )
+                      : Fluttertoast.showToast(
+                          msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 5,
+                          backgroundColor: Colors.black38,
+                          fontSize: 20,
+                          textColor: Colors.white,
+                          toastLength: Toast.LENGTH_SHORT,
+                        )
+                },
                 title: const Text('버전 정보'),
-                description: Text('Version: $_version'),
+                description: Text(_version == _latestVersion
+                    ? 'Version: $_version (최신버전입니다.)'
+                    : 'Version: $_version (최신버전이 아닙니다.)'),
                 leading: const Icon(Icons.info_outline),
               ),
             ],
@@ -239,6 +272,27 @@ class _SearchScreenState extends State<SearchScreen> {
       textColor: Colors.white,
       toastLength: Toast.LENGTH_SHORT,
     );
+  }
+
+  void _loadVersionFirebase() {
+    _versionReference.once().then((event) {
+      final snapshot = event.snapshot;
+      Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
+      if (values != null) {
+        values.forEach((key, value) {
+          _latestVersion = value;
+        });
+        setState(() {});
+      }
+    });
+  }
+
+  _launchMileageThief(String mileageTheifMarketUrl) async {
+    if (await canLaunch(mileageTheifMarketUrl)) {
+      await launch(mileageTheifMarketUrl);
+    } else {
+      throw '마켓을 열 수 없습니다: $mileageTheifMarketUrl';
+    }
   }
 }
 
