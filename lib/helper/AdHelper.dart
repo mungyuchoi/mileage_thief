@@ -6,7 +6,7 @@ class AdHelper {
     if(Platform.isAndroid) {
       return 'market://details?id=com.ssm.asiana';
     } else {
-      return 'https://apps.apple.com/kr/app/%EB%A7%88%EC%9D%BC%EB%A6%AC%EC%A7%80-%EB%8F%84%EB%91%91/id6446247689';
+      return 'https://apps.apple.com/app/myapp/6446247689';
     }
   }
 
