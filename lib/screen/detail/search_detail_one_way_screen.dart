@@ -42,17 +42,25 @@ class SearchDetailScreen extends StatelessWidget {
                     '\n\n성수기에는 마일리지가 50% 추가됩니다.',
                   ),
                 ),
-                Container(
-                  width: 80,
-                  height: 80,
-                  child: IconButton(
-                    onPressed: () {
-                      _launchMarketURL(AdHelper.asianaMarketUrl);
-                    },
-                    icon: Image.asset(
-                      'asset/img/app_asiana.png',
+                Column(
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      child: IconButton(
+                        onPressed: () {
+                          _launchMarketURL(AdHelper.asianaMarketUrl);
+                        },
+                        icon: Image.asset(
+                          'asset/img/app_asiana.png',
+                        ),
+                      ),
                     ),
-                  ),
+                    const Text(
+                      '아시아나 앱으로 이동',
+                      style: TextStyle(fontSize: 9),
+                    ),
+                  ],
                 ),
               ],
             ),
