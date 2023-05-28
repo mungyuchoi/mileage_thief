@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
+import 'package:mileage_thief/screen/setting/setting_donation.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import 'package:share/share.dart';
@@ -192,12 +193,20 @@ class _SearchScreenState extends State<SearchScreen> {
               //   description: const Text('로그인을 통해 다양한 기능을 사용해 보세요'),
               //   leading: const Icon(Icons.login),
               // ),
-              // SettingsTile(
-              //   onPressed: (context) => {},
-              //   title: const Text('기부 하기'),
-              //   description: const Text('"Make a small donation" (소소한 기부하기)'),
-              //   leading: const Icon(Icons.attach_money_outlined),
-              // ),
+              if (Theme
+                  .of(context)
+                  .platform == TargetPlatform.android)
+                SettingsTile(
+                  onPressed: (context) => {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SettingDonation()))
+                  },
+                  title: const Text('기부 하기'),
+                  description: const Text('"Make a small donation" (소소한 기부하기)'),
+                  leading: const Icon(Icons.attach_money_outlined),
+                ),
               SettingsTile(
                 onPressed: (context) => {
                   _launchMileageThief(AdHelper.mileageTheifMarketUrl)
