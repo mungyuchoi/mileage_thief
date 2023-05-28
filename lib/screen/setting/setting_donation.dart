@@ -160,7 +160,7 @@ class SettingDonationState extends State<SettingDonation> {
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black54,
-          title: const Text('마일리지 도둑', style: TextStyle(color: Colors.white)),
+          title: const Text('마일리지 도둑 기부', style: TextStyle(color: Colors.white)),
           leading: IconButton(
             color: Colors.white,
             icon: const Icon(Icons.arrow_back_ios_sharp),
