@@ -126,10 +126,10 @@ class SettingDonationState extends State<SettingDonation> {
       stack.add(
         ListView(
           children: <Widget>[
-            _buildConnectionCheckTile(),
+            // _buildConnectionCheckTile(),
             _buildProductList(),
-            _buildConsumableBox(),
-            _buildRestoreButton(),
+            // _buildConsumableBox(),
+            // _buildRestoreButton(),
           ],
         ),
       );
@@ -159,7 +159,14 @@ class SettingDonationState extends State<SettingDonation> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('IAP Example'),
+          backgroundColor: Colors.black54,
+          title: const Text('마일리지 도둑', style: TextStyle(color: Colors.white)),
+          leading: IconButton(
+            color: Colors.white,
+            icon: const Icon(Icons.arrow_back_ios_sharp),
+            iconSize: 20,
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
         body: Stack(
           children: stack,
@@ -201,12 +208,12 @@ class SettingDonationState extends State<SettingDonation> {
       return const Card(
           child: ListTile(
               leading: CircularProgressIndicator(),
-              title: Text('Fetching products...')));
+              title: Text('로딩중..')));
     }
     if (!_isAvailable) {
       return const Card();
     }
-    const ListTile productHeader = ListTile(title: Text('Products for Sale'));
+    const ListTile productHeader = ListTile(title: Text('프로젝트를 지원해주세요'));
     final List<ListTile> productList = <ListTile>[];
     if (_notFoundIds.isNotEmpty) {
       productList.add(ListTile(
@@ -243,7 +250,7 @@ class SettingDonationState extends State<SettingDonation> {
               icon: const Icon(Icons.upgrade))
               : TextButton(
             style: TextButton.styleFrom(
-              backgroundColor: Colors.green[800],
+              backgroundColor: Colors.black54,
               foregroundColor: Colors.white,
             ),
             onPressed: () {
