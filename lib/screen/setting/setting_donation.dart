@@ -157,6 +157,7 @@ class SettingDonationState extends State<SettingDonation> {
     }
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black54,
