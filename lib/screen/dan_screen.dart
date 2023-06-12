@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
-import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_dan_one_way_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_dan_round_screen.dart';
-import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -101,7 +99,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
         onAdLoaded: (_) {},
       ),
       size: AdSize.banner,
-      adUnitId: AdHelper.bannerAdUnitId,
+      adUnitId: AdHelper.bannerDanAdUnitId,
       request: const AdRequest(),
     )..load();
     _loadRewardedAd();
@@ -109,7 +107,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
   }
   _loadFullScreenAd() {
     InterstitialAd.load(
-      adUnitId: AdHelper.frontBannerAdUnitId,
+      adUnitId: AdHelper.frontBannerDanAdUnitId,
       request: AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
@@ -152,7 +150,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: AdHelper.rewardedAdUnitId,
+      adUnitId: AdHelper.rewardedDanAdUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -504,7 +502,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 13),
                         )),
                     const SizedBox(width: 10),
                     ElevatedButton(
@@ -534,7 +532,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 13),
                         )),
                   ],
                 ),

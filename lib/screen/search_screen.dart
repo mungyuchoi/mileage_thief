@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
+import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
 import 'package:mileage_thief/screen/setting/setting_donation.dart';
@@ -136,7 +137,14 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget buildDanWidget() {
-    return const Center(child: Text('곧 업데이트 예정입니다.'));
+    return FutureBuilder<InitializationStatus>(
+      future: _initGoogleMobileAds(),
+      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+        return const SingleChildScrollView(
+          child: SearchDanScreen(),
+        );
+      },
+    );
   }
 
   bool _notificationToggle = true;
@@ -788,7 +796,7 @@ class _AirportScreenState extends State<AirportScreen> {
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 13),
                         )),
                     const SizedBox(width: 10),
                     ElevatedButton(
@@ -818,7 +826,7 @@ class _AirportScreenState extends State<AirportScreen> {
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 13),
                         )),
                   ],
                 ),
