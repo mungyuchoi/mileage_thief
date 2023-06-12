@@ -6,7 +6,15 @@ class AdHelper {
     if(Platform.isAndroid) {
       return 'market://details?id=com.ssm.asiana';
     } else {
-      return 'https://apps.apple.com/app/myapp/6446247689';
+      return 'https://apps.apple.com/us/app/asiana-airlines/id373932237';
+    }
+  }
+
+  static String get danMarketUrl {
+    if(Platform.isAndroid) {
+      return 'market://details?id=com.koreanair.passenger';
+    } else {
+      return 'https://apps.apple.com/us/app/korean-air-my/id1512918989';
     }
   }
 

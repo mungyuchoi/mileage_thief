@@ -49,9 +49,8 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       appBar: AppBar(
-        title: const Text(
-          '마일리지 도둑',
-          style: TextStyle(color: Colors.black),
+        title: Text(_currentIndex == 0? '아시아나 마일리지 찾기' : '대한항공 마일리지 찾기',
+          style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: Image.asset(
           'asset/img/airplane.png',
