@@ -282,7 +282,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
           height: height,
           margin: const EdgeInsets.only(top: 30),
           decoration: const BoxDecoration(
-            color: Colors.grey,
+            color: Color(0x8000256B),
             borderRadius: BorderRadius.all(
               Radius.circular(50.0),
             ),
@@ -296,7 +296,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                   width: width * 0.5,
                   height: height,
                   decoration: const BoxDecoration(
-                    color: Colors.black38,
+                    color: Color(0xFF00256B),
                     borderRadius: BorderRadius.all(
                       Radius.circular(50.0),
                     ),
@@ -498,7 +498,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                         },
                         style: TextButton.styleFrom(
                             primary: Colors.white,
-                            backgroundColor: Colors.black54,
+                            backgroundColor: Color(0x8000256B),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
@@ -528,7 +528,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                         },
                         style: TextButton.styleFrom(
                             primary: Colors.white,
-                            backgroundColor: Colors.black54,
+                            backgroundColor: Color(0x8000256B),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
@@ -626,7 +626,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
-                      backgroundColor: Colors.black54,
+                      backgroundColor: const Color(0xFF00256B),
                       minimumSize: const Size.fromHeight(56.0)),
                   child: const Text(
                     "검색하기",

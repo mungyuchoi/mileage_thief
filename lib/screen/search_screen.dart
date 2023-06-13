@@ -49,7 +49,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       appBar: AppBar(
-        title: Text(_currentIndex == 0? '아시아나 마일리지 찾기' : '대한항공 마일리지 찾기',
+        title: Text(_currentIndex == 0? '대한항공 마일리지 찾기' : '아시아나 마일리지 찾기',
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: Image.asset(
@@ -96,11 +96,11 @@ class _SearchScreenState extends State<SearchScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.airlines),
-            label: '아시아나',
+            label: '대한항공',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.airlines),
-            label: '대한항공',
+            label: '아시아나',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -114,9 +114,9 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget buildPage(int index) {
     switch (index) {
       case 0:
-        return buildAsianaWidget();
-      case 1:
         return buildDanWidget();
+      case 1:
+        return buildAsianaWidget();
       case 2:
         return buildSettingsWidget();
       default:
@@ -575,7 +575,7 @@ class _AirportScreenState extends State<AirportScreen> {
           height: height,
           margin: const EdgeInsets.only(top: 30),
           decoration: const BoxDecoration(
-            color: Colors.grey,
+            color: Color(0x80D60815),
             borderRadius: BorderRadius.all(
               Radius.circular(50.0),
             ),
@@ -589,7 +589,7 @@ class _AirportScreenState extends State<AirportScreen> {
                   width: width * 0.5,
                   height: height,
                   decoration: const BoxDecoration(
-                    color: Colors.black38,
+                    color: Color(0xFFD60815),
                     borderRadius: BorderRadius.all(
                       Radius.circular(50.0),
                     ),
@@ -791,7 +791,7 @@ class _AirportScreenState extends State<AirportScreen> {
                         },
                         style: TextButton.styleFrom(
                             primary: Colors.white,
-                            backgroundColor: Colors.black54,
+                            backgroundColor: Color(0x80D60815),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
@@ -821,7 +821,7 @@ class _AirportScreenState extends State<AirportScreen> {
                         },
                         style: TextButton.styleFrom(
                             primary: Colors.white,
-                            backgroundColor: Colors.black54,
+                            backgroundColor: Color(0x80D60815),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
@@ -919,7 +919,7 @@ class _AirportScreenState extends State<AirportScreen> {
                   },
                   style: TextButton.styleFrom(
                       primary: Colors.white,
-                      backgroundColor: Colors.black54,
+                      backgroundColor: const Color(0xFFD60815),
                       minimumSize: const Size.fromHeight(56.0)),
                   child: const Text(
                     "검색하기",
