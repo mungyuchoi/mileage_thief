@@ -473,6 +473,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 ),
                 const Padding(padding: EdgeInsets.all(4)),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(width: 10),
                     ElevatedButton(

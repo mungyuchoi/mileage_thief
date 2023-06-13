@@ -766,6 +766,7 @@ class _AirportScreenState extends State<AirportScreen> {
                 ),
                 const Padding(padding: EdgeInsets.all(4)),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(width: 10),
                     ElevatedButton(
