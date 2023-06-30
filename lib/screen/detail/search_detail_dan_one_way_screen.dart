@@ -313,7 +313,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          item.arrivalDate,
+                          Util.convertToTime(item.arrivalDate),
                           style: const TextStyle(
                               color: Colors.red,
                               fontFamily: 'Roboto',

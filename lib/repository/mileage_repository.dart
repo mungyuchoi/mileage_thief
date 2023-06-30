@@ -331,7 +331,7 @@ class MileageRepository {
     }
     print('Mileage Count: ${departureMileages.length}');
     event = await FirebaseDatabase.instance
-        .ref('ASIANA')
+        .ref('DAN')
         .child('$arrivalAirport-$departureAirport')
         .orderByChild('departureDate')
         .once(DatabaseEventType.value);

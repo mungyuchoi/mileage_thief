@@ -432,7 +432,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            item.departureMileage.arrivalDate,
+                            Util.convertToTime(item.departureMileage.arrivalDate),
                             style: const TextStyle(
                                 color: Colors.red,
                                 fontFamily: 'Roboto',
@@ -507,7 +507,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            item.arrivalMileage.arrivalDate,
+                            Util.convertToTime(item.arrivalMileage.arrivalDate),
                             style: const TextStyle(
                                 color: Colors.red,
                                 fontFamily: 'Roboto',
