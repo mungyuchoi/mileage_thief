@@ -25,12 +25,8 @@ class MileageRepository {
         if (int.parse(departureDate) > int.parse(mileage.departureDate)) {
           continue;
         }
-        departureDate = '${searchModel.startYear}${searchModel.startMonth}000000';
-        if(int.parse(departureDate) > int.parse(mileage.departureDate)){
-          continue;
-        }
-        departureDate = '${searchModel.endYear}${searchModel.endMonth}999999';
-        if(int.parse(departureDate) < int.parse(mileage.departureDate)){
+        departureDate = DateFormat('yyyyMMddHHmm').format(DateTime.now().add(const Duration(days: 361)));
+        if (int.parse(departureDate) < int.parse(mileage.departureDate)){
           continue;
         }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
@@ -91,12 +87,8 @@ class MileageRepository {
         if (int.parse(departureDate) > int.parse(mileage.departureDate)) {
           continue;
         }
-        departureDate = '${searchModel.startYear}${searchModel.startMonth}000000';
-        if(int.parse(departureDate) > int.parse(mileage.departureDate)){
-          continue;
-        }
-        departureDate = '${searchModel.endYear}${searchModel.endMonth}999999';
-        if(int.parse(departureDate) < int.parse(mileage.departureDate)){
+        departureDate = DateFormat('yyyyMMddHHmm').format(DateTime.now().add(const Duration(days: 361)));
+        if (int.parse(departureDate) < int.parse(mileage.departureDate)){
           continue;
         }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
@@ -226,12 +218,9 @@ class MileageRepository {
         if (int.parse(departureDate) > int.parse(mileage.departureDate)) {
           continue;
         }
-        departureDate = '${searchModel.startYear}${searchModel.startMonth}000000';
-        if(int.parse(departureDate) > int.parse(mileage.departureDate)){
-          continue;
-        }
-        departureDate = '${searchModel.endYear}${searchModel.endMonth}999999';
-        if(int.parse(departureDate) < int.parse(mileage.departureDate)){
+        departureDate = DateFormat('yyyyMMddHHmm')
+            .format(DateTime.now().add(const Duration(days: 361)));
+        if (int.parse(departureDate) < int.parse(mileage.departureDate)) {
           continue;
         }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
@@ -292,12 +281,8 @@ class MileageRepository {
         if (int.parse(departureDate) > int.parse(mileage.departureDate)) {
           continue;
         }
-        departureDate = '${searchModel.startYear}${searchModel.startMonth}000000';
-        if(int.parse(departureDate) > int.parse(mileage.departureDate)){
-          continue;
-        }
-        departureDate = '${searchModel.endYear}${searchModel.endMonth}999999';
-        if(int.parse(departureDate) < int.parse(mileage.departureDate)){
+        departureDate = DateFormat('yyyyMMddHHmm').format(DateTime.now().add(const Duration(days: 361)));
+        if (int.parse(departureDate) < int.parse(mileage.departureDate)){
           continue;
         }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
