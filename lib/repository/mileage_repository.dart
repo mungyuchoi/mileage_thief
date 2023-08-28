@@ -241,7 +241,16 @@ class MileageRepository {
               mileages.add(mileage);
             }
             break;
-          default: //"이코노미+비즈니스"
+          case "퍼스트":
+            if (mileage.firstSeat != "0") {
+              mileage.firstSeat = "+1석";
+              mileages.add(mileage);
+            }
+            break;
+          case "이코노미+비즈니스": //"이코노미+비즈니스"
+            if (mileage.economySeat == "0" && mileage.businessSeat == "0") {
+              break;
+            }
             if (mileage.economySeat != "0") {
               mileage.economySeat = "N석";
             }
@@ -302,7 +311,16 @@ class MileageRepository {
               departureMileages.add(mileage);
             }
             break;
-          default: //"이코노미+비즈니스"
+          case "퍼스트":
+            if (mileage.firstSeat != "0") {
+              mileage.firstSeat = "+1석";
+              departureMileages.add(mileage);
+            }
+            break;
+          case "이코노미+비즈니스": //"이코노미+비즈니스"
+            if (mileage.economySeat == "0" && mileage.businessSeat == "0") {
+              break;
+            }
             if (mileage.economySeat != "0") {
               mileage.economySeat = "N석";
             }
@@ -341,7 +359,16 @@ class MileageRepository {
               arrivalMileages.add(mileage);
             }
             break;
-          default: //"이코노미+비즈니스"
+          case "퍼스트":
+            if (mileage.firstSeat != "0") {
+              mileage.firstSeat = "+1석";
+              arrivalMileages.add(mileage);
+            }
+            break;
+          case "이코노미+비즈니스": //"이코노미+비즈니스"
+            if (mileage.economySeat == "0" && mileage.businessSeat == "0") {
+              break;
+            }
             if (mileage.economySeat != "0") {
               mileage.economySeat = "N석";
             }

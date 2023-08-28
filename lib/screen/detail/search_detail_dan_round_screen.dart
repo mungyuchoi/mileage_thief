@@ -73,7 +73,7 @@ class SearchDetailDanRoundScreen extends StatelessWidget {
                   builder: (BuildContext context,
                       AsyncSnapshot<List<RoundMileage>> snapshot) {
                     if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return MyStatefulWidget(items: snapshot.data ?? []);
+                      return MyStatefulWidget(items: snapshot.data ?? [], model: searchModel);
                     } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                       return const Center(
                         child: Padding(
@@ -113,17 +113,17 @@ Future<List<RoundMileage>> getItems(SearchModel searchModel) async {
 
 class MyStatefulWidget extends StatefulWidget {
   final List<RoundMileage> items;
-
-  const MyStatefulWidget({Key? key, required this.items}) : super(key: key);
+  final SearchModel model;
+  const MyStatefulWidget({Key? key, required this.items, required this.model}) : super(key: key);
 
   @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState(items: items);
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState(items, model);
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   final List<RoundMileage> _items;
-
-  _MyStatefulWidgetState({required List<RoundMileage> items}) : _items = items;
+  final SearchModel _model;
+  _MyStatefulWidgetState(this._items, this._model);
 
   @override
   Widget build(BuildContext context) {

@@ -72,7 +72,7 @@ class SearchDetailDanScreen extends StatelessWidget {
                   builder: (BuildContext context,
                       AsyncSnapshot<List<Mileage>> snapshot) {
                     if(snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return MyStatefulWidget(items: snapshot.data ?? []);
+                      return MyStatefulWidget(items: snapshot.data ?? [], model: searchModel);
                     } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                       return const Center(
                         child: Padding(
@@ -112,16 +112,19 @@ Future<List<Mileage>> getItems(SearchModel searchModel) async {
 
 class MyStatefulWidget extends StatefulWidget {
   final List<Mileage> items;
-  const MyStatefulWidget({Key? key, required this.items}) : super(key: key);
+  final SearchModel model;
+  const MyStatefulWidget({Key? key, required this.items, required this.model}) : super(key: key);
 
   @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState(items: items);
+  State<MyStatefulWidget> createState() => _MyStatefulWidgetState(items, model);
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   final List<Mileage> _items;
+  final SearchModel _model;
 
-  _MyStatefulWidgetState({required  List<Mileage> items}): _items = items;
+  _MyStatefulWidgetState(this._items, this._model);
+
   @override
   Widget build(BuildContext context) {
     return _buildPanel();
@@ -178,31 +181,46 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Image.asset(
-                                'asset/img/letter-e.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.economySeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const Padding(padding: EdgeInsets.all(2)),
-                              Image.asset(
-                                'asset/img/letter-b.png',
-                                scale: 30,
-                              ),
-                              const Padding(padding: EdgeInsets.all(1)),
-                              Text(
-                                item.businessSeat,
-                                style: const TextStyle(
-                                    fontFamily: 'SsuroundAir',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
+                              if(_model.seatClass =="퍼스트") ...[
+                                Image.asset(
+                                  'asset/img/letter-f.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.firstSeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ] else ...[
+                                Image.asset(
+                                  'asset/img/letter-e.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.economySeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Padding(padding: EdgeInsets.all(2)),
+                                Image.asset(
+                                  'asset/img/letter-b.png',
+                                  scale: 30,
+                                ),
+                                const Padding(padding: EdgeInsets.all(1)),
+                                Text(
+                                  item.businessSeat,
+                                  style: const TextStyle(
+                                      fontFamily: 'SsuroundAir',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ],
                           ),
                         ),
