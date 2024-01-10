@@ -323,7 +323,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         ),
                         const Padding(padding: EdgeInsets.all(3)),
                         Text(
-                          Util.mergeDepartureAirportCity(item.arrivalCity, item.arrivalAirport),
+                          Util.mergeArrivalAirportCity(item.arrivalCity, item.arrivalAirport),
                           style: const TextStyle(
                               color: Color(0Xff6f6f6f),
                               fontFamily: 'Roboto',

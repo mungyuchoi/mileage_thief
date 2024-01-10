@@ -516,7 +516,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           ),
                           const Padding(padding: EdgeInsets.all(3)),
                           Text(
-                            Util.mergeDepartureAirportCity(
+                            Util.mergeArrivalAirportCity(
                                 item.arrivalMileage.arrivalCity,
                                 item.arrivalMileage.arrivalAirport),
                             style: const TextStyle(
