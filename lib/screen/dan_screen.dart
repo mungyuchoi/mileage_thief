@@ -73,7 +73,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
   final DatabaseReference _classReference =
-  FirebaseDatabase.instance.ref("CLASS");
+  FirebaseDatabase.instance.ref("CLASS_DAN");
   final DatabaseReference _countryReference =
   FirebaseDatabase.instance.ref("COUNTRY_DAN");
   int startMonth = DateTime.now().month, startYear = DateTime.now().year;
