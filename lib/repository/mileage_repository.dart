@@ -29,6 +29,14 @@ class MileageRepository {
         if (int.parse(departureDate) < int.parse(mileage.departureDate)){
           continue;
         }
+        String startDateTime = "${searchModel.startYear}${searchModel.startMonth}000000";
+        String endDateTime = "${searchModel.endYear}${searchModel.endMonth}312359";
+        if (int.parse(startDateTime) > int.parse(mileage.departureDate)) {
+          continue;
+        }
+        if (int.parse(endDateTime) < int.parse(mileage.departureDate)) {
+          continue;
+        }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
@@ -89,6 +97,14 @@ class MileageRepository {
         }
         departureDate = DateFormat('yyyyMMddHHmm').format(DateTime.now().add(const Duration(days: 361)));
         if (int.parse(departureDate) < int.parse(mileage.departureDate)){
+          continue;
+        }
+        String startDateTime = "${searchModel.startYear}${searchModel.startMonth}000000";
+        String endDateTime = "${searchModel.endYear}${searchModel.endMonth}312359";
+        if (int.parse(startDateTime) > int.parse(mileage.departureDate)) {
+          continue;
+        }
+        if (int.parse(endDateTime) < int.parse(mileage.departureDate)) {
           continue;
         }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
@@ -223,6 +239,15 @@ class MileageRepository {
         if (int.parse(departureDate) < int.parse(mileage.departureDate)) {
           continue;
         }
+        String startDateTime = "${searchModel.startYear}${searchModel.startMonth}000000";
+        String endDateTime = "${searchModel.endYear}${searchModel.endMonth}312359";
+        if (int.parse(startDateTime) > int.parse(mileage.departureDate)) {
+          continue;
+        }
+        if (int.parse(endDateTime) < int.parse(mileage.departureDate)) {
+          continue;
+        }
+
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
         mileage.businessSeat =
             mileage.businessSeat.replaceAll(RegExp('\\D'), "");
@@ -292,6 +317,14 @@ class MileageRepository {
         }
         departureDate = DateFormat('yyyyMMddHHmm').format(DateTime.now().add(const Duration(days: 361)));
         if (int.parse(departureDate) < int.parse(mileage.departureDate)){
+          continue;
+        }
+        String startDateTime = "${searchModel.startYear}${searchModel.startMonth}000000";
+        String endDateTime = "${searchModel.endYear}${searchModel.endMonth}312359";
+        if (int.parse(startDateTime) > int.parse(mileage.departureDate)) {
+          continue;
+        }
+        if (int.parse(endDateTime) < int.parse(mileage.departureDate)) {
           continue;
         }
         mileage.economySeat = mileage.economySeat.replaceAll(RegExp('\\D'), "");
