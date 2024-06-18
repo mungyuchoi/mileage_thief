@@ -119,39 +119,52 @@ class _CustomDropdownButton2State extends State<CustomDropdownButton2> {
             .toList(),
         onChanged: widget.onChanged,
         selectedItemBuilder: widget.selectedItemBuilder,
-        icon: widget.icon ?? const Icon(Icons.arrow_forward_ios_outlined),
-        iconSize: widget.iconSize ?? 12,
-        iconEnabledColor: widget.iconEnabledColor,
-        iconDisabledColor: widget.iconDisabledColor,
-        buttonHeight: widget.buttonHeight ?? 40,
-        buttonWidth: widget.buttonWidth ?? 140,
-        buttonPadding:
-        widget.buttonPadding ?? const EdgeInsets.only(left: 14, right: 14),
-        buttonDecoration: widget.buttonDecoration ??
-            BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.black45,
+        iconStyleData: IconStyleData(
+          icon: widget.icon ?? const Icon(Icons.arrow_forward_ios_outlined),
+          iconSize: widget.iconSize ?? 12,
+          iconEnabledColor: widget.iconEnabledColor,
+          iconDisabledColor: widget.iconDisabledColor,
+        ),
+        buttonStyleData: ButtonStyleData(
+          height: widget.buttonHeight ?? 40,
+          width: widget.buttonWidth ?? 140,
+          padding:
+          widget.buttonPadding ?? const EdgeInsets.only(left: 14, right: 14),
+          decoration: widget.buttonDecoration ??
+              BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.black45,
+                ),
               ),
-            ),
-        buttonElevation: widget.buttonElevation,
-        itemHeight: widget.itemHeight ?? 40,
-        itemPadding: widget.itemPadding ?? const EdgeInsets.only(left: 14, right: 14),
-        //Max height for the dropdown menu & becoming scrollable if there are more items. If you pass Null it will take max height possible for the items.
-        dropdownMaxHeight: widget.dropdownHeight ?? 200,
-        dropdownWidth: widget.dropdownWidth ?? 140,
-        dropdownPadding: widget.dropdownPadding,
-        dropdownDecoration: widget.dropdownDecoration ??
-            BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-            ),
-        dropdownElevation: widget.dropdownElevation ?? 8,
-        scrollbarRadius: widget.scrollbarRadius ?? const Radius.circular(40),
-        scrollbarThickness: widget.scrollbarThickness,
-        scrollbarAlwaysShow: widget.scrollbarAlwaysShow,
-        //Null or Offset(0, 0) will open just under the button. You can edit as you want.
-        offset: widget.offset,
-        dropdownOverButton: false, //Default is false to show menu below button
+          elevation: widget.buttonElevation,
+        ),
+        menuItemStyleData: MenuItemStyleData(
+          height: widget.itemHeight ?? 40,
+          padding: widget.itemPadding ?? const EdgeInsets.only(left: 14, right: 14),
+        ),
+        dropdownStyleData: DropdownStyleData(
+          //Max height for the dropdown menu & becoming scrollable if there are more items. If you pass Null it will take max height possible for the items.
+          maxHeight: widget.dropdownHeight ?? 200,
+          width: widget.dropdownWidth ?? 140,
+          padding: widget.dropdownPadding,
+          decoration: widget.dropdownDecoration ??
+              BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+              ),
+          elevation: widget.dropdownElevation ?? 8,
+          offset: const Offset(0, 0),
+          isOverButton: false, //Default is false to show menu below button
+          scrollbarTheme: ScrollbarThemeData(
+            radius: widget.scrollbarRadius ?? const Radius.circular(40),
+            thickness: widget.scrollbarThickness != null
+                ? MaterialStateProperty.all<double>(widget.scrollbarThickness!)
+                : null,
+            thumbVisibility: widget.scrollbarAlwaysShow != null
+                ? MaterialStateProperty.all<bool>(widget.scrollbarAlwaysShow!)
+                : null,
+          ),
+        ),
       ),
     );
   }

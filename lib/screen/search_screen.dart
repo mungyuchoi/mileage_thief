@@ -78,12 +78,6 @@ class _SearchScreenState extends State<SearchScreen> {
               String description = "마일리지 항공 앱을 공유해보세요! $appLink";
               Share.share(description);
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat, color: Colors.black54),
-            onPressed: () {
-              _launchOpenChat();
-            },
           )
         ],
       ),
@@ -811,8 +805,7 @@ class _AirportScreenState extends State<AirportScreen> {
                               dialogBackgroundColor: Colors.grey[200]);
                         },
                         style: TextButton.styleFrom(
-                            primary: Colors.white,
-                            backgroundColor: Color(0x80D60815),
+                            foregroundColor: Colors.white, backgroundColor: Color(0x80D60815),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
@@ -841,8 +834,7 @@ class _AirportScreenState extends State<AirportScreen> {
                               dialogBackgroundColor: Colors.grey[200]);
                         },
                         style: TextButton.styleFrom(
-                            primary: Colors.white,
-                            backgroundColor: Color(0x80D60815),
+                            foregroundColor: Colors.white, backgroundColor: Color(0x80D60815),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
@@ -939,8 +931,7 @@ class _AirportScreenState extends State<AirportScreen> {
                     }
                   },
                   style: TextButton.styleFrom(
-                      primary: Colors.white,
-                      backgroundColor: const Color(0xFFD60815),
+                      foregroundColor: Colors.white, backgroundColor: const Color(0xFFD60815),
                       minimumSize: const Size.fromHeight(56.0)),
                   child: const Text(
                     "검색하기",

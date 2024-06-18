@@ -498,8 +498,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                               dialogBackgroundColor: Colors.grey[200]);
                         },
                         style: TextButton.styleFrom(
-                            primary: Colors.white,
-                            backgroundColor: Color(0x8000256B),
+                            foregroundColor: Colors.white, backgroundColor: Color(0x8000256B),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
@@ -528,8 +527,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                               dialogBackgroundColor: Colors.grey[200]);
                         },
                         style: TextButton.styleFrom(
-                            primary: Colors.white,
-                            backgroundColor: Color(0x8000256B),
+                            foregroundColor: Colors.white, backgroundColor: Color(0x8000256B),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
@@ -626,8 +624,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     }
                   },
                   style: TextButton.styleFrom(
-                      primary: Colors.white,
-                      backgroundColor: const Color(0xFF00256B),
+                      foregroundColor: Colors.white, backgroundColor: const Color(0xFF00256B),
                       minimumSize: const Size.fromHeight(56.0)),
                   child: const Text(
                     "검색하기",
