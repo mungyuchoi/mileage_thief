@@ -1,16 +1,27 @@
-# mileage_thief
+# 마일리지도둑 (mileage_thief)
 
-A new Flutter project.
+## 개요 및 목적
 
-## Getting Started
+마일리지도둑은 항공권 마일리지 좌석을 쉽고 빠르게 검색할 수 있도록 도와주는 Flutter 기반의 앱/웹 서비스입니다. 다양한 항공사와 노선의 마일리지 좌석 정보를 한눈에 확인하고, 상세 정보를 제공하여 사용자들의 마일리지 활용을 극대화하는 것이 목적입니다.
 
-This project is a starting point for a Flutter application.
+## 주요 기능
 
-A few resources to get you started if this is your first Flutter project:
+- **항공권 마일리지 좌석 검색**  
+  다양한 조건(항공사, 노선, 날짜 등)으로 마일리지 좌석을 검색할 수 있습니다.
+- **상세 정보 제공**  
+  검색 결과에서 각 항공권의 상세 마일리지 정보, 좌석 등급, 필요 마일리지, 세부 조건 등을 확인할 수 있습니다.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 보조 기능 및 향후 고도화 아이디어
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- **커뮤니티 기능**  
+  사용자 간 질문, 정보 공유, 좌석 알림 등 커뮤니티 게시판(예정)
+- **포인트 및 등급 시스템**  
+  활동에 따른 포인트 적립, 등급별 혜택 제공(예정)
+- **광고 리워드 및 출석 체크**  
+  광고 시청, 출석 체크, 미션 등 다양한 리워드 기능(예정)
+- **데이터 시계열 저장 및 분석**  
+  좌석 데이터의 시계열 저장 및 추후 머신러닝/딥러닝 분석 활용(예정)
+
+---
+
+문의 및 기여: [프로젝트 운영진에게 문의]
