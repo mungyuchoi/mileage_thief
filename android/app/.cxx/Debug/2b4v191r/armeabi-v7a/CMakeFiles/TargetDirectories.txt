@@ -1,0 +1,2 @@
+D:/develop/mileage_thief/android/app/.cxx/Debug/2b4v191r/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/develop/mileage_thief/android/app/.cxx/Debug/2b4v191r/armeabi-v7a/CMakeFiles/rebuild_cache.dir
