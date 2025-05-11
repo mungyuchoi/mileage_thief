@@ -6,9 +6,9 @@ import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
-import 'package:share/share.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_custom_month_picker/flutter_custom_month_picker.dart';
 import 'package:settings_ui/settings_ui.dart';
-import 'package:package_info/package_info.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -74,7 +74,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 appLink = 'https://apps.apple.com/app/myapp/6446247689';
               }
               String description = "마일리지 항공 앱을 공유해보세요! $appLink";
-              Share.share(description);
+
+              // SharePlus.instance.share(description);
             },
           )
         ],
