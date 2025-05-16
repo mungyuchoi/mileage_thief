@@ -103,7 +103,6 @@ class _SearchDanScreen extends State<SearchDanScreen> {
       request: const AdRequest(),
     )..load();
     _loadRewardedAd();
-    // _loadFullScreenAd();
   }
   _loadFullScreenAd() {
     InterstitialAd.load(
@@ -631,12 +630,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     style: TextStyle(fontSize: 18),
                   ),
                 ),
-                Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    height: 50,
-                    child: AdWidget(
-                      ad: _banner,
-                    ))
+
               ],
             )),
       ],

@@ -936,13 +936,7 @@ class _AirportScreenState extends State<AirportScreen> {
                     "검색하기",
                     style: TextStyle(fontSize: 18),
                   ),
-                ),
-                Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    height: 50,
-                    child: AdWidget(
-                      ad: _banner,
-                    ))
+                )
               ],
             )),
       ],
