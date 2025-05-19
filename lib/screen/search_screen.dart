@@ -852,39 +852,39 @@ class _AirportScreenState extends State<AirportScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    FloatingActionButton.extended(
-                      onPressed: () {
-                        showFrontAd();
-                      },
-                      label: const Text("+ 2",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
-                      elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanut.png',
-                        scale: 19,
-                      ),
-                    ),
-                    FloatingActionButton.extended(
-                      onPressed: () {
-                        showRewardsAd();
-                      },
-                      label: const Text("+ 10",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
-                      elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanuts.png',
-                        scale: 19,
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //   children: [
+                //     FloatingActionButton.extended(
+                //       onPressed: () {
+                //         showFrontAd();
+                //       },
+                //       label: const Text("+ 2",
+                //           style: TextStyle(color: Colors.black87)),
+                //       backgroundColor: Colors.white,
+                //       elevation: 3,
+                //       icon: Image.asset(
+                //         'asset/img/peanut.png',
+                //         scale: 19,
+                //       ),
+                //     ),
+                //     FloatingActionButton.extended(
+                //       onPressed: () {
+                //         showRewardsAd();
+                //       },
+                //       label: const Text("+ 10",
+                //           style: TextStyle(color: Colors.black87)),
+                //       backgroundColor: Colors.white,
+                //       elevation: 3,
+                //       icon: Image.asset(
+                //         'asset/img/peanuts.png',
+                //         scale: 19,
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 const Padding(padding: EdgeInsets.all(3)),
-                const Text("땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!", textAlign: TextAlign.center),
+                const Text("🥜 광고로 땅콩 받는 기능은 잠시 휴식 중이에요! \n 다른 기회를 통해 땅콩을 사용하는 재미를 준비하고 있어요.", textAlign: TextAlign.center),
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () {
