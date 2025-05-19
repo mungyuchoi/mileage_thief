@@ -888,9 +888,9 @@ class _AirportScreenState extends State<AirportScreen> {
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () {
-                    bool isUseCounter = useCounter();
-                    print("onPressed search isUserCounter:$isUseCounter");
-                    if (!isUseCounter) return;
+                    // bool isUseCounter = useCounter();
+                    // print("onPressed search isUserCounter:$isUseCounter");
+                    // if (!isUseCounter) return;
                     if (xAlign == -1.0) {
                       Navigator.push(
                           context,
