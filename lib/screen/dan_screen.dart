@@ -7,7 +7,6 @@ import 'package:mileage_thief/screen/detail/search_detail_dan_one_way_screen.dar
 import 'package:mileage_thief/screen/detail/search_detail_dan_round_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -69,9 +68,9 @@ class _SearchDanScreen extends State<SearchDanScreen> {
   String? classSelectedValue = "비즈니스";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
-  late BannerAd _banner;
-  InterstitialAd? _interstitialAd;
-  RewardedAd? _rewardedAd;
+  // late BannerAd _banner;
+  // InterstitialAd? _interstitialAd;
+  // RewardedAd? _rewardedAd;
   final DatabaseReference _classReference =
   FirebaseDatabase.instance.ref("CLASS_DAN");
   final DatabaseReference _countryReference =
@@ -90,55 +89,55 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     xAlign = loginAlign;
     loginColor = selectedColor;
     signInColor = normalColor;
-    _banner = BannerAd(
-      listener: BannerAdListener(
-        onAdFailedToLoad: (Ad ad, LoadAdError err) {
-          FirebaseAnalytics.instance
-              .logEvent(name: "banner", parameters: {'error': err.message});
-        },
-        onAdLoaded: (_) {},
-      ),
-      size: AdSize.banner,
-      adUnitId: AdHelper.bannerDanAdUnitId,
-      request: const AdRequest(),
-    )..load();
-    _loadRewardedAd();
+    // _banner = BannerAd(
+    //   listener: BannerAdListener(
+    //     onAdFailedToLoad: (Ad ad, LoadAdError err) {
+    //       FirebaseAnalytics.instance
+    //           .logEvent(name: "banner", parameters: {'error': err.message});
+    //     },
+    //     onAdLoaded: (_) {},
+    //   ),
+    //   size: AdSize.banner,
+    //   adUnitId: AdHelper.bannerDanAdUnitId,
+    //   request: const AdRequest(),
+    // )..load();
+    // _loadRewardedAd();
   }
-  _loadFullScreenAd() {
-    InterstitialAd.load(
-      adUnitId: AdHelper.frontBannerDanAdUnitId,
-      request: AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          this._interstitialAd = ad;
-        },
-        onAdFailedToLoad: (LoadAdError error) {},
-      ),
-    );
-    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) {
-        _loadFullScreenAd();
-        print('%ad onAdShowedFullScreenContent.');
-      },
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        _incrementCounter(2);
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
-    );
-    _interstitialAd?.show();
-  }
+  // _loadFullScreenAd() {
+  //   InterstitialAd.load(
+  //     adUnitId: AdHelper.frontBannerDanAdUnitId,
+  //     request: AdRequest(),
+  //     adLoadCallback: InterstitialAdLoadCallback(
+  //       onAdLoaded: (InterstitialAd ad) {
+  //         this._interstitialAd = ad;
+  //       },
+  //       onAdFailedToLoad: (LoadAdError error) {},
+  //     ),
+  //   );
+  //   _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+  //     onAdShowedFullScreenContent: (InterstitialAd ad) {
+  //       _loadFullScreenAd();
+  //       print('%ad onAdShowedFullScreenContent.');
+  //     },
+  //     onAdDismissedFullScreenContent: (InterstitialAd ad) {
+  //       print('$ad onAdDismissedFullScreenContent.');
+  //       setState(() {
+  //         ad.dispose();
+  //       });
+  //       _loadFullScreenAd();
+  //     },
+  //     onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+  //       print('$ad onAdFailedToShowFullScreenContent: $error');
+  //       _incrementCounter(2);
+  //       setState(() {
+  //         ad.dispose();
+  //       });
+  //       _loadFullScreenAd();
+  //     },
+  //     onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
+  //   );
+  //   _interstitialAd?.show();
+  // }
 
   _loadCounter() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -147,34 +146,34 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     });
   }
 
-  void _loadRewardedAd() {
-    RewardedAd.load(
-      adUnitId: AdHelper.rewardedDanAdUnitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
-              setState(() {
-                ad.dispose();
-                _rewardedAd = null;
-              });
-              _loadRewardedAd();
-            },
-          );
-
-          setState(() {
-            _rewardedAd = ad;
-          });
-        },
-        onAdFailedToLoad: (err) {
-          print('Failed to load a rewarded ad: ${err.message}');
-          FirebaseAnalytics.instance
-              .logEvent(name: "rewards", parameters: {'error': err.message});
-        },
-      ),
-    );
-  }
+  // void _loadRewardedAd() {
+  //   RewardedAd.load(
+  //     adUnitId: AdHelper.rewardedDanAdUnitId,
+  //     request: const AdRequest(),
+  //     rewardedAdLoadCallback: RewardedAdLoadCallback(
+  //       onAdLoaded: (ad) {
+  //         ad.fullScreenContentCallback = FullScreenContentCallback(
+  //           onAdDismissedFullScreenContent: (ad) {
+  //             setState(() {
+  //               ad.dispose();
+  //               _rewardedAd = null;
+  //             });
+  //             _loadRewardedAd();
+  //           },
+  //         );
+  //
+  //         setState(() {
+  //           _rewardedAd = ad;
+  //         });
+  //       },
+  //       onAdFailedToLoad: (err) {
+  //         print('Failed to load a rewarded ad: ${err.message}');
+  //         FirebaseAnalytics.instance
+  //             .logEvent(name: "rewards", parameters: {'error': err.message});
+  //       },
+  //     ),
+  //   );
+  // }
 
   void _loadCountryFirebase() {
     print("loadCountryFirebase!");
@@ -207,19 +206,19 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     });
   }
 
-  void showFrontAd() {
-    _loadFullScreenAd();
+  // void showFrontAd() {
+    // _loadFullScreenAd();
     // print("showFrontAd _:$_interstitialAd");
     // _interstitialAd?.show();
     // _incrementCounter(2);
-  }
+  // }
 
-  void showRewardsAd() {
-    print("showRewardsAd _rewardedAd:$_rewardedAd");
-    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-      _incrementCounter(10);
-    });
-  }
+  // void showRewardsAd() {
+  //   print("showRewardsAd _rewardedAd:$_rewardedAd");
+  //   _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+  //     _incrementCounter(10);
+  //   });
+  // }
 
   _incrementCounter(int peanuts) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -267,8 +266,8 @@ class _SearchDanScreen extends State<SearchDanScreen> {
 
   @override
   void dispose() {
-    _banner.dispose();
-    _rewardedAd?.dispose();
+    // _banner.dispose();
+    // _rewardedAd?.dispose();
     super.dispose();
   }
 

@@ -1,7 +1,7 @@
 name: mileage_thief
 description: A new Flutter project.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 2.0.5+35
+version: 2.0.6+36
 
 environment:
   sdk: '>=3.0.0-218.0.dev <4.0.0'
@@ -16,7 +16,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   lottie: ^3.1.2
   share_plus: ^11.0.0
-  google_mobile_ads: ^5.1.0
   url_launcher: ^6.1.11
   firebase_analytics: ^11.0.1
   shared_preferences: ^2.0.18
