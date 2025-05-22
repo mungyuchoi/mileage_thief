@@ -832,7 +832,7 @@ class _AirportScreenState extends State<AirportScreen> {
                               lastYear: DateTime.now().year + 1,
                               selectButtonText: '확인',
                               cancelButtonText: '취소',
-                              highlightColor: Colors.black,
+                              highlightColor: Colors.black54,
                               textColor: Colors.black,
                               contentBackgroundColor: Colors.white,
                               dialogBackgroundColor: Colors.grey[200]);
@@ -861,7 +861,7 @@ class _AirportScreenState extends State<AirportScreen> {
                               lastYear: DateTime.now().year + 1,
                               selectButtonText: '확인',
                               cancelButtonText: '취소',
-                              highlightColor: Colors.black,
+                              highlightColor: Colors.black54,
                               textColor: Colors.black,
                               contentBackgroundColor: Colors.white,
                               dialogBackgroundColor: Colors.grey[200]);
