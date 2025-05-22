@@ -10,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -73,10 +74,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 appLink = 'https://apps.apple.com/app/myapp/6446247689';
               }
               String description = "마일리지 항공 앱을 공유해보세요! $appLink";
-
-              // SharePlus.instance.share(description);
+              SharePlus.instance.share(ShareParams(text: description));
             },
-          )
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat, color: Colors.black54),
+            onPressed: _launchOpenChat,
+          ),
         ],
       ),
       body: buildPage(_currentIndex),
@@ -121,38 +125,28 @@ class _SearchScreenState extends State<SearchScreen> {
         return buildAsianaWidget();
     }
   }
+
   Widget buildAsianaWidget() {
-    return SingleChildScrollView(
-      child: AirportScreen(key: airportScreenKey),
-    );
-  }
-  Widget buildDanWidget() {
-    return const SingleChildScrollView(
-      child: SearchDanScreen(),
+    return FutureBuilder<InitializationStatus>(
+      future: _initGoogleMobileAds(),
+      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+        return SingleChildScrollView(
+          child: AirportScreen(key: airportScreenKey),
+        );
+      },
     );
   }
 
-  // Widget buildAsianaWidget() {
-  //   return FutureBuilder<InitializationStatus>(
-  //     future: _initGoogleMobileAds(),
-  //     builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-  //       return SingleChildScrollView(
-  //         child: AirportScreen(key: airportScreenKey),
-  //       );
-  //     },
-  //   );
-  // }
-  //
-  // Widget buildDanWidget() {
-  //   return FutureBuilder<InitializationStatus>(
-  //     future: _initGoogleMobileAds(),
-  //     builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-  //       return const SingleChildScrollView(
-  //         child: SearchDanScreen(),
-  //       );
-  //     },
-  //   );
-  // }
+  Widget buildDanWidget() {
+    return FutureBuilder<InitializationStatus>(
+      future: _initGoogleMobileAds(),
+      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+        return const SingleChildScrollView(
+          child: SearchDanScreen(),
+        );
+      },
+    );
+  }
 
   bool _notificationToggle = true;
   String _version = '';
@@ -278,9 +272,9 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // Future<InitializationStatus> _initGoogleMobileAds() {
-  //   return MobileAds.instance.initialize();
-  // }
+  Future<InitializationStatus> _initGoogleMobileAds() {
+    return MobileAds.instance.initialize();
+  }
 
   Future<void> getVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -290,12 +284,42 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _launchOpenChat() async {
-    const url = 'https://open.kakao.com/o/grMdcJ7e';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('카카오 오픈채팅 안내', style: TextStyle(color: Colors.black)),
+        content: const Text('입장 비밀번호는 1987입니다.', style: TextStyle(color: Colors.black)),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+              backgroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              const url = 'https://open.kakao.com/o/grMdcJ7e';
+              if (await canLaunch(url)) {
+                await launch(url);
+              } else {
+                throw 'Could not launch $url';
+              }
+            },
+            child: const Text('확인'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+              backgroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('취소'),
+          ),
+        ],
+      ),
+    );
   }
 
   void setNotificationToggle(bool value) async {
@@ -383,9 +407,9 @@ class _AirportScreenState extends State<AirportScreen> {
   String? classSelectedValue = "비즈니스";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
-  // late BannerAd _banner;
-  // InterstitialAd? _interstitialAd;
-  // RewardedAd? _rewardedAd;
+  late BannerAd _banner;
+  InterstitialAd? _interstitialAd;
+  RewardedAd? _rewardedAd;
   final DatabaseReference _classReference =
       FirebaseDatabase.instance.ref("CLASS");
   final DatabaseReference _countryReference =
@@ -404,58 +428,58 @@ class _AirportScreenState extends State<AirportScreen> {
     xAlign = loginAlign;
     loginColor = selectedColor;
     signInColor = normalColor;
-  }
-  //   _banner = BannerAd(
-  //     listener: BannerAdListener(
-  //       onAdFailedToLoad: (Ad ad, LoadAdError err) {
-  //         FirebaseAnalytics.instance
-  //             .logEvent(name: "banner", parameters: {'error': err.message});
-  //       },
-  //       onAdLoaded: (_) {},
-  //     ),
-  //     size: AdSize.banner,
-  //     adUnitId: AdHelper.bannerAdUnitId,
-  //     request: const AdRequest(),
-  //   )..load();
-  //   _loadRewardedAd();
-  //   // _loadFullScreenAd();
-  // }
 
-  // _loadFullScreenAd() {
-  //   InterstitialAd.load(
-  //     adUnitId: AdHelper.frontBannerAdUnitId,
-  //     request: AdRequest(),
-  //     adLoadCallback: InterstitialAdLoadCallback(
-  //       onAdLoaded: (InterstitialAd ad) {
-  //         this._interstitialAd = ad;
-  //       },
-  //       onAdFailedToLoad: (LoadAdError error) {},
-  //     ),
-  //   );
-  //   _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-  //     onAdShowedFullScreenContent: (InterstitialAd ad) {
-  //       _loadFullScreenAd();
-  //       print('%ad onAdShowedFullScreenContent.');
-  //     },
-  //     onAdDismissedFullScreenContent: (InterstitialAd ad) {
-  //       print('$ad onAdDismissedFullScreenContent.');
-  //       setState(() {
-  //         ad.dispose();
-  //       });
-  //       _loadFullScreenAd();
-  //     },
-  //     onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-  //       print('$ad onAdFailedToShowFullScreenContent: $error');
-  //       _incrementCounter(2);
-  //       setState(() {
-  //         ad.dispose();
-  //       });
-  //       _loadFullScreenAd();
-  //     },
-  //     onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
-  //   );
-  //   _interstitialAd?.show();
-  // }
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdFailedToLoad: (Ad ad, LoadAdError err) {
+          FirebaseAnalytics.instance
+              .logEvent(name: "banner", parameters: {'error': err.message});
+        },
+        onAdLoaded: (_) {},
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
+    _loadRewardedAd();
+    _loadFullScreenAd();
+  }
+
+  _loadFullScreenAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          this._interstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {},
+      ),
+    );
+    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (InterstitialAd ad) {
+        _loadFullScreenAd();
+        print('%ad onAdShowedFullScreenContent.');
+      },
+      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        _incrementCounter(2);
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
+    );
+    _interstitialAd?.show();
+  }
 
   _loadCounter() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -464,34 +488,34 @@ class _AirportScreenState extends State<AirportScreen> {
     });
   }
 
-  // void _loadRewardedAd() {
-  //   RewardedAd.load(
-  //     adUnitId: AdHelper.rewardedAdUnitId,
-  //     request: const AdRequest(),
-  //     rewardedAdLoadCallback: RewardedAdLoadCallback(
-  //       onAdLoaded: (ad) {
-  //         ad.fullScreenContentCallback = FullScreenContentCallback(
-  //           onAdDismissedFullScreenContent: (ad) {
-  //             setState(() {
-  //               ad.dispose();
-  //               _rewardedAd = null;
-  //             });
-  //             _loadRewardedAd();
-  //           },
-  //         );
-  //
-  //         setState(() {
-  //           _rewardedAd = ad;
-  //         });
-  //       },
-  //       onAdFailedToLoad: (err) {
-  //         print('Failed to load a rewarded ad: ${err.message}');
-  //         FirebaseAnalytics.instance
-  //             .logEvent(name: "rewards", parameters: {'error': err.message});
-  //       },
-  //     ),
-  //   );
-  // }
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              setState(() {
+                ad.dispose();
+                _rewardedAd = null;
+              });
+              _loadRewardedAd();
+            },
+          );
+
+          setState(() {
+            _rewardedAd = ad;
+          });
+        },
+        onAdFailedToLoad: (err) {
+          print('Failed to load a rewarded ad: ${err.message}');
+          FirebaseAnalytics.instance
+              .logEvent(name: "rewards", parameters: {'error': err.message});
+        },
+      ),
+    );
+  }
 
   void _loadCountryFirebase() {
     print("loadCountryFirebase!");
@@ -524,19 +548,19 @@ class _AirportScreenState extends State<AirportScreen> {
     });
   }
 
-  // void showFrontAd() {
-    // _loadFullScreenAd();
-    // print("showFrontAd _:$_interstitialAd");
-    // _interstitialAd?.show();
-    // _incrementCounter(2);
-  // }
+  void showFrontAd() {
+    _loadFullScreenAd();
+    print("showFrontAd _:$_interstitialAd");
+    _interstitialAd?.show();
+    _incrementCounter(2);
+  }
 
-  // void showRewardsAd() {
-  //   print("showRewardsAd _rewardedAd:$_rewardedAd");
-  //   _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-  //     _incrementCounter(10);
-  //   });
-  // }
+  void showRewardsAd() {
+    print("showRewardsAd _rewardedAd:$_rewardedAd");
+    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+      _incrementCounter(10);
+    });
+  }
 
   _incrementCounter(int peanuts) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -584,8 +608,8 @@ class _AirportScreenState extends State<AirportScreen> {
 
   @override
   void dispose() {
-    // _banner.dispose();
-    // _rewardedAd?.dispose();
+    _banner.dispose();
+    _rewardedAd?.dispose();
     super.dispose();
   }
 
@@ -806,9 +830,9 @@ class _AirportScreenState extends State<AirportScreen> {
                               lastEnabledMonth: lastEnableMonth,
                               firstYear: DateTime.now().year,
                               lastYear: DateTime.now().year + 1,
-                              selectButtonText: 'OK',
-                              cancelButtonText: 'Cancel',
-                              highlightColor: Colors.black54,
+                              selectButtonText: '확인',
+                              cancelButtonText: '취소',
+                              highlightColor: Colors.black,
                               textColor: Colors.black,
                               contentBackgroundColor: Colors.white,
                               dialogBackgroundColor: Colors.grey[200]);
@@ -837,7 +861,7 @@ class _AirportScreenState extends State<AirportScreen> {
                               lastYear: DateTime.now().year + 1,
                               selectButtonText: '확인',
                               cancelButtonText: '취소',
-                              highlightColor: Colors.black54,
+                              highlightColor: Colors.black,
                               textColor: Colors.black,
                               contentBackgroundColor: Colors.white,
                               dialogBackgroundColor: Colors.grey[200]);
@@ -862,37 +886,37 @@ class _AirportScreenState extends State<AirportScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //   children: [
-                //     FloatingActionButton.extended(
-                //       onPressed: () {
-                //         showFrontAd();
-                //       },
-                //       label: const Text("+ 2",
-                //           style: TextStyle(color: Colors.black87)),
-                //       backgroundColor: Colors.white,
-                //       elevation: 3,
-                //       icon: Image.asset(
-                //         'asset/img/peanut.png',
-                //         scale: 19,
-                //       ),
-                //     ),
-                //     FloatingActionButton.extended(
-                //       onPressed: () {
-                //         showRewardsAd();
-                //       },
-                //       label: const Text("+ 10",
-                //           style: TextStyle(color: Colors.black87)),
-                //       backgroundColor: Colors.white,
-                //       elevation: 3,
-                //       icon: Image.asset(
-                //         'asset/img/peanuts.png',
-                //         scale: 19,
-                //       ),
-                //     ),
-                //   ],
-                // ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FloatingActionButton.extended(
+                      onPressed: () {
+                        showFrontAd();
+                      },
+                      label: const Text("+ 2",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanut.png',
+                        scale: 19,
+                      ),
+                    ),
+                    FloatingActionButton.extended(
+                      onPressed: () {
+                        showRewardsAd();
+                      },
+                      label: const Text("+ 10",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanuts.png',
+                        scale: 19,
+                      ),
+                    ),
+                  ],
+                ),
                 const Padding(padding: EdgeInsets.all(3)),
                 const Text("🥜 광고로 땅콩 받는 기능은 잠시 휴식 중이에요! \n 다른 기회를 통해 땅콩을 사용하는 재미를 준비하고 있어요.", textAlign: TextAlign.center),
                 const Padding(padding: EdgeInsets.all(3)),
