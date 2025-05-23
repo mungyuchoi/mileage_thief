@@ -69,6 +69,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
   String? classSelectedValue = "비즈니스";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
+  bool _arrivalError = false;
   late BannerAd _banner;
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
@@ -396,19 +397,33 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     ),
                     const Padding(padding: EdgeInsets.all(4)),
                     Expanded(
-                      child: CustomDropdownButton2(
-                        hint: '어디로 가나요?',
-                        dropdownWidth: 180,
-                        hintAlignment: Alignment.center,
-                        dropdownItems: airportItems,
-                        value: arrivalSelectedValue,
-                        scrollbarAlwaysShow: true,
-                        scrollbarThickness: 10,
-                        onChanged: (value) {
-                          setState(() {
-                            arrivalSelectedValue = value;
-                          });
-                        },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomDropdownButton2(
+                            hint: '어디로 가나요?',
+                            dropdownWidth: 180,
+                            hintAlignment: Alignment.center,
+                            dropdownItems: airportItems,
+                            value: arrivalSelectedValue,
+                            scrollbarAlwaysShow: true,
+                            scrollbarThickness: 10,
+                            onChanged: (value) {
+                              setState(() {
+                                arrivalSelectedValue = value;
+                                _arrivalError = false;
+                              });
+                            },
+                          ),
+                          if (_arrivalError)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 8.0, top: 4.0),
+                              child: Text(
+                                '도착지를 선택하세요.',
+                                style: TextStyle(color: Colors.red, fontSize: 12),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],
@@ -581,9 +596,27 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () {
-                    // bool isUseCounter = useCounter();
-                    // print("onPressed search isUserCounter:$isUseCounter");
-                    // if (!isUseCounter) return;
+                    if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
+                      setState(() {
+                        _arrivalError = true;
+                      });
+                      Fluttertoast.showToast(
+                        msg: "도착지를 선택해주세요.",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    if (departureSelectedValue == null || departureSelectedValue!.isEmpty) {
+                      Fluttertoast.showToast(
+                        msg: "출발지를 선택해주세요.",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
                     if (xAlign == -1.0) {
                       Navigator.push(
                           context,
