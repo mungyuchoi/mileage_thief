@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mileage_thief/model/search_detail_model_v2.dart';
 import 'package:mileage_thief/model/search_model.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
-import 'package:mileage_thief/model/search_detail_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mileage_thief/util/util.dart';
 class SearchDetailDanScreen extends StatelessWidget {
@@ -65,12 +65,14 @@ class SearchDetailDanScreen extends StatelessWidget {
             ),
             Container(
                 padding: const EdgeInsets.all(20),
-                // color: Color.alphaBlend(Colors.black12, const Color(0x00ffffff))),
                 color: const Color(0Xffeeeeee),
-                child: FutureBuilder<List<Mileage>>(
+                child: FutureBuilder<List<MileageV2>>(
                   future: getItems(searchModel),
                   builder: (BuildContext context,
-                      AsyncSnapshot<List<Mileage>> snapshot) {
+                      AsyncSnapshot<List<MileageV2>> snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('에러 발생: \\${snapshot.error}'));
+                    }
                     if(snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return MyStatefulWidget(items: snapshot.data ?? [], model: searchModel);
                     } else if (snapshot.hasData && snapshot.data!.isEmpty) {
@@ -106,12 +108,12 @@ class SearchDetailDanScreen extends StatelessWidget {
   }
 }
 
-Future<List<Mileage>> getItems(SearchModel searchModel) async {
-  return await MileageRepository.getDanMileages(searchModel);
+Future<List<MileageV2>> getItems(SearchModel searchModel) async {
+  return await MileageRepository.getDanMileagesV2(searchModel);
 }
 
 class MyStatefulWidget extends StatefulWidget {
-  final List<Mileage> items;
+  final List<MileageV2> items;
   final SearchModel model;
   const MyStatefulWidget({Key? key, required this.items, required this.model}) : super(key: key);
 
@@ -120,7 +122,7 @@ class MyStatefulWidget extends StatefulWidget {
 }
 
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final List<Mileage> _items;
+  final List<MileageV2> _items;
   final SearchModel _model;
 
   _MyStatefulWidgetState(this._items, this._model);
@@ -139,7 +141,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           _items[index].isExpanded = !isExpanded;
         });
       },
-      children: _items.map<ExpansionPanel>((Mileage item) {
+      children: _items.map<ExpansionPanel>((MileageV2 item) {
         return ExpansionPanel(
           headerBuilder: (BuildContext context, bool isExpanded) {
             return ListTile(
@@ -181,45 +183,26 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              if(_model.seatClass =="퍼스트") ...[
-                                Image.asset(
-                                  'asset/img/letter-f.png',
-                                  scale: 30,
-                                ),
-                                const Padding(padding: EdgeInsets.all(1)),
-                                Text(
-                                  item.firstSeat,
-                                  style: const TextStyle(
-                                      fontFamily: 'SsuroundAir',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ] else ...[
+                              if (item.hasEconomy) ...[
                                 Image.asset(
                                   'asset/img/letter-e.png',
                                   scale: 30,
                                 ),
-                                const Padding(padding: EdgeInsets.all(1)),
-                                Text(
-                                  item.economySeat,
-                                  style: const TextStyle(
-                                      fontFamily: 'SsuroundAir',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
                                 const Padding(padding: EdgeInsets.all(2)),
+                              ],
+                              if (item.hasBusiness) ...[
                                 Image.asset(
                                   'asset/img/letter-b.png',
                                   scale: 30,
                                 ),
-                                const Padding(padding: EdgeInsets.all(1)),
-                                Text(
-                                  item.businessSeat,
-                                  style: const TextStyle(
-                                      fontFamily: 'SsuroundAir',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
+                                const Padding(padding: EdgeInsets.all(2)),
+                              ],
+                              if (item.hasFirst) ...[
+                                Image.asset(
+                                  'asset/img/letter-f.png',
+                                  scale: 30,
                                 ),
+                                const Padding(padding: EdgeInsets.all(2)),
                               ],
                             ],
                           ),

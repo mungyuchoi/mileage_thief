@@ -3,7 +3,7 @@
     "project_number": "962527268971",
     "firebase_url": "https://mileagethief-default-rtdb.firebaseio.com",
     "project_id": "mileagethief",
-    "storage_bucket": "mileagethief.appspot.com"
+    "storage_bucket": "mileagethief.firebasestorage.app"
   },
   "client": [
     {
@@ -76,7 +76,8 @@
             }
           ]
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-8549606613390169~6982552576"
     }
   ],
   "configuration_version": "1"

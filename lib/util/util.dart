@@ -1,15 +1,20 @@
-
 class Util {
   static getDepartureDate(String departureDate) {
-    return departureDate.substring(0, 4) +
-        "." +
-        departureDate.substring(4, 6) +
-        '.' +
-        departureDate.substring(6, 8);
+    if (departureDate.length >= 8) {
+      return departureDate.substring(0, 4) +
+          "." +
+          departureDate.substring(4, 6) +
+          '.' +
+          departureDate.substring(6, 8);
+    }
+    return departureDate; // 혹은 ''
   }
 
   static getDepartureDetailDate(String departureDate) {
-    return "${departureDate.substring(8, 10)}:${departureDate.substring(10)}";
+    if (departureDate.length >= 10) {
+      return "${departureDate.substring(8, 10)}:${departureDate.substring(10)}";
+    }
+    return ""; // 혹은 '정보 없음'
   }
   static mergeDepartureAirportCity(String city, String airport) {
     return "$city ($airport) 출발";
