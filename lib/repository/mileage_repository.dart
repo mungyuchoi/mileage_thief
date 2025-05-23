@@ -473,7 +473,7 @@ class MileageRepository {
       final metaSnap = await firestore.collection('dan').doc(routeDoc).collection('flightInfo').doc('meta').get();
       if (metaSnap.exists) {
         meta = metaSnap.data();
-        print('[getDanMileagesV2] meta 정보 있음');
+        print('[getDanMileagesV2] meta 정보 있음: $meta');
       } else {
         print('[getDanMileagesV2] meta 정보 없음');
       }
@@ -503,7 +503,7 @@ class MileageRepository {
       print('[getDanMileagesV2] $latestCollectionId 내 도큐먼트 개수: ${docs.docs.length}');
       for (final doc in docs.docs) {
         final data = doc.data();
-        print('[getDanMileagesV2] doc data: $data');
+        // print('[getDanMileagesV2] doc data: $data');
         // departureDate(yyyyMMdd)에서 yyyyMM 추출 후 기간 필터링
         String depDate = data['departureDate']?.toString() ?? '';
         if (depDate.length >= 6) {

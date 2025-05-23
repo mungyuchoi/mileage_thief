@@ -42,15 +42,25 @@ class Util {
     return '아시아나 | 왕복 | 전체 | ' + date;
   }
 
-  static String convertToTime(String arrivalDate) {
-    if (arrivalDate.length != 4) {
-      // 유효한 시간 형식이 아닌 경우 예외 처리
-      return '유효하지 않은 시간 형식입니다.';
+  static String convertToTime(String dateStr) {
+    // 12자리(yyyyMMddHHmm) → HH:mm
+    if (dateStr.length == 12) {
+      String hour = dateStr.substring(8, 10);
+      String minute = dateStr.substring(10, 12);
+      return '$hour:$minute';
     }
-
-    String hour = arrivalDate.substring(0, 2);
-    String minute = arrivalDate.substring(2);
-    return '$hour:$minute';
+    // 8자리(yyyyMMdd) → 시분 정보 없음
+    if (dateStr.length == 8) {
+      return '시간 정보 없음';
+    }
+    // 4자리(시분) → HH:mm
+    if (dateStr.length == 4) {
+      String hour = dateStr.substring(0, 2);
+      String minute = dateStr.substring(2, 4);
+      return '$hour:$minute';
+    }
+    // 그 외
+    return '유효하지 않은 시간 형식입니다.';
   }
 
 
