@@ -168,7 +168,6 @@ class _MainCalendarState extends State<MainCalendar> {
       calendarBuilders: CalendarBuilders(
         markerBuilder: (context, day, events) {
           if (events.isNotEmpty) {
-            // economy, business, first 타입별로 분리
             final hasEconomy = events.any((e) => (e as Event).type == 'economy');
             final hasBusiness = events.any((e) => (e as Event).type == 'business');
             final hasFirst = events.any((e) => (e as Event).type == 'first');
@@ -182,7 +181,7 @@ class _MainCalendarState extends State<MainCalendar> {
                       width: 7,
                       height: 7,
                       decoration: const BoxDecoration(
-                        color: Colors.blue,
+                        color: economyColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -195,7 +194,7 @@ class _MainCalendarState extends State<MainCalendar> {
                       width: 7,
                       height: 7,
                       decoration: const BoxDecoration(
-                        color: Colors.green,
+                        color: businessColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -208,7 +207,7 @@ class _MainCalendarState extends State<MainCalendar> {
                       width: 7,
                       height: 7,
                       decoration: const BoxDecoration(
-                        color: Colors.red,
+                        color: firstColor,
                         shape: BoxShape.circle,
                       ),
                     ),
