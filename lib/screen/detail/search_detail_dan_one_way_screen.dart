@@ -1,22 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:mileage_thief/const/colors.dart';
 import 'package:mileage_thief/model/search_detail_model_v2.dart';
 import 'package:mileage_thief/model/search_model.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:mileage_thief/util/util.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:mileage_thief/custom/main_calendar.dart';
 
 import '../../model/event_model.dart';
 
-class SearchDetailDanScreen extends StatelessWidget {
+class SearchDetailDanScreen extends StatefulWidget {
   final SearchModel searchModel;
 
   const SearchDetailDanScreen(this.searchModel, {super.key});
 
   @override
+  State<SearchDetailDanScreen> createState() => _SearchDetailDanScreenState();
+}
+
+class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
+  late DateTime selectedDate;
+  List<MileageV2> allItems = [];
+  bool isLoading = true;
+  String? errorMsg;
+
+  List<Event> get events {
+    final events = <Event>[];
+    for (final m in allItems) {
+      final date = DateTime.tryParse(m.departureDate.substring(0,8)) ?? DateTime.now();
+      if (m.hasEconomy) {
+        events.add(Event(date: date, type: 'economy', color: Color(0xFF1976D2)));
+      }
+      if (m.hasBusiness) {
+        events.add(Event(date: date, type: 'business', color: Color(0xFFFFB300)));
+      }
+      if (m.hasFirst) {
+        events.add(Event(date: date, type: 'first', color: Color(0xFF8B1E3F)));
+      }
+    }
+    return events;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selectedDate = DateTime.now();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+    });
+    try {
+      final items = await getItems(widget.searchModel);
+      setState(() {
+        allItems = items;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 선택된 날짜에 해당하는 MileageV2 리스트 추출
+    final selectedItems = allItems.where((m) {
+      if (m.departureDate.length < 8) return false;
+      final depDate = DateTime(
+        int.parse(m.departureDate.substring(0, 4)),
+        int.parse(m.departureDate.substring(4, 6)),
+        int.parse(m.departureDate.substring(6, 8)),
+      );
+      return depDate.year == selectedDate.year &&
+             depDate.month == selectedDate.month &&
+             depDate.day == selectedDate.day;
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black54,
@@ -45,9 +110,9 @@ class SearchDetailDanScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '대한항공 | 편도 | ${searchModel.seatClass} | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}) | '
-                        '\n\n성수기에는 마일리지가 50% 추가됩니다.' +
-                            '\n검색 기간: ${searchModel.startYear}년 ${searchModel.startMonth}월 ~ ${searchModel.endYear}년 ${searchModel.endMonth}월',
+                        '대한항공 | 편도 | ${widget.searchModel.seatClass} | \n출발공항: ${widget.searchModel.departureAirport!!}) | \n도착공항: ${widget.searchModel.arrivalAirport!!}) | '
+                        '\n\n성수기에는 마일리지가 50% 추가됩니다.'
+                        '\n검색 기간: ${widget.searchModel.startYear}년 ${widget.searchModel.startMonth}월 ~ ${widget.searchModel.endYear}년 ${widget.searchModel.endMonth}월',
                       ),
                       const SizedBox(height: 8),
                     ],
@@ -92,49 +157,106 @@ class SearchDetailDanScreen extends StatelessWidget {
                 const Text('First', style: TextStyle(fontSize: 12)),
               ],
             ),
-            FutureBuilder<List<MileageV2>>(
-              future: getItems(searchModel),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('에러 발생: \\${snapshot.error}'));
-                }
-                final items = snapshot.data ?? [];
-                // 날짜별 Event 리스트 생성
-                final List<Event> events = [];
-                for (final m in items) {
-                  final date = DateTime.tryParse(m.departureDate.substring(0,8)) ?? DateTime.now();
-                  if (m.hasEconomy) {
-                    events.add(Event(date: date, type: 'economy', color: Colors.blue));
-                  }
-                  if (m.hasBusiness) {
-                    events.add(Event(date: date, type: 'business', color: Colors.green));
-                  }
-                  if (m.hasFirst) {
-                    events.add(Event(date: date, type: 'first', color: Colors.red));
-                  }
-                }
-                return MainCalendar(
-                  eventsStream: Stream.value(events),
-                  selectedDate: DateTime.now(),
-                  firstDay: DateTime(
-                    int.parse(searchModel.startYear ?? DateTime.now().year.toString()),
-                    int.parse(searchModel.startMonth ?? DateTime.now().month.toString()),
-                    1,
-                  ),
-                  lastDay: DateTime(
-                    int.parse(searchModel.endYear ?? DateTime.now().year.toString()),
-                    int.parse(searchModel.endMonth ?? DateTime.now().month.toString()),
-                    31,
-                  ),
-                  onDaySelected: (selectedDate, focusedDay) {
-                    // 날짜 선택 시 원하는 동작 구현
-                  },
-                );
+            // MainCalendar는 항상 표시
+            MainCalendar(
+              key: ValueKey(selectedDate),
+              eventsStream: Stream.value(events),
+              selectedDate: selectedDate,
+              firstDay: DateTime(
+                int.parse(widget.searchModel.startYear ?? DateTime.now().year.toString()),
+                int.parse(widget.searchModel.startMonth ?? DateTime.now().month.toString()),
+                1,
+              ),
+              lastDay: DateTime(
+                int.parse(widget.searchModel.endYear ?? DateTime.now().year.toString()),
+                int.parse(widget.searchModel.endMonth ?? DateTime.now().month.toString()),
+                31,
+              ),
+              onDaySelected: (date, focusedDay) {
+                setState(() {
+                  selectedDate = date;
+                });
               },
             ),
+            // 아래 정보 영역만 로딩/에러/데이터 표시
+            if (isLoading)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (errorMsg != null)
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('에러 발생: ', style: TextStyle(color: Colors.red)),
+              )
+            else ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(0),
+                ),
+                child: Text(
+                  '선택된 날짜: ${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (selectedItems.isEmpty)
+                const Text('해당 날짜의 좌석 정보가 없습니다.', style: TextStyle(color: Colors.grey)),
+              for (final m in selectedItems)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.07),
+                    border: Border.all(color: Colors.black26, width: 1.1),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (m.hasEconomy)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            '이코노미  세금: ${m.economyAmount}  마일리지: ${m.economyMileage}',
+                            style: const TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.w600, fontSize: 15),
+                          ),
+                        ),
+                      if (m.hasBusiness)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            '비즈니스  세금: ${m.businessAmount}  마일리지: ${m.businessMileage}',
+                            style: const TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.w600, fontSize: 15),
+                          ),
+                        ),
+                      if (m.hasFirst)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            '퍼스트  세금: ${m.firstAmount}  마일리지: ${m.firstMileage}',
+                            style: const TextStyle(color: Color(0xFF8B1E3F), fontWeight: FontWeight.w600, fontSize: 15),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
           ],
         ),
       ),

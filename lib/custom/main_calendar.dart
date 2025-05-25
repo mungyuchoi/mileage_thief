@@ -28,8 +28,6 @@ class MainCalendar extends StatefulWidget {
 
 class _MainCalendarState extends State<MainCalendar> {
   List<Event> _events = [];
-  DateTime? selectedDay;
-
   late DateTime _focusedDay;
   StreamSubscription? _eventSubscription;
 
@@ -138,25 +136,16 @@ class _MainCalendarState extends State<MainCalendar> {
         ),
         selectedTextStyle: defaultTextStyle.copyWith(color: PRIMARY_COLOR)),
       // 원하는 날짜 클릭 시 이벤트
-      onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
-        // 클릭 할 때 state를 변경
+      onDaySelected: (selectedDate, focusedDay) {
+        widget.onDaySelected(selectedDate, focusedDay);
         setState(() {
-          this.selectedDay = selectedDay;
-          // 우리가 달력 내에서 전 달 날짜를 클릭 할 때 옮겨주도록 state를 변경시켜 줌
-          _focusedDay = selectedDay;
+          _focusedDay = focusedDay;
         });
       },
-
-      // selectedDayPredicate를 통해 해당 날짜가 맞는지 비교 후 true false 비교 후 반환해 줌
-      selectedDayPredicate: (DateTime date) {
-        if (selectedDay == null) {
-          return false;
-        }
-
-        return date.year == selectedDay!.year &&
-            date.month == selectedDay!.month &&
-            date.day == selectedDay!.day;
-      },
+      selectedDayPredicate: (date) =>
+        date.year == widget.selectedDate.year &&
+        date.month == widget.selectedDate.month &&
+        date.day == widget.selectedDate.day,
       eventLoader: (day) {
         // 해당 날짜에 해당하는 이벤트 리스트 반환
         return _events.where((event) =>
