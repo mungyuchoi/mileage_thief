@@ -8,6 +8,8 @@ import 'package:mileage_thief/util/util.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mileage_thief/custom/main_calendar.dart';
 
+import '../../model/event_model.dart';
+
 class SearchDetailDanScreen extends StatelessWidget {
   final SearchModel searchModel;
 
@@ -73,26 +75,65 @@ class SearchDetailDanScreen extends StatelessWidget {
                 ),
               ],
             ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              color: Colors.white70,
-              child: MainCalendar(
-                eventsStream: Stream.value([]),
-                selectedDate: DateTime.now(),
-                firstDay: DateTime(
-                  int.parse(searchModel.startYear ?? DateTime.now().year.toString()),
-                  int.parse(searchModel.startMonth ?? DateTime.now().month.toString()),
-                  1,
-                ),
-                lastDay: DateTime(
-                  int.parse(searchModel.endYear ?? DateTime.now().year.toString()),
-                  int.parse(searchModel.endMonth ?? DateTime.now().month.toString()),
-                  31,
-                ),
-                onDaySelected: (selectedDate, focusedDay) {
-                  // 날짜 선택 시 원하는 동작 구현
-                },
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(width: 16),
+                Icon(Icons.circle, color: Colors.blue, size: 14),
+                const SizedBox(width: 4),
+                const Text('Economy', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 12),
+                Icon(Icons.circle, color: Colors.green, size: 14),
+                const SizedBox(width: 4),
+                const Text('Business', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 12),
+                Icon(Icons.circle, color: Colors.red, size: 14),
+                const SizedBox(width: 4),
+                const Text('First', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            FutureBuilder<List<MileageV2>>(
+              future: getItems(searchModel),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('에러 발생: \\${snapshot.error}'));
+                }
+                final items = snapshot.data ?? [];
+                // 날짜별 Event 리스트 생성
+                final List<Event> events = [];
+                for (final m in items) {
+                  final date = DateTime.tryParse(m.departureDate.substring(0,8)) ?? DateTime.now();
+                  if (m.hasEconomy) {
+                    events.add(Event(date: date, type: 'economy', color: Colors.blue));
+                  }
+                  if (m.hasBusiness) {
+                    events.add(Event(date: date, type: 'business', color: Colors.green));
+                  }
+                  if (m.hasFirst) {
+                    events.add(Event(date: date, type: 'first', color: Colors.red));
+                  }
+                }
+                return MainCalendar(
+                  eventsStream: Stream.value(events),
+                  selectedDate: DateTime.now(),
+                  firstDay: DateTime(
+                    int.parse(searchModel.startYear ?? DateTime.now().year.toString()),
+                    int.parse(searchModel.startMonth ?? DateTime.now().month.toString()),
+                    1,
+                  ),
+                  lastDay: DateTime(
+                    int.parse(searchModel.endYear ?? DateTime.now().year.toString()),
+                    int.parse(searchModel.endMonth ?? DateTime.now().month.toString()),
+                    31,
+                  ),
+                  onDaySelected: (selectedDate, focusedDay) {
+                    // 날짜 선택 시 원하는 동작 구현
+                  },
+                );
+              },
             ),
           ],
         ),

@@ -107,35 +107,36 @@ class _MainCalendarState extends State<MainCalendar> {
       ),
       calendarStyle: CalendarStyle(
         // 오늘 날짜에 하이라이팅의 유무
-          isTodayHighlighted: false,
-          // 캘린더의 평일 배경 스타일링(default면 평일을 의미)
-          defaultDecoration: defaultBoxDeco,
-          // 캘린더의 주말 배경 스타일링
+        isTodayHighlighted: false,
+        // 캘린더의 평일 배경 스타일링(default면 평일을 의미)
+          defaultDecoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6.0),
+            color: LIGHT_GREY_COLOR,
+        ),
+        // 캘린더의 주말 배경 스타일링
           weekendDecoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6.0),
             color: LIGHT_GREY_COLOR,
+        ),
+        // 선택한 날짜 배경 스타일링
+        selectedDecoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6.0),
+          border: Border.all(
+            color: PRIMARY_COLOR,
+            width: 2.0,
           ),
-          // 선택한 날짜 배경 스타일링
-          selectedDecoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(
-              color: PRIMARY_COLOR,
-              width: 1.0,
-            ),
-          ),
-          // 기본 값이 BoxShape.circle로 돼 있는데 우리는 rectangle로 해 줄 예정
-          // 만약 여기 설정을 해주지 않는다면 기본 설정인 circle과 우리의 설정인 rectangle이 겹쳐서 에러가 발생
-          outsideDecoration: BoxDecoration(
-              shape: BoxShape.rectangle
-          ),
-          // 텍스트 스타일링들
-          defaultTextStyle: defaultTextStyle,
-          weekendTextStyle: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.redAccent,
-          ),
-          selectedTextStyle: defaultTextStyle.copyWith(color: PRIMARY_COLOR)),
+        ),
+        outsideDecoration: BoxDecoration(
+            shape: BoxShape.rectangle
+        ),
+        // 텍스트 스타일링들
+        defaultTextStyle: defaultTextStyle,
+        weekendTextStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: Colors.red,
+        ),
+        selectedTextStyle: defaultTextStyle.copyWith(color: PRIMARY_COLOR)),
       // 원하는 날짜 클릭 시 이벤트
       onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
         // 클릭 할 때 state를 변경
@@ -156,6 +157,69 @@ class _MainCalendarState extends State<MainCalendar> {
             date.month == selectedDay!.month &&
             date.day == selectedDay!.day;
       },
+      eventLoader: (day) {
+        // 해당 날짜에 해당하는 이벤트 리스트 반환
+        return _events.where((event) =>
+          event.date.year == day.year &&
+          event.date.month == day.month &&
+          event.date.day == day.day
+        ).toList();
+      },
+      calendarBuilders: CalendarBuilders(
+        markerBuilder: (context, day, events) {
+          if (events.isNotEmpty) {
+            // economy, business, first 타입별로 분리
+            final hasEconomy = events.any((e) => (e as Event).type == 'economy');
+            final hasBusiness = events.any((e) => (e as Event).type == 'business');
+            final hasFirst = events.any((e) => (e as Event).type == 'first');
+            return Stack(
+              children: [
+                if (hasEconomy)
+                  Positioned(
+                    left: 14,
+                    bottom: 7,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                if (hasBusiness)
+                  Positioned(
+                    left: 26,
+                    bottom: 7,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                if (hasFirst)
+                  Positioned(
+                    right: 14,
+                    bottom: 7,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          } else {
+            return const SizedBox.shrink();
+          }
+        },
+      ),
     );
   }
 }
