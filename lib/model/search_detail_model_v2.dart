@@ -66,7 +66,7 @@ class MileageV2 {
       hasEconomy: int.tryParse(json['economy']?['amount']?.toString() ?? '0') != null && int.tryParse(json['economy']?['amount']?.toString() ?? '0')! > 0,
       hasBusiness: int.tryParse(json['business']?['amount']?.toString() ?? '0') != null && int.tryParse(json['business']?['amount']?.toString() ?? '0')! > 0,
       hasFirst: int.tryParse(json['first']?['amount']?.toString() ?? '0') != null && int.tryParse(json['first']?['amount']?.toString() ?? '0')! > 0,
-      isExpanded: false,
+      isExpanded: true,
     );
     print('[MileageV2.fromJson] economyMileage: \\${instance.economyMileage}, businessMileage: \\${instance.businessMileage}, firstMileage: \\${instance.firstMileage}, economyAmount: \\${instance.economyAmount}, businessAmount: \\${instance.businessAmount}, firstAmount: \\${instance.firstAmount}');
     return instance;

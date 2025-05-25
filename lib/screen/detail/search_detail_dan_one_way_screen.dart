@@ -5,6 +5,9 @@ import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mileage_thief/util/util.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:mileage_thief/custom/main_calendar.dart';
+
 class SearchDetailDanScreen extends StatelessWidget {
   final SearchModel searchModel;
 
@@ -36,9 +39,16 @@ class SearchDetailDanScreen extends StatelessWidget {
               children: [
                 Container(
                   margin: const EdgeInsets.all(8),
-                  child: Text(
-                    '대한항공 | 편도 | ${searchModel.seatClass} | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}) | '
-                        '\n\n성수기에는 마일리지가 50% 추가됩니다.',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '대한항공 | 편도 | ${searchModel.seatClass} | \n출발공항: ${searchModel.departureAirport!!}) | \n도착공항: ${searchModel.arrivalAirport!!}) | '
+                        '\n\n성수기에는 마일리지가 50% 추가됩니다.' +
+                            '\n검색 기간: ${searchModel.startYear}년 ${searchModel.startMonth}월 ~ ${searchModel.endYear}년 ${searchModel.endMonth}월',
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
                 Column(
@@ -64,35 +74,26 @@ class SearchDetailDanScreen extends StatelessWidget {
               ],
             ),
             Container(
-                padding: const EdgeInsets.all(20),
-                color: const Color(0Xffeeeeee),
-                child: FutureBuilder<List<MileageV2>>(
-                  future: getItems(searchModel),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<List<MileageV2>> snapshot) {
-                    if (snapshot.hasError) {
-                      return Center(child: Text('에러 발생: \\${snapshot.error}'));
-                    }
-                    if(snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return MyStatefulWidget(items: snapshot.data ?? [], model: searchModel);
-                    } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text("검색된 결과가 없습니다."),
-                        ),
-                      );
-                    }
-                    else {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                  },
-                )),
+              padding: const EdgeInsets.all(20),
+              color: Colors.white70,
+              child: MainCalendar(
+                eventsStream: Stream.value([]),
+                selectedDate: DateTime.now(),
+                firstDay: DateTime(
+                  int.parse(searchModel.startYear ?? DateTime.now().year.toString()),
+                  int.parse(searchModel.startMonth ?? DateTime.now().month.toString()),
+                  1,
+                ),
+                lastDay: DateTime(
+                  int.parse(searchModel.endYear ?? DateTime.now().year.toString()),
+                  int.parse(searchModel.endMonth ?? DateTime.now().month.toString()),
+                  31,
+                ),
+                onDaySelected: (selectedDate, focusedDay) {
+                  // 날짜 선택 시 원하는 동작 구현
+                },
+              ),
+            ),
           ],
         ),
       ),
