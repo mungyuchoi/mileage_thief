@@ -218,7 +218,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                   decoration: BoxDecoration(
                     color: Colors.grey.withOpacity(0.07),
                     border: Border.all(color: Colors.black26, width: 1.1),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(6),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.white.withOpacity(0.04),

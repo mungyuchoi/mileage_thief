@@ -420,6 +420,7 @@ class _AirportScreenState extends State<AirportScreen> {
   int firstEnableMonth = DateTime.now().month,
       lastEnableMonth = DateTime.now().month;
   int _counter = 3;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -447,39 +448,34 @@ class _AirportScreenState extends State<AirportScreen> {
   }
 
   _loadFullScreenAd() {
+    isLoading = true;
+    setState(() {});
     InterstitialAd.load(
       adUnitId: AdHelper.frontBannerAdUnitId,
       request: AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
-          this._interstitialAd = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              ad.dispose();
+              _incrementCounter(2);
+              isLoading = false;
+              setState(() {});
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              ad.dispose();
+              isLoading = false;
+              setState(() {});
+            },
+          );
+          ad.show();
         },
-        onAdFailedToLoad: (LoadAdError error) {},
+        onAdFailedToLoad: (LoadAdError error) {
+          isLoading = false;
+          setState(() {});
+        },
       ),
     );
-    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) {
-        _loadFullScreenAd();
-        print('%ad onAdShowedFullScreenContent.');
-      },
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        _incrementCounter(2);
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
-    );
-    _interstitialAd?.show();
   }
 
   _loadCounter() async {
@@ -549,11 +545,35 @@ class _AirportScreenState extends State<AirportScreen> {
     });
   }
 
-  void showFrontAd() {
-    _loadFullScreenAd();
-    print("showFrontAd _:$_interstitialAd");
-    _interstitialAd?.show();
-    _incrementCounter(2);
+  Future<void> showFrontAd() async {
+    isLoading = true;
+    setState(() {});
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              ad.dispose();
+              _incrementCounter(2);
+              isLoading = false;
+              setState(() {});
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              ad.dispose();
+              isLoading = false;
+              setState(() {});
+            },
+          );
+          ad.show();
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          isLoading = false;
+          setState(() {});
+        },
+      ),
+    );
   }
 
   void showRewardsAd() {
@@ -905,8 +925,17 @@ class _AirportScreenState extends State<AirportScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     FloatingActionButton.extended(
-                      onPressed: () {
-                        showFrontAd();
+                      onPressed: () async {
+                        if (isLoading) {
+                          Fluttertoast.showToast(
+                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.black54,
+                            textColor: Colors.white,
+                          );
+                          return;
+                        }
+                        await showFrontAd();
                       },
                       label: const Text("+ 2",
                           style: TextStyle(color: Colors.black87)),

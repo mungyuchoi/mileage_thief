@@ -63,7 +63,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     "28박29일",
     "29박30일",
   ];
-  final List<String> classItems = ["이코노미", "비즈니스", "이코노미+비즈니스"];
+  final List<String> classItems = ["전체", "이코노미", "비즈니스", "이코노미+비즈니스"];
   List<String> airportItems = [];
   String? dateSelectedValue = "전체";
   String? classSelectedValue = "비즈니스";
@@ -82,6 +82,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
   int firstEnableMonth = DateTime.now().month,
       lastEnableMonth = DateTime.now().month;
   int _counter = 3;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -208,11 +209,11 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     });
   }
 
-  void showFrontAd() {
+  Future<void> showFrontAd() async {
     _loadFullScreenAd();
-    print("showFrontAd _:$_interstitialAd");
+    print("showFrontAd _:$_interstitialAd" );
     _interstitialAd?.show();
-    _incrementCounter(2);
+    // await _incrementCounter(2);
   }
 
   void showRewardsAd() {
@@ -564,8 +565,24 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     FloatingActionButton.extended(
-                      onPressed: () {
-                        showFrontAd();
+                      onPressed: () async {
+                        if (isLoading) {
+                          Fluttertoast.showToast(
+                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.black54,
+                            textColor: Colors.white,
+                          );
+                          return;
+                        }
+                        isLoading = true;
+                        setState(() {});
+                        try {
+                          await showFrontAd();
+                        } finally {
+                          isLoading = false;
+                          setState(() {});
+                        }
                       },
                       label: const Text("+ 2",
                           style: TextStyle(color: Colors.black87)),
