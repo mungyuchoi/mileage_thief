@@ -29,10 +29,10 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
     for (final m in allItems) {
       final date = DateTime.tryParse(m.departureDate.substring(0,8)) ?? DateTime.now();
       if (m.hasEconomy) {
-        events.add(Event(date: date, type: 'economy', color: Color(0xFF1976D2)));
+        events.add(Event(date: date, type: 'economy', color: Color(0xFF425EB2)));
       }
       if (m.hasBusiness) {
-        events.add(Event(date: date, type: 'business', color: Color(0xFFFFB300)));
+        events.add(Event(date: date, type: 'business', color: Color(0xFF0A1863)));
       }
       if (m.hasFirst) {
         events.add(Event(date: date, type: 'first', color: Color(0xFF8B1E3F)));
@@ -96,6 +96,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -111,7 +112,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                     children: [
                       Text(
                         '대한항공 | 편도 | ${widget.searchModel.seatClass} | \n출발공항: ${widget.searchModel.departureAirport!!}) | \n도착공항: ${widget.searchModel.arrivalAirport!!}) | '
-                        '\n\n성수기에는 마일리지가 50% 추가됩니다.'
+                        '\n'
                         '\n검색 기간: ${widget.searchModel.startYear}년 ${widget.searchModel.startMonth}월 ~ ${widget.searchModel.endYear}년 ${widget.searchModel.endMonth}월',
                       ),
                       const SizedBox(height: 8),
@@ -144,11 +145,11 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 const SizedBox(width: 16),
-                Icon(Icons.circle, color: Color(0xFF1976D2), size: 14),
+                Icon(Icons.circle, color: Color(0xFF425EB2), size: 14),
                 const SizedBox(width: 4),
                 const Text('Economy', style: TextStyle(fontSize: 12)),
                 const SizedBox(width: 12),
-                Icon(Icons.circle, color: Color(0xFFFFB300), size: 14),
+                Icon(Icons.circle, color: Color(0xFF0A1863), size: 14),
                 const SizedBox(width: 4),
                 const Text('Business', style: TextStyle(fontSize: 12)),
                 const SizedBox(width: 12),
@@ -234,7 +235,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text(
                             '이코노미  세금: ${m.economyAmount}  마일리지: ${m.economyMileage}',
-                            style: const TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.w600, fontSize: 15),
+                            style: const TextStyle(color: Color(0xFF425EB2), fontWeight: FontWeight.w600, fontSize: 15),
                           ),
                         ),
                       if (m.hasBusiness)
@@ -242,7 +243,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text(
                             '비즈니스  세금: ${m.businessAmount}  마일리지: ${m.businessMileage}',
-                            style: const TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.w600, fontSize: 15),
+                            style: const TextStyle(color: Color(0xFF0A1863), fontWeight: FontWeight.w600, fontSize: 15),
                           ),
                         ),
                       if (m.hasFirst)
