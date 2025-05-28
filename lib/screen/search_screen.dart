@@ -369,50 +369,14 @@ class _AirportScreenState extends State<AirportScreen> {
   double xAlign = 5.0;
   Color loginColor = Colors.black;
   Color signInColor = Colors.black;
-  final List<String> dateItems = [
-    "전체",
-    "1박2일",
-    "2박3일",
-    "3박4일",
-    "4박5일",
-    "5박6일",
-    "6박7일",
-    "7박8일",
-    "8박9일",
-    "9박10일",
-    "10박11일",
-    "11박12일",
-    "12박13일",
-    "13박14일",
-    "14박15일",
-    "15박16일",
-    "16박17일",
-    "17박18일",
-    "18박19일",
-    "19박20일",
-    "20박21일",
-    "21박22일",
-    "22박23일",
-    "23박24일",
-    "24박25일",
-    "25박26일",
-    "26박27일",
-    "27박28일",
-    "28박29일",
-    "29박30일",
-  ];
-  final List<String> classItems = ["이코노미", "비즈니스", "이코노미+비즈니스"];
   List<String> airportItems = [];
   String? dateSelectedValue = "전체";
-  String? classSelectedValue = "비즈니스";
   String? departureSelectedValue = "서울|인천-ICN";
   String? arrivalSelectedValue;
   bool _arrivalError = false;
   late BannerAd _banner;
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
-  final DatabaseReference _classReference =
-      FirebaseDatabase.instance.ref("CLASS");
   final DatabaseReference _countryReference =
       FirebaseDatabase.instance.ref("COUNTRY");
   int startMonth = DateTime.now().month, startYear = DateTime.now().year;
@@ -526,20 +490,6 @@ class _AirportScreenState extends State<AirportScreen> {
         });
         airportItems.remove("서울|인천-ICN");
         airportItems.insert(0, "서울|인천-ICN");
-        setState(() {});
-      }
-    });
-    _classReference.once().then((event) {
-      final snapshot = event.snapshot;
-      Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
-      if (values != null) {
-        classItems.clear();
-        values.forEach((key, value) {
-          classItems.add(key);
-        });
-        classItems.sort();
-        classItems.remove("이코노미");
-        classItems.insert(0, "이코노미");
         setState(() {});
       }
     });
@@ -798,58 +748,6 @@ class _AirportScreenState extends State<AirportScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Column(
-                      children: [
-                        const Text('클래스'),
-                        const Padding(padding: EdgeInsets.all(4)),
-                        CustomDropdownButton2(
-                          buttonWidth: 140,
-                          dropdownWidth: 140,
-                          valueAlignment: Alignment.center,
-                          hint: '비즈니스, 퍼스트',
-                          dropdownItems: classItems,
-                          value: classSelectedValue,
-                          scrollbarAlwaysShow: true,
-                          onChanged: (value) {
-                            setState(() {
-                              classSelectedValue = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    SizedBox(width: 10),
-                    Column(
-                      children: [
-                        const Text('검색박수'),
-                        const Padding(padding: EdgeInsets.all(4)),
-                        CustomDropdownButton2(
-                          buttonWidth: 140,
-                          dropdownWidth: 100,
-                          valueAlignment: Alignment.center,
-                          hint: '전체',
-                          dropdownItems: dateItems,
-                          value: dateSelectedValue,
-                          scrollbarAlwaysShow: true,
-                          onChanged: (value) {
-                            setState(() {
-                              dateSelectedValue = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Padding(padding: EdgeInsets.all(4)),
-                const Divider(
-                  color: Colors.black,
-                  thickness: 2,
-                ),
-                const Padding(padding: EdgeInsets.all(4)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
                     SizedBox(width: 10),
                     ElevatedButton(
                         onPressed: () {
@@ -996,7 +894,7 @@ class _AirportScreenState extends State<AirportScreen> {
                                     isRoundTrip: xAlign == -1.0 ? true : false,
                                     departureAirport: departureSelectedValue,
                                     arrivalAirport: arrivalSelectedValue,
-                                    seatClass: classSelectedValue,
+                                    seatClass: '',
                                     searchDate: dateSelectedValue,
                                     startMonth:
                                         startMonth.toString().padLeft(2, '0'),
@@ -1015,7 +913,7 @@ class _AirportScreenState extends State<AirportScreen> {
                                           xAlign == -1.0 ? true : false,
                                       departureAirport: departureSelectedValue,
                                       arrivalAirport: arrivalSelectedValue,
-                                      seatClass: classSelectedValue,
+                                      seatClass: '',
                                       searchDate: dateSelectedValue,
                                       startMonth:
                                           startMonth.toString().padLeft(2, '0'),
