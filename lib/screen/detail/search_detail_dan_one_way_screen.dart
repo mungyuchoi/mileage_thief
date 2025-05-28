@@ -140,32 +140,65 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                 ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(width: 16),
-                Icon(Icons.circle, color: Color(0xFF425EB2), size: 14),
-                const SizedBox(width: 4),
-                const Text('Economy', style: TextStyle(fontSize: 12)),
-                const SizedBox(width: 12),
-                Icon(Icons.circle, color: Color(0xFF0A1863), size: 14),
-                const SizedBox(width: 4),
-                const Text('Business', style: TextStyle(fontSize: 12)),
-                const SizedBox(width: 12),
-                Icon(Icons.circle, color: Color(0xFF8B1E3F), size: 14),
-                const SizedBox(width: 4),
-                const Text('First', style: TextStyle(fontSize: 12)),
-              ],
-            ),
             Padding(
-              padding: const EdgeInsets.only(left: 20, top: 8, bottom: 4),
-              child: Text(
-                '가는날: ' + _getIata(widget.searchModel.departureAirport) + ' - ' + _getIata(widget.searchModel.arrivalAirport),
-                style: const TextStyle(
-                  color: Color(0xFF0A1863),
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '가는날: ' + _getIata(widget.searchModel.departureAirport) + ' - ' + _getIata(widget.searchModel.arrivalAirport),
+                    style: const TextStyle(
+                      color: Color(0xFF0A1863),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.help_outline, color: Color(0xFF0A1863)),
+                    tooltip: '범례',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Colors.white,
+                          title: const Text('좌석 정보', style: TextStyle(fontWeight: FontWeight.bold)),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  _legendMarker('E', Color(0xFF425EB2)),
+                                  Text('일반석'),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  _legendMarker('B', Color(0xFF0A1863)),
+                                  Text('비즈니스'),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  _legendMarker('F', Color(0xFF8B1E3F)),
+                                  Text('일등석'),
+                                ],
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('닫기'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             // MainCalendar는 항상 표시
@@ -289,6 +322,27 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
     if (airport == null) return '';
     final parts = airport.split('-');
     return parts.isNotEmpty ? parts.last.trim() : airport;
+  }
+
+  Widget _legendMarker(String label, Color color) {
+    return Container(
+      width: 30,
+      height: 30,
+      margin: const EdgeInsets.only(right: 8),
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }
 
