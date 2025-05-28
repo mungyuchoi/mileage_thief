@@ -398,7 +398,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[200],
                             foregroundColor: Colors.black54,
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -421,8 +421,8 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('${h.departure} - ${h.arrival}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
-                                      Text('${h.startYear}.${h.startMonth} ~ ${h.endYear}.${h.endMonth}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                                      Text('${h.departure} - ${h.arrival}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+                                      Text('${h.startYear}.${h.startMonth} ~ ${h.endYear}.${h.endMonth}', style: const TextStyle(fontSize: 10, color: Colors.black54)),
                                     ],
                                   ),
                                 ),
