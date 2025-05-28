@@ -84,7 +84,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black54,
+        backgroundColor: Color(0xFF425EB2),
         title: const Text(
           '검색하기',
           style: TextStyle(color: Colors.white),
@@ -196,7 +196,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: Color(0xFF425EB2),
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Text(

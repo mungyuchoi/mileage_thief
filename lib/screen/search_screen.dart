@@ -17,6 +17,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:share_plus/share_plus.dart';
+import '../model/search_history.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -385,6 +386,7 @@ class _AirportScreenState extends State<AirportScreen> {
       lastEnableMonth = DateTime.now().month;
   int _counter = 3;
   bool isLoading = false;
+  List<SearchHistory> searchHistory = [];
 
   @override
   void initState() {
@@ -744,6 +746,67 @@ class _AirportScreenState extends State<AirportScreen> {
                   color: Colors.black,
                   thickness: 2,
                 ),
+                if (searchHistory.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Column(
+                      children: searchHistory.map((h) => Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[200],
+                            foregroundColor: Colors.black54,
+                            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              departureSelectedValue = h.departure;
+                              arrivalSelectedValue = h.arrival;
+                              startYear = h.startYear;
+                              startMonth = h.startMonth;
+                              endYear = h.endYear;
+                              endMonth = h.endMonth;
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('${h.departure} - ${h.arrival}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+                                      Text('${h.startYear}.${h.startMonth} ~ ${h.endYear}.${h.endMonth}', style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16, color: Colors.black54),
+                                splashRadius: 10,
+                                onPressed: () {
+                                  setState(() {
+                                    searchHistory.remove(h);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                  const Padding(padding: EdgeInsets.all(4)),
+                  const Divider(
+                    color: Colors.black,
+                    thickness: 2,
+                  ),
+                ],
                 const Padding(padding: EdgeInsets.all(4)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -970,6 +1033,22 @@ class _AirportScreenState extends State<AirportScreen> {
                                           endMonth.toString().padLeft(2, '0'),
                                       endYear: endYear.toString()))));
                     }
+                    // 히스토리 추가
+                    final newHistory = SearchHistory(
+                      departure: departureSelectedValue ?? '',
+                      arrival: arrivalSelectedValue ?? '',
+                      startYear: startYear,
+                      startMonth: startMonth,
+                      endYear: endYear,
+                      endMonth: endMonth,
+                    );
+                    setState(() {
+                      searchHistory.remove(newHistory); // 중복 제거
+                      searchHistory.insert(0, newHistory); // 맨 앞에 추가
+                      if (searchHistory.length > 3) {
+                        searchHistory = searchHistory.sublist(0, 3);
+                      }
+                    });
                   },
                   style: TextButton.styleFrom(
                       foregroundColor: Colors.white, backgroundColor: const Color(0xFFD60815),
