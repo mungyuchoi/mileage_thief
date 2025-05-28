@@ -11,7 +11,7 @@ import '../model/search_model.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:flutter_custom_month_picker/flutter_custom_month_picker.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
 
 class SearchDanScreen extends StatefulWidget {
   const SearchDanScreen({super.key});
@@ -391,25 +391,49 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                   children: [
                     SizedBox(width: 10),
                     ElevatedButton(
-                        onPressed: () {
-                          showMonthPicker(context, onSelected: (month, year) {
+                        onPressed: () async {
+                          final selected = await showMonthPicker(
+                            context: context,
+                            initialDate: DateTime(startYear, startMonth),
+                            firstDate: DateTime(DateTime.now().year, 1),
+                            lastDate: DateTime(DateTime.now().year + 1, 12),
+                            monthPickerDialogSettings: MonthPickerDialogSettings(
+                              dialogSettings: PickerDialogSettings(
+                                dialogBackgroundColor: Colors.white,
+                                locale: Locale('ko'),
+                              ),
+                              headerSettings: PickerHeaderSettings(
+                                headerBackgroundColor: Color(0x8000256B),
+                              ),
+                              dateButtonsSettings: PickerDateButtonsSettings(
+                                unselectedMonthsTextColor: Colors.black,
+                                selectedMonthTextColor: Colors.black,
+                                currentMonthTextColor: Colors.black,
+                              ),
+                              actionBarSettings: PickerActionBarSettings(
+                                confirmWidget: Text(
+                                  '확인',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                cancelWidget: Text(
+                                  '취소',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                          if (selected != null) {
                             setState(() {
-                              startMonth = month;
-                              startYear = year;
+                              startYear = selected.year;
+                              startMonth = selected.month;
                             });
-                          },
-                              initialSelectedMonth: startMonth,
-                              initialSelectedYear: startYear,
-                              firstEnabledMonth: firstEnableMonth,
-                              lastEnabledMonth: lastEnableMonth,
-                              firstYear: DateTime.now().year,
-                              lastYear: DateTime.now().year + 1,
-                              selectButtonText: '확인',
-                              cancelButtonText: '취소',
-                              highlightColor: Colors.black54,
-                              textColor: Colors.black,
-                              contentBackgroundColor: Colors.white,
-                              dialogBackgroundColor: Colors.grey[200]);
+                          }
                         },
                         style: TextButton.styleFrom(
                             foregroundColor: Colors.white, backgroundColor: Color(0x8000256B),
@@ -420,25 +444,49 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                         )),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                        onPressed: () {
-                          showMonthPicker(context, onSelected: (month, year) {
+                        onPressed: () async {
+                          final selected = await showMonthPicker(
+                            context: context,
+                            initialDate: DateTime(endYear, endMonth),
+                            firstDate: DateTime(DateTime.now().year, 1),
+                            lastDate: DateTime(DateTime.now().year + 1, 12),
+                            monthPickerDialogSettings: MonthPickerDialogSettings(
+                              dialogSettings: PickerDialogSettings(
+                                dialogBackgroundColor: Colors.white,
+                                locale: Locale('ko'),
+                              ),
+                              headerSettings: PickerHeaderSettings(
+                                headerBackgroundColor: Color(0x8000256B),
+                              ),
+                              dateButtonsSettings: PickerDateButtonsSettings(
+                                unselectedMonthsTextColor: Colors.black,
+                                selectedMonthTextColor: Colors.black,
+                                currentMonthTextColor: Colors.black,
+                              ),
+                              actionBarSettings: PickerActionBarSettings(
+                                confirmWidget: Text(
+                                  '확인',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                cancelWidget: Text(
+                                  '취소',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                          if (selected != null) {
                             setState(() {
-                              endMonth = month;
-                              endYear = year;
+                              endYear = selected.year;
+                              endMonth = selected.month;
                             });
-                          },
-                              initialSelectedMonth: endMonth,
-                              initialSelectedYear: endYear,
-                              firstEnabledMonth: firstEnableMonth,
-                              lastEnabledMonth: lastEnableMonth,
-                              firstYear: DateTime.now().year,
-                              lastYear: DateTime.now().year + 1,
-                              selectButtonText: '확인',
-                              cancelButtonText: '취소',
-                              highlightColor: Colors.black54,
-                              textColor: Colors.black,
-                              contentBackgroundColor: Colors.white,
-                              dialogBackgroundColor: Colors.grey[200]);
+                          }
                         },
                         style: TextButton.styleFrom(
                             foregroundColor: Colors.white, backgroundColor: Color(0x8000256B),

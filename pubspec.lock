@@ -480,6 +480,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
+  month_picker_dialog:
+    dependency: "direct main"
+    description:
+      name: month_picker_dialog
+      sha256: "9a9a626907b0c54f1c7f4b68d27971f6df5c100411b79357161cd6a5629bfeac"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.3"
+  nested:
+    dependency: transitive
+    description:
+      name: nested
+      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   package_info_plus:
     dependency: "direct main"
     description:
@@ -584,6 +600,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.2"
+  provider:
+    dependency: transitive
+    description:
+      name: provider
+      sha256: "4abbd070a04e9ddc287673bf5a030c7ca8b685ff70218720abab8b092f53dd84"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.5"
   settings_ui:
     dependency: "direct main"
     description:

@@ -29,6 +29,7 @@ dependencies:
   settings_ui: ^2.0.2
   package_info_plus: ^8.3.0
   cloud_firestore: ^5.6.8
+  month_picker_dialog: ^6.0.3
 
 dev_dependencies:
   flutter_test:
