@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mileage_thief/const/colors.dart';
 import 'package:mileage_thief/model/search_detail_model_v2.dart';
 import 'package:mileage_thief/model/search_model.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
@@ -84,7 +83,7 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF425EB2),
+        backgroundColor: Color(0xFF00256B),
         title: const Text(
           '검색하기',
           style: TextStyle(color: Colors.white),
@@ -158,6 +157,17 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
                 const Text('First', style: TextStyle(fontSize: 12)),
               ],
             ),
+            Padding(
+              padding: const EdgeInsets.only(left: 20, top: 8, bottom: 4),
+              child: Text(
+                '가는날: ' + _getIata(widget.searchModel.departureAirport) + ' - ' + _getIata(widget.searchModel.arrivalAirport),
+                style: const TextStyle(
+                  color: Color(0xFF0A1863),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             // MainCalendar는 항상 표시
             MainCalendar(
               key: ValueKey(selectedDate),
@@ -210,7 +220,10 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
               ),
               const SizedBox(height: 8),
               if (selectedItems.isEmpty)
-                const Text('해당 날짜의 좌석 정보가 없습니다.', style: TextStyle(color: Colors.grey)),
+                const Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: Text('해당 날짜의 좌석 정보가 없습니다.', style: TextStyle(color: Colors.grey)),
+                ),
               for (final m in selectedItems)
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -270,6 +283,12 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
     } else {
       throw '마켓을 열 수 없습니다: $asianaMarketUrl';
     }
+  }
+
+  String _getIata(String? airport) {
+    if (airport == null) return '';
+    final parts = airport.split('-');
+    return parts.isNotEmpty ? parts.last.trim() : airport;
   }
 }
 
