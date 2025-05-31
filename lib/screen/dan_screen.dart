@@ -229,91 +229,91 @@ class _SearchDanScreen extends State<SearchDanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: width,
-          height: height,
-          margin: const EdgeInsets.only(top: 30),
-          decoration: const BoxDecoration(
-            color: Color(0x8000256B),
-            borderRadius: BorderRadius.all(
-              Radius.circular(50.0),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Container(
+            width: width,
+            height: height,
+            margin: const EdgeInsets.only(top: 30),
+            decoration: const BoxDecoration(
+              color: Color(0x8000256B),
+              borderRadius: BorderRadius.all(
+                Radius.circular(50.0),
+              ),
+            ),
+            child: Stack(
+              children: [
+                AnimatedAlign(
+                  alignment: Alignment(xAlign, 0),
+                  duration: Duration(milliseconds: 300),
+                  child: Container(
+                    width: width * 0.5,
+                    height: height,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF00256B),
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(50.0),
+                      ),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      xAlign = loginAlign;
+                      loginColor = selectedColor;
+                      signInColor = normalColor;
+                    });
+                  },
+                  child: Align(
+                    alignment: Alignment(-1, 0),
+                    child: Container(
+                      width: width * 0.5,
+                      color: Colors.transparent,
+                      alignment: Alignment.center,
+                      child: Text(
+                        '편도',
+                        style: TextStyle(
+                          color: loginColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      xAlign = signInAlign;
+                      signInColor = selectedColor;
+                      loginColor = normalColor;
+                    });
+                  },
+                  child: Align(
+                    alignment: Alignment(1, 0),
+                    child: Container(
+                      width: width * 0.5,
+                      color: Colors.transparent,
+                      alignment: Alignment.center,
+                      child: Text(
+                        '왕복',
+                        style: TextStyle(
+                          color: signInColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Stack(
-            children: [
-              AnimatedAlign(
-                alignment: Alignment(xAlign, 0),
-                duration: Duration(milliseconds: 300),
-                child: Container(
-                  width: width * 0.5,
-                  height: height,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF00256B),
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(50.0),
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    xAlign = loginAlign;
-                    loginColor = selectedColor;
-                    signInColor = normalColor;
-                  });
-                },
-                child: Align(
-                  alignment: Alignment(-1, 0),
-                  child: Container(
-                    width: width * 0.5,
-                    color: Colors.transparent,
-                    alignment: Alignment.center,
-                    child: Text(
-                      '편도',
-                      style: TextStyle(
-                        color: loginColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    xAlign = signInAlign;
-                    signInColor = selectedColor;
-                    loginColor = normalColor;
-                  });
-                },
-                child: Align(
-                  alignment: Alignment(1, 0),
-                  child: Container(
-                    width: width * 0.5,
-                    color: Colors.transparent,
-                    alignment: Alignment.center,
-                    child: Text(
-                      '왕복',
-                      style: TextStyle(
-                        color: signInColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
+          Container(
             padding: const EdgeInsets.all(15),
             width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: ListView(
-              padding: const EdgeInsets.all(4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Divider(
                   color: Colors.black,
@@ -568,10 +568,12 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                   color: Colors.black,
                   thickness: 2,
                 ),
-                Text(
-                  '땅콩: $_counter개',
-                  style: const TextStyle(fontSize: 18, color: Colors.black87),
-                  textAlign: TextAlign.center,
+                Center(
+                  child: Text(
+                    '땅콩: $_counter개',
+                    style: const TextStyle(fontSize: 18, color: Colors.black87),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
                 Row(
@@ -621,9 +623,14 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     ),
                   ],
                 ),
-                const Padding(padding: EdgeInsets.all(3)),
-                const Text("🥜 광고로 땅콩 받는 기능은 잠시 휴식 중이에요! \n 다른 기회를 통해 땅콩을 사용하는 재미를 준비하고 있어요.", textAlign: TextAlign.center),
-                const Padding(padding: EdgeInsets.all(3)),
+                const Padding(padding: EdgeInsets.all(7)),
+                const Center(
+                  child: Text(
+                    "땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const Padding(padding: EdgeInsets.all(7)),
                 ElevatedButton(
                   onPressed: () {
                     if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
@@ -723,8 +730,10 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 ),
 
               ],
-            )),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
