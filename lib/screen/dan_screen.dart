@@ -370,11 +370,15 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                             },
                           ),
                           if (_arrivalError)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 8.0, top: 4.0),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0, top: 4.0),
                               child: Text(
-                                '도착지를 선택하세요.',
-                                style: TextStyle(color: Colors.red, fontSize: 12),
+                                (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty)
+                                    ? '도착지를 선택하세요.'
+                                    : (departureSelectedValue == arrivalSelectedValue)
+                                        ? '출발지와 도착지가 같을 수 없습니다.'
+                                        : '도착지에 문제가 있습니다.',
+                                style: const TextStyle(color: Colors.red, fontSize: 12),
                               ),
                             ),
                         ],
@@ -637,6 +641,18 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     if (departureSelectedValue == null || departureSelectedValue!.isEmpty) {
                       Fluttertoast.showToast(
                         msg: "출발지를 선택해주세요.",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    if (departureSelectedValue == arrivalSelectedValue) {
+                      setState(() {
+                        _arrivalError = true;
+                      });
+                      Fluttertoast.showToast(
+                        msg: "출발지와 도착지가 같을 수 없습니다.",
                         gravity: ToastGravity.BOTTOM,
                         backgroundColor: Colors.black54,
                         textColor: Colors.white,

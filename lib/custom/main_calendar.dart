@@ -225,7 +225,7 @@ class _MainCalendarState extends State<MainCalendar> {
                 label = 'E';
                 bgColor = Color(0xFF425EB2); // Economy
               } else if (event.type == 'business') {
-                label = 'P';
+                label = 'B';
                 bgColor = Color(0xFF0A1863); // Business
               } else if (event.type == 'first') {
                 label = 'F';
