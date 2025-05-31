@@ -431,38 +431,6 @@ class _AirportScreenState extends State<AirportScreen> {
       request: const AdRequest(),
     )..load();
     _loadRewardedAd();
-    _loadFullScreenAd();
-  }
-
-  _loadFullScreenAd() {
-    isLoading = true;
-    setState(() {});
-    InterstitialAd.load(
-      adUnitId: AdHelper.frontBannerAdUnitId,
-      request: AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (InterstitialAd ad) {
-              ad.dispose();
-              _incrementCounter(2);
-              isLoading = false;
-              setState(() {});
-            },
-            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-              ad.dispose();
-              isLoading = false;
-              setState(() {});
-            },
-          );
-          ad.show();
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          isLoading = false;
-          setState(() {});
-        },
-      ),
-    );
   }
 
   _loadCounter() async {
