@@ -128,13 +128,34 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget buildAsianaWidget() {
-    return FutureBuilder<InitializationStatus>(
-      future: _initGoogleMobileAds(),
-      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-        return SingleChildScrollView(
+    return Stack(
+      children: [
+        // 1. 기존 UI 흐릿하게 보이도록
+        SingleChildScrollView(
           child: AirportScreen(key: airportScreenKey),
-        );
-      },
+        ),
+        // 2. 반투명 안개 레이어
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.white.withOpacity(0.85),
+        ),
+        // 3. 안내 문구
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.cloud, size: 60, color: Colors.black54),
+              SizedBox(height: 24),
+              Text(
+                '아시아나 기능은 안정화된 이후에 오픈됩니다.',
+                style: TextStyle(fontSize: 18, color: Colors.black87, fontWeight: FontWeight.w900),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
