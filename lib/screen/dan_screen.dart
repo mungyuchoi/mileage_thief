@@ -590,13 +590,33 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                           );
                           return;
                         }
-                        isLoading = true;
-                        setState(() {});
-                        try {
-                          await showFrontAd();
-                        } finally {
-                          isLoading = false;
+                        final result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Colors.white,
+                            title: const Text('알림', style: TextStyle(color: Colors.black)),
+                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('예', style: TextStyle(color: Colors.black)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (result == true) {
+                          isLoading = true;
                           setState(() {});
+                          try {
+                            await showFrontAd();
+                          } finally {
+                            isLoading = false;
+                            setState(() {});
+                          }
                         }
                       },
                       label: const Text("+ 2",
@@ -609,8 +629,28 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       ),
                     ),
                     FloatingActionButton.extended(
-                      onPressed: () {
-                        showRewardsAd();
+                      onPressed: () async {
+                        final result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Colors.white,
+                            title: const Text('알림', style: TextStyle(color: Colors.black)),
+                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('예', style: TextStyle(color: Colors.black)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (result == true) {
+                          showRewardsAd();
+                        }
                       },
                       label: const Text("+ 10",
                           style: TextStyle(color: Colors.black87)),
