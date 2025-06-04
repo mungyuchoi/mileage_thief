@@ -674,19 +674,21 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 ElevatedButton(
                   onPressed: () {
                     final isOneWay = xAlign == -1.0;
-                    final needPeanuts = isOneWay ? 2 : 3;
-                    if (_counter < needPeanuts) {
+                    final needPeanuts = isOneWay ? 0 : 2;
+                    if (!isOneWay && _counter < needPeanuts) {
                       Fluttertoast.showToast(
-                        msg: isOneWay ? "땅콩이 2개 이상 필요합니다." : "땅콩이 3개 이상 필요합니다.",
+                        msg: "땅콩이 2개 이상 필요합니다.",
                         gravity: ToastGravity.BOTTOM,
                         backgroundColor: Colors.black54,
                         textColor: Colors.white,
                       );
                       return;
                     }
-                    setState(() {
-                      _counter -= needPeanuts;
-                    });
+                    if (!isOneWay) {
+                      setState(() {
+                        _counter -= needPeanuts;
+                      });
+                    }
                     if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
                       setState(() {
                         _arrivalError = true;
@@ -795,7 +797,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 16.0),
                               child: Text(
-                                isOneWay ? '땅콩 소모 2개' : '땅콩 소모 3개',
+                                isOneWay ? '땅콩 0개(무료)' : '땅콩 소모 2개',
                                 style: const TextStyle(fontSize: 12, color: Colors.white70),
                               ),
                             );
