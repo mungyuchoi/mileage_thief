@@ -673,22 +673,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 const Padding(padding: EdgeInsets.all(7)),
                 ElevatedButton(
                   onPressed: () {
-                    final isOneWay = xAlign == -1.0;
-                    final needPeanuts = isOneWay ? 0 : 2;
-                    if (!isOneWay && _counter < needPeanuts) {
-                      Fluttertoast.showToast(
-                        msg: "땅콩이 2개 이상 필요합니다.",
-                        gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.black54,
-                        textColor: Colors.white,
-                      );
-                      return;
-                    }
-                    if (!isOneWay) {
-                      setState(() {
-                        _counter -= needPeanuts;
-                      });
-                    }
+                    // 땅콩 사용하지 않음 (무료)
                     if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
                       setState(() {
                         _arrivalError = true;
@@ -793,12 +778,11 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                         alignment: Alignment.centerRight,
                         child: Builder(
                           builder: (context) {
-                            final isOneWay = xAlign == -1.0;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 16.0),
+                            return const Padding(
+                              padding: EdgeInsets.only(right: 16.0),
                               child: Text(
-                                isOneWay ? '땅콩 0개(무료)' : '땅콩 소모 2개',
-                                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                '땅콩 0개(무료)',
+                                style: TextStyle(fontSize: 12, color: Colors.white70),
                               ),
                             );
                           },
