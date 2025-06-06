@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
+import 'package:mileage_thief/screen/login_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
@@ -18,6 +20,8 @@ import 'package:month_picker_dialog/month_picker_dialog.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:share_plus/share_plus.dart';
 import '../model/search_history.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -176,120 +180,84 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget buildSettingsWidget() {
     return Scaffold(
-      body: SettingsList(
-        platform: DevicePlatform.iOS,
-        sections: [
-          SettingsSection(
-            tiles: [
-              SettingsTile.switchTile(
-                initialValue: _notificationToggle,
-                onToggle: (bool value) {
-                  setNotificationToggle(value);
-                  setState(() {
-                    _notificationToggle = value;
-                  });
-                },
-                title: const Text('알림'),
-                description: const Text('마일리지 도둑 알림'),
-                leading: const Icon(Icons.notifications_none),
-                activeSwitchColor: Colors.black54,
-              ),
-              // SettingsTile(
-              //   onPressed: (context) => {},
-              //   title: const Text('Q & A'),
-              //   description: const Text('자주 하는 질문 및 답변'),
-              //   leading: const Icon(Icons.quiz_outlined),
-              // ),
-              // SettingsTile(
-              //   onPressed: (context) => {
-              //     showDialog(
-              //       context: context,
-              //       builder: (BuildContext context) {
-              //         return AlertDialog(
-              //           title: const Text('로그인 / 로그아웃'),
-              //           content: const Text('추후 기능으로 제공 예정 입니다.'),
-              //           actions: [
-              //             TextButton(
-              //               onPressed: () {
-              //                 Navigator.of(context).pop();
-              //               },
-              //               child: const Text('닫기'),
-              //             ),
-              //           ],
-              //         );
-              //       },
-              //     )
-              //   },
-              //   title: const Text('로그인 / 로그아웃'),
-              //   description: const Text('로그인을 통해 다양한 기능을 사용해 보세요'),
-              //   leading: const Icon(Icons.login),
-              // ),
-              // if (Theme
-              //     .of(context)
-              //     .platform == TargetPlatform.android)
-              //   SettingsTile(
-              //     onPressed: (context) => {
-              //       Navigator.push(
-              //           context,
-              //           MaterialPageRoute(
-              //               builder: (context) => const SettingDonation()))
-              //     },
-              //     title: const Text('기부 하기'),
-              //     description: const Text('"Make a small donation" (소소한 기부하기)'),
-              //     leading: const Icon(Icons.attach_money_outlined),
-              //   ),
-              // if (Theme
-              //     .of(context)
-              //     .platform == TargetPlatform.android)
-              //   SettingsTile(
-              //     onPressed: (context) => {
-              //       Navigator.push(
-              //           context,
-              //           MaterialPageRoute(
-              //               builder: (context) => const SettingPurchase()))
-              //     },
-              //     title: const Text('땅콩 구매하기'),
-              //     description: const Text('"광고 없이 땅콩 구매를 통해 검색해보세요."'),
-              //     leading: const Icon(Icons.attach_money_outlined),
-              //   ),
-              SettingsTile(
-                onPressed: (context) => {
-                  _launchMileageThief(AdHelper.mileageTheifMarketUrl)
-                },
-                title: const Text("스토어로 이동"),
-                leading: const Icon(Icons.info_outline),
-              ),
-              SettingsTile(
-                onPressed: (context) => {
-                  _version == _latestVersion
-                      ? Fluttertoast.showToast(
-                          msg: "최신버전입니다.",
-                          gravity: ToastGravity.BOTTOM,
-                          timeInSecForIosWeb: 5,
-                          backgroundColor: Colors.black38,
-                          fontSize: 20,
-                          textColor: Colors.white,
-                          toastLength: Toast.LENGTH_SHORT,
-                        )
-                      : Fluttertoast.showToast(
-                          msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
-                          gravity: ToastGravity.BOTTOM,
-                          timeInSecForIosWeb: 5,
-                          backgroundColor: Colors.black38,
-                          fontSize: 20,
-                          textColor: Colors.white,
-                          toastLength: Toast.LENGTH_SHORT,
-                        )
-                },
-                title: const Text('버전 정보'),
-                description: Text(_version == _latestVersion
-                    ? 'Version: $_version (최신버전입니다.)'
-                    : 'Version: $_version (최신버전이 아닙니다.)'),
-                leading: const Icon(Icons.info_outline),
+      body: StreamBuilder<User?>(
+        stream: AuthService.authStateChanges,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+          
+          return SettingsList(
+            platform: DevicePlatform.iOS,
+            sections: [
+              SettingsSection(
+                tiles: [
+                  SettingsTile.switchTile(
+                    initialValue: _notificationToggle,
+                    onToggle: (bool value) {
+                      setNotificationToggle(value);
+                      setState(() {
+                        _notificationToggle = value;
+                      });
+                    },
+                    title: const Text('알림'),
+                    description: const Text('마일리지 도둑 알림'),
+                    leading: const Icon(Icons.notifications_none),
+                    activeSwitchColor: Colors.black54,
+                  ),
+                  SettingsTile(
+                    onPressed: (context) => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      )
+                    },
+                    title: Text(user == null ? '로그인' : '내 정보'),
+                    description: Text(user == null 
+                      ? '로그인하여 땅콩을 클라우드에 저장하세요'
+                      : '${user.displayName ?? user.email ?? "사용자"}님, 안녕하세요!'),
+                    leading: Icon(user == null ? Icons.login : Icons.account_circle_outlined),
+                  ),
+                  SettingsTile(
+                    onPressed: (context) => {
+                      _launchMileageThief(AdHelper.mileageTheifMarketUrl)
+                    },
+                    title: const Text("스토어로 이동"),
+                    leading: const Icon(Icons.info_outline),
+                  ),
+                  SettingsTile(
+                    onPressed: (context) => {
+                      _version == _latestVersion
+                          ? Fluttertoast.showToast(
+                              msg: "최신버전입니다.",
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 5,
+                              backgroundColor: Colors.black38,
+                              fontSize: 20,
+                              textColor: Colors.white,
+                              toastLength: Toast.LENGTH_SHORT,
+                            )
+                          : Fluttertoast.showToast(
+                              msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 5,
+                              backgroundColor: Colors.black38,
+                              fontSize: 20,
+                              textColor: Colors.white,
+                              toastLength: Toast.LENGTH_SHORT,
+                            )
+                    },
+                    title: const Text('버전 정보'),
+                    description: Text(_version == _latestVersion
+                        ? 'Version: $_version (최신버전입니다.)'
+                        : 'Version: $_version (최신버전이 아닙니다.)'),
+                    leading: const Icon(Icons.info_outline),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -529,6 +497,15 @@ class _AirportScreenState extends State<AirportScreen> {
     setState(() {
       _counter = (prefs.getInt('counter') ?? 0) + peanuts;
       prefs.setInt('counter', _counter);
+      
+      // 로그인 상태 확인 후 Firestore 업데이트
+      final currentUser = AuthService.currentUser;
+      if (currentUser != null) {
+        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+          print('Firestore 업데이트 오류: $error');
+        });
+      }
+      
       Fluttertoast.showToast(
         msg: "땅콩 $peanuts개를 얻었습니다.",
         gravity: ToastGravity.BOTTOM,

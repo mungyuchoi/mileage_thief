@@ -13,6 +13,8 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class SearchDanScreen extends StatefulWidget {
   const SearchDanScreen({super.key});
@@ -181,6 +183,15 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     setState(() {
       _counter = (prefs.getInt('counter') ?? 0) + peanuts;
       prefs.setInt('counter', _counter);
+      
+      // 로그인 상태 확인 후 Firestore 업데이트
+      final currentUser = AuthService.currentUser;
+      if (currentUser != null) {
+        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+          print('Firestore 업데이트 오류: $error');
+        });
+      }
+      
       Fluttertoast.showToast(
         msg: "땅콩 $peanuts개를 얻었습니다.",
         gravity: ToastGravity.BOTTOM,

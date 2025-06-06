@@ -51,6 +51,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "962527268971-fp07ds2a1uvhkk9u6vcvc9f1o5vib6ik.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mungyu.mileage_thief",
+            "certificate_hash": "9e030f5023c2cbd12350900b6018e75fc4f5a455"
+          }
+        },
+        {
           "client_id": "962527268971-cuqq0s5mupi8e7spns7al27ttqd3k0h0.apps.googleusercontent.com",
           "client_type": 3
         }

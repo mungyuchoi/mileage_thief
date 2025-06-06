@@ -30,6 +30,10 @@ dependencies:
   package_info_plus: ^8.3.0
   cloud_firestore: ^5.6.8
   month_picker_dialog: ^6.0.3
+  firebase_auth: ^5.1.0
+  google_sign_in: ^6.1.4
+  sign_in_with_apple: ^6.1.1
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:
