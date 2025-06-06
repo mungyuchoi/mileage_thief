@@ -576,97 +576,98 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                   ),
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    FloatingActionButton.extended(
-                      onPressed: () async {
-                        if (isLoading) {
-                          Fluttertoast.showToast(
-                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
-                            gravity: ToastGravity.BOTTOM,
-                            backgroundColor: Colors.black54,
-                            textColor: Colors.white,
-                          );
-                          return;
-                        }
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: Colors.white,
-                            title: const Text('알림', style: TextStyle(color: Colors.black)),
-                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text('예', style: TextStyle(color: Colors.black)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (result == true) {
-                          isLoading = true;
-                          setState(() {});
-                          try {
-                            await showFrontAd();
-                          } finally {
-                            isLoading = false;
-                            setState(() {});
-                          }
-                        }
-                      },
-                      label: const Text("+ 2",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
-                      elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanut.png',
-                        scale: 19,
-                      ),
-                    ),
-                    FloatingActionButton.extended(
-                      onPressed: () async {
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: Colors.white,
-                            title: const Text('알림', style: TextStyle(color: Colors.black)),
-                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text('예', style: TextStyle(color: Colors.black)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (result == true) {
-                          showRewardsAd();
-                        }
-                      },
-                      label: const Text("+ 10",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
-                      elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanuts.png',
-                        scale: 19,
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //   children: [
+                //     FloatingActionButton.extended(
+                //       onPressed: () async {
+                //         if (isLoading) {
+                //           Fluttertoast.showToast(
+                //             msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
+                //             gravity: ToastGravity.BOTTOM,
+                //             backgroundColor: Colors.black54,
+                //             textColor: Colors.white,
+                //           );
+                //           return;
+                //         }
+                //         final result = await showDialog<bool>(
+                //           context: context,
+                //           builder: (context) => AlertDialog(
+                //             backgroundColor: Colors.white,
+                //             title: const Text('알림', style: TextStyle(color: Colors.black)),
+                //             content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                //             actions: [
+                //               TextButton(
+                //                 onPressed: () => Navigator.of(context).pop(false),
+                //                 child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                //               ),
+                //               TextButton(
+                //                 onPressed: () => Navigator.of(context).pop(true),
+                //                 child: const Text('예', style: TextStyle(color: Colors.black)),
+                //               ),
+                //             ],
+                //           ),
+                //         );
+                //         if (result == true) {
+                //           isLoading = true;
+                //           setState(() {});
+                //           try {
+                //             await showFrontAd();
+                //           } finally {
+                //             isLoading = false;
+                //             setState(() {});
+                //           }
+                //         }
+                //       },
+                //       label: const Text("+ 2",
+                //           style: TextStyle(color: Colors.black87)),
+                //       backgroundColor: Colors.white,
+                //       elevation: 3,
+                //       icon: Image.asset(
+                //         'asset/img/peanut.png',
+                //         scale: 19,
+                //       ),
+                //     ),
+                //     FloatingActionButton.extended(
+                //       onPressed: () async {
+                //         final result = await showDialog<bool>(
+                //           context: context,
+                //           builder: (context) => AlertDialog(
+                //             backgroundColor: Colors.white,
+                //             title: const Text('알림', style: TextStyle(color: Colors.black)),
+                //             content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                //             actions: [
+                //               TextButton(
+                //                 onPressed: () => Navigator.of(context).pop(false),
+                //                 child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                //               ),
+                //               TextButton(
+                //                 onPressed: () => Navigator.of(context).pop(true),
+                //                 child: const Text('예', style: TextStyle(color: Colors.black)),
+                //               ),
+                //             ],
+                //           ),
+                //         );
+                //         if (result == true) {
+                //           showRewardsAd();
+                //         }
+                //       },
+                //       label: const Text("+ 10",
+                //           style: TextStyle(color: Colors.black87)),
+                //       backgroundColor: Colors.white,
+                //       elevation: 3,
+                //       icon: Image.asset(
+                //         'asset/img/peanuts.png',
+                //         scale: 19,
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 const Padding(padding: EdgeInsets.all(7)),
                 const Center(
                   child: Text(
-                    "땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!",
+                    "광고로 땅콩 받는 기능은 잠시 휴식중이에요!" +
+                    "\n다른 기회를 통해 땅콩을 사용하는 재미를 준비하고 있어요.",
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -791,7 +792,14 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     ],
                   ),
                 ),
-
+                const Padding(padding: EdgeInsets.all(16)),
+                // 배너 광고 표시
+                Container(
+                  alignment: Alignment.center,
+                  child: AdWidget(ad: _banner),
+                  width: double.infinity,
+                  height: _banner.size.height.toDouble(),
+                ),
               ],
             ),
           ),
