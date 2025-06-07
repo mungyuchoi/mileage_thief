@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class CancellationNotificationRegisterScreen extends StatefulWidget {
   const CancellationNotificationRegisterScreen({super.key});
@@ -35,6 +37,7 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
 
   // Firebase 참조
   final DatabaseReference _countryReference = FirebaseDatabase.instance.ref("COUNTRY_DAN");
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // 땅콩 계산 관련
   int totalPeanuts = 0;
@@ -204,6 +207,138 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
     return selectedClasses.join(", ");
   }
 
+  String _extractAirportCode(String airportString) {
+    // "서울|인천-ICN" → "ICN" 형태로 추출
+    final parts = airportString.split('-');
+    if (parts.length > 1) {
+      return parts.last;
+    }
+    return airportString;
+  }
+
+  List<String> _getSelectedSeatClassCodes() {
+    List<String> codes = [];
+    if (isEconomySelected) codes.add('E');
+    if (isBusinessSelected) codes.add('B');
+    if (isFirstSelected) codes.add('F');
+    return codes;
+  }
+
+  String _createRouteKey(String from, String to, List<String> seatClasses) {
+    return '${from}-${to}_${seatClasses.join('')}';
+  }
+
+  Future<void> _saveSubscriptionToFirestore() async {
+    try {
+      final currentUser = AuthService.currentUser;
+      if (currentUser == null) {
+        throw Exception('로그인이 필요합니다.');
+      }
+
+      final fromCode = _extractAirportCode(departureSelectedValue!);
+      final toCode = _extractAirportCode(arrivalSelectedValue!);
+      final seatClasses = _getSelectedSeatClassCodes();
+      final subscriptionId = const Uuid().v4();
+
+      final now = Timestamp.now();
+      final expiresAt = Timestamp.fromDate(DateTime.now().add(const Duration(days: 7)));
+
+      // 1. cancel_subscriptions/{uid}/items/{docId} 저장
+      final subscriptionData = {
+        'from': fromCode,
+        'to': toCode,
+        'seatClasses': seatClasses,
+        'startDate': Timestamp.fromDate(_rangeStart!),
+        'endDate': Timestamp.fromDate(_rangeEnd ?? _rangeStart!),
+        'expiresAt': expiresAt,
+        'createdAt': now,
+        'peanutUsed': totalPeanuts,
+        'autoRenew': false,
+        'notifiedDates': [],
+      };
+
+      await _firestore
+          .collection('cancel_subscriptions')
+          .doc(currentUser.uid)
+          .collection('items')
+          .doc(subscriptionId)
+          .set(subscriptionData);
+
+      // 2. popular_subscriptions/{route}_{classes} 업데이트
+      final routeKey = _createRouteKey(fromCode, toCode, seatClasses);
+      final popularRef = _firestore.collection('popular_subscriptions').doc(routeKey);
+
+      await _firestore.runTransaction((transaction) async {
+        final popularDoc = await transaction.get(popularRef);
+        
+        if (popularDoc.exists) {
+          transaction.update(popularRef, {
+            'count': FieldValue.increment(1),
+            'lastUpdated': now,
+          });
+        } else {
+          transaction.set(popularRef, {
+            'count': 1,
+            'lastUpdated': now,
+          });
+        }
+      });
+
+      // 3. 사용자 땅콩 개수 차감
+      final newPeanutCount = userPeanutCount - totalPeanuts;
+      await UserService.updatePeanutCount(currentUser.uid, newPeanutCount);
+
+      print('구독 정보 저장 완료: $subscriptionId');
+      
+    } catch (e) {
+      print('구독 정보 저장 오류: $e');
+      rethrow;
+    }
+  }
+
+  void _processSubscription() async {
+    try {
+      // 로딩 표시
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF00256B),
+          ),
+        ),
+      );
+
+      await _saveSubscriptionToFirestore();
+
+      // 로딩 닫기
+      Navigator.of(context).pop();
+
+      // 성공 메시지
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('취소표 알림이 등록되었습니다! (땅콩 $totalPeanuts개 소모)'),
+          backgroundColor: const Color(0xFF00256B),
+        ),
+      );
+
+      // 페이지 닫기
+      Navigator.pop(context);
+
+    } catch (e) {
+      // 로딩 닫기
+      Navigator.of(context).pop();
+
+      // 에러 메시지
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('구독 등록 중 오류가 발생했습니다: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _showConfirmationDialog() {
     showDialog(
       context: context,
@@ -320,17 +455,6 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
         ),
       ],
     );
-  }
-
-  void _processSubscription() {
-    // TODO: 실제 구독 로직 구현
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('취소표 알림이 등록되었습니다! (땅콩 $totalPeanuts개 소모)'),
-        backgroundColor: const Color(0xFF00256B),
-      ),
-    );
-    Navigator.pop(context);
   }
 
   @override
