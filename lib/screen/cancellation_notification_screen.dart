@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'cancellation_notification_register_screen.dart';
 
 class CancellationNotificationScreen extends StatefulWidget {
   const CancellationNotificationScreen({super.key});
@@ -56,11 +57,10 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
       ),
       floatingActionButton: _currentTabIndex == 0 ? FloatingActionButton(
         onPressed: () {
-          // 알림 추가 기능
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('취소표 알림을 추가합니다'),
-              duration: Duration(seconds: 2),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CancellationNotificationRegisterScreen(),
             ),
           );
         },
