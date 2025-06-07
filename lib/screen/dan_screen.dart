@@ -6,6 +6,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/detail/search_detail_dan_one_way_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_dan_round_screen.dart';
+import 'package:mileage_thief/screen/cancellation_notification_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import '../model/search_history.dart';
@@ -243,10 +244,49 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          // 상단 알림 버튼 영역
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(top: 20, right: 16, left: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CancellationNotificationScreen(),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.notifications_outlined,
+                        color: Color(0xFF00256B),
+                        size: 28,
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        '취소표 알림',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF00256B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Container(
             width: width,
             height: height,
-            margin: const EdgeInsets.only(top: 30),
+            margin: const EdgeInsets.only(top: 10),
             decoration: const BoxDecoration(
               color: Color(0x8000256B),
               borderRadius: BorderRadius.all(
