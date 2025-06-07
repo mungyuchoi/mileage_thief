@@ -53,11 +53,55 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
       Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
       if (values != null) {
         airportItems.clear();
+        
+        // 우선순위 목록
+        List<String> priorityOrder = [
+          "뉴욕",
+          "발리",
+          "파리", 
+          "LA",
+          "하와이",
+          "시드니",
+          "바르셀로나",
+          "프랑크푸르트",
+          "런던",
+          "방콕",
+          "호찌민",
+          "싱가포르",
+          "벤쿠버",
+          "브리즈번",
+          "샌프란시스코"
+        ];
+        
+        // 모든 공항 데이터를 임시 리스트에 저장
+        List<String> allAirports = [];
         values.forEach((key, value) {
-          airportItems.add(key);
+          allAirports.add(key);
         });
-        airportItems.remove("서울|인천-ICN");
-        airportItems.insert(0, "서울|인천-ICN");
+        
+        // 서울|인천-ICN 제거 (나중에 맨 앞에 추가)
+        allAirports.remove("서울|인천-ICN");
+        
+        // 우선순위에 따라 정렬
+        List<String> priorityAirports = [];
+        List<String> remainingAirports = [...allAirports];
+        
+        // 우선순위 공항들을 먼저 추가
+        for (String priority in priorityOrder) {
+          for (String airport in allAirports) {
+            if (airport.contains(priority)) {
+              priorityAirports.add(airport);
+              remainingAirports.remove(airport);
+              break; // 첫 번째 매칭만 사용
+            }
+          }
+        }
+        
+        // 최종 순서: 서울|인천-ICN + 우선순위 공항들 + 나머지 공항들
+        airportItems.add("서울|인천-ICN");
+        airportItems.addAll(priorityAirports);
+        airportItems.addAll(remainingAirports);
+        
         setState(() {});
       }
     });
@@ -68,7 +112,7 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
     if (currentUser != null) {
       try {
         // Firestore에서 사용자의 peanutCount 가져오기
-        final userData = await UserService.getUserData(currentUser.uid);
+        final userData = await UserService.getUserFromFirestore(currentUser.uid);
         setState(() {
           userPeanutCount = userData?['peanutCount'] ?? 0;
         });
@@ -150,6 +194,143 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
 
   bool _hasEnoughPeanuts() {
     return userPeanutCount >= totalPeanuts;
+  }
+
+  String _getSelectedSeatClasses() {
+    List<String> selectedClasses = [];
+    if (isEconomySelected) selectedClasses.add("이코노미");
+    if (isBusinessSelected) selectedClasses.add("비즈니스");
+    if (isFirstSelected) selectedClasses.add("퍼스트");
+    return selectedClasses.join(", ");
+  }
+
+  void _showConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text(
+            '취소표 알림 구독 확인',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '다음 조건으로 취소표 알림을 구독하시겠습니까?',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+              _buildConfirmationRow('구간', '$departureSelectedValue → $arrivalSelectedValue'),
+              const SizedBox(height: 8),
+              _buildConfirmationRow('좌석등급', _getSelectedSeatClasses()),
+              const SizedBox(height: 8),
+              _buildConfirmationRow('알림기간', _getDateRangeText()),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00256B).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '소모될 땅콩: $totalPeanuts개',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF00256B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '구독 후 보유 땅콩: ${userPeanutCount - totalPeanuts}개',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _processSubscription();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00256B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                '확인',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildConfirmationRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 60,
+          child: Text(
+            '$label:',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _processSubscription() {
+    // TODO: 실제 구독 로직 구현
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('취소표 알림이 등록되었습니다! (땅콩 $totalPeanuts개 소모)'),
+        backgroundColor: const Color(0xFF00256B),
+      ),
+    );
+    Navigator.pop(context);
   }
 
   @override
@@ -359,6 +540,7 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
                     startingDayOfWeek: StartingDayOfWeek.sunday,
                     rangeStartDay: _rangeStart,
                     rangeEndDay: _rangeEnd,
+                    locale: 'ko_KR',
                     onDaySelected: _onDaySelected,
                     onRangeSelected: _onRangeSelected,
                     onFormatChanged: (format) {
@@ -487,16 +669,7 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _isFormValid() ? () {
-                  // TODO: 구독 로직 구현
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('취소표 알림이 등록되었습니다! (땅콩 $totalPeanuts개 소모)'),
-                      backgroundColor: const Color(0xFF00256B),
-                    ),
-                  );
-                  Navigator.pop(context);
-                } : null,
+                onPressed: _isFormValid() ? _showConfirmationDialog : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00256B),
                   foregroundColor: Colors.white,
