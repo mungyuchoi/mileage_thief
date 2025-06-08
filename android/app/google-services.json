@@ -67,6 +67,14 @@
           }
         },
         {
+          "client_id": "962527268971-mnrujvfrbvlm8su73oj00bpksv4degmu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mungyu.mileage_thief",
+            "certificate_hash": "bd9d5dd955c27f3fa41ec534b7d66ebbd3f8f655"
+          }
+        },
+        {
           "client_id": "962527268971-cuqq0s5mupi8e7spns7al27ttqd3k0h0.apps.googleusercontent.com",
           "client_type": 3
         }
