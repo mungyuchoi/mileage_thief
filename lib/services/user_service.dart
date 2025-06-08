@@ -13,6 +13,7 @@ class UserService {
       'displayName': user.displayName,
       'photoURL': user.photoURL,
       'peanutCount': peanutCount,
+      'peanutCountLimit': 3,
       'fcmToken': fcmToken ?? '',
       'createdAt': FieldValue.serverTimestamp(),
       'lastLoginAt': FieldValue.serverTimestamp(),

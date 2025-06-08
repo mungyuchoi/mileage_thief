@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'cancellation_notification_register_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import 'package:intl/intl.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class CancellationNotificationScreen extends StatefulWidget {
   const CancellationNotificationScreen({super.key});
@@ -34,6 +36,63 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
     super.dispose();
   }
 
+  Future<void> _handleFabPressed() async {
+    final currentUser = AuthService.currentUser;
+    if (currentUser == null) {
+      Fluttertoast.showToast(
+        msg: "로그인이 필요합니다",
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      // 1. 사용자의 제한 개수 확인
+      final userData = await UserService.getUserFromFirestore(currentUser.uid);
+      final limit = userData?['peanutCountLimit'] ?? 3;
+
+      // 2. 현재 등록된 알림 개수 확인
+      final snapshot = await _firestore
+          .collection('cancel_subscriptions')
+          .doc(currentUser.uid)
+          .collection('items')
+          .get();
+
+      final currentCount = snapshot.docs.length;
+
+      if (currentCount >= limit) {
+        // 제한에 도달한 경우
+        Fluttertoast.showToast(
+          msg: "현재 사용자는 취소표 알림이 ${limit}개까지만 허용됩니다",
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.orange,
+          textColor: Colors.white,
+          toastLength: Toast.LENGTH_LONG,
+        );
+        return;
+      }
+
+      // 제한에 도달하지 않은 경우 등록 화면으로 이동
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const CancellationNotificationRegisterScreen(),
+        ),
+      );
+
+    } catch (e) {
+      print('알림 개수 확인 오류: $e');
+      Fluttertoast.showToast(
+        msg: "오류가 발생했습니다. 다시 시도해주세요",
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,14 +119,7 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
         ],
       ),
       floatingActionButton: _currentTabIndex == 0 ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CancellationNotificationRegisterScreen(),
-            ),
-          );
-        },
+        onPressed: _handleFabPressed,
         backgroundColor: const Color(0xFF00256B),
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),

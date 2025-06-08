@@ -113,10 +113,30 @@ class _SearchDanScreen extends State<SearchDanScreen> {
   }
 
   _loadCounter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _counter = (prefs.getInt('counter') ?? 3);
-    });
+    final currentUser = AuthService.currentUser;
+    
+    if (currentUser != null) {
+      // 로그인한 사용자: Firestore에서 peanutCount 가져오기
+      try {
+        final userData = await UserService.getUserFromFirestore(currentUser.uid);
+        setState(() {
+          _counter = userData?['peanutCount'] ?? 0;
+        });
+      } catch (error) {
+        print('Firestore에서 peanutCount 로드 오류: $error');
+        // Firestore 실패 시 SharedPreferences를 fallback으로 사용
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        setState(() {
+          _counter = (prefs.getInt('counter') ?? 3);
+        });
+      }
+    } else {
+      // 로그인하지 않은 사용자: SharedPreferences 사용
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _counter = (prefs.getInt('counter') ?? 3);
+      });
+    }
   }
 
   void _loadRewardedAd() {
