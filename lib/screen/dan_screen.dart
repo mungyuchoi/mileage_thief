@@ -118,7 +118,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     if (currentUser != null) {
       // 로그인한 사용자: Firestore에서 peanutCount 가져오기
       try {
-        final userData = await UserService.getUserFromFirestore(currentUser.uid);
+        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
         setState(() {
           _counter = userData?['peanutCount'] ?? 0;
         });

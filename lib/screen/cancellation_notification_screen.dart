@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'cancellation_notification_register_screen.dart';
+import 'notification_history_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
@@ -49,8 +50,8 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
     }
 
     try {
-      // 1. 사용자의 제한 개수 확인
-      final userData = await UserService.getUserFromFirestore(currentUser.uid);
+      // 1. 사용자의 제한 개수 확인 (peanutCountLimit 필드 자동 추가)
+      final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
       final limit = userData?['peanutCountLimit'] ?? 3;
 
       // 2. 현재 등록된 알림 개수 확인
@@ -245,7 +246,7 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 66), // 하단에 50 + 기본 16 = 66 패딩 추가
           itemCount: docs.length,
           itemBuilder: (context, index) {
             final doc = docs[index];
@@ -372,112 +373,286 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
       );
     }
 
+    void _navigateToHistory() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NotificationHistoryScreen(
+            subscriptionId: docId,
+            from: from,
+            to: to,
+            seatClasses: seatClasses,
+          ),
+        ),
+      );
+    }
+
+    void _showActiveDeleteConfirmDialog(String docId, String from, String to, int peanutUsed) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              '취소표 알림 삭제',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$from → $to',
+                  style: const TextStyle(
+                    color: Color(0xFF00256B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '이 알림을 삭제하시겠습니까?',
+                  style: TextStyle(color: Colors.black, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '소모된 땅콩 ${peanutUsed}개를 돌려받을 수 없습니다.',
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  '취소',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _deleteActiveSubscription(docId, from, to);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                child: const Text(
+                  '삭제',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Opacity(
         opacity: isExpired ? 0.5 : 1.0,
         child: Stack(
           children: [
-            Card(
-              elevation: 2,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: isExpired ? Colors.grey.shade300 : const Color(0xFF00256B).withOpacity(0.2),
-                  width: 1,
+            GestureDetector(
+              onTap: isExpired ? null : _navigateToHistory,
+              onLongPress: isExpired ? null : () => _showActiveDeleteConfirmDialog(docId, from, to, peanutUsed),
+              child: Card(
+                elevation: 2,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: isExpired ? Colors.grey.shade300 : const Color(0xFF00256B).withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 상단: 구간 정보
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '$from → $to',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isExpired ? Colors.grey : Colors.black,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 상단: 구간 정보
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$from → $to',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: isExpired ? Colors.grey : Colors.black,
+                              ),
                             ),
                           ),
-                        ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isExpired ? Colors.grey.shade200 : const Color(0xFF00256B).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isExpired ? '만료' : '활성',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isExpired ? Colors.grey : const Color(0xFF00256B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // 중간: 상세 정보
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoRow('좌석등급', getSeatClassText(), isExpired),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildInfoRow('알림기간', getDateRangeText(), isExpired),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoRow('사용된 땅콩', '$peanutUsed개', isExpired),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildInfoRow(
+                              '만료일', 
+                              expiresAt != null ? DateFormat('MM.dd HH:mm').format(expiresAt) : '', 
+                              isExpired
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      // 알림 히스토리 정보 (활성 구독만)
+                      if (!isExpired) ...[
+                        const SizedBox(height: 12),
+                        _buildNotificationInfo(docId, isExpired),
+                      ],
+                      
+                      if (isExpired) ...[
+                        const SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: isExpired ? Colors.grey.shade200 : const Color(0xFF00256B).withOpacity(0.1),
+                            color: Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text(
-                            isExpired ? '만료' : '활성',
+                          child: const Text(
+                            '이 알림은 만료되었습니다',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isExpired ? Colors.grey : const Color(0xFF00256B),
+                              color: Colors.red,
                               fontWeight: FontWeight.w500,
                             ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],
-                    ),
-                    
-                    const SizedBox(height: 12),
-                    
-                    // 중간: 상세 정보
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoRow('좌석등급', getSeatClassText(), isExpired),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildInfoRow('알림기간', getDateRangeText(), isExpired),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoRow('사용된 땅콩', '$peanutUsed개', isExpired),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildInfoRow(
-                            '만료일', 
-                            expiresAt != null ? DateFormat('MM.dd HH:mm').format(expiresAt) : '', 
-                            isExpired
+                      
+                      // 클릭 안내 (활성 구독만)
+                      if (!isExpired) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00256B).withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.touch_app,
+                                    size: 16,
+                                    color: Color(0xFF00256B),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '탭하여 알림 히스토리 보기',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF00256B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.touch_app,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '길게 눌러서 삭제',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                    
-                    if (isExpired) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          '이 알림은 만료되었습니다',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -514,6 +689,151 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
     );
   }
 
+  Widget _buildNotificationInfo(String subscriptionId, bool isExpired) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: AuthService.currentUser != null
+          ? _firestore
+              .collection('notification_history')
+              .doc(AuthService.currentUser!.uid)
+              .collection('items')
+              .where('subscriptionId', isEqualTo: subscriptionId)
+              .snapshots()
+          : null,
+      builder: (context, snapshot) {
+        if (snapshot.hasError || !snapshot.hasData) {
+          return _buildNotificationInfoWidget(0, null, 0);
+        }
+
+        final docs = snapshot.data!.docs;
+        
+        // 클라이언트에서 정렬
+        docs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aTimestamp = aData['notifiedAt'] as Timestamp?;
+          final bTimestamp = bData['notifiedAt'] as Timestamp?;
+          
+          if (aTimestamp == null && bTimestamp == null) return 0;
+          if (aTimestamp == null) return 1;
+          if (bTimestamp == null) return -1;
+          
+          return bTimestamp.compareTo(aTimestamp); // 내림차순
+        });
+        
+        // 전체 알림 개수 조회
+        return FutureBuilder<QuerySnapshot>(
+          future: AuthService.currentUser != null
+              ? _firestore
+                  .collection('notification_history')
+                  .doc(AuthService.currentUser!.uid)
+                  .collection('items')
+                  .where('subscriptionId', isEqualTo: subscriptionId)
+                  .get()
+              : Future.value(null),
+          builder: (context, countSnapshot) {
+            final totalCount = countSnapshot.data?.docs.length ?? 0;
+            final unreadCount = countSnapshot.data?.docs
+                .where((doc) => !(doc.data() as Map<String, dynamic>)['isRead'] ?? false)
+                .length ?? 0;
+            
+            final lastNotification = docs.isNotEmpty 
+                ? (docs.first.data() as Map<String, dynamic>)['notifiedAt'] as Timestamp?
+                : null;
+            
+            return _buildNotificationInfoWidget(totalCount, lastNotification?.toDate(), unreadCount);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildNotificationInfoWidget(int totalCount, DateTime? lastNotification, int unreadCount) {
+    final timeAgo = lastNotification != null ? _getTimeAgo(lastNotification) : null;
+    
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF00256B).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF00256B).withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.notifications,
+                      size: 16,
+                      color: totalCount > 0 ? const Color(0xFF00256B) : Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '총 알림: $totalCount건',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: totalCount > 0 ? const Color(0xFF00256B) : Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (unreadCount > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (timeAgo != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '최근 알림: $timeAgo',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTimeAgo(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}분 전';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}시간 전';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}일 전';
+    } else {
+      return DateFormat('MM.dd').format(date);
+    }
+  }
+
   Future<void> _deleteSubscription(String docId) async {
     try {
       final currentUser = AuthService.currentUser;
@@ -530,7 +850,7 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
         ),
       );
 
-      // Firestore에서 문서 삭제
+      // 1. 구독 정보 삭제
       await _firestore
           .collection('cancel_subscriptions')
           .doc(currentUser.uid)
@@ -538,13 +858,98 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
           .doc(docId)
           .delete();
 
+      // 2. 관련된 알림 히스토리도 삭제
+      final notificationHistoryQuery = await _firestore
+          .collection('notification_history')
+          .doc(currentUser.uid)
+          .collection('items')
+          .where('subscriptionId', isEqualTo: docId)
+          .get();
+
+      // 배치로 알림 히스토리 삭제
+      if (notificationHistoryQuery.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (final doc in notificationHistoryQuery.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      }
+
       // 로딩 닫기
       Navigator.of(context).pop();
 
       // 성공 메시지
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('만료된 알림이 삭제되었습니다'),
+          content: Text('만료된 알림과 알림 히스토리가 삭제되었습니다'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      // 로딩 닫기
+      Navigator.of(context).pop();
+
+      // 에러 메시지
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('삭제 중 오류가 발생했습니다: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteActiveSubscription(String docId, String from, String to) async {
+    try {
+      final currentUser = AuthService.currentUser;
+      if (currentUser == null) return;
+
+      // 로딩 표시
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF00256B),
+          ),
+        ),
+      );
+
+      // 배치를 사용하여 원자성 보장
+      final batch = _firestore.batch();
+
+      // 1. 먼저 알림 히스토리 삭제
+      final notificationHistoryQuery = await _firestore
+          .collection('notification_history')
+          .doc(currentUser.uid)
+          .collection('items')
+          .where('subscriptionId', isEqualTo: docId)
+          .get();
+
+      for (final doc in notificationHistoryQuery.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 2. 구독 정보 삭제
+      final subscriptionRef = _firestore
+          .collection('cancel_subscriptions')
+          .doc(currentUser.uid)
+          .collection('items')
+          .doc(docId);
+
+      batch.delete(subscriptionRef);
+
+      // 배치 실행
+      await batch.commit();
+
+      // 로딩 닫기
+      Navigator.of(context).pop();
+
+      // 성공 메시지
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$from → $to 알림이 삭제되었습니다'),
           backgroundColor: Colors.green,
         ),
       );
@@ -679,7 +1084,7 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
           });
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 66), // 하단에 50 + 기본 16 = 66 패딩 추가
           itemCount: sortedDocs.length,
           itemBuilder: (context, index) {
             final doc = sortedDocs[index];

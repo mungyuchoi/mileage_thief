@@ -114,8 +114,8 @@ class _CancellationNotificationRegisterScreenState extends State<CancellationNot
     final currentUser = AuthService.currentUser;
     if (currentUser != null) {
       try {
-        // Firestore에서 사용자의 peanutCount 가져오기
-        final userData = await UserService.getUserFromFirestore(currentUser.uid);
+        // Firestore에서 사용자의 peanutCount 가져오기 (peanutCountLimit 필드 자동 추가)
+        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
         setState(() {
           userPeanutCount = userData?['peanutCount'] ?? 0;
         });

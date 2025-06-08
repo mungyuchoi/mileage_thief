@@ -142,4 +142,47 @@ class UserService {
       rethrow;
     }
   }
+
+  // peanutCountLimit 필드 추가/업데이트 (기존 사용자용)
+  static Future<void> ensurePeanutCountLimit(String uid) async {
+    try {
+      await _firestore
+          .collection(_usersCollection)
+          .doc(uid)
+          .update({
+        'peanutCountLimit': 3,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      print('peanutCountLimit 필드 추가 완료: $uid');
+    } catch (e) {
+      print('peanutCountLimit 필드 추가 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 사용자 정보 가져오기 + peanutCountLimit 자동 추가
+  static Future<Map<String, dynamic>?> getUserFromFirestoreWithLimit(String uid) async {
+    try {
+      final doc = await _firestore.collection(_usersCollection).doc(uid).get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        
+        // peanutCountLimit 필드가 없으면 추가
+        if (!data.containsKey('peanutCountLimit')) {
+          await ensurePeanutCountLimit(uid);
+          // 업데이트된 데이터 다시 가져오기
+          final updatedDoc = await _firestore.collection(_usersCollection).doc(uid).get();
+          return updatedDoc.data();
+        }
+        
+        return data;
+      }
+      return null;
+    } catch (e) {
+      print('사용자 정보 가져오기 오류: $e');
+      rethrow;
+    }
+  }
 }
