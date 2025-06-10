@@ -6,6 +6,8 @@
 	<string>962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
 	<string>com.googleusercontent.apps.962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>962527268971-aceihv4j4vrsbmqdstcb3fpljiatdhq3.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyDGAgbK-9qurqHVQPdDVrxlXC92N2PIcZ0</string>
 	<key>GCM_SENDER_ID</key>
@@ -17,7 +19,7 @@
 	<key>PROJECT_ID</key>
 	<string>mileagethief</string>
 	<key>STORAGE_BUCKET</key>
-	<string>mileagethief.appspot.com</string>
+	<string>mileagethief.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -32,5 +34,7 @@
 	<string>1:962527268971:ios:d6efb76824deb711e4612e</string>
 	<key>DATABASE_URL</key>
 	<string>https://mileagethief-default-rtdb.firebaseio.com</string>
+	<key>ADMOB_APP_ID</key>
+	<string>ca-app-pub-8549606613390169~3500255527</string>
 </dict>
 </plist>
