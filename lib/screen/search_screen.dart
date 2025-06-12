@@ -199,7 +199,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       });
                     },
                     title: const Text('알림'),
-                    description: const Text('마일리지 도둑 알림'),
+                    description: const Text('마일리지 캐치 알림'),
                     leading: const Icon(Icons.notifications_none),
                     activeSwitchColor: Colors.black54,
                   ),
