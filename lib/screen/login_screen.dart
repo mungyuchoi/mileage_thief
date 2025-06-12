@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../helper/AdHelper.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/fcm_service.dart';
@@ -17,14 +19,25 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isUpdatingName = false;
+  bool _isAdLoading = false;
   User? _currentUser;
   int _currentPeanutCount = 0;
+  InterstitialAd? _interstitialAd;
+  RewardedAd? _rewardedAd;
 
   @override
   void initState() {
     super.initState();
     _getCurrentUser();
     _loadPeanutCount();
+    _loadRewardedAd();
+  }
+
+  @override
+  void dispose() {
+    _interstitialAd?.dispose();
+    _rewardedAd?.dispose();
+    super.dispose();
   }
 
   void _getCurrentUser() {
@@ -274,6 +287,115 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _loadFullScreenAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerDanAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {},
+      ),
+    );
+    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (InterstitialAd ad) {
+        _loadFullScreenAd();
+        print('ad onAdShowedFullScreenContent.');
+      },
+      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        _incrementPeanutCount(2);
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
+    );
+    _interstitialAd?.show();
+  }
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedDanAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              setState(() {
+                ad.dispose();
+                _rewardedAd = null;
+              });
+              _loadRewardedAd();
+            },
+          );
+
+          setState(() {
+            _rewardedAd = ad;
+          });
+        },
+        onAdFailedToLoad: (err) {
+          print('Failed to load a rewarded ad: ${err.message}');
+        },
+      ),
+    );
+  }
+
+  Future<void> _showFrontAd() async {
+    _loadFullScreenAd();
+    print("showFrontAd _:$_interstitialAd");
+    _interstitialAd?.show();
+  }
+
+  void _showRewardsAd() {
+    print("showRewardsAd _rewardedAd:$_rewardedAd");
+    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+      _incrementPeanutCount(10);
+    });
+  }
+
+  Future<void> _incrementPeanutCount(int peanuts) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final currentUser = AuthService.currentUser;
+    
+    setState(() {
+      _currentPeanutCount = (_currentPeanutCount) + peanuts;
+    });
+    
+    await prefs.setInt('counter', _currentPeanutCount);
+    
+    // 로그인 상태 확인 후 Firestore 업데이트
+    if (currentUser != null) {
+      try {
+        await UserService.updatePeanutCount(currentUser.uid, _currentPeanutCount);
+      } catch (error) {
+        print('Firestore 업데이트 오류: $error');
+      }
+    }
+    
+    // 땅콩 수 다시 로드하여 동기화
+    await _loadPeanutCount();
+    
+    Fluttertoast.showToast(
+      msg: "땅콩 $peanuts개를 얻었습니다.",
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 5,
+      backgroundColor: Colors.green,
+      fontSize: 20,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_SHORT,
+    );
+  }
+
   String _getLoginButtonText() {
     if (Platform.isAndroid) {
       return 'Google로 로그인';
@@ -447,6 +569,98 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 20),
+
+              // 광고 버튼들 (+2, +10)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  FloatingActionButton.extended(
+                    onPressed: () async {
+                      if (_isAdLoading) {
+                        Fluttertoast.showToast(
+                          msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
+                          gravity: ToastGravity.BOTTOM,
+                          backgroundColor: Colors.black54,
+                          textColor: Colors.white,
+                        );
+                        return;
+                      }
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Colors.white,
+                          title: const Text('알림', style: TextStyle(color: Colors.black)),
+                          content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('예', style: TextStyle(color: Colors.black)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (result == true) {
+                        setState(() {
+                          _isAdLoading = true;
+                        });
+                        try {
+                          await _showFrontAd();
+                        } finally {
+                          setState(() {
+                            _isAdLoading = false;
+                          });
+                        }
+                      }
+                    },
+                    label: const Text("+ 2",
+                        style: TextStyle(color: Colors.black87)),
+                    backgroundColor: Colors.white,
+                    elevation: 3,
+                    icon: Image.asset(
+                      'asset/img/peanut.png',
+                      scale: 19,
+                    ),
+                  ),
+                  FloatingActionButton.extended(
+                    onPressed: () async {
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Colors.white,
+                          title: const Text('알림', style: TextStyle(color: Colors.black)),
+                          content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('예', style: TextStyle(color: Colors.black)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (result == true) {
+                        _showRewardsAd();
+                      }
+                    },
+                    label: const Text("+ 10",
+                        style: TextStyle(color: Colors.black87)),
+                    backgroundColor: Colors.white,
+                    elevation: 3,
+                    icon: Image.asset(
+                      'asset/img/peanuts.png',
+                      scale: 19,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
               
               // 사용자 정보 카드
               Container(
@@ -495,7 +709,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text('보유 땅콩', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              Text('$_currentPeanutCount개', style: const TextStyle(fontSize: 14)),
+                              Text('$_currentPeanutCount개', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
