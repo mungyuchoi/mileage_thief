@@ -185,4 +185,31 @@ class UserService {
       rethrow;
     }
   }
+
+  // 회원 탈퇴 시 모든 데이터 삭제 (cancel_subscriptions, notification_history 포함)
+  static Future<void> deleteUserFromFirestore(String uid) async {
+    final batch = _firestore.batch();
+    // 1. users/{uid} 삭제
+    batch.delete(_firestore.collection(_usersCollection).doc(uid));
+
+    // 2. cancel_subscriptions/{uid}/items 전체 삭제
+    final cancelSubsItems = await _firestore.collection('cancel_subscriptions').doc(uid).collection('items').get();
+    for (final doc in cancelSubsItems.docs) {
+      batch.delete(doc.reference);
+    }
+    // 2-1. cancel_subscriptions/{uid} 문서도 삭제
+    batch.delete(_firestore.collection('cancel_subscriptions').doc(uid));
+
+    // 3. notification_history/{uid}/items 전체 삭제
+    final notifHistoryItems = await _firestore.collection('notification_history').doc(uid).collection('items').get();
+    for (final doc in notifHistoryItems.docs) {
+      batch.delete(doc.reference);
+    }
+    // 3-1. notification_history/{uid} 문서도 삭제
+    batch.delete(_firestore.collection('notification_history').doc(uid));
+
+    // 일괄 커밋
+    await batch.commit();
+    print('회원 탈퇴 관련 모든 데이터 삭제 완료: $uid');
+  }
 }
