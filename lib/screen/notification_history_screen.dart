@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
+import '../helper/AdHelper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NotificationHistoryScreen extends StatefulWidget {
   final String subscriptionId;
@@ -53,6 +55,8 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF00256B),
+        foregroundColor: Colors.white,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -66,8 +70,6 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF00256B),
-        foregroundColor: Colors.white,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _getCurrentUserStream(),
@@ -129,54 +131,91 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
           final docs = snapshot.data?.docs ?? [];
           
-          // 클라이언트에서 정렬
+          // 출발시간 기준 오름차순 정렬
           docs.sort((a, b) {
             final aData = a.data() as Map<String, dynamic>;
             final bData = b.data() as Map<String, dynamic>;
-            final aTimestamp = aData['notifiedAt'] as Timestamp?;
-            final bTimestamp = bData['notifiedAt'] as Timestamp?;
-            
-            if (aTimestamp == null && bTimestamp == null) return 0;
-            if (aTimestamp == null) return 1;
-            if (bTimestamp == null) return -1;
-            
-            return bTimestamp.compareTo(aTimestamp); // 내림차순
+            String? aDep;
+            String? bDep;
+            // 출발시간 추출 (여러 개면 가장 이른 값)
+            if (aData['flightInfo'] != null && (aData['flightInfo'] as Map<String, dynamic>)['departureTime'] != null) {
+              final dep = (aData['flightInfo'] as Map<String, dynamic>)['departureTime'];
+              if (dep is List && dep.isNotEmpty) {
+                aDep = (List<String>.from(dep)..sort()).first;
+              } else if (dep is String) {
+                aDep = dep;
+              }
+            }
+            if (bData['flightInfo'] != null && (bData['flightInfo'] as Map<String, dynamic>)['departureTime'] != null) {
+              final dep = (bData['flightInfo'] as Map<String, dynamic>)['departureTime'];
+              if (dep is List && dep.isNotEmpty) {
+                bDep = (List<String>.from(dep)..sort()).first;
+              } else if (dep is String) {
+                bDep = dep;
+              }
+            }
+            // 출발시간이 없으면 notifiedAt으로 fallback
+            if (aDep == null && bDep == null) {
+              final aTimestamp = aData['notifiedAt'] as Timestamp?;
+              final bTimestamp = bData['notifiedAt'] as Timestamp?;
+              if (aTimestamp == null && bTimestamp == null) return 0;
+              if (aTimestamp == null) return 1;
+              if (bTimestamp == null) return -1;
+              return aTimestamp.compareTo(bTimestamp); // 오래된 순
+            }
+            if (aDep == null) return 1;
+            if (bDep == null) return -1;
+            return aDep.compareTo(bDep); // 출발시간 오름차순
           });
 
           if (docs.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 80,
-                    color: Colors.grey,
+            return Column(
+              children: [
+                _buildHeaderWithKoreanAirButton(),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.notifications_none,
+                          size: 80,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          '받은 알림이 없습니다',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          '취소표가 발견되면 알림을 받게 됩니다',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    '받은 알림이 없습니다',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '취소표가 발견되면 알림을 받게 됩니다',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              return _buildNotificationCard(data, doc.id);
-            },
+          return Column(
+            children: [
+              _buildHeaderWithKoreanAirButton(),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    return _buildNotificationCard(data, doc.id);
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -273,16 +312,16 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                           '항공사: ${flightInfo['airline']}',
                           style: const TextStyle(fontSize: 12, color: Colors.black54),
                         ),
-                      if (flightInfo['flightNumber'] != null)
-                        Text(
-                          '편명: ${flightInfo['flightNumber']}',
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
                       if (flightInfo['departureTime'] != null)
-                        Text(
-                          '출발시간: ${flightInfo['departureTime']}',
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
+                        (() {
+                          final dep = flightInfo['departureTime'];
+                          if (dep is List) {
+                            final sorted = List<String>.from(dep)..sort();
+                            return Text('출발시간: ${sorted.join(', ')}', style: const TextStyle(fontSize: 12, color: Colors.black54));
+                          } else {
+                            return Text('출발시간: $dep', style: const TextStyle(fontSize: 12, color: Colors.black54));
+                          }
+                        })(),
                     ],
                   ),
                 ),
@@ -309,5 +348,61 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     } else {
       return DateFormat('MM.dd').format(date);
     }
+  }
+
+  Widget _buildHeaderWithKoreanAirButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${widget.from} → ${widget.to}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF00256B)),
+                ),
+                Text(
+                  _getSeatClassText(),
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: () async {
+                  final url = AdHelper.danMarketUrl;
+                  if (await canLaunch(url)) {
+                    await launch(url);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset('asset/img/app_dan.png', width: 32, height: 32),
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text('대한항공 앱', style: TextStyle(fontSize: 10, color: Color(0xFF00256B))),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 } 
