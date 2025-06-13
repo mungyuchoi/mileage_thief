@@ -414,6 +414,61 @@ class _LoginScreenState extends State<LoginScreen> {
     return Icons.login;
   }
 
+  Future<void> _handleDeleteAccount() async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('회원탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        content: const Text('정말로 회원탈퇴 하시겠습니까?\n\n모든 정보가 삭제되며 복구할 수 없습니다.', style: TextStyle(color: Colors.black)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      // Firestore 유저 데이터 삭제
+      await UserService.deleteUserFromFirestore(user.uid);
+      // Firebase Auth 계정 삭제
+      await user.delete();
+      // SharedPreferences(로컬) 데이터 삭제
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      // FCM 토큰 삭제 (옵션)
+      await FCMService.deleteCurrentToken();
+      // 상태 초기화
+      setState(() {
+        _currentUser = null;
+        _currentPeanutCount = 3;
+      });
+      Fluttertoast.showToast(
+        msg: "회원탈퇴가 완료되었습니다.",
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      // 로그인 화면으로 이동(필요시)
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "회원탈퇴 실패: "+e.toString(),
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -739,6 +794,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+              // iOS에서만 회원탈퇴 버튼 노출
+              if (Platform.isIOS) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: _handleDeleteAccount,
+                    icon: const Icon(Icons.delete_forever),
+                    label: const Text(
+                      '회원탈퇴',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
