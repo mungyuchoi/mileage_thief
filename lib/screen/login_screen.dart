@@ -445,8 +445,6 @@ class _LoginScreenState extends State<LoginScreen> {
       // SharedPreferences(로컬) 데이터 삭제
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      // FCM 토큰 삭제 (옵션)
-      await FCMService.deleteCurrentToken();
       // 상태 초기화
       setState(() {
         _currentUser = null;
@@ -484,331 +482,62 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_currentUser == null) ...[
-              Icon(
-                Icons.account_circle,
-                size: 100,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(height: 20),
-            ],
-            
-            if (_currentUser == null) ...[
-              const Text(
-                '로그인하여 땅콩을 클라우드에 저장하세요!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_currentUser == null) ...[
+                Icon(
+                  Icons.account_circle,
+                  size: 100,
+                  color: Colors.grey[400],
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '현재 땅콩: $_currentPeanutCount개',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 30),
+                const SizedBox(height: 20),
+              ],
               
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  icon: _isLoading 
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Icon(_getLoginIcon()),
-                  label: Text(
-                    _isLoading ? '로그인 중...' : _getLoginButtonText(),
-                    style: const TextStyle(fontSize: 16),
+              if (_currentUser == null) ...[
+                const Text(
+                  '로그인하여 땅콩을 클라우드에 저장하세요!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Platform.isAndroid 
-                      ? const Color(0xFF4285F4)  // 구글 블루
-                      : Colors.black,             // 애플 블랙
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '현재 땅콩: $_currentPeanutCount개',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black54,
                   ),
                 ),
-              ),
-            ] else ...[
-              // 사용자 프로필 이미지
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: _currentUser!.photoURL != null 
-                  ? NetworkImage(_currentUser!.photoURL!)
-                  : null,
-                backgroundColor: Colors.grey[300],
-                child: _currentUser!.photoURL == null 
-                  ? Icon(Icons.person, size: 50, color: Colors.grey[600])
-                  : null,
-              ),
-              const SizedBox(height: 20),
-              
-              Text(
-                '안녕하세요!',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 10),
-              
-              // 사용자 이름과 편집 버튼
-              Stack(
-                children: [
-                  // displayName (전체 폭을 차지하면서 중앙 정렬)
-                  Container(
-                    width: double.infinity,
-                    alignment: Alignment.center,
-                    child: Text(
-                      _currentUser!.displayName ?? _currentUser!.email ?? '사용자',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  // 편집 버튼 (displayName 바로 옆에 붙임)
-                  Positioned.fill(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _currentUser!.displayName ?? _currentUser!.email ?? '사용자',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            color: Colors.transparent, // 투명하게 해서 위치만 잡음
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(width: 20), // 마진 추가
-                        IconButton(
-                          onPressed: _isUpdatingName ? null : _showEditNameDialog,
-                          icon: _isUpdatingName 
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                                ),
-                              )
-                            : const Icon(Icons.edit, size: 18, color: Colors.grey),
-                          splashRadius: 16,
-                          tooltip: '이름 편집',
-                          padding: EdgeInsets.zero, // 기존 padding 제거
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // 광고 버튼들 (+2, +10)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  FloatingActionButton.extended(
-                    onPressed: () async {
-                      if (_isAdLoading) {
-                        Fluttertoast.showToast(
-                          msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
-                          gravity: ToastGravity.BOTTOM,
-                          backgroundColor: Colors.black54,
-                          textColor: Colors.white,
-                        );
-                        return;
-                      }
-                      final result = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: Colors.white,
-                          title: const Text('알림', style: TextStyle(color: Colors.black)),
-                          content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('아니오', style: TextStyle(color: Colors.black)),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text('예', style: TextStyle(color: Colors.black)),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (result == true) {
-                        setState(() {
-                          _isAdLoading = true;
-                        });
-                        try {
-                          await _showFrontAd();
-                        } finally {
-                          setState(() {
-                            _isAdLoading = false;
-                          });
-                        }
-                      }
-                    },
-                    label: const Text("+ 2",
-                        style: TextStyle(color: Colors.black87)),
-                    backgroundColor: Colors.white,
-                    elevation: 3,
-                    icon: Image.asset(
-                      'asset/img/peanut.png',
-                      scale: 19,
-                    ),
-                  ),
-                  FloatingActionButton.extended(
-                    onPressed: () async {
-                      final result = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: Colors.white,
-                          title: const Text('알림', style: TextStyle(color: Colors.black)),
-                          content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('아니오', style: TextStyle(color: Colors.black)),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text('예', style: TextStyle(color: Colors.black)),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (result == true) {
-                        _showRewardsAd();
-                      }
-                    },
-                    label: const Text("+ 10",
-                        style: TextStyle(color: Colors.black87)),
-                    backgroundColor: Colors.white,
-                    elevation: 3,
-                    icon: Image.asset(
-                      'asset/img/peanuts.png',
-                      scale: 19,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // 사용자 정보 카드
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.account_circle, color: Colors.blue, size: 24),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('로그인된 계정', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              Text(_currentUser!.email ?? '이메일 없음', style: const TextStyle(fontSize: 14)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Image.asset(
-                          'asset/img/peanuts.png',
-                          width: 24,
-                          height: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('보유 땅콩', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              Text('$_currentPeanutCount개', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _handleLogout,
-                  icon: const Icon(Icons.logout),
-                  label: const Text(
-                    '로그아웃',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              // iOS에서만 회원탈퇴 버튼 노출
-              if (Platform.isIOS) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 30),
+                
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton.icon(
-                    onPressed: _handleDeleteAccount,
-                    icon: const Icon(Icons.delete_forever),
-                    label: const Text(
-                      '회원탈퇴',
-                      style: TextStyle(fontSize: 16),
+                    onPressed: _isLoading ? null : _handleLogin,
+                    icon: _isLoading 
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Icon(_getLoginIcon()),
+                    label: Text(
+                      _isLoading ? '로그인 중...' : _getLoginButtonText(),
+                      style: const TextStyle(fontSize: 16),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: Platform.isAndroid 
+                        ? const Color(0xFF4285F4)  // 구글 블루
+                        : Colors.black,             // 애플 블랙
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -816,9 +545,281 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+              ] else ...[
+                // 사용자 프로필 이미지
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: _currentUser!.photoURL != null 
+                    ? NetworkImage(_currentUser!.photoURL!)
+                    : null,
+                  backgroundColor: Colors.grey[300],
+                  child: _currentUser!.photoURL == null 
+                    ? Icon(Icons.person, size: 50, color: Colors.grey[600])
+                    : null,
+                ),
+                const SizedBox(height: 20),
+                
+                Text(
+                  '안녕하세요!',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                
+                // 사용자 이름과 편집 버튼
+                Stack(
+                  children: [
+                    // displayName (전체 폭을 차지하면서 중앙 정렬)
+                    Container(
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      child: Text(
+                        _currentUser!.displayName ?? _currentUser!.email ?? '사용자',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    // 편집 버튼 (displayName 바로 옆에 붙임)
+                    Positioned.fill(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _currentUser!.displayName ?? _currentUser!.email ?? '사용자',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              color: Colors.transparent, // 투명하게 해서 위치만 잡음
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(width: 20), // 마진 추가
+                          IconButton(
+                            onPressed: _isUpdatingName ? null : _showEditNameDialog,
+                            icon: _isUpdatingName 
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                                  ),
+                                )
+                              : const Icon(Icons.edit, size: 18, color: Colors.grey),
+                            splashRadius: 16,
+                            tooltip: '이름 편집',
+                            padding: EdgeInsets.zero, // 기존 padding 제거
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // 광고 버튼들 (+2, +10)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FloatingActionButton.extended(
+                      onPressed: () async {
+                        if (_isAdLoading) {
+                          Fluttertoast.showToast(
+                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.black54,
+                            textColor: Colors.white,
+                          );
+                          return;
+                        }
+                        final result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Colors.white,
+                            title: const Text('알림', style: TextStyle(color: Colors.black)),
+                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('예', style: TextStyle(color: Colors.black)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (result == true) {
+                          setState(() {
+                            _isAdLoading = true;
+                          });
+                          try {
+                            await _showFrontAd();
+                          } finally {
+                            setState(() {
+                              _isAdLoading = false;
+                            });
+                          }
+                        }
+                      },
+                      label: const Text("+ 2",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanut.png',
+                        scale: 19,
+                      ),
+                    ),
+                    FloatingActionButton.extended(
+                      onPressed: () async {
+                        final result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Colors.white,
+                            title: const Text('알림', style: TextStyle(color: Colors.black)),
+                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('예', style: TextStyle(color: Colors.black)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (result == true) {
+                          _showRewardsAd();
+                        }
+                      },
+                      label: const Text("+ 10",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanuts.png',
+                        scale: 19,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                
+                // 사용자 정보 카드
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.account_circle, color: Colors.blue, size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('로그인된 계정', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                Text(_currentUser!.email ?? '이메일 없음', style: const TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Image.asset(
+                            'asset/img/peanuts.png',
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('보유 땅콩', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                Text('$_currentPeanutCount개', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: _handleLogout,
+                    icon: const Icon(Icons.logout),
+                    label: const Text(
+                      '로그아웃',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                // iOS에서만 회원탈퇴 버튼 노출
+                if (Platform.isIOS) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _handleDeleteAccount,
+                      icon: const Icon(Icons.delete_forever),
+                      label: const Text(
+                        '회원탈퇴',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 32),
               ],
             ],
-          ],
+          ),
         ),
       ),
     );
