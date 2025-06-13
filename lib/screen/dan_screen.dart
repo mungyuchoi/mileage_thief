@@ -31,6 +31,9 @@ const double signInAlign = 1;
 const Color selectedColor = Colors.white;
 const Color normalColor = Colors.white;
 
+// 전역 스크린샷 모드 변수
+bool isScreenShotMode = false;
+
 class _SearchDanScreen extends State<SearchDanScreen> {
   double xAlign = 5.0;
   Color loginColor = Colors.black;
@@ -865,12 +868,13 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 ),
                 const Padding(padding: EdgeInsets.all(16)),
                 // 배너 광고 표시
-                Container(
-                  alignment: Alignment.center,
-                  child: AdWidget(ad: _banner),
-                  width: double.infinity,
-                  height: _banner.size.height.toDouble(),
-                ),
+                if (!isScreenShotMode)
+                  Container(
+                    alignment: Alignment.center,
+                    child: AdWidget(ad: _banner),
+                    width: double.infinity,
+                    height: _banner.size.height.toDouble(),
+                  ),
               ],
             ),
           ),
