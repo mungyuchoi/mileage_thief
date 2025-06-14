@@ -61,9 +61,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   : "설정",
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
-        leading: Image.asset(
-          'asset/img/airplane.png',
-          scale: 2,
+        leading: SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Image.asset(
+              'asset/img/app_icon.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 1,

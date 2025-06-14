@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'cancellation_notification_register_screen.dart';
 import 'notification_history_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +6,8 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../helper/AdHelper.dart';
 
 class CancellationNotificationScreen extends StatefulWidget {
   const CancellationNotificationScreen({super.key});
@@ -19,6 +21,8 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
   late TabController _tabController;
   int _currentTabIndex = 0;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late BannerAd _banner;
+  bool _isBannerLoaded = false;
 
   @override
   void initState() {
@@ -29,11 +33,21 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
         _currentTabIndex = _tabController.index;
       });
     });
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _isBannerLoaded = true),
+        onAdFailedToLoad: (ad, err) => setState(() => _isBannerLoaded = false),
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _banner.dispose();
     super.dispose();
   }
 
@@ -125,6 +139,17 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ) : null,
+      bottomNavigationBar: _isBannerLoaded
+          ? SafeArea(
+              child: Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                width: double.infinity,
+                height: _banner.size.height.toDouble(),
+                child: AdWidget(ad: _banner),
+              ),
+            )
+          : null,
     );
   }
 

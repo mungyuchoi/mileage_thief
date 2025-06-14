@@ -5,6 +5,7 @@ import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/repository/mileage_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mileage_thief/custom/main_calendar.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../model/event_model.dart';
 
@@ -22,6 +23,8 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
   List<MileageV2> allItems = [];
   bool isLoading = true;
   String? errorMsg;
+  late BannerAd _banner;
+  bool _isBannerLoaded = false;
 
   List<Event> get events {
     final events = <Event>[];
@@ -45,6 +48,21 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
     super.initState();
     selectedDate = DateTime.now();
     _loadData();
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _isBannerLoaded = true),
+        onAdFailedToLoad: (ad, err) => setState(() => _isBannerLoaded = false),
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _banner.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -307,6 +325,17 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: _isBannerLoaded
+          ? SafeArea(
+              child: Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                width: double.infinity,
+                height: _banner.size.height.toDouble(),
+                child: AdWidget(ad: _banner),
+              ),
+            )
+          : null,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:mileage_thief/repository/mileage_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mileage_thief/custom/main_calendar.dart';
 import '../../model/event_model.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class SearchDetailDanRoundScreen extends StatefulWidget {
   final SearchModel searchModel;
@@ -28,6 +29,9 @@ class _SearchDetailDanRoundScreenState extends State<SearchDetailDanRoundScreen>
   bool isReturnLoading = true;
   String? returnErrorMsg;
 
+  late BannerAd _banner;
+  bool _isBannerLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +39,21 @@ class _SearchDetailDanRoundScreenState extends State<SearchDetailDanRoundScreen>
     selectedReturnDate = DateTime.now().add(const Duration(days: 7));
     _loadGoData();
     _loadReturnData();
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _isBannerLoaded = true),
+        onAdFailedToLoad: (ad, err) => setState(() => _isBannerLoaded = false),
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _banner.dispose();
+    super.dispose();
   }
 
   Future<void> _loadGoData() async {
@@ -368,6 +387,7 @@ class _SearchDetailDanRoundScreenState extends State<SearchDetailDanRoundScreen>
               ],
 
               const SizedBox(height: 32),
+              SizedBox(height: 50),
 
               // 오는날
               Row(
@@ -516,6 +536,17 @@ class _SearchDetailDanRoundScreenState extends State<SearchDetailDanRoundScreen>
           ),
         ),
       ),
+      bottomNavigationBar: _isBannerLoaded
+          ? SafeArea(
+              child: Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                width: double.infinity,
+                height: _banner.size.height.toDouble(),
+                child: AdWidget(ad: _banner),
+              ),
+            )
+          : null,
     );
   }
 }

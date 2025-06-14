@@ -24,6 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
   int _currentPeanutCount = 0;
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
+  late BannerAd _banner;
+  bool _isBannerLoaded = false;
 
   @override
   void initState() {
@@ -31,12 +33,22 @@ class _LoginScreenState extends State<LoginScreen> {
     _getCurrentUser();
     _loadPeanutCount();
     _loadRewardedAd();
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _isBannerLoaded = true),
+        onAdFailedToLoad: (ad, err) => setState(() => _isBannerLoaded = false),
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
   }
 
   @override
   void dispose() {
     _interstitialAd?.dispose();
     _rewardedAd?.dispose();
+    _banner.dispose();
     super.dispose();
   }
 
@@ -83,6 +95,11 @@ class _LoginScreenState extends State<LoginScreen> {
       
       if (userCredential?.user != null) {
         final user = userCredential!.user!;
+        await user.reload();
+        final updatedUser = AuthService.currentUser;
+        setState(() {
+          _currentUser = updatedUser;
+        });
         
         // 사용자 확인 다이얼로그 표시
         final shouldSave = await _showConfirmDialog();
@@ -822,6 +839,17 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: _isBannerLoaded
+          ? SafeArea(
+              child: Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                width: double.infinity,
+                height: _banner.size.height.toDouble(),
+                child: AdWidget(ad: _banner),
+              ),
+            )
+          : null,
     );
   }
 } 
