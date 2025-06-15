@@ -142,23 +142,68 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     },
                   ),
                 ),
-                ListTile(
-                  tileColor: Colors.transparent,
-                  leading: const Icon(Icons.list),
-                  title: const Text('전체글'),
-                  selected: selectedBoardId == 'all',
-                  onTap: () {
-                    setState(() {
-                      selectedBoardId = 'all';
-                      selectedBoardName = '전체글';
-                    });
-                    Navigator.pop(context);
-                  },
+                Container(
+                  decoration: selectedBoardId == 'all'
+                      ? BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFB2F7EF), Color(0xFF7FC7F5)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                        )
+                      : null,
+                  child: ListTile(
+                    tileColor: Colors.transparent,
+                    leading: Icon(
+                      Icons.list,
+                      color: selectedBoardId == 'all' ? Colors.white : Colors.black54,
+                    ),
+                    title: Text(
+                      '전체글',
+                      style: TextStyle(
+                        color: selectedBoardId == 'all' ? Colors.white : Colors.black87,
+                        fontWeight: selectedBoardId == 'all' ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    selected: selectedBoardId == 'all',
+                    onTap: () {
+                      setState(() {
+                        selectedBoardId = 'all';
+                        selectedBoardName = '전체글';
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
                 ),
-                ...boards.map((board) => ListTile(
-                      leading: Icon(getBoardIcon(board['id'] as String)),
-                      title: Text(board['name']!),
+                ...boards.map((board) =>
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: selectedBoardId == board['id']
+                        ? BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFB2F7EF), Color(0xFF7FC7F5)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          )
+                        : null,
+                    child: ListTile(
+                      leading: Icon(
+                        getBoardIcon(board['id'] as String),
+                        color: selectedBoardId == board['id'] ? Colors.white : Colors.black54,
+                      ),
+                      title: Text(
+                        board['name']!,
+                        style: TextStyle(
+                          color: selectedBoardId == board['id'] ? Colors.white : Colors.black87,
+                          fontWeight: selectedBoardId == board['id'] ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
                       selected: selectedBoardId == board['id'],
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      tileColor: Colors.transparent,
                       onTap: () {
                         setState(() {
                           selectedBoardId = board['id']!;
@@ -166,7 +211,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         });
                         Navigator.pop(context);
                       },
-                    )),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -176,7 +223,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
         children: [
           // 카테고리/검색/공지 바
           Container(
-            color: Colors.white,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFB2F7EF), Color(0xFF7FC7F5)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -192,7 +246,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(selectedBoardName, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.white,
+                    //     borderRadius: BorderRadius.circular(20),
+                    //     boxShadow: [
+                    //       BoxShadow(
+                    //         color: Colors.black.withOpacity(0.03),
+                    //         blurRadius: 2,
+                    //         offset: const Offset(0, 1),
+                    //       ),
+                    //     ],
+                    //   ),
+                      child: Text(
+                        selectedBoardName,
+                        style: const TextStyle(
+                          color: Colors.black54, // 민트~블루 계열 텍스트
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 Row(
@@ -208,32 +283,107 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ],
             ),
           ),
-          const Divider(height: 1, color: Colors.grey),
           // 본문 영역
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               itemCount: 10, // TODO: Firestore에서 글 목록 불러오기
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.grey),
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.grey[200],
-                    child: const Icon(Icons.person, color: Colors.black54),
+                // 샘플 데이터
+                final sample = {
+                  'title': '샘플 게시글 제목 $index',
+                  'contentHtml': '샘플 게시글 내용 미리보기... 이곳에 본문이 들어갑니다.',
+                  'viewCount': 10 + index * 3,
+                  'commentCount': index % 3,
+                  'likesCount': index % 5,
+                  'createdAt': DateTime.now().subtract(Duration(minutes: index * 2)),
+                };
+                return Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                  title: Text('샘플 게시글 제목 $index', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('샘플 게시글 내용 미리보기...'),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.favorite_border, size: 18, color: Colors.black38),
-                      SizedBox(height: 4),
-                      Icon(Icons.mode_comment_outlined, size: 18, color: Colors.black38),
-                    ],
+                  elevation: 1.5,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFFF8FAFF), // 연한 파랑-하양
+                          Color(0xFFFDF6FF), // 연한 보라-하양
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Stack(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 제목
+                            Text(
+                              sample['title'] as String,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                                color: Colors.black,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            // 본문
+                            Text(
+                              sample['contentHtml'] as String,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 10),
+                            // 조회수 + comment/like
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '조회 ${sample['viewCount']}회',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black38,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(Icons.mode_comment_outlined, size: 18, color: Colors.black38),
+                                    const SizedBox(width: 4),
+                                    Text('${sample['commentCount']}', style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                                    const SizedBox(width: 16),
+                                    Icon(Icons.favorite_border, size: 18, color: Colors.black38),
+                                    const SizedBox(width: 4),
+                                    Text('${sample['likesCount']}', style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        // 우측 상단 작성 시간
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Text(
+                            _formatTime(sample['createdAt'] as DateTime),
+                            style: const TextStyle(fontSize: 12, color: Colors.black38),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  onTap: () {
-                    // TODO: 게시글 상세로 이동
-                  },
                 );
               },
             ),
@@ -248,5 +398,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
         child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
+    if (diff.inHours < 24) return '${diff.inHours}시간 전';
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 } 
