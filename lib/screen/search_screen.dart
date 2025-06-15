@@ -22,6 +22,7 @@ import 'package:share_plus/share_plus.dart';
 import '../model/search_history.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../screen/community_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -55,10 +56,12 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: Text(
           _currentIndex == 0
-              ? '대한항공 마일리지 찾기'
+              ? '커뮤니티'
               : _currentIndex == 1
-                  ? '아시아나 마일리지 찾기'
-                  : "설정",
+                  ? '대한항공 마일리지 찾기'
+                  : _currentIndex == 2
+                      ? '아시아나 마일리지 찾기'
+                      : '설정',
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: SizedBox(
@@ -108,18 +111,50 @@ class _SearchScreenState extends State<SearchScreen> {
             _currentIndex = index;
           });
         },
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.airlines),
-            label: '대한항공',
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.forum),
+                SizedBox(height: 2),
+                Text('커뮤니티', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.airlines),
-            label: '아시아나',
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.airlines),
+                SizedBox(height: 2),
+                Text('대한항공', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: '설정',
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.airlines),
+                SizedBox(height: 2),
+                Text('아시아나', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.settings),
+                SizedBox(height: 2),
+                Text('설정', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
           ),
         ],
       ),
@@ -129,13 +164,15 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget buildPage(int index) {
     switch (index) {
       case 0:
-        return buildDanWidget();
+        return const CommunityScreen();
       case 1:
-        return buildAsianaWidget();
+        return buildDanWidget();
       case 2:
+        return buildAsianaWidget();
+      case 3:
         return buildSettingsWidget();
       default:
-        return buildAsianaWidget();
+        return const CommunityScreen();
     }
   }
 

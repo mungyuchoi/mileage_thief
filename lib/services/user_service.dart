@@ -12,11 +12,29 @@ class UserService {
       'email': user.email,
       'displayName': user.displayName,
       'photoURL': user.photoURL,
-      'peanutCount': peanutCount,
-      'peanutCountLimit': 3,
-      'fcmToken': fcmToken ?? '',
+      'joinedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
       'lastLoginAt': FieldValue.serverTimestamp(),
+      'postCount': 0,
+      'commentCount': 0,
+      'likesReceived': 0,
+      'reportedCount': 0,
+      'reportSubmittedCount': 0,
+      'grade': '이코노미',
+      'gradeLevel': 1,
+      'displayGrade': '이코노미 Lv.1',
+      'title': '',
+      'gradeUpdatedAt': FieldValue.serverTimestamp(),
+      'peanutCount': peanutCount,
+      'peanutCountLimit': 3,
+      'adBonusPercent': 0,
+      'badgeVisible': true,
+      'roles': ['user'],
+      'isBanned': false,
+      'warnCount': 0,
+      'fcmToken': fcmToken ?? '',
+      'followingCount': 0,
+      'followerCount': 0,
     };
   }
 
@@ -212,4 +230,38 @@ class UserService {
     await batch.commit();
     print('회원 탈퇴 관련 모든 데이터 삭제 완료: $uid');
   }
+}
+
+Future<void> migrateAllUsersToCommunitySchema() async {
+  final users = await FirebaseFirestore.instance.collection('users').get();
+  for (final doc in users.docs) {
+    final data = doc.data();
+    final updates = <String, dynamic>{};
+
+    // md 기준 누락 필드 모두 추가
+    if (!data.containsKey('joinedAt')) updates['joinedAt'] = FieldValue.serverTimestamp();
+    if (!data.containsKey('postCount')) updates['postCount'] = 0;
+    if (!data.containsKey('commentCount')) updates['commentCount'] = 0;
+    if (!data.containsKey('likesReceived')) updates['likesReceived'] = 0;
+    if (!data.containsKey('reportedCount')) updates['reportedCount'] = 0;
+    if (!data.containsKey('reportSubmittedCount')) updates['reportSubmittedCount'] = 0;
+    if (!data.containsKey('grade')) updates['grade'] = '이코노미';
+    if (!data.containsKey('gradeLevel')) updates['gradeLevel'] = 1;
+    if (!data.containsKey('displayGrade')) updates['displayGrade'] = '이코노미 Lv.1';
+    if (!data.containsKey('title')) updates['title'] = '';
+    if (!data.containsKey('gradeUpdatedAt')) updates['gradeUpdatedAt'] = FieldValue.serverTimestamp();
+    if (!data.containsKey('adBonusPercent')) updates['adBonusPercent'] = 0;
+    if (!data.containsKey('badgeVisible')) updates['badgeVisible'] = true;
+    if (!data.containsKey('roles')) updates['roles'] = ['user'];
+    if (!data.containsKey('isBanned')) updates['isBanned'] = false;
+    if (!data.containsKey('warnCount')) updates['warnCount'] = 0;
+    if (!data.containsKey('followingCount')) updates['followingCount'] = 0;
+    if (!data.containsKey('followerCount')) updates['followerCount'] = 0;
+
+    // 이미 있는 필드는 건드리지 않음
+    if (updates.isNotEmpty) {
+      await doc.reference.update(updates);
+    }
+  }
+  print('모든 기존 사용자 문서가 커뮤니티 스키마로 마이그레이션 완료!');
 }
