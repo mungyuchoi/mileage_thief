@@ -148,7 +148,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       ? BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFB2F7EF), Color(0xFF7FC7F5)],
+                            colors: [Color(0xFFB2F7EF), Color(0xFF051667)],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -184,7 +184,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         ? BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFB2F7EF), Color(0xFF7FC7F5)],
+                              colors: [Color(0xFFB2F7EF), Color(0xFF425EB2)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -227,7 +227,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFB2F7EF), Color(0xFF7FC7F5)],
+                colors: [Color(0xFFB2F7EF), Color(0xFF425EB2)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
