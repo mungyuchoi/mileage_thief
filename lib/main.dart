@@ -152,7 +152,8 @@ Future<void> main() async {
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
-      fontFamily: 'Ohsquareair',
+      primarySwatch: Colors.blue,
+      fontFamily: 'NanumGothic',
     ),
     routes: {
       '/': (context) => SearchScreen(),

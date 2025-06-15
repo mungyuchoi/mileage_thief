@@ -46,6 +46,7 @@ flutter:
   uses-material-design: true
   assets:
     - asset/img/
+    - asset/font/
   fonts:
     - family: Ssuk
       fonts:
@@ -62,6 +63,13 @@ flutter:
     - family: SsuroundAir
       fonts:
         - asset: asset/font/Cafe24SSurroundAir.ttf
+    - family: NanumGothic
+      fonts:
+        - asset: asset/font/NanumGothic.ttf
+        - asset: asset/font/NanumGothicBold.ttf
+          weight: 700
+        - asset: asset/font/NanumGothicExtraBold.ttf
+          weight: 800
 
 flutter_icons:
   android: "launcher_icon"

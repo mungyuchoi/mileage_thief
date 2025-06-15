@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
+import 'community_detail_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({Key? key}) : super(key: key);
@@ -248,17 +249,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.white,
-                    //     borderRadius: BorderRadius.circular(20),
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: Colors.black.withOpacity(0.03),
-                    //         blurRadius: 2,
-                    //         offset: const Offset(0, 1),
-                    //       ),
-                    //     ],
-                    //   ),
                       child: Text(
                         selectedBoardName,
                         style: const TextStyle(
@@ -304,7 +294,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                   elevation: 1.5,
-                  child: Container(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      // 더미 데이터에 boardId, boardName 추가
+                      final boardId = selectedBoardId;
+                      final boardName = selectedBoardName;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CommunityDetailScreen(
+                            boardId: boardId,
+                            boardName: boardName,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       gradient: LinearGradient(
@@ -382,6 +388,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ),
                         ),
                       ],
+                    ),
                     ),
                   ),
                 );
