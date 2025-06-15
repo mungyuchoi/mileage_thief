@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
 import 'community_detail_screen.dart';
+import 'community_post_create_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({Key? key}) : super(key: key);
@@ -399,7 +400,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: 글쓰기 화면 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CommunityPostCreateScreen()),
+          );
         },
         backgroundColor: Colors.black,
         child: const Icon(Icons.edit, color: Colors.white),

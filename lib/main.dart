@@ -7,6 +7,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/fcm_service.dart';
+import 'screen/community_post_create_screen.dart';
+import 'screen/community_board_select_screen.dart';
 
 // 전역 NavigatorKey 추가
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -157,7 +159,7 @@ Future<void> main() async {
     ),
     routes: {
       '/': (context) => SearchScreen(),
-      // '/search': (context) => SearchScreen(),
+      '/community_board_select': (context) => const CommunityBoardSelectScreen(),
     },
   ));
 }
