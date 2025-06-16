@@ -748,6 +748,18 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 const Padding(padding: EdgeInsets.all(7)),
                 ElevatedButton(
                   onPressed: () {
+                    // 시작일/종료일 유효성 검사 추가
+                    final start = DateTime(startYear, startMonth);
+                    final end = DateTime(endYear, endMonth);
+                    if (start.isAfter(end)) {
+                      Fluttertoast.showToast(
+                        msg: "잘못된 시작일과 종료일입니다.",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
                     // 땅콩 사용하지 않음 (무료)
                     if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
                       setState(() {
