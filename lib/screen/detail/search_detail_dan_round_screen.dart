@@ -35,8 +35,13 @@ class _SearchDetailDanRoundScreenState extends State<SearchDetailDanRoundScreen>
   @override
   void initState() {
     super.initState();
-    selectedGoDate = DateTime.now();
-    selectedReturnDate = DateTime.now().add(const Duration(days: 7));
+    final firstDay = DateTime(
+      int.parse(widget.searchModel.startYear ?? DateTime.now().year.toString()),
+      int.parse(widget.searchModel.startMonth ?? DateTime.now().month.toString()),
+      1,
+    );
+    selectedGoDate = firstDay;
+    selectedReturnDate = firstDay;
     _loadGoData();
     _loadReturnData();
     _banner = BannerAd(

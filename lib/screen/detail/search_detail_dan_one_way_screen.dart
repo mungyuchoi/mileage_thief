@@ -46,7 +46,12 @@ class _SearchDetailDanScreenState extends State<SearchDetailDanScreen> {
   @override
   void initState() {
     super.initState();
-    selectedDate = DateTime.now();
+    final firstDay = DateTime(
+      int.parse(widget.searchModel.startYear ?? DateTime.now().year.toString()),
+      int.parse(widget.searchModel.startMonth ?? DateTime.now().month.toString()),
+      1,
+    );
+    selectedDate = firstDay;
     _loadData();
     _banner = BannerAd(
       listener: BannerAdListener(
