@@ -130,6 +130,14 @@ class CommunityDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              // 댓글 리스트 상단 구분선 추가
+              const Divider(
+                height: 16,
+                thickness: 0.7,
+                color: Color(0xFFE0E0E0),
+                indent: 0,
+                endIndent: 0,
+              ),
               // 댓글 리스트 (Column)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -138,38 +146,50 @@ class CommunityDetailScreen extends StatelessWidget {
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
                       name: '갈바람1',
-                      level: 'Expert Level 5',
+                      level: '퍼스트 Lv.1',
                       content: '우긴다고 해주는것도 아니고 그러려니 합니다 😂',
-                      date: '06. 10.',
+                      date: '6 시간전',
                       likes: 2,
-                      isAuthor: false,
+                      onReport: () {},
+                      onReply: () {},
+                      onLike: () {},
+                      levelColor: const Color(0xFFE43232),
                     ),
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
                       name: '수묵금',
                       level: '작성자',
                       content: '속도가 느려지거나\n벽돌 될수도 있습니다\n벽돌 이란 ?\n스마트폰 기능 멈추고\n사용 못하는 것을 말합니다\n발열도 나지요',
-                      date: '06. 10.',
+                      date: '10 시간전',
                       likes: 1,
-                      isAuthor: true,
+                      onReport: () {},
+                      onReply: () {},
+                      onLike: () {},
+                      levelColor: const Color(0xFF070000),
                     ),
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/4.jpg',
                       name: 'COOLKAWA',
-                      level: 'Active Level 6',
+                      level: '비즈니스 Lv.1',
                       content: 'ㅋㅋㅋㅋ 다들 그러려니 참 웃픕니다',
-                      date: '06. 12.',
+                      date: '11 시간전',
                       likes: 1,
-                      isAuthor: false,
+                      onReport: () {},
+                      onReply: () {},
+                      onLike: () {},
+                      levelColor: const Color(0xFF01114C),
                     ),
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/5.jpg',
                       name: '보리보리찡',
-                      level: 'Active Level 5',
+                      level: '★ 운영자 ★',
                       content: '@COOLKAWA ㅎㅎ 😂',
-                      date: '06. 13.',
+                      date: '2 일전',
                       likes: 0,
-                      isAuthor: false,
+                      onReport: () {},
+                      onReply: () {},
+                      onLike: () {},
+                      levelColor: const Color(0xFF070000),
                     ),
                   ],
                 ),
@@ -230,63 +250,80 @@ class CommunityDetailScreen extends StatelessWidget {
     required String content,
     required String date,
     required int likes,
-    required bool isAuthor,
+    required VoidCallback onReport,
+    required VoidCallback onReply,
+    required VoidCallback onLike,
+    required Color levelColor,
   }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0.5,
-      color: const Color(0xFFFCFCFE),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(profileUrl),
-                  radius: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isAuthor ? const Color(0xFFEDF7FB) : const Color(0xFFF2F3F7),
-                    borderRadius: BorderRadius.circular(10),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 1.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(profileUrl),
+                    radius: 10,
                   ),
-                  child: Text(
-                    level,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isAuthor ? const Color(0xFF3BB2D6) : Colors.black54,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: 4),
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEDF7FB),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      level,
+                      style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.bold),
                     ),
                   ),
-                ),
-                const Spacer(),
-                Icon(Icons.more_vert, size: 18, color: Colors.black26),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(content, style: const TextStyle(fontSize: 15, color: Colors.black87)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Text(date, style: const TextStyle(fontSize: 13, color: Colors.black38)),
-                const Spacer(),
-                Icon(Icons.favorite_border, size: 18, color: Colors.black38),
-                const SizedBox(width: 3),
-                Text('$likes', style: const TextStyle(fontSize: 13, color: Colors.black54)),
-                const SizedBox(width: 12),
-                Text('답글', style: TextStyle(fontSize: 13, color: Colors.black54)),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.report_gmailerrorred, color: Colors.blueGrey, size: 18),
+                    onPressed: onReport,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.mode_comment_outlined, color: Colors.blueGrey, size: 16),
+                      SizedBox(width: 2),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.thumb_up_alt_outlined, color: Colors.blueGrey, size: 16),
+                      SizedBox(width: 2),
+                      Text('$likes', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Text(content, style: const TextStyle(fontSize: 14)),
+              ),
+            ],
+          ),
         ),
-      ),
+        const Divider(
+          height: 16,
+          thickness: 0.7,
+          color: Color(0xFFE0E0E0),
+          indent: 0,
+          endIndent: 0,
+        ),
+      ],
     );
   }
 } 
