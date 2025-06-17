@@ -50,8 +50,8 @@ class CommunityDetailScreen extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Text('동백섬', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              Text('Expert Level 5', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                              Text('댄공', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text('비즈니스 Lv.5', style: TextStyle(fontSize: 12, color: Colors.black54)),
                             ],
                           ),
                           const Spacer(),
@@ -69,12 +69,12 @@ class CommunityDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'S23U Google play 스토어앱 업데이트 있습니다',
+                        '마일리지 대한항공, 아시아나 통합안!과연?',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        '비슷한 앱 사용 가능 Google Go(8.6MB) 보기\n새로운 기능\n- 검색 페이지의 개선된 디자인\n- 인앱 환경에 맞게 디자인된 새 기능',
+                        '이제 아시아나는 따로 카드 못만듭니다 ㅠㅠ \n마일리지 카드 만드려고했는데 대한항공이 더 많긴하네요\n하루 빨리 좀 정상화되었으면 해요.',
                         style: TextStyle(fontSize: 15, color: Colors.black87),
                       ),
                       const SizedBox(height: 10),
@@ -145,21 +145,21 @@ class CommunityDetailScreen extends StatelessWidget {
                   children: [
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
-                      name: '갈바람1',
-                      level: '퍼스트 Lv.1',
-                      content: '우긴다고 해주는것도 아니고 그러려니 합니다 😂',
+                      name: '마일리지초보',
+                      level: '이코노미 Lv.1',
+                      content: '마일리지로 항공권 처음 발권해보려는데, 대한항공이랑 아시아나 중 어디가 더 쉬울까요?',
                       date: '6 시간전',
                       likes: 2,
                       onReport: () {},
                       onReply: () {},
                       onLike: () {},
-                      levelColor: const Color(0xFFE43232),
+                      levelColor: const Color(0xFF068C03),
                     ),
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
-                      name: '수묵금',
+                      name: '댄공',
                       level: '작성자',
-                      content: '속도가 느려지거나\n벽돌 될수도 있습니다\n벽돌 이란 ?\n스마트폰 기능 멈추고\n사용 못하는 것을 말합니다\n발열도 나지요',
+                      content: '취소표 알림 기능 대박!',
                       date: '10 시간전',
                       likes: 1,
                       onReport: () {},
@@ -169,9 +169,9 @@ class CommunityDetailScreen extends StatelessWidget {
                     ),
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/4.jpg',
-                      name: 'COOLKAWA',
+                      name: '마일천하',
                       level: '비즈니스 Lv.1',
-                      content: 'ㅋㅋㅋㅋ 다들 그러려니 참 웃픕니다',
+                      content: '마일리지 통합 빨리 나와라! ',
                       date: '11 시간전',
                       likes: 1,
                       onReport: () {},
@@ -181,9 +181,9 @@ class CommunityDetailScreen extends StatelessWidget {
                     ),
                     _buildComment(
                       profileUrl: 'https://randomuser.me/api/portraits/men/5.jpg',
-                      name: '보리보리찡',
+                      name: '보리보리',
                       level: '★ 운영자 ★',
-                      content: '@COOLKAWA ㅎㅎ 😂',
+                      content: '@마일천하 😂',
                       date: '2 일전',
                       likes: 0,
                       onReport: () {},
@@ -255,75 +255,76 @@ class CommunityDetailScreen extends StatelessWidget {
     required VoidCallback onLike,
     required Color levelColor,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 1.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(profileUrl),
-                    radius: 10,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Color(0xFFE0E0E0), width: 0.7)),
+      elevation: 0.5,
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(profileUrl),
+                  radius: 10,
+                ),
+                const SizedBox(width: 4),
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDF7FB),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 4),
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEDF7FB),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      level,
-                      style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.bold),
-                    ),
+                  child: Text(
+                    level,
+                    style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
-                  Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(Icons.report_gmailerrorred, color: Colors.blueGrey, size: 18),
-                    onPressed: onReport,
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.mode_comment_outlined, color: Colors.blueGrey, size: 16),
-                      SizedBox(width: 2),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.thumb_up_alt_outlined, color: Colors.blueGrey, size: 16),
-                      SizedBox(width: 2),
-                      Text('$likes', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: Text(content, style: const TextStyle(fontSize: 14)),
-              ),
-            ],
-          ),
+                ),
+                const SizedBox(width: 8),
+                Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(Icons.report_gmailerrorred, color: Colors.blueGrey, size: 18),
+                  onPressed: onReport,
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.mode_comment_outlined, color: Colors.blueGrey, size: 16),
+                    SizedBox(width: 2),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    Icon(Icons.thumb_up_alt_outlined, color: Colors.blueGrey, size: 16),
+                    SizedBox(width: 2),
+                    Text('$likes', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: Text(content, style: const TextStyle(fontSize: 14)),
+            ),
+            // const Divider(
+            //   height: 16,
+            //   thickness: 0.7,
+            //   color: Color(0xFFE0E0E0),
+            //   indent: 0,
+            //   endIndent: 0,
+            // ),
+          ],
         ),
-        const Divider(
-          height: 16,
-          thickness: 0.7,
-          color: Color(0xFFE0E0E0),
-          indent: 0,
-          endIndent: 0,
-        ),
-      ],
+      ),
     );
   }
 } 
