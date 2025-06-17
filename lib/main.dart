@@ -9,6 +9,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/fcm_service.dart';
 import 'screen/community_post_create_screen.dart';
 import 'screen/community_board_select_screen.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // 전역 NavigatorKey 추가
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -157,6 +159,16 @@ Future<void> main() async {
       primarySwatch: Colors.blue,
       fontFamily: 'NanumGothic',
     ),
+    localizationsDelegates: [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      FlutterQuillLocalizations.delegate,
+    ],
+    supportedLocales: const [
+      Locale('en'),
+      Locale('ko'),
+    ],
     routes: {
       '/': (context) => SearchScreen(),
       '/community_board_select': (context) => const CommunityBoardSelectScreen(),

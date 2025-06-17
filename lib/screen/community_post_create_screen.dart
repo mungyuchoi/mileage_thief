@@ -18,12 +18,18 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   final quill.QuillController _quillController = quill.QuillController.basic();
   final FocusNode _editorFocusNode = FocusNode();
   final ScrollController _editorScrollController = ScrollController();
+  bool _showToolbar = false;
 
   @override
   void initState() {
     super.initState();
     selectedBoardId = widget.initialBoardId;
     selectedBoardName = widget.initialBoardName;
+    _editorFocusNode.addListener(() {
+      setState(() {
+        _showToolbar = _editorFocusNode.hasFocus;
+      });
+    });
   }
 
   @override
@@ -99,20 +105,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
               ),
               const Divider(height: 32, color: Color(0xFFE0E0E0)),
               // RichTextEditor 영역 시작
-              quill.QuillSimpleToolbar(
-                controller: _quillController,
-                config: quill.QuillSimpleToolbarConfig(
-                  embedButtons: FlutterQuillEmbeds.toolbarButtons(),
-                  showClipboardPaste: true,
-                ),
-              ),
-              const SizedBox(height: 8),
               Container(
-                height: 220,
+                height: 500,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Color(0xFFE0E0E0)),
+                  color: Colors.transparent,
                 ),
                 child: quill.QuillEditor(
                   controller: _quillController,
@@ -120,7 +116,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                   scrollController: _editorScrollController,
                   config: quill.QuillEditorConfig(
                     placeholder: '내용을 입력하세요...',
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(2),
                     expands: false,
                     embedBuilders: FlutterQuillEmbeds.editorBuilders(),
                   ),
@@ -133,16 +129,83 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                 style: TextStyle(color: Colors.grey, fontSize: 15),
               ),
               const SizedBox(height: 32),
-              const Text('태그', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const Divider(height: 32, color: Color(0xFFE0E0E0)),
-              const Text(
-                '쉼표나 공백으로 태그를 구분할 수 있습니다. 태그 앞에 # 표시를 넣는 것은 선택 사항이지만, 일부 특수 문자(/, \\, ?, ;, :)는 태그에 넣을 수 없습니다.',
-                style: TextStyle(color: Colors.grey, fontSize: 15),
-              ),
             ],
           ),
         ),
       ),
+      bottomSheet: _showToolbar && MediaQuery.of(context).viewInsets.bottom > 0
+          ? Material(
+              elevation: 2,
+              color: Colors.transparent,
+              child: quill.QuillSimpleToolbar(
+                controller: _quillController,
+                config: quill.QuillSimpleToolbarConfig(
+                  showBoldButton: true,
+                  showItalicButton: true,
+                  showUnderLineButton: true,
+                  showStrikeThrough: true,
+                  showFontSize: true,
+                  buttonOptions: quill.QuillSimpleToolbarButtonOptions(
+                    fontFamily: quill.QuillToolbarFontFamilyButtonOptions(
+                      items: const {
+                        'Sans Serif': 'sans-serif',
+                        'Serif': 'serif',
+                        'Monospace': 'monospace',
+                        'Ibarra Real Nova': 'ibarra-real-nova',
+                        'SquarePeg': 'square-peg',
+                        'Nunito': 'nunito',
+                        'Pacifico': 'pacifico',
+                        'Roboto Mono': 'roboto-mono',
+                        'Clear': 'Clear', // 또는 context.loc.clear 사용 가능
+                      },
+                      defaultDisplayText: '글꼴',
+                    ),
+                    fontSize: quill.QuillToolbarFontSizeButtonOptions(
+                      items: const {
+                        '10': '10',
+                        '12': '12',
+                        '14': '14',
+                        '16': '16',
+                        '18': '18',
+                        '20': '20',
+                        '24': '24',
+                      },
+                      defaultDisplayText: '크기',
+                      // 필요시 initialValue, style 등도 추가 가능
+                    ),
+                  ),
+                  showQuote: true,
+                  showAlignmentButtons: true,
+                  showListNumbers: true,
+                  showListBullets: true,
+                  showListCheck: false,
+                  showCodeBlock: false,
+                  showInlineCode: false,
+                  showColorButton: false,
+                  showBackgroundColorButton: false,
+                  showLink: false,
+                  showClearFormat: false,
+                  showDirection: false,
+                  showIndent: false,
+                  showUndo: false,
+                  showRedo: false,
+                  showHeaderStyle: false,
+                  showSearchButton: false,
+                  showDividers: false,
+                  showFontFamily: true,
+                  showSmallButton: false,
+                  showJustifyAlignment: true,
+                  showClipboardPaste: true,
+                  multiRowsDisplay: false,
+                  embedButtons: FlutterQuillEmbeds.toolbarButtons(
+                    imageButtonOptions: const QuillToolbarImageButtonOptions(), // 이미지 버튼만
+                    videoButtonOptions: null,    // 동영상 버튼 제거
+                    cameraButtonOptions: null,   // 카메라 버튼 제거
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 } 
