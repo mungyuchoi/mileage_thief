@@ -88,22 +88,26 @@ class CommunityDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        children: const [
-                          Text('06. 11.', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                          Spacer(),
-                          Icon(Icons.remove_red_eye, size: 16, color: Colors.black26),
-                          SizedBox(width: 3),
-                          Text('47', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                          SizedBox(width: 12),
-                          Icon(Icons.mode_comment_outlined, size: 16, color: Colors.black26),
-                          SizedBox(width: 3),
-                          Text('4', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                          SizedBox(width: 12),
-                          Icon(Icons.favorite_border, size: 16, color: Colors.black26),
-                          SizedBox(width: 3),
-                          Text('3', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                        ],
+                      SizedBox(
+                        height: 20,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: const [
+                            Text('06. 11.', style: TextStyle(fontSize: 13, color: Colors.black38)),
+                            Spacer(),
+                            Icon(Icons.remove_red_eye, size: 16, color: Colors.black26),
+                            SizedBox(width: 3),
+                            Text('47', style: TextStyle(fontSize: 13, color: Colors.black38)),
+                            SizedBox(width: 12),
+                            Icon(Icons.mode_comment_outlined, size: 16, color: Colors.black26),
+                            SizedBox(width: 3),
+                            Text('4', style: TextStyle(fontSize: 13, color: Colors.black38)),
+                            SizedBox(width: 12),
+                            Icon(Icons.favorite_border, size: 16, color: Colors.black26),
+                            SizedBox(width: 3),
+                            Text('3', style: TextStyle(fontSize: 13, color: Colors.black38)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -258,63 +262,68 @@ class CommunityDetailScreen extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Color(0xFFE0E0E0), width: 0.7)),
-      elevation: 0.5,
+      elevation: 0.3,
       color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(profileUrl),
-                  radius: 10,
-                ),
-                const SizedBox(width: 4),
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEDF7FB),
-                    borderRadius: BorderRadius.circular(8),
+            SizedBox(
+              height: 28,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(profileUrl),
+                    radius: 9,
                   ),
-                  child: Text(
-                    level,
-                    style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.bold),
+                  const SizedBox(width: 4),
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEDF7FB),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      level,
+                      style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                const Spacer(),
-                IconButton(
-                  icon: Icon(Icons.report_gmailerrorred, color: Colors.blueGrey, size: 18),
-                  onPressed: onReport,
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.mode_comment_outlined, color: Colors.blueGrey, size: 16),
-                    SizedBox(width: 2),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    Icon(Icons.thumb_up_alt_outlined, color: Colors.blueGrey, size: 16),
-                    SizedBox(width: 2),
-                    Text('$likes', style: TextStyle(fontSize: 12)),
-                  ],
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.report_gmailerrorred, color: Colors.blueGrey, size: 16),
+                    onPressed: onReport,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.mode_comment_outlined, color: Colors.blueGrey, size: 16),
+                      SizedBox(width: 2),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.thumb_up_alt_outlined, color: Colors.blueGrey, size: 16),
+                      SizedBox(width: 2),
+                      Text('$likes', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.only(left: 6),
               child: Text(content, style: const TextStyle(fontSize: 14)),
             ),
+            const SizedBox(height: 2),
             // const Divider(
             //   height: 16,
             //   thickness: 0.7,
