@@ -24,6 +24,9 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   final FocusNode _titleFocusNode = FocusNode();
   final FocusNode _editorFocusNode = FocusNode();
   String _editorText = '';
+  bool _isBold = false;
+  bool _isItalic = false;
+  bool _isUnderline = false;
 
   @override
   void initState() {
@@ -161,12 +164,6 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                             ),
                             otherOptions: OtherOptions(
                               height: 500,
-                              customOptions: '''
-                                <style>
-                                  p { margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; }
-                                  body { margin: 0 !important; padding: 0 !important; }
-                                </style>
-                              ''',
                             ),
                             callbacks: Callbacks(
                               onChangeContent: (String? changed) {
@@ -236,35 +233,96 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                           icon: const Icon(Icons.image),
                           tooltip: '이미지',
                           onPressed: () {
-                            _htmlController.execCommand('insertImage');
+                            _htmlController.execCommand('insertNetworkImage');
                           },
                         ),
-                        SizedBox(width: 6),
+                        // 뒤로가기(undo)
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            _htmlController.execCommand('undo');
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: const Icon(Icons.undo, color: Colors.black),
+                          ),
+                        ),
+                        // 앞으로가기(redo)
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            _htmlController.execCommand('redo');
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: const Icon(Icons.redo, color: Colors.black),
+                          ),
+                        ),
+                        SizedBox(width: 3),
                         // 굵게
-                        IconButton(
-                          icon: const Icon(Icons.format_bold),
-                          tooltip: '굵게',
-                          onPressed: () {
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
                             _htmlController.execCommand('bold');
+                            setState(() {
+                              _isBold = !_isBold;
+                            });
                           },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _isBold ? Colors.grey[200] : Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(Icons.format_bold, color: _isBold ? Colors.black : Colors.black),
+                          ),
                         ),
+                        SizedBox(width: 1),
                         // 이탤릭
-                        IconButton(
-                          icon: const Icon(Icons.format_italic),
-                          tooltip: '이탤릭',
-                          onPressed: () {
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
                             _htmlController.execCommand('italic');
+                            setState(() {
+                              _isItalic = !_isItalic;
+                            });
                           },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _isItalic ? Colors.grey[200] : Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(Icons.format_italic, color: _isItalic ? Colors.black : Colors.black),
+                          ),
                         ),
+                        SizedBox(width: 1),
                         // 밑줄
-                        IconButton(
-                          icon: const Icon(Icons.format_underline),
-                          tooltip: '밑줄',
-                          onPressed: () {
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
                             _htmlController.execCommand('underline');
+                            setState(() {
+                              _isUnderline = !_isUnderline;
+                            });
                           },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _isUnderline ? Colors.grey[200] : Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(Icons.format_underline, color: _isUnderline ? Colors.black : Colors.black),
+                          ),
                         ),
-                        SizedBox(width: 6),
                         // 정렬
                         Builder(
                           builder: (context) {
@@ -314,7 +372,6 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                             );
                           },
                         ),
-                        SizedBox(width: 6),
                         // 폰트 크기
                         Builder(
                           builder: (context) {
@@ -393,7 +450,6 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                             );
                           },
                         ),
-                        SizedBox(width: 6),
                         // 전체 지우기
                         IconButton(
                           icon: const Icon(Icons.clear),
