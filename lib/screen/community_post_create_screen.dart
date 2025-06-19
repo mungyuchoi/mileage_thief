@@ -230,10 +230,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                       children: [
                         // 이미지 삽입
                         IconButton(
-                          icon: const Icon(Icons.image),
+                          icon: const Icon(Icons.image, color: Colors.black,),
                           tooltip: '이미지',
                           onPressed: () {
-                            _htmlController.execCommand('insertNetworkImage');
+                            _htmlController.execCommand('insertImage');
                           },
                         ),
                         // 뒤로가기(undo)
@@ -327,7 +327,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                         Builder(
                           builder: (context) {
                             return IconButton(
-                              icon: const Icon(Icons.format_align_left),
+                              icon: const Icon(Icons.format_align_left, color : Colors.black),
                               tooltip: '정렬',
                               onPressed: () async {
                                 final RenderBox button = context.findRenderObject() as RenderBox;
@@ -376,7 +376,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                         Builder(
                           builder: (context) {
                             return IconButton(
-                              icon: const Icon(Icons.format_size),
+                              icon: const Icon(Icons.format_size, color : Colors.black),
                               tooltip: '폰트 크기',
                               onPressed: () async {
                                 final RenderBox button = context.findRenderObject() as RenderBox;
@@ -452,7 +452,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                         ),
                         // 전체 지우기
                         IconButton(
-                          icon: const Icon(Icons.clear),
+                          icon: const Icon(Icons.clear, color : Colors.black),
                           tooltip: '전체 지우기',
                           onPressed: () {
                             _htmlController.setText('');
