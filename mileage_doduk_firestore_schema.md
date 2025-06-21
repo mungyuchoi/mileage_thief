@@ -119,6 +119,7 @@
 | title          | string   | 제목 |
 | contentHtml    | string   | HTML 형식의 본문 |
 | author         | map      | 작성자 정보 (uid, displayName, profileImageUrl) |
+| viewsCount     | number   | 조회수 |
 | likesCount     | number   | 좋아요 수 |
 | commentCount   | number   | 댓글 수 |
 | reportsCount   | number   | 신고 수 |

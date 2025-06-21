@@ -1,4 +1,3 @@
-import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/screen/search_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -33,10 +32,10 @@ Future<void> main() async {
   } catch (e) {
     print("Firebase already initialized: $e");
   }
-  
+
   // FCM 초기화
   await FCMService.initialize();
-  
+
   MobileAds.instance.initialize();
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -162,7 +161,6 @@ Future<void> main() async {
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
-      AppFlowyEditorLocalizations.delegate,
     ],
     supportedLocales: const [
       Locale('en'),
