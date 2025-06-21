@@ -400,10 +400,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CommunityPostCreateScreen()),
-          );
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const CommunityPostCreateScreen()),
+          // );
         },
         backgroundColor: Colors.black,
         child: const Icon(Icons.edit, color: Colors.white),

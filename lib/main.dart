@@ -1,3 +1,4 @@
+import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/screen/search_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,9 +8,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/fcm_service.dart';
-import 'screen/community_post_create_screen.dart';
 import 'screen/community_board_select_screen.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 // 전역 NavigatorKey 추가
@@ -163,7 +162,7 @@ Future<void> main() async {
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
-      FlutterQuillLocalizations.delegate,
+      AppFlowyEditorLocalizations.delegate,
     ],
     supportedLocales: const [
       Locale('en'),
