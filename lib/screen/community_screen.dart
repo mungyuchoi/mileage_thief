@@ -400,10 +400,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(builder: (context) => const CommunityPostCreateScreen()),
-          // );
+          // 현재 선택된 게시판이 'all'이 아닌 경우 초기값으로 전달
+          if (selectedBoardId != 'all') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CommunityPostCreateScreen(
+                  initialBoardId: selectedBoardId,
+                  initialBoardName: selectedBoardName,
+                ),
+              ),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CommunityPostCreateScreen()),
+            );
+          }
         },
         backgroundColor: Colors.black,
         child: const Icon(Icons.edit, color: Colors.white),
