@@ -140,7 +140,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       Fluttertoast.showToast(
         msg: "게시글이 성공적으로 등록되었습니다",
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.black38,
         textColor: Colors.white,
       );
 
