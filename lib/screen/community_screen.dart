@@ -32,6 +32,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
   String selectedBoardName = '전체글';
   Map<String, dynamic>? userProfile;
   bool isProfileLoading = false;
+  
+  // 뷰 모드 토글 (false: 카드뷰, true: 간단뷰)
+  bool isCompactView = false;
 
   // 무한 스크롤 관련 변수
   final ScrollController _scrollController = ScrollController();
@@ -335,8 +338,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 ),
                 Row(
                   children: [
+                    // 뷰 모드 토글 버튼
                     IconButton(
-                      icon: const Icon(Icons.search, color: Colors.black),
+                      icon: Icon(
+                        isCompactView ? Icons.view_module : Icons.view_list,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isCompactView = !isCompactView;
+                        });
+                      },
+                      tooltip: isCompactView ? '카드뷰로 보기' : '간단뷰로 보기',
+                    ),
+                    // 검색 버튼
+                    IconButton(
+                      icon: const Icon(Icons.search, color: Colors.white),
                       onPressed: () {
                         // TODO: 검색 기능 구현
                       },
@@ -362,7 +379,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           vertical: 8, horizontal: 8),
                       itemCount: _posts.length + (_isLoadingMore ? 1 : 0),
                       separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
+                          isCompactView ? const SizedBox.shrink() : const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         // 로딩 인디케이터 표시
                         if (index == _posts.length) {
@@ -383,6 +400,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         // HTML 태그 제거해서 미리보기 텍스트 만들기
                         String plainText =
                             _removeHtmlTags(post['contentHtml'] ?? '');
+
+                        // 뷰 모드에 따라 다른 위젯 반환
+                        if (isCompactView) {
+                          return _buildCompactListItem(post, createdAt, index);
+                        }
 
                         return Card(
                           shape: RoundedRectangleBorder(
@@ -715,5 +737,119 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (diff.inHours < 24) return '${diff.inHours}시간 전';
     if (diff.inDays < 7) return '${diff.inDays}일 전';
     return DateFormat('MM/dd').format(dateTime);
+  }
+
+  // 간단뷰 아이템 위젯
+  Widget _buildCompactListItem(Map<String, dynamic> post, DateTime createdAt, int index) {
+    return Column(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // 게시글 조회수 증가
+              _incrementViewCount(_posts[index].id, _posts[index].reference.parent.parent!.id);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CommunityDetailScreen(
+                    boardId: post['boardId'] ?? '',
+                    boardName: _getBoardName(post['boardId'] ?? ''),
+                  ),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1줄: 제목 + 시간
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          post['title'] ?? '제목 없음',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatTime(createdAt),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // 2줄: 조회수 | 댓글수 | 좋아요수
+                  Row(
+                    children: [
+                      Text(
+                        '조회 ${post['viewsCount'] ?? 0}회',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const Text(
+                        ' | ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const Icon(Icons.mode_comment_outlined, size: 12, color: Colors.black45),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${post['commentCount'] ?? 0}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const Text(
+                        ' | ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const Icon(Icons.favorite_border, size: 12, color: Colors.black45),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${post['likesCount'] ?? 0}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // 얇은 구분선
+        const Divider(
+          height: 1,
+          thickness: 0.5,
+          color: Colors.black12,
+          indent: 16,
+          endIndent: 16,
+        ),
+      ],
+    );
   }
 }
