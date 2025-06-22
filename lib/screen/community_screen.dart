@@ -312,7 +312,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               children: [
                 Builder(
                   builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.black),
+                    icon: const Icon(Icons.menu, color: Colors.brown),
                     onPressed: () {
                       Scaffold.of(context).openDrawer();
                     },
