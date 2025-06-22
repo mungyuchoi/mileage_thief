@@ -6,6 +6,7 @@ import '../services/user_service.dart';
 import 'login_screen.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_screen.dart';
+import 'community_search_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({Key? key}) : super(key: key);
@@ -24,8 +25,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     {'id': 'error_report', 'name': '오류 신고'},
     {'id': 'suggestion', 'name': '건의사항'},
     {'id': 'free', 'name': '자유게시판'},
-    {'id': 'notice', 'name': '운영 공지사항'},
-    {'id': 'popular', 'name': '인기글 모음'},
+    {'id': 'notice', 'name': '운영 공지사항'}
   ];
 
   String selectedBoardId = 'all';
@@ -43,6 +43,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   final int _postsPerPage = 20;
+  
+  // 초기 로딩 상태 관리
+  bool _isInitialLoading = true;
 
   @override
   void initState() {
@@ -355,7 +358,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     IconButton(
                       icon: const Icon(Icons.search, color: Colors.white),
                       onPressed: () {
-                        // TODO: 검색 기능 구현
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CommunitySearchScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -369,11 +377,41 @@ class _CommunityScreenState extends State<CommunityScreen> {
               onRefresh: () async {
                 _refreshPosts();
               },
-              child: _posts.isEmpty
+              child: _isInitialLoading
                   ? const Center(
                       child: CircularProgressIndicator(),
                     )
-                  : ListView.separated(
+                  : _posts.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.post_add_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                '게시글이 없습니다',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '첫 번째 게시글을 작성해보세요!',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(
                           vertical: 8, horizontal: 8),
@@ -610,6 +648,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 초기 게시글 로드
   Future<void> _loadInitialPosts() async {
     try {
+      setState(() {
+        _isInitialLoading = true;
+      });
+
       Query query = _getQuery();
       query = query.limit(_postsPerPage);
 
@@ -625,9 +667,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
           _lastDocument = _posts.last;
         }
         _hasMoreData = _posts.length == _postsPerPage;
+        _isInitialLoading = false; // 로딩 완료
       });
     } catch (e) {
       print('초기 게시글 로드 오류: $e');
+      setState(() {
+        _isInitialLoading = false; // 오류 발생 시에도 로딩 상태 해제
+      });
     }
   }
 
@@ -689,6 +735,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       _lastDocument = null;
       _hasMoreData = true;
       _isLoadingMore = false;
+      _isInitialLoading = true; // 새로고침 시 로딩 상태 활성화
     });
     _loadInitialPosts();
   }
