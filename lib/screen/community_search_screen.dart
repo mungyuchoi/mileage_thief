@@ -377,8 +377,10 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => CommunityDetailScreen(
+                                                postId: _searchResults[index].id,
                                                 boardId: post['boardId'] ?? '',
                                                 boardName: _getBoardName(post['boardId'] ?? ''),
+                                                dateString: _searchResults[index].reference.parent.parent!.id,
                                               ),
                                             ),
                                           );

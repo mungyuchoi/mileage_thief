@@ -108,6 +108,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       drawer: Drawer(
         child: Container(
           color: Colors.white,
@@ -149,7 +150,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         return const SizedBox(
                           height: 24,
                           width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF74512D),
+                          ),
                         );
                       } else if (userProfile != null) {
                         final displayName =
@@ -374,12 +378,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
           // 본문 영역
           Expanded(
             child: RefreshIndicator(
+              color: const Color(0xFF74512D),
               onRefresh: () async {
                 _refreshPosts();
               },
               child: _isInitialLoading
                   ? const Center(
-                      child: CircularProgressIndicator(),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF74512D),
+                      ),
                     )
                   : _posts.isEmpty
                       ? const Center(
@@ -424,7 +431,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           return const Center(
                             child: Padding(
                               padding: EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF74512D),
+                              ),
                             ),
                           );
                         }
@@ -460,9 +469,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => CommunityDetailScreen(
+                                    postId: _posts[index].id,
                                     boardId: post['boardId'] ?? '',
-                                    boardName:
-                                        _getBoardName(post['boardId'] ?? ''),
+                                    boardName: _getBoardName(post['boardId'] ?? ''),
+                                    dateString: _posts[index].reference.parent.parent!.id,
                                   ),
                                 ),
                               );
@@ -801,8 +811,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => CommunityDetailScreen(
+                    postId: _posts[index].id,
                     boardId: post['boardId'] ?? '',
                     boardName: _getBoardName(post['boardId'] ?? ''),
+                    dateString: _posts[index].reference.parent.parent!.id,
                   ),
                 ),
               );

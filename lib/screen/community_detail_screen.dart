@@ -1,339 +1,606 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
-class CommunityDetailScreen extends StatelessWidget {
+class CommunityDetailScreen extends StatefulWidget {
+  final String postId;
   final String boardId;
   final String boardName;
-  const CommunityDetailScreen({Key? key, required this.boardId, required this.boardName}) : super(key: key);
+  final String dateString;
+
+  const CommunityDetailScreen({
+    Key? key,
+    required this.postId,
+    required this.boardId,
+    required this.boardName,
+    required this.dateString,
+  }) : super(key: key);
+
+  @override
+  State<CommunityDetailScreen> createState() => _CommunityDetailScreenState();
+}
+
+class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
+  Map<String, dynamic>? _post;
+  bool _isLoading = true;
+  bool _isLiked = false;
+  bool _isDisliked = false;
+  final User? _currentUser = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPostDetail();
+    _checkUserLikeStatus();
+  }
+
+  Future<void> _loadPostDetail() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .get();
+
+      if (docSnapshot.exists) {
+        setState(() {
+          _post = docSnapshot.data() as Map<String, dynamic>;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorAndGoBack('게시글을 찾을 수 없습니다.');
+      }
+    } catch (e) {
+      print('게시글 로드 오류: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorAndGoBack('게시글을 불러오는 중 오류가 발생했습니다.');
+    }
+  }
+
+  Future<void> _checkUserLikeStatus() async {
+    if (_currentUser == null) return;
+
+    try {
+      // 좋아요 상태 확인
+      final likeDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('likes')
+          .doc(_currentUser!.uid)
+          .get();
+
+      // 싫어요 상태 확인
+      final dislikeDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('dislikes')
+          .doc(_currentUser!.uid)
+          .get();
+
+      setState(() {
+        _isLiked = likeDoc.exists;
+        _isDisliked = dislikeDoc.exists;
+      });
+    } catch (e) {
+      print('좋아요/싫어요 상태 확인 오류: $e');
+    }
+  }
+
+  void _showErrorAndGoBack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+    Navigator.pop(context);
+  }
+
+  Future<void> _toggleLike() async {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final postRef = FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId);
+
+      final likeRef = postRef.collection('likes').doc(_currentUser!.uid);
+      final dislikeRef = postRef.collection('dislikes').doc(_currentUser!.uid);
+
+      if (_isLiked) {
+        // 좋아요 취소
+        batch.delete(likeRef);
+        batch.update(postRef, {'likesCount': FieldValue.increment(-1)});
+        setState(() {
+          _isLiked = false;
+          if (_post != null) {
+            _post!['likesCount'] = (_post!['likesCount'] ?? 0) - 1;
+          }
+        });
+      } else {
+        // 좋아요 추가
+        batch.set(likeRef, {
+          'userId': _currentUser!.uid,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        batch.update(postRef, {'likesCount': FieldValue.increment(1)});
+
+        // 싫어요가 있다면 제거
+        if (_isDisliked) {
+          batch.delete(dislikeRef);
+          batch.update(postRef, {'dislikesCount': FieldValue.increment(-1)});
+          setState(() {
+            _isDisliked = false;
+            if (_post != null) {
+              _post!['dislikesCount'] = (_post!['dislikesCount'] ?? 0) - 1;
+            }
+          });
+        }
+
+        setState(() {
+          _isLiked = true;
+          if (_post != null) {
+            _post!['likesCount'] = (_post!['likesCount'] ?? 0) + 1;
+          }
+        });
+      }
+
+      await batch.commit();
+    } catch (e) {
+      print('좋아요 처리 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  Future<void> _toggleDislike() async {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final postRef = FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId);
+
+      final likeRef = postRef.collection('likes').doc(_currentUser!.uid);
+      final dislikeRef = postRef.collection('dislikes').doc(_currentUser!.uid);
+
+      if (_isDisliked) {
+        // 싫어요 취소
+        batch.delete(dislikeRef);
+        batch.update(postRef, {'dislikesCount': FieldValue.increment(-1)});
+        setState(() {
+          _isDisliked = false;
+          if (_post != null) {
+            _post!['dislikesCount'] = (_post!['dislikesCount'] ?? 0) - 1;
+          }
+        });
+      } else {
+        // 싫어요 추가
+        batch.set(dislikeRef, {
+          'userId': _currentUser!.uid,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        batch.update(postRef, {'dislikesCount': FieldValue.increment(1)});
+
+        // 좋아요가 있다면 제거
+        if (_isLiked) {
+          batch.delete(likeRef);
+          batch.update(postRef, {'likesCount': FieldValue.increment(-1)});
+          setState(() {
+            _isLiked = false;
+            if (_post != null) {
+              _post!['likesCount'] = (_post!['likesCount'] ?? 0) - 1;
+            }
+          });
+        }
+
+        setState(() {
+          _isDisliked = true;
+          if (_post != null) {
+            _post!['dislikesCount'] = (_post!['dislikesCount'] ?? 0) + 1;
+          }
+        });
+      }
+
+      await batch.commit();
+    } catch (e) {
+      print('싫어요 처리 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  void _sharePost() {
+    if (_post != null) {
+      final title = _post!['title'] ?? '제목 없음';
+      final content = _removeHtmlTags(_post!['contentHtml'] ?? '');
+      final shareText = '$title\n\n$content\n\n마일리지도둑 커뮤니티에서 공유';
+      Share.share(shareText);
+    }
+  }
+
+  String _removeHtmlTags(String htmlString) {
+    return htmlString
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll(RegExp(r'&[^;]+;'), '')
+        .trim();
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
+    if (diff.inHours < 24) return '${diff.inHours}시간 전';
+    if (diff.inDays < 7) return '${diff.inDays}일 전';
+    return DateFormat('yyyy.MM.dd HH:mm').format(dateTime);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(boardName, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(
+          widget.boardName,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.favorite_border, color: Colors.black), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.share, color: Colors.black), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert, color: Colors.black), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: _sharePost,
+          ),
         ],
       ),
-      backgroundColor: const Color(0xFFF1F1F3),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 본문 카드
-              Card(
-                margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                elevation: 1.5,
-                color: const Color(0xFFFCFCFE),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const CircleAvatar(
-                            backgroundImage: NetworkImage('https://randomuser.me/api/portraits/men/1.jpg'),
-                            radius: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('댄공', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              Text('비즈니스 Lv.5', style: TextStyle(fontSize: 12, color: Colors.black54)),
-                            ],
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(
-                              backgroundColor: Color(0xFFEDF7FB),
-                              foregroundColor: Color(0xFF3BB2D6),
-                              minimumSize: Size(60, 32),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF74512D),
+              ),
+            )
+          : _post == null
+              ? const Center(
+                  child: Text(
+                    '게시글을 찾을 수 없습니다.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                )
+              : Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 게시글 제목
+                            Text(
+                              _post!['title'] ?? '제목 없음',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
-                            child: const Text('팔로우', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        '마일리지 대한항공, 아시아나 통합안!과연?',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '이제 아시아나는 따로 카드 못만듭니다 ㅠㅠ \n마일리지 카드 만드려고했는데 대한항공이 더 많긴하네요\n하루 빨리 좀 정상화되었으면 해요.',
-                        style: TextStyle(fontSize: 15, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png',
-                          height: 160,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 20,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: const [
-                            Text('06. 11.', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                            Spacer(),
-                            Icon(Icons.remove_red_eye, size: 16, color: Colors.black26),
-                            SizedBox(width: 3),
-                            Text('47', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                            SizedBox(width: 12),
-                            Icon(Icons.mode_comment_outlined, size: 16, color: Colors.black26),
-                            SizedBox(width: 3),
-                            Text('4', style: TextStyle(fontSize: 13, color: Colors.black38)),
-                            SizedBox(width: 12),
-                            Icon(Icons.favorite_border, size: 16, color: Colors.black26),
-                            SizedBox(width: 3),
-                            Text('3', style: TextStyle(fontSize: 13, color: Colors.black38)),
+                            const SizedBox(height: 16),
+
+                            // 작성자 정보
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  // 프로필 이미지
+                                  Builder(
+                                    builder: (context) {
+                                      final photoURL = _post!['author']?['photoURL'] ?? 
+                                                      _post!['author']?['profileImageUrl'] ?? '';
+                                      
+                                      return CircleAvatar(
+                                        backgroundColor: Colors.grey[300],
+                                        radius: 20,
+                                        backgroundImage: photoURL.isNotEmpty
+                                            ? NetworkImage(photoURL)
+                                            : null,
+                                        child: photoURL.isEmpty
+                                            ? const Icon(Icons.person,
+                                                color: Colors.black54, size: 24)
+                                            : null,
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _post!['author']['displayName'] ?? '익명',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _formatTime((_post!['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now()),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // 게시글 내용
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _removeHtmlTags(_post!['contentHtml'] ?? ''),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // 통계 정보
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  _buildStatItem(
+                                    Icons.visibility_outlined,
+                                    '조회수',
+                                    '${_post!['viewsCount'] ?? 0}',
+                                  ),
+                                  _buildStatItem(
+                                    Icons.mode_comment_outlined,
+                                    '댓글',
+                                    '${_post!['commentCount'] ?? 0}',
+                                  ),
+                                  _buildStatItem(
+                                    Icons.favorite_border,
+                                    '좋아요',
+                                    '${_post!['likesCount'] ?? 0}',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // 댓글 영역 (기본 레이아웃)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.mode_comment_outlined,
+                                        color: Color(0xFF74512D),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '댓글 ${_post!['commentCount'] ?? 0}개',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Center(
+                                    child: Text(
+                                      '댓글 시스템은 다음 단계에서 구현 예정입니다.',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              // 댓글/정렬 바
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.mode_comment_outlined, size: 20, color: Colors.black45),
-                    const SizedBox(width: 4),
-                    const Text('4', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    const Spacer(),
-                    DropdownButton<String>(
-                      value: '등록순',
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: '등록순', child: Text('등록순')),
-                        DropdownMenuItem(value: '최신순', child: Text('최신순')),
-                      ],
-                      onChanged: (v) {},
                     ),
-                  ],
-                ),
-              ),
-              // 댓글 리스트 상단 구분선 추가
-              const Divider(
-                height: 16,
-                thickness: 0.7,
-                color: Color(0xFFE0E0E0),
-                indent: 0,
-                endIndent: 0,
-              ),
-              // 댓글 리스트 (Column)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                child: Column(
-                  children: [
-                    _buildComment(
-                      profileUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
-                      name: '마일리지초보',
-                      level: '이코노미 Lv.1',
-                      content: '마일리지로 항공권 처음 발권해보려는데, 대한항공이랑 아시아나 중 어디가 더 쉬울까요?',
-                      date: '6 시간전',
-                      likes: 2,
-                      onReport: () {},
-                      onReply: () {},
-                      onLike: () {},
-                      levelColor: const Color(0xFF068C03),
-                    ),
-                    _buildComment(
-                      profileUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
-                      name: '댄공',
-                      level: '작성자',
-                      content: '취소표 알림 기능 대박!',
-                      date: '10 시간전',
-                      likes: 1,
-                      onReport: () {},
-                      onReply: () {},
-                      onLike: () {},
-                      levelColor: const Color(0xFF070000),
-                    ),
-                    _buildComment(
-                      profileUrl: 'https://randomuser.me/api/portraits/men/4.jpg',
-                      name: '마일천하',
-                      level: '비즈니스 Lv.1',
-                      content: '마일리지 통합 빨리 나와라! ',
-                      date: '11 시간전',
-                      likes: 1,
-                      onReport: () {},
-                      onReply: () {},
-                      onLike: () {},
-                      levelColor: const Color(0xFF01114C),
-                    ),
-                    _buildComment(
-                      profileUrl: 'https://randomuser.me/api/portraits/men/5.jpg',
-                      name: '보리보리',
-                      level: '★ 운영자 ★',
-                      content: '@마일천하 😂',
-                      date: '2 일전',
-                      likes: 0,
-                      onReport: () {},
-                      onReply: () {},
-                      onLike: () {},
-                      levelColor: const Color(0xFF070000),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              // 댓글 입력창
-              Container(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    const Icon(Icons.add, color: Colors.black38),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF1F1F3),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: '댓글을 입력하세요',
-                            hintStyle: const TextStyle(color: Colors.black38),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+
+                    // 하단 좋아요/싫어요 버튼
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, -2),
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3BB2D6),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                        minimumSize: const Size(56, 36),
-                        padding: EdgeInsets.zero,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _toggleLike,
+                              icon: Icon(
+                                _isLiked ? Icons.favorite : Icons.favorite_border,
+                                color: _isLiked ? Colors.red : Colors.grey[600],
+                                size: 20,
+                              ),
+                              label: Text(
+                                '좋아요 ${_post!['likesCount'] ?? 0}',
+                                style: TextStyle(
+                                  color: _isLiked ? Colors.red : Colors.grey[600],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.grey[600],
+                                elevation: 0,
+                                side: BorderSide(
+                                  color: _isLiked ? Colors.red : Colors.grey[300]!,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _toggleDislike,
+                              icon: Icon(
+                                _isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
+                                color: _isDisliked ? Colors.blue : Colors.grey[600],
+                                size: 20,
+                              ),
+                              label: Text(
+                                '싫어요 ${_post!['dislikesCount'] ?? 0}',
+                                style: TextStyle(
+                                  color: _isDisliked ? Colors.blue : Colors.grey[600],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.grey[600],
+                                elevation: 0,
+                                side: BorderSide(
+                                  color: _isDisliked ? Colors.blue : Colors.grey[300]!,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: const Text('등록', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildComment({
-    required String profileUrl,
-    required String name,
-    required String level,
-    required String content,
-    required String date,
-    required int likes,
-    required VoidCallback onReport,
-    required VoidCallback onReply,
-    required VoidCallback onLike,
-    required Color levelColor,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Color(0xFFE0E0E0), width: 0.7)),
-      elevation: 0.3,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 28,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(profileUrl),
-                    radius: 9,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEDF7FB),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      level,
-                      style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(Icons.report_gmailerrorred, color: Colors.blueGrey, size: 16),
-                    onPressed: onReport,
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.mode_comment_outlined, color: Colors.blueGrey, size: 16),
-                      SizedBox(width: 2),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.thumb_up_alt_outlined, color: Colors.blueGrey, size: 16),
-                      SizedBox(width: 2),
-                      Text('$likes', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: Text(content, style: const TextStyle(fontSize: 14)),
-            ),
-            const SizedBox(height: 2),
-            // const Divider(
-            //   height: 16,
-            //   thickness: 0.7,
-            //   color: Color(0xFFE0E0E0),
-            //   indent: 0,
-            //   endIndent: 0,
-            // ),
-          ],
+  Widget _buildStatItem(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFF74512D),
+          size: 24,
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF74512D),
+          ),
+        ),
+      ],
     );
   }
 } 

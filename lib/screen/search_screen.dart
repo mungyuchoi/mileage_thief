@@ -101,6 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: buildPage(_currentIndex),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         currentIndex: _currentIndex,
         selectedItemColor: Colors.black54,
         unselectedItemColor: Colors.black38,
