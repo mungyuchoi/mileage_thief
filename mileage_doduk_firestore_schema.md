@@ -62,7 +62,7 @@
 #### ▶️ my_posts/{postId}
 ```json
 {
-  "postPath": "posts/20250609/abc123",
+  "postPath": "posts/20250609/posts/abc123",
   "title": "상테크 카드 추천!",
   "createdAt": "2025-06-09T10:00:00Z"
 }
@@ -71,7 +71,7 @@
 #### ▶️ liked_posts/{postId}
 ```json
 {
-  "postPath": "posts/20250608/xyz456",
+  "postPath": "posts/20250608/posts/xyz456",
   "likedAt": "2025-06-08T22:30:00Z"
 }
 ```
@@ -79,9 +79,11 @@
 #### ▶️ my_comments/{commentId} _(선택적)_
 ```json
 {
-  "commentPath": "posts/20250607/abc123/comments/cmt789",
-  "postPath": "posts/20250607/abc123",
-  "content": "정보 감사합니다!",
+  "commentPath": "posts/20250607/posts/abc123/comments/cmt789",
+  "postPath": "posts/20250607/posts/abc123",
+  "contentHtml": "<p>정보 감사합니다!</p>",
+  "contentType": "html",
+  "attachments": [],
   "createdAt": "2025-06-07T09:40:00Z"
 }
 ```
@@ -138,7 +140,21 @@
   "uid": "user_abc",
   "displayName": "무기명",
   "profileImageUrl": "https://...",
-  "content": "좋은 정보 감사합니다.",
+  "contentHtml": "<p>좋은 정보 감사합니다!</p>",
+  "contentType": "html",
+  "attachments": [
+    {
+      "type": "image",
+      "url": "https://storage.../posts/20250609/posts/abc123/comments/cmt789/images/cmt789_abc123.png",
+      "filename": "screenshot.png"
+    }
+  ],
+  "parentCommentId": null,
+  "depth": 0,
+  "replyToUserId": null,
+  "mentionedUsers": [],
+  "hasMention": false,
+  "likesCount": 0,
   "isDeleted": false,
   "isHidden": true,
   "hiddenByReport": true,
