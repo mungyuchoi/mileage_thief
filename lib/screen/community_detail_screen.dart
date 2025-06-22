@@ -44,6 +44,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedImage;
   bool _isUploadingImage = false;
+  bool _isAddingComment = false;
 
   @override
   void initState() {
@@ -153,40 +154,24 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   List<Map<String, dynamic>> _sortCommentsHierarchically(List<Map<String, dynamic>> comments) {
-    print('=== 댓글 정렬 시작 ===');
-    print('전체 댓글 수: ${comments.length}');
-    
     final List<Map<String, dynamic>> parentComments = [];
     final Map<String, List<Map<String, dynamic>>> repliesByParent = {};
 
     // 댓글을 부모 댓글과 답글로 분류
     for (final comment in comments) {
-      final commentId = comment['commentId'];
       final parentId = comment['parentCommentId'];
-      final contentHtml = comment['contentHtml'] ?? '';
-      
-      print('댓글 ID: $commentId');
-      print('부모 ID: $parentId');
-      print('내용: $contentHtml');
-      print('depth: ${comment['depth']}');
-      print('---');
       
       if (parentId == null) {
         // 원댓글
         parentComments.add(comment);
-        print('→ 원댓글로 분류');
       } else {
         // 답글 (모든 레벨의 답글 포함)
         if (!repliesByParent.containsKey(parentId)) {
           repliesByParent[parentId] = [];
         }
         repliesByParent[parentId]!.add(comment);
-        print('→ 답글로 분류 (부모: $parentId)');
       }
     }
-
-    print('원댓글 수: ${parentComments.length}');
-    print('답글 그룹 수: ${repliesByParent.length}');
     
     // 부모 댓글들을 시간순으로 정렬
     parentComments.sort((a, b) {
@@ -201,15 +186,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       _addCommentAndReplies(parentComment, repliesByParent, finalComments);
     }
 
-    print('최종 댓글 순서:');
-    for (int i = 0; i < finalComments.length; i++) {
-      final comment = finalComments[i];
-      final depth = comment['depth'] ?? 0;
-      final indent = '  ' * depth;
-      print('$i. $indent${comment['commentId']} - ${comment['contentHtml']}');
-    }
-    print('=== 댓글 정렬 완료 ===');
-
     return finalComments;
   }
 
@@ -222,11 +198,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     result.add(comment);
     
     final commentId = comment['commentId'];
-    print('부모 댓글 처리: $commentId');
     
     if (repliesByParent.containsKey(commentId)) {
       final replies = repliesByParent[commentId]!;
-      print('  └─ 답글 ${replies.length}개 발견');
       
       // 답글들을 시간순으로 정렬
       replies.sort((a, b) {
@@ -237,11 +211,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       
       // 각 답글을 재귀적으로 처리 (답글의 답글도 포함)
       for (final reply in replies) {
-        print('     답글 추가: ${reply['commentId']} - ${reply['contentHtml']}');
         _addCommentAndReplies(reply, repliesByParent, result);
       }
-    } else {
-      print('  └─ 답글 없음');
     }
   }
 
@@ -549,9 +520,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (_currentUser == null ||
         (_commentController.text.trim().isEmpty && _selectedImage == null)) return;
 
-    if (_isUploadingImage) return; // 이미지 업로드 중일 때는 중복 등록 방지
+    if (_isUploadingImage || _isAddingComment) return; // 이미지 업로드 중이거나 댓글 등록 중일 때는 중복 방지
 
     try {
+      setState(() {
+        _isAddingComment = true;
+      });
+
       // 먼저 댓글 문서를 생성해서 commentId를 얻음
       final commentRef = FirebaseFirestore.instance
           .collection('posts')
@@ -678,6 +653,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         if (_post != null) {
           _post!['commentCount'] = (_post!['commentCount'] ?? 0) + 1;
         }
+        _isAddingComment = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -685,6 +661,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       );
     } catch (e) {
       print('댓글 등록 오류: $e');
+      setState(() {
+        _isAddingComment = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('댓글 등록 중 오류가 발생했습니다.')),
       );
@@ -1198,18 +1177,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
                                   // 전송 버튼
                                   FloatingActionButton(
-                                    onPressed: _isUploadingImage ? null : _addComment,
-                                    backgroundColor: _isUploadingImage
+                                    onPressed: (_isUploadingImage || _isAddingComment) ? null : _addComment,
+                                    backgroundColor: (_isUploadingImage || _isAddingComment)
                                         ? Colors.grey[400]
                                         : const Color(0xFF74512D),
                                     mini: true,
-                                    child: _isUploadingImage
+                                    child: (_isUploadingImage || _isAddingComment)
                                         ? const SizedBox(
                                             width: 16,
                                             height: 16,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              color: Colors.white,
+                                              color: Color(0xFF74512D),
                                             ),
                                           )
                                         : const Icon(Icons.send, color: Colors.white, size: 20),
