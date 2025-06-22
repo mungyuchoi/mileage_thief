@@ -442,8 +442,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   String _removeHtmlTags(String htmlString) {
     return htmlString
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll(RegExp(r'&[^;]+;'), '')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n') // <br> 태그를 줄바꿈으로
+        .replaceAll(RegExp(r'<img[^>]*>', caseSensitive: false), '') // <img> 태그 제거
+        .replaceAll(RegExp(r'<p[^>]*>', caseSensitive: false), '') // <p> 태그 제거
+        .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n') // </p> 태그를 줄바꿈으로
+        .replaceAll(RegExp(r'<[^>]*>'), '') // 나머지 HTML 태그 제거
+        .replaceAll(RegExp(r'&[^;]+;'), '') // HTML 엔티티 제거
+        .replaceAll(RegExp(r'\n+'), '\n') // 연속된 줄바꿈을 하나로
         .trim();
   }
 
@@ -996,6 +1001,74 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     height: 1.4,
                   ),
                 ),
+                
+                // 첨부된 이미지 표시
+                if (comment['attachments'] != null && (comment['attachments'] as List).isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Column(
+                      children: (comment['attachments'] as List).map<Widget>((attachment) {
+                        if (attachment['type'] == 'image') {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                attachment['url'],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 200,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 200,
+                                    color: Colors.grey[200],
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                        color: const Color(0xFF74512D),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 200,
+                                    color: Colors.grey[200],
+                                    child: const Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          '이미지를 불러올 수 없습니다',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
+                      }).toList(),
+                    ),
+                  ),
+                
                 const SizedBox(height: 8),
                 Row(
                   children: [
