@@ -416,26 +416,24 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   Row(
                                     children: [
                                       // 프로필 이미지
-                                      CircleAvatar(
-                                        backgroundColor: Colors.grey[300],
-                                        radius: 20,
-                                        backgroundImage: (post['author']
-                                                        ['photoURL'] !=
-                                                    null &&
-                                                post['author']['photoURL']
-                                                    .toString()
-                                                    .isNotEmpty)
-                                            ? NetworkImage(
-                                                post['author']['photoURL'])
-                                            : null,
-                                        child: (post['author']['photoURL'] ==
-                                                    null ||
-                                                post['author']['photoURL']
-                                                    .toString()
-                                                    .isEmpty)
-                                            ? const Icon(Icons.person,
-                                                color: Colors.black54, size: 22)
-                                            : null,
+                                      Builder(
+                                        builder: (context) {
+                                          // 두 키 모두 체크하여 fallback 처리
+                                          final photoURL = post['author']?['photoURL'] ?? 
+                                                          post['author']?['profileImageUrl'] ?? '';
+                                          
+                                          return CircleAvatar(
+                                            backgroundColor: Colors.grey[300],
+                                            radius: 12,
+                                            backgroundImage: photoURL.isNotEmpty
+                                                ? NetworkImage(photoURL)
+                                                : null,
+                                            child: photoURL.isEmpty
+                                                ? const Icon(Icons.person,
+                                                    color: Colors.black54, size: 18)
+                                                : null,
+                                          );
+                                        },
                                       ),
                                       const SizedBox(width: 12),
                                       // 닉네임

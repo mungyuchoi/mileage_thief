@@ -115,7 +115,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         'author': {
           'uid': currentUser.uid,
           'displayName': userProfile['displayName'] ?? '익명',
-          'profileImageUrl': userProfile['photoURL'] ?? '',
+          'photoURL': userProfile['photoURL'] ?? '',
         },
         'viewsCount': 0,
         'likesCount': 0,
