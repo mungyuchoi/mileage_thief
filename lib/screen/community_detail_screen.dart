@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/user_service.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -410,7 +411,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   void _sharePost() {
     if (_post != null) {
       final title = _post!['title'] ?? '제목 없음';
-      final content = _removeHtmlTags(_post!['contentHtml'] ?? '');
+      final content = _getPlainTextFromHtml(_post!['contentHtml'] ?? '');
       final shareText = '$title\n\n$content\n\n마일리지도둑 커뮤니티에서 공유';
       Share.share(shareText);
     }
@@ -670,7 +671,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
-  String _removeHtmlTags(String htmlString) {
+  String _getPlainTextFromHtml(String htmlString) {
     return htmlString
         .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n') // <br> 태그를 줄바꿈으로
         .replaceAll(RegExp(r'<img[^>]*>', caseSensitive: false), '') // <img> 태그 제거
@@ -889,13 +890,22 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   const SizedBox(height: 12),
 
                                   // 게시글 내용
-                                  Text(
-                                    _removeHtmlTags(_post!['contentHtml'] ?? ''),
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.black87,
-                                      height: 1.5,
-                                    ),
+                                  Html(
+                                    data: _post!['contentHtml'] ?? '',
+                                    style: {
+                                      "body": Style(
+                                        fontSize: FontSize(15),
+                                        color: Colors.black87,
+                                        lineHeight: LineHeight(1.5),
+                                        margin: Margins.zero,
+                                      ),
+                                      "p": Style(
+                                        margin: Margins.only(bottom: 8),
+                                      ),
+                                      "br": Style(
+                                        margin: Margins.only(bottom: 4),
+                                      ),
+                                    },
                                   ),
                                   const SizedBox(height: 16),
 
@@ -1276,73 +1286,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   const SizedBox(height: 4),
                   _buildCommentContent(comment),
                   
-                  // 첨부된 이미지 표시
-                  if (comment['attachments'] != null && (comment['attachments'] as List).isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Column(
-                        children: (comment['attachments'] as List).map<Widget>((attachment) {
-                          if (attachment['type'] == 'image') {
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  attachment['url'],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: 200,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      width: double.infinity,
-                                      height: 200,
-                                      color: Colors.grey[200],
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
-                                              : null,
-                                          color: const Color(0xFF74512D),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: double.infinity,
-                                      height: 200,
-                                      color: Colors.grey[200],
-                                      child: const Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.broken_image,
-                                            size: 40,
-                                            color: Colors.grey,
-                                          ),
-                                          SizedBox(height: 8),
-                                          Text(
-                                            '이미지를 불러올 수 없습니다',
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox();
-                        }).toList(),
-                      ),
-                    ),
-                  
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -1392,49 +1335,30 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Widget _buildCommentContent(Map<String, dynamic> comment) {
-    final content = _removeHtmlTags(comment['contentHtml'] ?? comment['content'] ?? '');
+    final contentHtml = comment['contentHtml'] ?? comment['content'] ?? '';
     final hasMention = comment['hasMention'] == true;
     
-    if (hasMention && content.startsWith('@')) {
-      // 멘션 파싱
-      final mentionEndIndex = content.indexOf(' ');
-      if (mentionEndIndex > 0) {
-        final mentionText = content.substring(0, mentionEndIndex);
-        final restText = content.substring(mentionEndIndex);
-        
-        return RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: mentionText,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-              TextSpan(
-                text: restText,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-    
-    return Text(
-      content,
-      style: const TextStyle(
-        fontSize: 14,
-        color: Colors.black87,
-        height: 1.4,
-      ),
+    return Html(
+      data: contentHtml,
+      style: {
+        "body": Style(
+          fontSize: FontSize(14),
+          color: Colors.black87,
+          lineHeight: LineHeight(1.4),
+          margin: Margins.zero,
+        ),
+        "p": Style(
+          margin: Margins.only(bottom: 4),
+        ),
+        "br": Style(
+          margin: Margins.only(bottom: 2),
+        ),
+        // 멘션 스타일링
+        "span[data-mention]": Style(
+          color: Colors.blue,
+          fontWeight: FontWeight.w600,
+        ),
+      },
     );
   }
 } 

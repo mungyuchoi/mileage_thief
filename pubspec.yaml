@@ -40,6 +40,7 @@ dependencies:
   html_editor_enhanced: ^2.7.0
   image_picker: ^1.1.2
   firebase_storage: ^12.4.7
+  flutter_html: ^3.0.0
 
 dev_dependencies:
   flutter_test:
