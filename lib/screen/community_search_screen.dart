@@ -122,16 +122,16 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   }
 
   // 검색어 하이라이팅
-  Widget _highlightSearchText(String text, String searchQuery) {
+  Widget _highlightSearchText(String text, String searchQuery, {TextStyle? baseStyle}) {
     if (searchQuery.isEmpty) {
-      return Text(text);
+      return Text(text, style: baseStyle);
     }
 
     final lowercaseText = text.toLowerCase();
     final lowercaseQuery = searchQuery.toLowerCase();
     
     if (!lowercaseText.contains(lowercaseQuery)) {
-      return Text(text);
+      return Text(text, style: baseStyle);
     }
 
     final spans = <TextSpan>[];
@@ -140,25 +140,32 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
     while (true) {
       final index = lowercaseText.indexOf(lowercaseQuery, start);
       if (index == -1) {
-        // 남은 텍스트 추가
+        // 남은 텍스트 추가 (부모 스타일 적용)
         if (start < text.length) {
-          spans.add(TextSpan(text: text.substring(start)));
+          spans.add(TextSpan(
+            text: text.substring(start),
+            style: baseStyle,
+          ));
         }
         break;
       }
       
-      // 하이라이트 이전 텍스트
+      // 하이라이트 이전 텍스트 (부모 스타일 적용)
       if (index > start) {
-        spans.add(TextSpan(text: text.substring(start, index)));
+        spans.add(TextSpan(
+          text: text.substring(start, index),
+          style: baseStyle,
+        ));
       }
       
       // 하이라이트된 텍스트
       spans.add(TextSpan(
         text: text.substring(index, index + searchQuery.length),
-        style: const TextStyle(
-          backgroundColor: Color(0xFFE8F5E8), // 연한 초록 배경
+        style: TextStyle(
+          backgroundColor: const Color(0xFFE8F5E8), // 연한 초록 배경
           color: Colors.black,
           fontWeight: FontWeight.w600,
+          fontSize: baseStyle?.fontSize ?? 12,
         ),
       ));
       
@@ -167,9 +174,6 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
 
     return RichText(
       text: TextSpan(
-        style: DefaultTextStyle.of(context).style.copyWith(
-          fontSize: 12, // 일반 텍스트 크기 작게
-        ),
         children: spans,
       ),
     );
@@ -385,28 +389,24 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               // 제목 (하이라이팅)
-                                              DefaultTextStyle(
-                                                style: const TextStyle(
+                                              _highlightSearchText(
+                                                post['title'] ?? '제목 없음',
+                                                _searchController.text,
+                                                baseStyle: const TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
                                                   color: Colors.black87,
-                                                ),
-                                                child: _highlightSearchText(
-                                                  post['title'] ?? '제목 없음',
-                                                  _searchController.text,
                                                 ),
                                               ),
                                               const SizedBox(height: 8),
                                               
                                               // 내용 미리보기 (하이라이팅)
-                                              DefaultTextStyle(
-                                                style: const TextStyle(
+                                              _highlightSearchText(
+                                                _removeHtmlTags(post['contentHtml'] ?? ''),
+                                                _searchController.text,
+                                                baseStyle: const TextStyle(
                                                   fontSize: 12,
                                                   color: Colors.grey,
-                                                ),
-                                                child: _highlightSearchText(
-                                                  _removeHtmlTags(post['contentHtml'] ?? ''),
-                                                  _searchController.text,
                                                 ),
                                               ),
                                               const SizedBox(height: 12),
