@@ -32,6 +32,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isLoading = true;
   bool _isLiked = false;
   bool _isFollowing = false;
+  Map<String, bool> _commentLikes = {}; // 댓글 좋아요 상태 저장
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   final TextEditingController _commentController = TextEditingController();
   String _commentSortOrder = '등록순';
@@ -103,14 +104,41 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .orderBy('createdAt', descending: false)
           .get();
 
-      setState(() {
-        _comments = commentsSnapshot.docs
-            .map((doc) => {
-                  'commentId': doc.id,
-                  ...doc.data() as Map<String, dynamic>
-                })
-            .toList();
-      });
+      final comments = commentsSnapshot.docs
+          .map((doc) => {
+                'commentId': doc.id,
+                ...doc.data() as Map<String, dynamic>
+              })
+          .toList();
+
+      // 각 댓글의 좋아요 상태 확인
+      if (_currentUser != null) {
+        final Map<String, bool> commentLikes = {};
+        for (final comment in comments) {
+          final commentId = comment['commentId'];
+          final likeDoc = await FirebaseFirestore.instance
+              .collection('posts')
+              .doc(widget.dateString)
+              .collection('posts')
+              .doc(widget.postId)
+              .collection('comments')
+              .doc(commentId)
+              .collection('likes')
+              .doc(_currentUser!.uid)
+              .get();
+          
+          commentLikes[commentId] = likeDoc.exists;
+        }
+        
+        setState(() {
+          _comments = comments;
+          _commentLikes = commentLikes;
+        });
+      } else {
+        setState(() {
+          _comments = comments;
+        });
+      }
     } catch (e) {
       print('댓글 로드 오류: $e');
     }
@@ -135,6 +163,68 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       });
     } catch (e) {
       print('사용자 상태 확인 오류: $e');
+    }
+  }
+
+  Future<void> _toggleCommentLike(String commentId) async {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
+
+    try {
+      final commentRef = FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('comments')
+          .doc(commentId);
+
+      final likeRef = commentRef.collection('likes').doc(_currentUser!.uid);
+      final isCurrentlyLiked = _commentLikes[commentId] ?? false;
+
+      if (isCurrentlyLiked) {
+        // 좋아요 취소
+        await likeRef.delete();
+        await commentRef.update({
+          'likesCount': FieldValue.increment(-1),
+        });
+
+        setState(() {
+          _commentLikes[commentId] = false;
+          // 댓글 목록에서도 업데이트
+          final commentIndex = _comments.indexWhere((c) => c['commentId'] == commentId);
+          if (commentIndex != -1) {
+            _comments[commentIndex]['likesCount'] = (_comments[commentIndex]['likesCount'] ?? 0) - 1;
+          }
+        });
+      } else {
+        // 좋아요 추가
+        await likeRef.set({
+          'uid': _currentUser!.uid,
+          'likedAt': FieldValue.serverTimestamp(),
+        });
+        await commentRef.update({
+          'likesCount': FieldValue.increment(1),
+        });
+
+        setState(() {
+          _commentLikes[commentId] = true;
+          // 댓글 목록에서도 업데이트
+          final commentIndex = _comments.indexWhere((c) => c['commentId'] == commentId);
+          if (commentIndex != -1) {
+            _comments[commentIndex]['likesCount'] = (_comments[commentIndex]['likesCount'] ?? 0) + 1;
+          }
+        });
+      }
+    } catch (e) {
+      print('댓글 좋아요 처리 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('오류가 발생했습니다.')),
+      );
     }
   }
 
@@ -421,6 +511,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       _commentController.clear();
       _removeSelectedImage();
+      
+      // 새 댓글의 좋아요 상태 초기화
+      _commentLikes[commentRef.id] = false;
+      
       _loadComments();
 
       setState(() {
@@ -1072,11 +1166,31 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.favorite_border, size: 16, color: Colors.grey[500]),
-                    const SizedBox(width: 4),
-                    Text(
-                      '0', // 실제로는 댓글 좋아요 수
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    GestureDetector(
+                      onTap: () => _toggleCommentLike(comment['commentId']),
+                      child: Row(
+                        children: [
+                          Icon(
+                            (_commentLikes[comment['commentId']] ?? false) 
+                                ? Icons.favorite 
+                                : Icons.favorite_border,
+                            size: 16,
+                            color: (_commentLikes[comment['commentId']] ?? false) 
+                                ? Colors.red 
+                                : Colors.grey[500],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${comment['likesCount'] ?? 0}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: (_commentLikes[comment['commentId']] ?? false) 
+                                  ? Colors.red 
+                                  : Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Text(
