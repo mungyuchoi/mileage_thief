@@ -152,11 +152,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             userProfile!['displayGrade'] ?? '이코노미 Lv.1';
                         return Row(
                           children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.grey[300],
-                              radius: 18,
-                              child: const Icon(Icons.person,
-                                  color: Colors.black, size: 20),
+                            Builder(
+                              builder: (context) {
+                                // 사용자 프로필에서 photoURL 가져오기 (fallback 포함)
+                                final photoURL = userProfile!['photoURL'] ?? '';
+                                
+                                return CircleAvatar(
+                                  backgroundColor: Colors.grey[300],
+                                  radius: 18,
+                                  backgroundImage: photoURL.isNotEmpty
+                                      ? NetworkImage(photoURL)
+                                      : null,
+                                  child: photoURL.isEmpty
+                                      ? const Icon(Icons.person,
+                                          color: Colors.black, size: 20)
+                                      : null,
+                                );
+                              },
                             ),
                             const SizedBox(width: 10),
                             Column(
@@ -192,7 +204,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       ? BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFB2F7EF), Color(0xFF051667)],
+                            colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -236,7 +248,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         ? BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFB2F7EF), Color(0xFF425EB2)],
+                              colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -287,7 +299,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFB2F7EF), Color(0xFF425EB2)],
+                colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -313,7 +325,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       child: Text(
                         selectedBoardName,
                         style: const TextStyle(
-                          color: Colors.black54, // 민트~블루 계열 텍스트
+                          color: Colors.black54,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -557,7 +569,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             );
           }
         },
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF74512D),
         child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
