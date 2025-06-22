@@ -149,11 +149,11 @@
       "filename": "screenshot.png"
     }
   ],
-  "parentCommentId": null,
-  "depth": 0,
-  "replyToUserId": null,
-  "mentionedUsers": [],
-  "hasMention": false,
+  "parentCommentId": "parent_cmt_id",  // 답글의 부모 댓글 ID (null이면 원댓글)
+  "depth": 1,                          // 들여쓰기 레벨 (0=원댓글, 1=답글)
+  "replyToUserId": "user_def",         // 답글 대상 사용자 ID
+  "mentionedUsers": ["user_def"],      // 멘션된 사용자 ID 배열
+  "hasMention": true,                  // 멘션 포함 여부
   "likesCount": 0,
   "isDeleted": false,
   "isHidden": true,
