@@ -91,7 +91,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       );
       
       if (image != null) {
-        tempImagePaths.add(image.path);
+        setState(() {
+          tempImagePaths.add(image.path);
+        });
+        
         print('이미지 선택됨: ${image.path}');
         print('총 이미지 개수: ${tempImagePaths.length}/$maxImageCount');
         
@@ -102,7 +105,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         Fluttertoast.showToast(
           msg: "이미지가 추가되었습니다 (${tempImagePaths.length}/$maxImageCount)",
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF74512D),
           textColor: Colors.white,
         );
       }
@@ -515,39 +518,42 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
               ),
               const SizedBox(height: 16),
               // 이미지 추가 버튼
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: tempImagePaths.length >= maxImageCount ? null : _addImageToEditor,
-                      icon: Icon(
-                        Icons.camera_alt_rounded,
-                        color: tempImagePaths.length >= maxImageCount 
-                            ? Colors.grey 
-                            : Colors.white,
-                      ),
-                      label: Text(
-                        tempImagePaths.length >= maxImageCount 
-                            ? '최대 개수 도달 (${tempImagePaths.length}/$maxImageCount)'
-                            : '사진 추가 (${tempImagePaths.length}/$maxImageCount)',
-                        style: TextStyle(
-                          color: tempImagePaths.length >= maxImageCount 
-                              ? Colors.grey 
-                              : Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: tempImagePaths.length >= maxImageCount 
-                            ? Colors.grey[300] 
-                            : const Color(0xFF5271FF),
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: ElevatedButton.icon(
+                  onPressed: tempImagePaths.length >= maxImageCount ? null : _addImageToEditor,
+                  icon: Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 20,
+                    color: tempImagePaths.length >= maxImageCount 
+                        ? Colors.grey[600] 
+                        : Colors.white,
+                  ),
+                  label: Text(
+                    tempImagePaths.length >= maxImageCount 
+                        ? '최대 개수 도달 (${tempImagePaths.length}/$maxImageCount)'
+                        : '사진 추가 (${tempImagePaths.length}/$maxImageCount)',
+                    style: TextStyle(
+                      color: tempImagePaths.length >= maxImageCount 
+                          ? Colors.grey[600] 
+                          : Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: tempImagePaths.length >= maxImageCount 
+                        ? Colors.grey[200] 
+                        : const Color(0xFF74512D),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: tempImagePaths.length >= maxImageCount ? 0 : 2,
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
             ],
