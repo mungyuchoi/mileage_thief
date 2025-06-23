@@ -31,6 +31,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   Map<String, dynamic>? _post;
   List<Map<String, dynamic>> _comments = [];
   bool _isLoading = true;
+  bool _isLoadingComments = true; // 댓글 로딩 상태 추가
   bool _isLiked = false;
   bool _isFollowing = false;
   Map<String, bool> _commentLikes = {}; // 댓글 좋아요 상태 저장
@@ -102,6 +103,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _loadComments() async {
     try {
+      setState(() {
+        _isLoadingComments = true;
+      });
+
       final commentsSnapshot = await FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
@@ -143,14 +148,19 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         setState(() {
           _comments = sortedComments;
           _commentLikes = commentLikes;
+          _isLoadingComments = false;
         });
       } else {
         setState(() {
           _comments = sortedComments;
+          _isLoadingComments = false;
         });
       }
     } catch (e) {
       print('댓글 로드 오류: $e');
+      setState(() {
+        _isLoadingComments = false;
+      });
     }
   }
 
@@ -953,79 +963,115 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                               ),
                             ),
 
-                          // 댓글 섹션 (댓글이 있을 때만 표시)
-                          if (_comments.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  // 댓글 헤더
-                                  Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          '댓글 ${_comments.length}',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        DropdownButton<String>(
-                                          value: _commentSortOrder,
-                                          underline: const SizedBox(),
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
-                                          ),
-                                          items: ['등록순', '최신순'].map((String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            );
-                                          }).toList(),
-                                          onChanged: (String? newValue) {
-                                            if (newValue != null) {
-                                              setState(() {
-                                                _commentSortOrder = newValue;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // 댓글 목록
-                                  ListView.separated(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: _comments.length,
-                                    separatorBuilder: (context, index) => Divider(
-                                      height: 1,
-                                      color: Colors.grey[200],
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final comment = _comments[index];
-                                      return _buildCommentItem(comment);
-                                    },
-                                  ),
-                                ],
-                              ),
+                          // 댓글 섹션
+                          Container(
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
+                            child: _isLoadingComments
+                                ? // 댓글 로딩 중 UI
+                                Container(
+                                    padding: const EdgeInsets.all(40),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF74512D),
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  )
+                                : _comments.isEmpty
+                                    ? // 댓글이 없을 때 UI
+                                    Container(
+                                        padding: const EdgeInsets.all(40),
+                                        child: Center(
+                                          child: Column(
+                                            children: [
+                                              Icon(
+                                                Icons.chat_bubble_outline,
+                                                size: 48,
+                                                color: Colors.grey[400],
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Text(
+                                                '첫 번째 댓글을 작성해보세요!',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.grey[600],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : // 댓글이 있을 때 UI
+                                    Column(
+                                        children: [
+                                          // 댓글 헤더
+                                          Padding(
+                                            padding: const EdgeInsets.all(16),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  '댓글 ${_comments.length}',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                DropdownButton<String>(
+                                                  value: _commentSortOrder,
+                                                  underline: const SizedBox(),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  items: ['등록순', '최신순'].map((String value) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: value,
+                                                      child: Text(value),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (String? newValue) {
+                                                    if (newValue != null) {
+                                                      setState(() {
+                                                        _commentSortOrder = newValue;
+                                                      });
+                                                    }
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          // 댓글 목록
+                                          ListView.separated(
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            itemCount: _comments.length,
+                                            separatorBuilder: (context, index) => Divider(
+                                              height: 1,
+                                              color: Colors.grey[200],
+                                            ),
+                                            itemBuilder: (context, index) {
+                                              final comment = _comments[index];
+                                              return _buildCommentItem(comment);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                          ),
                           ],
                         ),
                       ),
