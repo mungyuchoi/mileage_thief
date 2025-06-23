@@ -101,6 +101,41 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
+  Future<void> _refreshData() async {
+    try {
+      // 게시글과 댓글을 동시에 새로고침
+      await Future.wait([
+        _loadPostDetailForRefresh(), // 조회수 증가 없이 로드
+        _loadComments(),
+        _checkUserStatus(),
+      ]);
+    } catch (e) {
+      print('새로고침 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('새로고침 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  Future<void> _loadPostDetailForRefresh() async {
+    try {
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .get();
+
+      if (docSnapshot.exists) {
+        setState(() {
+          _post = docSnapshot.data() as Map<String, dynamic>;
+        });
+      }
+    } catch (e) {
+      print('게시글 새로고침 오류: $e');
+    }
+  }
+
   Future<void> _loadComments() async {
     try {
       setState(() {
@@ -787,9 +822,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               : Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
+                      child: RefreshIndicator(
+                        onRefresh: _refreshData,
+                        color: const Color(0xFF74512D),
+                        backgroundColor: Colors.white,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            children: [
                             // 게시글 내용 카드
                             Container(
                               margin: const EdgeInsets.all(16),
@@ -913,7 +953,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                         margin: Margins.only(bottom: 8),
                                       ),
                                       "br": Style(
-                                        margin: Margins.only(bottom: 4),
+                                        margin: Margins.only(bottom: 1),
+                                      ),
+                                      "img": Style(
+                                        margin: Margins.only(top: 2, bottom: 2),
+                                      ),
+                                      "u": Style(
+                                        margin: Margins.zero,
                                       ),
                                     },
                                   ),
@@ -1072,7 +1118,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                         ],
                                       ),
                           ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1397,7 +1444,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           margin: Margins.only(bottom: 4),
         ),
         "br": Style(
-          margin: Margins.only(bottom: 2),
+          margin: Margins.only(bottom: 1),
+        ),
+        "img": Style(
+          margin: Margins.only(top: 2, bottom: 2),
+        ),
+        "u": Style(
+          margin: Margins.zero,
         ),
         // 멘션 스타일링
         "span[data-mention]": Style(
