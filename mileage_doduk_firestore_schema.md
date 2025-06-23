@@ -120,7 +120,7 @@
 | boardId        | string   | 게시판 ID (e.g., deal, free) |
 | title          | string   | 제목 |
 | contentHtml    | string   | HTML 형식의 본문 |
-| author         | map      | 작성자 정보 (uid, displayName, profileImageUrl) |
+| author         | map      | 작성자 정보 (uid, displayName, photoURL, displayGrade) |
 | viewsCount     | number   | 조회수 |
 | likesCount     | number   | 좋아요 수 |
 | commentCount   | number   | 댓글 수 |
@@ -130,6 +130,22 @@
 | hiddenByReport | boolean  | 신고 누적 자동 블라인드 여부 |
 | createdAt      | timestamp| 작성 시각 |
 | updatedAt      | timestamp| 수정 시각 |
+
+#### ▶️ author 구조 상세
+```json
+{
+  "uid": "user123",
+  "displayName": "vory!",
+  "photoURL": "https://...",
+  "displayGrade": "이코노미 Lv.1"
+}
+```
+
+> **중요**: 사용자 정보 변경 시 author 필드 업데이트
+> - 등급 업그레이드: 해당 유저의 모든 posts와 comments의 author.displayGrade 일괄 업데이트
+> - 프로필 사진 변경: author.photoURL 일괄 업데이트  
+> - 닉네임 변경: author.displayName 일괄 업데이트
+> - 읽기 성능 최적화를 위해 비정규화된 구조 사용
 
 ### 📂 서브컬렉션
 
@@ -206,7 +222,6 @@
 | suggestion   | 건의사항      | 사용자 의견, 개선 요청                    |
 | free         | 자유게시판    | 일상, 후기, 질문 섞인 잡담                |
 | notice       | 운영 공지사항 | 관리자 공지, 업데이트 안내                |
-| popular      | 인기글 모음   | 자동 필터링 (like 기준 등) (읽기 전용)     |
 
 ---
 

@@ -630,6 +630,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       final profileImageUrl = userData?['photoURL'] ?? '';
       final displayName = userData?['displayName'] ?? '익명';
+      final displayGrade = userData?['displayGrade'] ?? '이코노미 Lv.1';
 
       // 마지막 로그인 시간 업데이트
       await UserService.updateLastLogin(_currentUser!.uid);
@@ -639,6 +640,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         'uid': _currentUser!.uid,
         'displayName': displayName,
         'profileImageUrl': profileImageUrl,
+        'displayGrade': displayGrade,
         'contentHtml': contentHtml.isEmpty ? '<p>이미지</p>' : '<p>$contentHtml</p>',
         'contentType': 'html',
         'attachments': attachments,
@@ -751,6 +753,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return level != null ? '$gradeName Lv.$level' : gradeName;
   }
 
+  String _getBoardDisplayName(String boardId) {
+    final boardMap = {
+      'question': '마일리지',
+      'deal': '적립/카드 혜택',
+      'seat_share': '좌석 공유',
+      'review': '항공 리뷰',
+      'error_report': '오류 신고',
+      'suggestion': '건의사항',
+      'free': '자유게시판',
+      'notice': '운영 공지사항',
+    };
+    return boardMap[boardId] ?? boardId;
+  }
+
   Color _getGradeColor(String? grade) {
     switch (grade) {
       case 'economy':
@@ -848,13 +864,24 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // 카테고리명
+                                  Text(
+                                    _getBoardDisplayName(widget.boardId),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF74512D),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+
                                   // 작성자 정보
                                   Row(
                                     children: [
                                       // 프로필 이미지
                                       CircleAvatar(
                                         radius: 24,
-                                        backgroundColor: _getGradeColor(_post!['author']?['grade']),
+                                        backgroundColor: Colors.grey,
                                         backgroundImage: (_post!['author']?['photoURL'] ??
                                                          _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
                                             ? NetworkImage(_post!['author']['photoURL'] ??
@@ -887,13 +914,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              _getGradeDisplay(
-                                                _post!['author']?['grade'],
-                                                _post!['author']?['gradeLevel'],
-                                              ),
-                                              style: TextStyle(
+                                              _post!['author']?['displayGrade'] ?? '이코노미 Lv.1',
+                                              style: const TextStyle(
                                                 fontSize: 12,
-                                                color: _getGradeColor(_post!['author']?['grade']),
+                                                color: Colors.grey,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
@@ -936,6 +960,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       color: Colors.black87,
                                       height: 1.3,
                                     ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  
+                                  // 제목 밑 구분선
+                                  Container(
+                                    height: 1,
+                                    color: Colors.grey[300],
                                   ),
                                   const SizedBox(height: 12),
 

@@ -252,6 +252,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
           'uid': currentUser.uid,
           'displayName': userProfile['displayName'] ?? '익명',
           'photoURL': userProfile['photoURL'] ?? '',
+          'displayGrade': userProfile['displayGrade'] ?? '이코노미 Lv.1',
         },
         'viewsCount': 0,
         'likesCount': 0,
