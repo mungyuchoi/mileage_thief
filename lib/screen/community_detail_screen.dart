@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/user_service.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'community_post_create_screen.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -463,33 +464,128 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   void _showMoreOptions() {
+    // 본인 게시글인지 확인
+    final isMyPost = _currentUser?.uid == _post?['author']?['uid'];
+    
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.report_outlined),
-              title: const Text('신고하기'),
-              onTap: () {
-                Navigator.pop(context);
-                _reportPost();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.block_outlined),
-              title: const Text('차단하기'),
-              onTap: () {
-                Navigator.pop(context);
-                _blockUser();
-              },
-            ),
-          ],
+          children: isMyPost 
+            ? [
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('수정하기'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _editPost();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline),
+                  title: const Text('삭제하기'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deletePost();
+                  },
+                ),
+              ]
+            : [
+                ListTile(
+                  leading: const Icon(Icons.report_outlined),
+                  title: const Text('신고하기'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _reportPost();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.block_outlined),
+                  title: const Text('차단하기'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _blockUser();
+                  },
+                ),
+              ],
         ),
       ),
     );
+  }
+
+  void _editPost() {
+    if (_post == null) return;
+    
+    // 수정 모드로 게시글 작성 화면으로 이동
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CommunityPostCreateScreen(
+          isEditMode: true,
+          postId: widget.postId,
+          dateString: widget.dateString,
+          initialBoardId: widget.boardId,
+          initialBoardName: widget.boardName,
+          editTitle: _post!['title'] ?? '',
+          editContentHtml: _post!['contentHtml'] ?? '',
+        ),
+      ),
+    ).then((result) {
+      // 수정 완료 후 돌아왔을 때 게시글 새로고침
+      if (result == true) {
+        _loadPostDetail();
+      }
+    });
+  }
+
+  void _deletePost() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('게시글 삭제'),
+        content: const Text('정말로 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _confirmDeletePost();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeletePost() async {
+    try {
+      // 게시글 삭제
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글이 삭제되었습니다.')),
+      );
+
+      // 상위 화면으로 돌아가기
+      Navigator.pop(context);
+    } catch (e) {
+      print('게시글 삭제 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글 삭제 중 오류가 발생했습니다.')),
+      );
+    }
   }
 
   void _reportPost() {
@@ -972,7 +1068,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
                                   // 게시글 내용
                                   Html(
-                                    data: _post!['contentHtml'] ?? '',
+                                    data: (_post!['contentHtml'] ?? '')
+                                        .replaceAll(RegExp(r'<br\s*/?>\s*</p>', caseSensitive: false), '</p>') // 이미지 뒤 <br> 제거
+                                        .replaceAll(RegExp(r'<br\s*/?>\s*$', caseSensitive: false), ''), // 끝에 오는 <br> 제거
                                     style: {
                                       "body": Style(
                                         fontSize: FontSize(15),
@@ -981,13 +1079,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                         margin: Margins.zero,
                                       ),
                                       "p": Style(
-                                        margin: Margins.only(bottom: 8),
+                                        margin: Margins.zero,
+                                        padding: HtmlPaddings.zero,
                                       ),
                                       "br": Style(
-                                        margin: Margins.only(bottom: 1),
+                                        margin: Margins.zero,
+                                        display: Display.none, // <br> 태그 완전히 숨기기
                                       ),
                                       "img": Style(
-                                        margin: Margins.only(top: 2, bottom: 2),
+                                        margin: Margins.zero,
+                                        display: Display.block,
                                       ),
                                       "u": Style(
                                         margin: Margins.zero,
@@ -1472,13 +1573,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           margin: Margins.zero,
         ),
         "p": Style(
-          margin: Margins.only(bottom: 4),
+          margin: Margins.only(bottom: 2),
         ),
         "br": Style(
-          margin: Margins.only(bottom: 1),
+          margin: Margins.zero,
         ),
         "img": Style(
-          margin: Margins.only(top: 2, bottom: 2),
+          margin: Margins.zero,
         ),
         "u": Style(
           margin: Margins.zero,

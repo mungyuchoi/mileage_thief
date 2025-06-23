@@ -14,10 +14,24 @@ import 'dart:convert';
 class CommunityPostCreateScreen extends StatefulWidget {
   final String? initialBoardId;
   final String? initialBoardName;
+  
+  // 편집 모드 관련 파라미터
+  final bool isEditMode;
+  final String? postId;
+  final String? dateString;
+  final String? editTitle;
+  final String? editContentHtml;
 
-  const CommunityPostCreateScreen(
-      {Key? key, this.initialBoardId, this.initialBoardName})
-      : super(key: key);
+  const CommunityPostCreateScreen({
+    Key? key, 
+    this.initialBoardId, 
+    this.initialBoardName,
+    this.isEditMode = false,
+    this.postId,
+    this.dateString,
+    this.editTitle,
+    this.editContentHtml,
+  }) : super(key: key);
 
   @override
   State<CommunityPostCreateScreen> createState() =>
@@ -36,8 +50,18 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   @override
   void initState() {
     super.initState();
-    selectedBoardId = widget.initialBoardId;
-    selectedBoardName = widget.initialBoardName;
+    
+    if (widget.isEditMode) {
+      // 편집 모드일 때 기존 데이터로 초기화
+      selectedBoardId = widget.initialBoardId;
+      selectedBoardName = widget.initialBoardName;
+      _titleController.text = widget.editTitle ?? '';
+      // HTML 에디터 내용은 onInit 콜백에서 설정
+    } else {
+      // 새 게시글 작성 모드
+      selectedBoardId = widget.initialBoardId;
+      selectedBoardName = widget.initialBoardName;
+    }
   }
 
   @override
@@ -226,11 +250,21 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         return;
       }
 
-      // 6. UUID와 날짜 생성
-      const uuid = Uuid();
-      final postId = uuid.v4();
-      final now = DateTime.now();
-      final dateString = DateFormat('yyyyMMdd').format(now);
+      // 6. UUID와 날짜 생성 (편집 모드가 아닐 때만)
+      String postId;
+      String dateString;
+      
+      if (widget.isEditMode) {
+        // 편집 모드일 때는 기존 ID 사용
+        postId = widget.postId!;
+        dateString = widget.dateString!;
+      } else {
+        // 새 게시글일 때만 새 ID 생성
+        const uuid = Uuid();
+        postId = uuid.v4();
+        final now = DateTime.now();
+        dateString = DateFormat('yyyyMMdd').format(now);
+      }
 
       // 7. HTML 내의 이미지들을 업로드하고 URL로 교체
       print('=== 이미지 처리 시작 ===');
@@ -243,27 +277,40 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       print('처리된 contentHtml (첫 500자): ${processedContentHtml.length > 500 ? processedContentHtml.substring(0, 500) : processedContentHtml}');
 
       // 8. Firestore에 저장할 데이터 준비
-      final postData = {
-        'postId': postId,
-        'boardId': selectedBoardId,
-        'title': title,
-        'contentHtml': processedContentHtml,
-        'author': {
-          'uid': currentUser.uid,
-          'displayName': userProfile['displayName'] ?? '익명',
-          'photoURL': userProfile['photoURL'] ?? '',
-          'displayGrade': userProfile['displayGrade'] ?? '이코노미 Lv.1',
-        },
-        'viewsCount': 0,
-        'likesCount': 0,
-        'commentCount': 0,
-        'reportsCount': 0,
-        'isDeleted': false,
-        'isHidden': false,
-        'hiddenByReport': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+      Map<String, dynamic> postData;
+      
+      if (widget.isEditMode) {
+        // 편집 모드일 때는 업데이트할 필드만 포함
+        postData = {
+          'boardId': selectedBoardId,
+          'title': title,
+          'contentHtml': processedContentHtml,
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+      } else {
+        // 새 게시글일 때는 모든 필드 포함
+        postData = {
+          'postId': postId,
+          'boardId': selectedBoardId,
+          'title': title,
+          'contentHtml': processedContentHtml,
+          'author': {
+            'uid': currentUser.uid,
+            'displayName': userProfile['displayName'] ?? '익명',
+            'photoURL': userProfile['photoURL'] ?? '',
+            'displayGrade': userProfile['displayGrade'] ?? '이코노미 Lv.1',
+          },
+          'viewsCount': 0,
+          'likesCount': 0,
+          'commentCount': 0,
+          'reportsCount': 0,
+          'isDeleted': false,
+          'isHidden': false,
+          'hiddenByReport': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+      }
 
       // 데이터 크기 확인
       print('=== Firestore 데이터 크기 확인 ===');
@@ -286,23 +333,36 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       }
 
       // 9. Firestore에 저장
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(dateString)
-          .collection('posts')
-          .doc(postId)
-          .set(postData);
+      if (widget.isEditMode) {
+        // 편집 모드일 때는 업데이트
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(dateString)
+            .collection('posts')
+            .doc(postId)
+            .update(postData);
+      } else {
+        // 새 게시글일 때는 생성
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(dateString)
+            .collection('posts')
+            .doc(postId)
+            .set(postData);
+      }
 
       // 10. 성공 메시지
       Fluttertoast.showToast(
-        msg: "게시글이 성공적으로 등록되었습니다",
+        msg: widget.isEditMode 
+            ? "게시글이 성공적으로 수정되었습니다"
+            : "게시글이 성공적으로 등록되었습니다",
         gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.black38,
         textColor: Colors.white,
       );
 
-      // 11. 화면 닫기
-      Navigator.pop(context);
+      // 11. 화면 닫기 (편집 완료 신호와 함께)
+      Navigator.pop(context, widget.isEditMode ? true : false);
 
     } catch (e) {
       print('게시글 등록 오류: $e');
@@ -326,8 +386,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('커뮤니티 게시글 작성',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(
+          widget.isEditMode ? '게시글 수정' : '커뮤니티 게시글 작성',
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         actions: [
           TextButton(
             onPressed: () async {
@@ -434,10 +496,21 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                   onChangeContent: (String? changed) {
                     // 내용 변경 시 콜백
                   },
-                                    onInit: () {
+                  onInit: () async {
                     // 초기화 완료 시 콜백
+                    print('HTML 에디터 초기화 완료');
+                    
+                    // 편집 모드일 때 기존 내용 설정
+                    if (widget.isEditMode && widget.editContentHtml != null && widget.editContentHtml!.isNotEmpty) {
+                      print('편집 모드 - 기존 내용 설정: ${widget.editContentHtml!.length > 100 ? widget.editContentHtml!.substring(0, 100) + "..." : widget.editContentHtml!}');
+                      
+                      // 약간의 지연 후 내용 설정 (에디터가 완전히 준비될 때까지)
+                      await Future.delayed(const Duration(milliseconds: 500));
+                      _htmlController.setText(widget.editContentHtml!);
+                      
+                      print('기존 내용 설정 완료');
+                    }
                   },
-
                 ),
               ),
               const SizedBox(height: 16),
