@@ -46,6 +46,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   final ImagePicker _picker = ImagePicker();
   List<String> tempImagePaths = []; // 임시 이미지 경로들
   static const int maxImageCount = 10; // 최대 이미지 개수
+  bool _isLoading = false; // 로딩 상태 관리
 
   @override
   void initState() {
@@ -184,11 +185,65 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
     return processedHtml;
   }
 
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 배경 터치로 닫기 방지
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                  strokeWidth: 3,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  widget.isEditMode ? '게시글을 수정하고 있습니다...' : '게시글을 등록하고 있습니다...',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _hideLoadingDialog() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
   Future<void> _handleSubmit() async {
+    if (_isLoading) return; // 이미 로딩 중이면 중복 실행 방지
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
+    _showLoadingDialog(); // 로딩 다이얼로그 표시
+    
     try {
       // 1. 로그인 확인
       final currentUser = AuthService.currentUser;
       if (currentUser == null) {
+        _hideLoadingDialog(); // 로딩 다이얼로그 닫기
+        setState(() {
+          _isLoading = false;
+        });
         Fluttertoast.showToast(
           msg: "로그인이 필요합니다",
           gravity: ToastGravity.BOTTOM,
@@ -200,6 +255,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
 
       // 2. 게시판 선택 확인
       if (selectedBoardId == null || selectedBoardName == null) {
+        _hideLoadingDialog(); // 로딩 다이얼로그 닫기
+        setState(() {
+          _isLoading = false;
+        });
         Fluttertoast.showToast(
           msg: "게시판을 선택해주세요",
           gravity: ToastGravity.BOTTOM,
@@ -212,6 +271,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       // 3. 제목 확인
       final title = _titleController.text.trim();
       if (title.isEmpty) {
+        _hideLoadingDialog(); // 로딩 다이얼로그 닫기
+        setState(() {
+          _isLoading = false;
+        });
         Fluttertoast.showToast(
           msg: "제목을 입력해주세요",
           gravity: ToastGravity.BOTTOM,
@@ -228,6 +291,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       print('HTML 내용 미리보기 (첫 1000자): ${contentHtml.length > 1000 ? contentHtml.substring(0, 1000) : contentHtml}');
       
       if (contentHtml.trim().isEmpty || contentHtml.trim() == '<p></p>') {
+        _hideLoadingDialog(); // 로딩 다이얼로그 닫기
+        setState(() {
+          _isLoading = false;
+        });
         Fluttertoast.showToast(
           msg: "내용을 입력해주세요",
           gravity: ToastGravity.BOTTOM,
@@ -244,6 +311,10 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       // 5. 사용자 정보 가져오기
       final userProfile = await UserService.getUserFromFirestore(currentUser.uid);
       if (userProfile == null) {
+        _hideLoadingDialog(); // 로딩 다이얼로그 닫기
+        setState(() {
+          _isLoading = false;
+        });
         Fluttertoast.showToast(
           msg: "사용자 정보를 가져올 수 없습니다",
           gravity: ToastGravity.BOTTOM,
@@ -354,7 +425,13 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
             .set(postData);
       }
 
-      // 10. 성공 메시지
+      // 10. 로딩 다이얼로그 닫기
+      _hideLoadingDialog();
+      setState(() {
+        _isLoading = false;
+      });
+
+      // 11. 성공 메시지
       Fluttertoast.showToast(
         msg: widget.isEditMode 
             ? "게시글이 성공적으로 수정되었습니다"
@@ -364,11 +441,18 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         textColor: Colors.white,
       );
 
-      // 11. 화면 닫기 (편집 완료 신호와 함께)
+      // 12. 화면 닫기 (편집 완료 신호와 함께)
       Navigator.pop(context, widget.isEditMode ? true : false);
 
     } catch (e) {
       print('게시글 등록 오류: $e');
+      
+      // 오류 발생 시에도 로딩 다이얼로그 닫기
+      _hideLoadingDialog();
+      setState(() {
+        _isLoading = false;
+      });
+      
       Fluttertoast.showToast(
         msg: "게시글 등록 중 오류가 발생했습니다",
         gravity: ToastGravity.BOTTOM,
@@ -395,14 +479,17 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () async {
+            onPressed: _isLoading ? null : () async {
               await _handleSubmit();
             },
-            child: const Text('등록',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16)),
+            child: Text(
+              _isLoading ? '등록 중...' : '등록',
+              style: TextStyle(
+                color: _isLoading ? Colors.grey : Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
         ],
       ),

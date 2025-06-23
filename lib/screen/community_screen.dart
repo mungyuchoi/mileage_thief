@@ -460,12 +460,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           elevation: 1.5,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(18),
-                            onTap: () {
+                            onTap: () async {
                               // 게시글 조회수 증가
                               _incrementViewCount(_posts[index].id,
                                   _posts[index].reference.parent.parent!.id);
 
-                              Navigator.push(
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => CommunityDetailScreen(
@@ -476,6 +476,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   ),
                                 ),
                               );
+                              
+                              // 게시글 수정/삭제가 있었으면 목록 새로고침
+                              if (result == true) {
+                                _refreshPosts();
+                              }
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -619,24 +624,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
+        onPressed: () async {
           // 현재 선택된 게시판이 'all'이 아닌 경우 초기값으로 전달
-          if (selectedBoardId != 'all') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CommunityPostCreateScreen(
-                  initialBoardId: selectedBoardId,
-                  initialBoardName: selectedBoardName,
-                ),
-              ),
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const CommunityPostCreateScreen()),
-            );
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => selectedBoardId != 'all'
+                  ? CommunityPostCreateScreen(
+                      initialBoardId: selectedBoardId,
+                      initialBoardName: selectedBoardName,
+                    )
+                  : const CommunityPostCreateScreen(),
+            ),
+          );
+          
+          // 게시글 작성이 완료되면 목록 새로고침
+          if (result == true || result == false) {
+            _refreshPosts();
           }
         },
         backgroundColor: const Color(0xFF74512D),
@@ -803,11 +807,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
+            onTap: () async {
               // 게시글 조회수 증가
               _incrementViewCount(_posts[index].id, _posts[index].reference.parent.parent!.id);
 
-              Navigator.push(
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => CommunityDetailScreen(
@@ -818,6 +822,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   ),
                 ),
               );
+              
+              // 게시글 수정/삭제가 있었으면 목록 새로고침
+              if (result == true) {
+                _refreshPosts();
+              }
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

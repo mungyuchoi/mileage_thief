@@ -561,6 +561,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       // 수정 완료 후 돌아왔을 때 게시글 새로고침
       if (result == true) {
         _loadPostDetail();
+        // 상위 화면(커뮤니티 목록)에도 변경사항 알림
+        Navigator.pop(context, true);
       }
     });
   }
@@ -640,8 +642,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         const SnackBar(content: Text('게시글이 삭제되었습니다.')),
       );
 
-      // 상위 화면으로 돌아가기
-      Navigator.pop(context);
+      // 상위 화면으로 돌아가기 (변경사항 알림)
+      Navigator.pop(context, true);
     } catch (e) {
       print('게시글 삭제 오류: $e');
       ScaffoldMessenger.of(context).showSnackBar(
