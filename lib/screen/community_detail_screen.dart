@@ -463,55 +463,80 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
-  void _showMoreOptions() {
+  Widget _buildMoreOptionsMenu() {
     // 본인 게시글인지 확인
     final isMyPost = _currentUser?.uid == _post?['author']?['uid'];
     
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: isMyPost 
-            ? [
-                ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('수정하기'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _editPost();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete_outline),
-                  title: const Text('삭제하기'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deletePost();
-                  },
-                ),
-              ]
-            : [
-                ListTile(
-                  leading: const Icon(Icons.report_outlined),
-                  title: const Text('신고하기'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _reportPost();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.block_outlined),
-                  title: const Text('차단하기'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _blockUser();
-                  },
-                ),
-              ],
-        ),
-      ),
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+      color: Colors.white,
+      onSelected: (String value) {
+        switch (value) {
+          case 'edit':
+            _editPost();
+            break;
+          case 'delete':
+            _deletePost();
+            break;
+          case 'report':
+            _reportPost();
+            break;
+          case 'block':
+            _blockUser();
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        if (isMyPost) {
+          // 본인 게시글일 때
+          return [
+            const PopupMenuItem<String>(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit_outlined, size: 20, color: Colors.black87),
+                  SizedBox(width: 12),
+                  Text('수정하기'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                  SizedBox(width: 12),
+                  Text('삭제하기', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ];
+        } else {
+          // 다른 사람 게시글일 때
+          return [
+            const PopupMenuItem<String>(
+              value: 'report',
+              child: Row(
+                children: [
+                  Icon(Icons.report_outlined, size: 20, color: Colors.black87),
+                  SizedBox(width: 12),
+                  Text('신고하기'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'block',
+              child: Row(
+                children: [
+                  Icon(Icons.block_outlined, size: 20, color: Colors.black87),
+                  SizedBox(width: 12),
+                  Text('차단하기'),
+                ],
+              ),
+            ),
+          ];
+        }
+      },
     );
   }
 
@@ -544,6 +569,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('게시글 삭제'),
         content: const Text('정말로 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.'),
         actions: [
@@ -566,13 +592,49 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _confirmDeletePost() async {
     try {
-      // 게시글 삭제
+      // 소프트 삭제: isDeleted 필드를 true로 변경
       await FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
           .collection('posts')
           .doc(widget.postId)
-          .delete();
+          .update({
+            'isDeleted': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // 관리자용 삭제된 게시글 백업 생성
+      if (_post != null) {
+        await FirebaseFirestore.instance
+            .collection('admin')
+            .doc('deleted_posts')
+            .collection('posts')
+            .doc(widget.postId)
+            .set({
+              'originalPath': 'posts/${widget.dateString}/posts/${widget.postId}',
+              'postId': widget.postId,
+              'dateString': widget.dateString,
+              'boardId': _post!['boardId'],
+              'title': _post!['title'],
+              'contentHtml': _post!['contentHtml'],
+              'author': _post!['author'],
+              'viewsCount': _post!['viewsCount'] ?? 0,
+              'likesCount': _post!['likesCount'] ?? 0,
+              'commentCount': _post!['commentCount'] ?? 0,
+              'createdAt': _post!['createdAt'],
+              'deletedAt': FieldValue.serverTimestamp(),
+              'deletedBy': _currentUser!.uid,
+              'deletionType': 'user_self_delete', // 사용자 스스로 삭제
+            });
+      }
+
+      // 사용자 게시글 수 감소
+      if (_currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .update({'postCount': FieldValue.increment(-1)});
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('게시글이 삭제되었습니다.')),
@@ -912,10 +974,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             icon: Icon(Icons.share_outlined, color: Colors.grey[600]),
             onPressed: _sharePost,
           ),
-          IconButton(
-            icon: Icon(Icons.more_vert, color: Colors.grey[600]),
-            onPressed: _showMoreOptions,
-          ),
+          _buildMoreOptionsMenu(),
         ],
       ),
       body: _isLoading
