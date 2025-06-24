@@ -150,7 +150,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('posts')
           .doc(widget.postId)
           .collection('comments')
-          .orderBy('createdAt', descending: false)
+          .orderBy('createdAt', descending: _commentSortOrder == '최신순')
           .get();
 
       final allComments = commentsSnapshot.docs
@@ -221,11 +221,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       }
     }
     
-    // 부모 댓글들을 시간순으로 정렬
+    // 부모 댓글들을 선택된 순서로 정렬
     parentComments.sort((a, b) {
       final aTime = (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
       final bTime = (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-      return aTime.compareTo(bTime);
+      
+      if (_commentSortOrder == '최신순') {
+        return bTime.compareTo(aTime); // 최신순: 내림차순
+      } else {
+        return aTime.compareTo(bTime); // 등록순: 오름차순
+      }
     });
 
     // 재귀적으로 댓글과 답글들을 추가
@@ -250,11 +255,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (repliesByParent.containsKey(commentId)) {
       final replies = repliesByParent[commentId]!;
       
-      // 답글들을 시간순으로 정렬
+      // 답글들을 선택된 순서로 정렬
       replies.sort((a, b) {
         final aTime = (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final bTime = (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-        return aTime.compareTo(bTime);
+        
+        if (_commentSortOrder == '최신순') {
+          return bTime.compareTo(aTime); // 최신순: 내림차순
+        } else {
+          return aTime.compareTo(bTime); // 등록순: 오름차순
+        }
       });
       
       // 각 답글을 재귀적으로 처리 (답글의 답글도 포함)
@@ -1265,6 +1275,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 DropdownButton<String>(
                                                   value: _commentSortOrder,
                                                   underline: const SizedBox(),
+                                                  dropdownColor: Colors.white,
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     color: Colors.grey[600],
@@ -1280,6 +1291,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                       setState(() {
                                                         _commentSortOrder = newValue;
                                                       });
+                                                      _loadComments(); // 댓글 다시 로드
                                                     }
                                                   },
                                                 ),
