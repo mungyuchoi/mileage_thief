@@ -18,13 +18,13 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   // 게시판 목록 (md파일 boards 표 기반, 아이콘 포함)
   final List<Map<String, dynamic>> boards = [
+    {'id': 'free', 'name': '자유게시판'},
     {'id': 'question', 'name': '마일리지'},
     {'id': 'deal', 'name': '적립/카드 혜택'},
     {'id': 'seat_share', 'name': '좌석 공유'},
     {'id': 'review', 'name': '항공 리뷰'},
     {'id': 'error_report', 'name': '오류 신고'},
     {'id': 'suggestion', 'name': '건의사항'},
-    {'id': 'free', 'name': '자유게시판'},
     {'id': 'notice', 'name': '운영 공지사항'}
   ];
 
