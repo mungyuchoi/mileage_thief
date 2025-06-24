@@ -981,16 +981,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          _post?['title'] ?? widget.boardName,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: null,
         actions: [
           IconButton(
             icon: Icon(
