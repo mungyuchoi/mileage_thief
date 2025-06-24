@@ -1167,6 +1167,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       "p": Style(
                                         margin: Margins.zero,
                                         padding: HtmlPaddings.zero,
+                                        whiteSpace: WhiteSpace.pre,
                                       ),
                                       "br": Style(
                                         margin: Margins.only(bottom: 8),
@@ -1627,6 +1628,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ),
         "p": Style(
           margin: Margins.only(bottom: 2),
+          whiteSpace: WhiteSpace.pre,
         ),
         "br": Style(
           margin: Margins.zero,
