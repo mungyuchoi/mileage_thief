@@ -1589,7 +1589,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '이코노미 Lv.1', // 실제로는 comment에서 가져와야 함
+                        comment['displayGrade'] ?? '이코노미 Lv.1',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
