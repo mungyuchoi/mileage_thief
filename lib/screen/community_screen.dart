@@ -754,13 +754,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
     _loadInitialPosts();
   }
 
-  // HTML 태그 제거
+  // HTML 태그 제거 (<br> 태그 전까지만 추출)
   String _removeHtmlTags(String htmlString) {
-    // 간단한 HTML 태그 제거 (정규식 사용)
-    return htmlString
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll(RegExp(r'&[^;]+;'), '')
+    if (htmlString.isEmpty) return '';
+    
+    // <br> 태그가 나오기 전까지의 HTML만 추출
+    String beforeBr = htmlString.split(RegExp(r'<br\s*/?>', caseSensitive: false))[0];
+    
+    // HTML 태그 제거
+    String cleaned = beforeBr
+        .replaceAll(RegExp(r'<[^>]*>'), '') // 모든 HTML 태그 제거
+        .replaceAll(RegExp(r'&[^;]+;'), '') // HTML 엔티티 제거
         .trim();
+    
+    return cleaned;
   }
 
   // boardId로 게시판 이름 가져오기
