@@ -335,7 +335,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       child: Text(
                         selectedBoardName,
                         style: const TextStyle(
-                          color: Colors.black54,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
