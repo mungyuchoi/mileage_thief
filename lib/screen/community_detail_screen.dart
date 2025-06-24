@@ -1156,9 +1156,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
                                   // 5. 게시글 내용 (contentHtml)
                                   Html(
-                                    data: (_post!['contentHtml'] ?? '')
-                                        .replaceAll(RegExp(r'<br\s*/?>\s*</p>', caseSensitive: false), '</p>') // 이미지 뒤 <br> 제거
-                                        .replaceAll(RegExp(r'<br\s*/?>\s*$', caseSensitive: false), ''), // 끝에 오는 <br> 제거
+                                    data: _post!['contentHtml'] ?? '',
                                     style: {
                                       "body": Style(
                                         fontSize: FontSize(15),
@@ -1171,8 +1169,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                         padding: HtmlPaddings.zero,
                                       ),
                                       "br": Style(
-                                        margin: Margins.zero,
-                                        display: Display.none, // <br> 태그 완전히 숨기기
+                                        margin: Margins.only(bottom: 8),
+                                        display: Display.block,
                                       ),
                                       "img": Style(
                                         margin: Margins.zero,
