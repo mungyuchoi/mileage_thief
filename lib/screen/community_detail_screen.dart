@@ -1629,8 +1629,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     final contentHtml = comment['contentHtml'] ?? comment['content'] ?? '';
     final hasMention = comment['hasMention'] == true;
     
+    // @사용자명 패턴을 파란색으로 스타일링
+    final processedHtml = contentHtml.replaceAllMapped(
+      RegExp(r'@([a-zA-Z0-9가-힣_]+[!]?)', multiLine: true),
+      (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
+    );
+    
     return Html(
-      data: contentHtml,
+      data: processedHtml,
       style: {
         "body": Style(
           fontSize: FontSize(14),
