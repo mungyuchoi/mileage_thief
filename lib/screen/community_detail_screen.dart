@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import '../services/user_service.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -664,6 +665,32 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     );
   }
 
+  Future<void> _launchUrl(String url) async {
+    try {
+      // URL이 http:// 또는 https://로 시작하지 않으면 https:// 추가
+      String formattedUrl = url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        formattedUrl = 'https://$url';
+      }
+
+      final Uri uri = Uri.parse(formattedUrl);
+      
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // 외부 브라우저에서 열기
+        );
+      } else {
+        throw Exception('URL을 열 수 없습니다');
+      }
+    } catch (e) {
+      print('URL 실행 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('링크를 열 수 없습니다: $url')),
+      );
+    }
+  }
+
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -1154,6 +1181,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       "u": Style(
                                         margin: Margins.zero,
                                       ),
+                                      "a": Style(
+                                        color: Colors.blue,
+                                        textDecoration: TextDecoration.underline,
+                                      ),
+                                    },
+                                    onLinkTap: (url, _, __) {
+                                      if (url != null) {
+                                        _launchUrl(url);
+                                      }
                                     },
                                   ),
                                   const SizedBox(height: 16),
@@ -1645,11 +1681,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         "u": Style(
           margin: Margins.zero,
         ),
+        "a": Style(
+          color: Colors.blue,
+          textDecoration: TextDecoration.underline,
+        ),
         // 멘션 스타일링
         "span[data-mention]": Style(
           color: Colors.blue,
           fontWeight: FontWeight.w600,
         ),
+      },
+      onLinkTap: (url, _, __) {
+        if (url != null) {
+          _launchUrl(url);
+        }
       },
     );
   }
