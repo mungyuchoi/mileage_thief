@@ -1039,23 +1039,56 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // 카테고리명
+                                  // 1. 카테고리명 (boardId) - 작게
                                   Text(
                                     _getBoardDisplayName(widget.boardId),
                                     style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                       color: Color(0xFF74512D),
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 4),
 
-                                  // 작성자 정보
+                                  // 2. 게시글 제목 (title) - 크고 굵게
+                                  Text(
+                                    _post!['title'] ?? '제목 없음',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+
+                                  // 3. 시간 | 조회수 - 작은 글자, 적당한 색상
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _formatTime((_post!['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now()),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      Text(
+                                        ' | 조회 ${_post!['viewsCount'] ?? 0}회',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // 4. 프로필 정보 + 댓글/좋아요 - 한줄로 짧게
                                   Row(
                                     children: [
                                       // 프로필 이미지
                                       CircleAvatar(
-                                        radius: 24,
+                                        radius: 12,
                                         backgroundColor: Colors.grey,
                                         backgroundImage: (_post!['author']?['photoURL'] ??
                                                          _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
@@ -1069,83 +1102,59 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 style: const TextStyle(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
+                                                  fontSize: 12,
                                                 ),
                                               )
                                             : null,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              _post!['author']?['displayName'] ?? '익명',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              _post!['author']?['displayGrade'] ?? '이코노미 Lv.1',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
+                                      const SizedBox(width: 8),
+                                      // 닉네임
+                                      Text(
+                                        _post!['author']?['displayName'] ?? '익명',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
                                         ),
                                       ),
-                                      // 팔로우 버튼
-                                      if (_currentUser?.uid != _post!['author']?['uid'])
-                                        TextButton(
-                                          onPressed: _toggleFollow,
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: _isFollowing
-                                                ? Colors.grey[200]
-                                                : const Color(0xFF74512D),
-                                            minimumSize: const Size(60, 32),
-                                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            _isFollowing ? '팔로잉' : '팔로우',
-                                            style: TextStyle(
-                                              color: _isFollowing ? Colors.grey[600] : Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
+                                      const SizedBox(width: 6),
+                                      // 등급
+                                      Text(
+                                        _post!['author']?['displayGrade'] ?? '이코노미 Lv.1',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                          fontWeight: FontWeight.w500,
                                         ),
+                                      ),
+                                      const Spacer(),
+                                      // 댓글 아이콘 + 수
+                                      Icon(Icons.mode_comment_outlined, size: 16, color: Colors.grey[600]),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${_post!['commentCount'] ?? 0}',
+                                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      // 좋아요 아이콘 + 수
+                                      Icon(
+                                        _isLiked ? Icons.favorite : Icons.favorite_border,
+                                        size: 16,
+                                        color: _isLiked ? Colors.red : Colors.grey[600],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${_post!['likesCount'] ?? 0}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _isLiked ? Colors.red : Colors.grey[600],
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 16),
 
-                                  // 게시글 제목
-                                  Text(
-                                    _post!['title'] ?? '제목 없음',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black87,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  
-                                  // 제목 밑 구분선
-                                  Container(
-                                    height: 1,
-                                    color: Colors.grey[300],
-                                  ),
-                                  const SizedBox(height: 12),
-
-                                  // 게시글 내용
+                                  // 5. 게시글 내용 (contentHtml)
                                   Html(
                                     data: (_post!['contentHtml'] ?? '')
                                         .replaceAll(RegExp(r'<br\s*/?>\s*</p>', caseSensitive: false), '</p>') // 이미지 뒤 <br> 제거
@@ -1182,48 +1191,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                         _launchUrl(url);
                                       }
                                     },
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  // 하단 정보 (날짜, 조회수, 댓글수, 좋아요수)
-                                  Row(
-                                    children: [
-                                      Text(
-                                        _formatTime((_post!['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now()),
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Icon(Icons.visibility_outlined, size: 16, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_post!['viewsCount'] ?? 0}',
-                                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Icon(Icons.mode_comment_outlined, size: 16, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_post!['commentCount'] ?? 0}',
-                                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Icon(
-                                        _isLiked ? Icons.favorite : Icons.favorite_border,
-                                        size: 16,
-                                        color: _isLiked ? Colors.red : Colors.grey[600],
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_post!['likesCount'] ?? 0}',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: _isLiked ? Colors.red : Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ],
                               ),
