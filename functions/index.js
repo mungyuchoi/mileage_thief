@@ -147,6 +147,389 @@ exports.onPostLikeCreated = onDocumentCreated({
 });
 
 /**
+ * 댓글 알림 Cloud Function
+ * 트리거: posts/{date}/posts/{postId}/comments/{commentId} onCreate
+ *
+ * 1번 사용자가 게시글을 생성
+ * 2번 사용자가 해당 게시글에 댓글을 추가함
+ * → 1번 사용자의 디바이스에게 "2번 사용자가 게시글에 댓글을 달았습니다." 알림 발송
+ */
+exports.onCommentCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/comments/{commentId}",
+  region: "asia-northeast3", // 서울 리전
+}, async (event) => {
+  try {
+    const {date, postId, commentId} = event.params;
+    const commentData = event.data.data();
+
+    logger.info(
+        `댓글 알림 시작: postId=${postId}, commentId=${commentId}, ` +
+        `commenter=${commentData.uid}`,
+    );
+
+    // 1. 게시글 정보 조회
+    const postDoc = await admin.firestore()
+        .doc(`posts/${date}/posts/${postId}`)
+        .get();
+
+    if (!postDoc.exists) {
+      logger.error(`게시글을 찾을 수 없음: ${postId}`);
+      return;
+    }
+
+    const postData = postDoc.data();
+    const authorUid = postData.author.uid;
+    const postTitle = postData.title;
+    const commenterUid = commentData.uid;
+
+    // 2. 대댓글인 경우 게시글 작성자에게 알림 발송하지 않음
+    if (commentData.parentCommentId) {
+      logger.info(`대댓글이므로 게시글 작성자에게 댓글 알림 발송하지 않음: ${commentId}`);
+      return;
+    }
+
+    // 3. 자기 자신이 댓글을 단 경우 알림 발송하지 않음
+    if (authorUid === commenterUid) {
+      logger.info(`자기 자신이 댓글을 단 경우 알림 발송하지 않음: ${commenterUid}`);
+      return;
+    }
+
+    // 4. 댓글 작성자 정보 조회
+    const commenterDoc = await admin.firestore()
+        .collection("users")
+        .doc(commenterUid)
+        .get();
+
+    if (!commenterDoc.exists) {
+      logger.error(`댓글 작성자를 찾을 수 없음: ${commenterUid}`);
+      return;
+    }
+
+    const commenterData = commenterDoc.data();
+    const commenterName = commenterData.displayName || "익명";
+
+    // 5. 게시글 작성자의 FCM 토큰 조회
+    const authorDoc = await admin.firestore()
+        .collection("users")
+        .doc(authorUid)
+        .get();
+
+    if (!authorDoc.exists) {
+      logger.error(`게시글 작성자를 찾을 수 없음: ${authorUid}`);
+      return;
+    }
+
+    const authorData = authorDoc.data();
+    const fcmToken = authorData.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`게시글 작성자의 FCM 토큰이 없음: ${authorUid}`);
+      return;
+    }
+
+    // 6. 알림 메시지 생성
+    const notification = {
+      title: "댓글 알림",
+      body: `${commenterName}님이 게시글에 댓글을 달았습니다.`,
+    };
+
+    // 7. FCM 메시지 발송
+    const message = {
+      token: fcmToken,
+      notification: notification,
+      data: {
+        type: "post_comment",
+        postId: postId,
+        postTitle: postTitle,
+        commentId: commentId,
+        commentedBy: commenterUid,
+        commentedByName: commenterName,
+        date: date,
+        path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+      },
+      android: {
+        notification: {
+          channelId: "post_notifications",
+          priority: "high",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    const response = await admin.messaging().send(message);
+    logger.info(`댓글 알림 발송 성공: messageId=${response}`);
+
+    logger.info(
+        `댓글 알림 완료: postId=${postId}, author=${authorUid}, ` +
+        `commenter=${commenterUid}`,
+    );
+  } catch (error) {
+    logger.error(`댓글 알림 오류: ${error.message}`, error);
+  }
+});
+
+/**
+ * 대댓글 알림 Cloud Function
+ * 트리거: posts/{date}/posts/{postId}/comments/{commentId} onCreate
+ * 조거: parentCommentId가 있는 경우만 (답글인 경우)
+ *
+ * 1번 사용자가 게시글에 댓글을 달음
+ * 2번 사용자가 1번 사용자의 댓글에 대댓글을 달음
+ * → 1번 사용자의 디바이스에게 "2번 사용자가 댓글에 댓글을 달았습니다." 알림 발송
+ */
+exports.onReplyCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/comments/{commentId}",
+  region: "asia-northeast3", // 서울 리전
+}, async (event) => {
+  try {
+    const {date, postId, commentId} = event.params;
+    const commentData = event.data.data();
+
+    // parentCommentId가 없는 경우 (원댓글인 경우) 처리하지 않음
+    if (!commentData.parentCommentId) {
+      logger.info(`원댓글이므로 대댓글 알림 처리하지 않음: ${commentId}`);
+      return;
+    }
+
+    logger.info(
+        `대댓글 알림 시작: postId=${postId}, commentId=${commentId}, ` +
+        `replyTo=${commentData.parentCommentId}, replier=${commentData.uid}`,
+    );
+
+    const replierUid = commentData.uid;
+    const parentCommentId = commentData.parentCommentId;
+
+    // 1. 부모 댓글 정보 조회
+    const parentCommentDoc = await admin.firestore()
+        .doc(`posts/${date}/posts/${postId}/comments/${parentCommentId}`)
+        .get();
+
+    if (!parentCommentDoc.exists) {
+      logger.error(`부모 댓글을 찾을 수 없음: ${parentCommentId}`);
+      return;
+    }
+
+    const parentCommentData = parentCommentDoc.data();
+    const parentCommenterUid = parentCommentData.uid;
+
+    // 2. 자기 자신이 대댓글을 단 경우 알림 발송하지 않음
+    if (parentCommenterUid === replierUid) {
+      logger.info(
+          `자기 자신이 대댓글을 단 경우 알림 발송하지 않음: ${replierUid}`,
+      );
+      return;
+    }
+
+    // 3. 대댓글 작성자 정보 조회
+    const replierDoc = await admin.firestore()
+        .collection("users")
+        .doc(replierUid)
+        .get();
+
+    if (!replierDoc.exists) {
+      logger.error(`대댓글 작성자를 찾을 수 없음: ${replierUid}`);
+      return;
+    }
+
+    const replierData = replierDoc.data();
+    const replierName = replierData.displayName || "익명";
+
+    // 4. 부모 댓글 작성자의 FCM 토큰 조회
+    const parentCommenterDoc = await admin.firestore()
+        .collection("users")
+        .doc(parentCommenterUid)
+        .get();
+
+    if (!parentCommenterDoc.exists) {
+      logger.error(`부모 댓글 작성자를 찾을 수 없음: ${parentCommenterUid}`);
+      return;
+    }
+
+    const parentCommenterData = parentCommenterDoc.data();
+    const fcmToken = parentCommenterData.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`부모 댓글 작성자의 FCM 토큰이 없음: ${parentCommenterUid}`);
+      return;
+    }
+
+    // 5. 알림 메시지 생성
+    const notification = {
+      title: "대댓글 알림",
+      body: `${replierName}님이 댓글에 댓글을 달았습니다.`,
+    };
+
+    // 6. FCM 메시지 발송
+    const message = {
+      token: fcmToken,
+      notification: notification,
+      data: {
+        type: "comment_reply",
+        postId: postId,
+        commentId: commentId,
+        parentCommentId: parentCommentId,
+        repliedBy: replierUid,
+        repliedByName: replierName,
+        date: date,
+        path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+      },
+      android: {
+        notification: {
+          channelId: "post_notifications",
+          priority: "high",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    const response = await admin.messaging().send(message);
+    logger.info(`대댓글 알림 발송 성공: messageId=${response}`);
+
+    logger.info(
+        `대댓글 알림 완료: postId=${postId}, parentCommenter=${parentCommenterUid}, ` +
+        `replier=${replierUid}`,
+    );
+  } catch (error) {
+    logger.error(`대댓글 알림 오류: ${error.message}`, error);
+  }
+});
+
+/**
+ * 댓글 좋아요 알림 Cloud Function
+ * 트리거: posts/{date}/posts/{postId}/comments/{commentId}/likes/{uid} onCreate
+ *
+ * 1번 사용자가 게시글을 생성
+ * 2번 사용자가 해당 게시글에 댓글을 추가함
+ * 3번 사용자가 2번 사용자의 댓글에 좋아요를 함
+ * → 2번 사용자의 디바이스에게 "3번 사용자가 댓글에 좋아요를 하였습니다." 알림 발송
+ */
+exports.onCommentLikeCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/comments/{commentId}/likes/{uid}",
+  region: "asia-northeast3", // 서울 리전
+}, async (event) => {
+  try {
+    const {date, postId, commentId, uid} = event.params;
+
+    logger.info(
+        `댓글 좋아요 알림 시작: postId=${postId}, commentId=${commentId}, ` +
+        `likedBy=${uid}`,
+    );
+
+    // 1. 댓글 정보 조회
+    const commentDoc = await admin.firestore()
+        .doc(`posts/${date}/posts/${postId}/comments/${commentId}`)
+        .get();
+
+    if (!commentDoc.exists) {
+      logger.error(`댓글을 찾을 수 없음: ${commentId}`);
+      return;
+    }
+
+    const commentData = commentDoc.data();
+    const commenterUid = commentData.uid;
+    const commenterName = commentData.displayName || "익명";
+
+    // 2. 자기 자신이 좋아요한 경우 알림 발송하지 않음
+    if (commenterUid === uid) {
+      logger.info(
+          `자기 자신이 댓글에 좋아요한 경우 알림 발송하지 않음: ${uid}`,
+      );
+      return;
+    }
+
+    // 3. 좋아요한 사용자 정보 조회
+    const likerDoc = await admin.firestore()
+        .collection("users")
+        .doc(uid)
+        .get();
+
+    if (!likerDoc.exists) {
+      logger.error(`좋아요한 사용자를 찾을 수 없음: ${uid}`);
+      return;
+    }
+
+    const likerData = likerDoc.data();
+    const likerName = likerData.displayName || "익명";
+
+    // 4. 댓글 작성자의 FCM 토큰 조회
+    const commenterDoc = await admin.firestore()
+        .collection("users")
+        .doc(commenterUid)
+        .get();
+
+    if (!commenterDoc.exists) {
+      logger.error(`댓글 작성자를 찾을 수 없음: ${commenterUid}`);
+      return;
+    }
+
+    const commenterUserData = commenterDoc.data();
+    const fcmToken = commenterUserData.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`댓글 작성자의 FCM 토큰이 없음: ${commenterUid}`);
+      return;
+    }
+
+    // 5. 알림 메시지 생성
+    const notification = {
+      title: "댓글 좋아요 알림",
+      body: `${likerName}님이 댓글에 좋아요를 하였습니다.`,
+    };
+
+    // 6. FCM 메시지 발송
+    const message = {
+      token: fcmToken,
+      notification: notification,
+      data: {
+        type: "comment_like",
+        postId: postId,
+        commentId: commentId,
+        likedBy: uid,
+        likedByName: likerName,
+        commenterName: commenterName,
+        date: date,
+        path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+      },
+      android: {
+        notification: {
+          channelId: "post_notifications",
+          priority: "high",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    const response = await admin.messaging().send(message);
+    logger.info(`댓글 좋아요 알림 발송 성공: messageId=${response}`);
+
+    logger.info(
+        `댓글 좋아요 알림 완료: postId=${postId}, commenter=${commenterUid}, ` +
+        `liker=${uid}`,
+    );
+  } catch (error) {
+    logger.error(`댓글 좋아요 알림 오류: ${error.message}`, error);
+  }
+});
+
+/**
  * 테스트용 함수 (배포 후 확인용)
  */
 exports.helloWorld = onRequest((request, response) => {
