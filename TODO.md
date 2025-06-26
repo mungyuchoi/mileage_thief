@@ -62,11 +62,32 @@
   - [x] HTML 렌더링 완성
   - [x] 계층 구조 정렬 (부모 댓글 → 답글 순서)
 
+### ✅ **Day 4 완성된 기능 (2024.12.25)** 🔔
+- [x] **🔔 알림 시스템 완전 구현**
+  - [x] **Firebase Cloud Functions** 알림 서비스
+    - [x] 게시글 좋아요 알림 (`onPostLikeCreated`)
+    - [x] 댓글 알림 (`onCommentCreated`)
+    - [x] 대댓글 알림 (`onReplyCreated`)
+    - [x] 댓글 좋아요 알림 (`onCommentLikeCreated`)
+  - [x] **FCM 푸시 알림** 완전 구현
+    - [x] 포그라운드/백그라운드/앱 종료 상태 처리
+    - [x] 로컬 알림 생성 (포그라운드)
+    - [x] 딥링크 데이터 포함 (postId, commentId, boardId, boardName)
+  - [x] **딥링크 시스템** 완전 구현
+    - [x] 게시글 상세 페이지로 자동 이동
+    - [x] 특정 댓글로 스크롤 기능
+    - [x] boardId → boardName 매핑
+    - [x] 존재하지 않는 게시글/댓글 에러 처리
+    - [x] **사용자 경험 최적화**
+      - [x] 포그라운드에서 로컬 알림 생성 (바로 이동하지 않음)
+      - [x] 일관된 알림 경험 (모든 상태에서 동일)
+      - [x] 에러 시 홈화면으로 자동 이동
+      - [x] 토스트 메시지로 명확한 피드백
+
 ### ❌ 미완성 기능 (다음 우선순위)
 - [ ] 게시글 작성 기능 고도화 (현재 기본 기능만 있음)
 - [ ] 마이페이지 완성
 - [ ] 등급 시스템 및 업그레이드 기능
-- [ ] 알림 시스템
 
 ---
 
@@ -131,6 +152,59 @@ comments/{commentId}: {
 
 ---
 
+## 🔔 **완료된 알림 시스템** ✅
+
+### 📱 알림 시스템 구조 (완성됨)
+**Cloud Functions 구조:**
+```javascript
+// 게시글 좋아요 알림
+exports.onPostLikeCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/likes/{uid}",
+  // FCM 메시지 발송 + 딥링크 데이터 포함
+});
+
+// 댓글 알림
+exports.onCommentCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/comments/{commentId}",
+  // 게시글 작성자에게 댓글 알림
+});
+
+// 대댓글 알림
+exports.onReplyCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/comments/{commentId}",
+  // 부모 댓글 작성자에게 대댓글 알림
+});
+
+// 댓글 좋아요 알림
+exports.onCommentLikeCreated = onDocumentCreated({
+  document: "posts/{date}/posts/{postId}/comments/{commentId}/likes/{uid}",
+  // 댓글 작성자에게 좋아요 알림
+});
+```
+
+**딥링크 데이터 구조:**
+```json
+{
+  "type": "post_like|post_comment|comment_reply|comment_like",
+  "postId": "게시글ID",
+  "commentId": "댓글ID (댓글 관련 알림만)",
+  "boardId": "게시판ID",
+  "boardName": "게시판이름",
+  "date": "날짜",
+  "path": "/community/detail/{date}/{postId}"
+}
+```
+
+**완성된 기능:**
+- [x] **4가지 알림 타입** 완전 구현
+- [x] **FCM 푸시 알림** (포그라운드/백그라운드/앱종료)
+- [x] **딥링크 시스템** (게시글/댓글 자동 이동)
+- [x] **에러 처리** (존재하지 않는 게시글/댓글)
+- [x] **사용자 경험 최적화** (일관된 알림 경험)
+- [x] **boardId → boardName 매핑** (Cloud Functions)
+
+---
+
 ## 🎯 1단계: 핵심 기능 완성 (거의 완료)
 
 ### ✅ 1.1 검색 및 UI 개선 완료 🔍
@@ -159,16 +233,18 @@ comments/{commentId}: {
 - **우선순위**: ⭐⭐⭐
 - **상태**: ✅ **완료**
 
-### 🆕 2.3 알림 시스템 🔔
+### ✅ 2.3 알림 시스템 완료 🔔
 - **우선순위**: ⭐⭐⭐
-- **예상 시간**: 6-8시간
+- **상태**: ✅ **완료**
 
-**구현 사항:**
-- [ ] 댓글 알림
-- [ ] 좋아요 알림
-- [ ] 답글 알림
-- [ ] 푸시 알림 (FCM)
-- [ ] 알림 설정 관리
+**구현 완료 사항:**
+- [x] 댓글 알림
+- [x] 좋아요 알림
+- [x] 답글 알림
+- [x] 댓글 좋아요 알림
+- [x] 푸시 알림 (FCM)
+- [x] 딥링크 시스템
+- [x] 에러 처리
 
 ---
 
@@ -198,16 +274,6 @@ comments/{commentId}: {
   - [ ] 작성한 게시글 목록
   - [ ] 댓글 히스토리
   - [ ] 좋아요한 게시글
-- [ ] **등급 시스템**
-  - [ ] 현재 등급 표시
-  - [ ] 등급별 혜택 설명
-  - [ ] 다음 등급까지 진행도
-- [ ] **소셜 기능**
-  - [ ] 팔로우/팔로워 목록
-  - [ ] 팔로잉 관리
-- [ ] **설정 메뉴**
-  - [ ] 알림 설정
-  - [ ] 테마 설정
 
 ---
 
