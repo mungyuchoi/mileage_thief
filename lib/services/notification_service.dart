@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class NotificationService {
@@ -82,11 +83,19 @@ class NotificationService {
   }
 
   /// 포그라운드 메시지 처리 (앱이 열려있을 때)
-  void _handleForegroundMessage(RemoteMessage message) {
+  void _handleForegroundMessage(RemoteMessage message) async {
     print('포그라운드 메시지 수신: ${message.data}');
     
-    // 포그라운드에서는 로컬 알림 생성 (바로 이동하지 않음)
-    _showLocalNotification(message);
+    // 알림 설정 확인
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool notificationEnabled = prefs.getBool('notification') ?? true;
+    
+    if (notificationEnabled) {
+      // 알림이 켜져있을 때만 로컬 알림 생성
+      _showLocalNotification(message);
+    } else {
+      print('알림이 꺼져있어서 포그라운드 알림을 생성하지 않습니다.');
+    }
   }
 
   /// 로컬 알림 생성
