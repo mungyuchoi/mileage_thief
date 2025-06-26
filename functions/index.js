@@ -61,6 +61,20 @@ exports.onPostLikeCreated = onDocumentCreated({
     const postData = postDoc.data();
     const authorUid = postData.author.uid;
     const postTitle = postData.title;
+    const boardId = postData.boardId || "free"; // 게시판 ID
+
+    // boardId 기반으로 boardName 매핑
+    const boardNameMap = {
+      "free": "자유게시판",
+      "question": "마일리지",
+      "deal": "적립/카드 혜택",
+      "seat_share": "좌석 공유",
+      "review": "항공 리뷰",
+      "error_report": "오류 신고",
+      "suggestion": "건의사항",
+      "notice": "운영 공지사항",
+    };
+    const boardName = boardNameMap[boardId] || "자유게시판";
 
     // 2. 자기 자신이 좋아요한 경우 알림 발송하지 않음
     if (authorUid === uid) {
@@ -115,6 +129,8 @@ exports.onPostLikeCreated = onDocumentCreated({
         type: "post_like",
         postId: postId,
         postTitle: postTitle,
+        boardId: boardId, // 게시판 ID 추가
+        boardName: boardName, // 게시판 이름 추가
         likedBy: uid,
         likedByName: likerName,
         date: date,
@@ -180,6 +196,20 @@ exports.onCommentCreated = onDocumentCreated({
     const postData = postDoc.data();
     const authorUid = postData.author.uid;
     const postTitle = postData.title;
+    const boardId = postData.boardId || "free"; // 게시판 ID
+
+    // boardId 기반으로 boardName 매핑
+    const boardNameMap = {
+      "free": "자유게시판",
+      "question": "마일리지",
+      "deal": "적립/카드 혜택",
+      "seat_share": "좌석 공유",
+      "review": "항공 리뷰",
+      "error_report": "오류 신고",
+      "suggestion": "건의사항",
+      "notice": "운영 공지사항",
+    };
+    const boardName = boardNameMap[boardId] || "자유게시판";
     const commenterUid = commentData.uid;
 
     // 2. 대댓글인 경우 게시글 작성자에게 알림 발송하지 않음
@@ -241,6 +271,8 @@ exports.onCommentCreated = onDocumentCreated({
         type: "post_comment",
         postId: postId,
         postTitle: postTitle,
+        boardId: boardId, // 게시판 ID 추가
+        boardName: boardName, // 게시판 이름 추가
         commentId: commentId,
         commentedBy: commenterUid,
         commentedByName: commenterName,
@@ -359,19 +391,47 @@ exports.onReplyCreated = onDocumentCreated({
       return;
     }
 
-    // 5. 알림 메시지 생성
+    // 5. 게시글 정보 조회 (boardId, boardName용)
+    const postDoc = await admin.firestore()
+        .doc(`posts/${date}/posts/${postId}`)
+        .get();
+
+    let boardId = "free";
+    let boardName = "자유게시판";
+
+    if (postDoc.exists) {
+      const postData = postDoc.data();
+      boardId = postData.boardId || "free";
+
+      // boardId 기반으로 boardName 매핑
+      const boardNameMap = {
+        "free": "자유게시판",
+        "question": "마일리지",
+        "deal": "적립/카드 혜택",
+        "seat_share": "좌석 공유",
+        "review": "항공 리뷰",
+        "error_report": "오류 신고",
+        "suggestion": "건의사항",
+        "notice": "운영 공지사항",
+      };
+      boardName = boardNameMap[boardId] || "자유게시판";
+    }
+
+    // 6. 알림 메시지 생성
     const notification = {
       title: "대댓글 알림",
       body: `${replierName}님이 댓글에 댓글을 달았습니다.`,
     };
 
-    // 6. FCM 메시지 발송
+    // 7. FCM 메시지 발송
     const message = {
       token: fcmToken,
       notification: notification,
       data: {
         type: "comment_reply",
         postId: postId,
+        boardId: boardId, // 게시판 ID 추가
+        boardName: boardName, // 게시판 이름 추가
         commentId: commentId,
         parentCommentId: parentCommentId,
         repliedBy: replierUid,
@@ -482,19 +542,47 @@ exports.onCommentLikeCreated = onDocumentCreated({
       return;
     }
 
-    // 5. 알림 메시지 생성
+    // 5. 게시글 정보 조회 (boardId, boardName용)
+    const postDoc = await admin.firestore()
+        .doc(`posts/${date}/posts/${postId}`)
+        .get();
+
+    let boardId = "free";
+    let boardName = "자유게시판";
+
+    if (postDoc.exists) {
+      const postData = postDoc.data();
+      boardId = postData.boardId || "free";
+
+      // boardId 기반으로 boardName 매핑
+      const boardNameMap = {
+        "free": "자유게시판",
+        "question": "마일리지",
+        "deal": "적립/카드 혜택",
+        "seat_share": "좌석 공유",
+        "review": "항공 리뷰",
+        "error_report": "오류 신고",
+        "suggestion": "건의사항",
+        "notice": "운영 공지사항",
+      };
+      boardName = boardNameMap[boardId] || "자유게시판";
+    }
+
+    // 6. 알림 메시지 생성
     const notification = {
       title: "댓글 좋아요 알림",
       body: `${likerName}님이 댓글에 좋아요를 하였습니다.`,
     };
 
-    // 6. FCM 메시지 발송
+    // 7. FCM 메시지 발송
     const message = {
       token: fcmToken,
       notification: notification,
       data: {
         type: "comment_like",
         postId: postId,
+        boardId: boardId, // 게시판 ID 추가
+        boardName: boardName, // 게시판 이름 추가
         commentId: commentId,
         likedBy: uid,
         likedByName: likerName,

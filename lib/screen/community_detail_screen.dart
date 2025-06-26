@@ -16,6 +16,7 @@ class CommunityDetailScreen extends StatefulWidget {
   final String boardId;
   final String boardName;
   final String dateString;
+  final String? scrollToCommentId; // 딥링크용 댓글 스크롤 ID
 
   const CommunityDetailScreen({
     Key? key,
@@ -23,6 +24,7 @@ class CommunityDetailScreen extends StatefulWidget {
     required this.boardId,
     required this.boardName,
     required this.dateString,
+    this.scrollToCommentId, // 딥링크용 댓글 스크롤 ID
   }) : super(key: key);
 
   @override
@@ -50,6 +52,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isUploadingImage = false;
   bool _isAddingComment = false;
 
+  // 딥링크 스크롤용 키들
+  final Map<String, GlobalKey> _commentKeys = {};
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +67,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   @override
   void dispose() {
     _commentController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -192,6 +199,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           _comments = sortedComments;
           _isLoadingComments = false;
         });
+      }
+
+      // 딥링크로 전달된 댓글로 스크롤
+      if (widget.scrollToCommentId != null) {
+        _scrollToComment(widget.scrollToCommentId!);
       }
     } catch (e) {
       print('댓글 로드 오류: $e');
@@ -385,10 +397,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   void _showErrorAndGoBack(String message) {
+    // 토스트 메시지 표시
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
-    Navigator.pop(context);
+    
+    // 잠시 후 홈화면으로 이동
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        // 모든 화면을 pop하고 홈화면으로 이동
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (Route<dynamic> route) => false,
+        );
+      }
+    });
   }
 
   Future<void> _toggleLike() async {
@@ -1510,8 +1538,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     final createdAt = (comment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
     final depth = comment['depth'] ?? 0;
     final isHighlighted = _replyingToCommentId == comment['commentId'];
+    final commentId = comment['commentId'];
+    
+    // 딥링크 스크롤용 GlobalKey 생성
+    if (!_commentKeys.containsKey(commentId)) {
+      _commentKeys[commentId] = GlobalKey();
+    }
     
     return Container(
+      key: _commentKeys[commentId], // 딥링크 스크롤용 키
       color: isHighlighted ? Colors.blue.withOpacity(0.1) : null,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -1673,5 +1708,46 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         }
       },
     );
+  }
+
+  /// 딥링크로 특정 댓글로 스크롤
+  void _scrollToComment(String commentId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final commentKey = _commentKeys[commentId];
+      if (commentKey?.currentContext != null) {
+        Scrollable.ensureVisible(
+          commentKey!.currentContext!,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+          alignment: 0.3, // 화면 상단 30% 지점에 위치
+        );
+        
+        // 댓글 하이라이트 효과 (선택사항)
+        _highlightComment(commentId);
+      } else {
+        // 존재하지 않는 댓글인 경우
+        print('존재하지 않는 댓글: $commentId');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('유효하지 않은 댓글입니다.'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+  }
+
+  /// 댓글 하이라이트 효과
+  void _highlightComment(String commentId) {
+    // 잠시 후 하이라이트 제거
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          // 하이라이트 상태를 관리하는 변수가 있다면 여기서 제거
+        });
+      }
+    });
   }
 } 
