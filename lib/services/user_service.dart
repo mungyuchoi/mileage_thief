@@ -15,7 +15,7 @@ class UserService {
       'joinedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
       'lastLoginAt': FieldValue.serverTimestamp(),
-      'postCount': 0,
+      'postsCount': 0,
       'commentCount': 0,
       'likesReceived': 0,
       'likesCount': 0,

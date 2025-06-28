@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
@@ -26,6 +29,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   bool _isPostsLoading = false;
   bool _isCommentsLoading = false;
   bool _isLikedPostsLoading = false;
+  bool _isUpdatingProfile = false;
+  
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -69,16 +75,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     });
 
     try {
-      // 사용자가 작성한 게시글 가져오기
-      final postsQuery = await FirebaseFirestore.instance
-          .collectionGroup('posts')
-          .where('uid', isEqualTo: user.uid)
+      // 사용자의 my_posts 서브컬렉션에서 직접 가져오기
+      final myPostsQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('my_posts')
           .orderBy('createdAt', descending: true)
           .limit(20)
           .get();
 
       setState(() {
-        _userPosts = postsQuery.docs;
+        _userPosts = myPostsQuery.docs;
         _isPostsLoading = false;
       });
     } catch (e) {
@@ -98,16 +105,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     });
 
     try {
-      // 사용자가 작성한 댓글 가져오기
-      final commentsQuery = await FirebaseFirestore.instance
-          .collectionGroup('comments')
-          .where('uid', isEqualTo: user.uid)
+      // 사용자의 my_comments 서브컬렉션에서 직접 가져오기
+      final myCommentsQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('my_comments')
           .orderBy('createdAt', descending: true)
           .limit(20)
           .get();
 
       setState(() {
-        _userComments = commentsQuery.docs;
+        _userComments = myCommentsQuery.docs;
         _isCommentsLoading = false;
       });
     } catch (e) {
@@ -147,6 +155,189 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       });
     }
   }
+
+  Future<void> _updateProfileImage() async {
+    try {
+      // 1. 이미지 선택
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (image == null) return;
+
+      final user = AuthService.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      setState(() {
+        _isUpdatingProfile = true;
+      });
+
+      // 2. Firebase Storage에 업로드
+      final File imageFile = File(image.path);
+      final String fileName = '${user.uid}.png';
+      final Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child('users')
+          .child(fileName);
+
+      // 기존 파일이 있다면 덮어쓰기 (같은 경로이므로 자동으로 대체됨)
+      final UploadTask uploadTask = storageRef.putFile(imageFile);
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // 3. Firestore 사용자 정보 업데이트
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'photoURL': downloadUrl,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 4. Firebase Auth 프로필 업데이트
+      await user.updatePhotoURL(downloadUrl);
+
+      // 5. 기존 게시글과 댓글의 프로필 이미지 업데이트
+      await _updateExistingPostsAndComments(user.uid, downloadUrl);
+
+      // 6. 로컬 상태 업데이트
+      setState(() {
+        if (userProfile != null) {
+          userProfile!['photoURL'] = downloadUrl;
+        }
+        _isUpdatingProfile = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('프로필 이미지가 업데이트되었습니다.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      print('프로필 이미지 업데이트 오류: $e');
+      setState(() {
+        _isUpdatingProfile = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('프로필 이미지 업데이트 중 오류가 발생했습니다.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateExistingPostsAndComments(String uid, String newPhotoURL) async {
+    try {
+      print('🔄 기존 게시글과 댓글의 프로필 이미지 업데이트 시작...');
+      print('📸 새 프로필 이미지 URL: $newPhotoURL');
+      
+      // 1. 사용자의 모든 게시글 업데이트
+      final myPostsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('my_posts')
+          .get();
+
+      print('📝 업데이트할 게시글 수: ${myPostsSnapshot.docs.length}');
+
+      for (final myPostDoc in myPostsSnapshot.docs) {
+        final myPostData = myPostDoc.data();
+        final postPath = myPostData['postPath'] as String?;
+        print('📄 게시글 경로: $postPath');
+        
+        if (postPath != null) {
+          final pathParts = postPath.split('/');
+          if (pathParts.length >= 4) {
+            final dateString = pathParts[1];
+            final postId = pathParts[3];
+            
+            print('🎯 게시글 업데이트: posts/$dateString/posts/$postId');
+            
+            try {
+              // 실제 게시글 문서 업데이트 (개별로 처리)
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(dateString)
+                  .collection('posts')
+                  .doc(postId)
+                  .update({
+                'author.photoURL': newPhotoURL,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              print('✅ 게시글 업데이트 성공: $postId');
+            } catch (e) {
+              print('❌ 게시글 업데이트 실패: $postId, 오류: $e');
+            }
+          }
+        }
+      }
+
+      // 2. 사용자의 모든 댓글 업데이트
+      final myCommentsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('my_comments')
+          .get();
+
+      print('💬 업데이트할 댓글 수: ${myCommentsSnapshot.docs.length}');
+
+      for (final myCommentDoc in myCommentsSnapshot.docs) {
+        final myCommentData = myCommentDoc.data();
+        final commentPath = myCommentData['commentPath'] as String?;
+        print('💭 댓글 경로: $commentPath');
+        
+        if (commentPath != null) {
+          final pathParts = commentPath.split('/');
+          if (pathParts.length >= 6) {
+            final dateString = pathParts[1];
+            final postId = pathParts[3];
+            final commentId = pathParts[5];
+            
+            print('🎯 댓글 업데이트: posts/$dateString/posts/$postId/comments/$commentId');
+            
+            try {
+              // 실제 댓글 문서 업데이트 (개별로 처리)
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(dateString)
+                  .collection('posts')
+                  .doc(postId)
+                  .collection('comments')
+                  .doc(commentId)
+                  .update({
+                'profileImageUrl': newPhotoURL,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              print('✅ 댓글 업데이트 성공: $commentId');
+            } catch (e) {
+              print('❌ 댓글 업데이트 실패: $commentId, 오류: $e');
+            }
+          }
+        }
+      }
+
+      print('🎉 프로필 이미지 업데이트 완료!');
+
+    } catch (e) {
+      print('💥 기존 게시글/댓글 프로필 이미지 업데이트 오류: $e');
+      // 에러가 발생해도 프로필 이미지 업데이트 자체는 성공했으므로 
+      // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 로그만 남김
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -214,20 +405,29 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                    bottom: 0,
                                    right: 0,
                                    child: GestureDetector(
-                                     onTap: () {
-                                       // 닉네임 편집 기능 추후 구현
-                                     },
+                                     onTap: _isUpdatingProfile ? null : _updateProfileImage,
                                      child: Container(
                                        padding: const EdgeInsets.all(4),
                                        decoration: BoxDecoration(
-                                         color: Colors.grey[100],
+                                         color: _isUpdatingProfile 
+                                             ? Colors.grey[300] 
+                                             : Colors.grey[100],
                                          borderRadius: BorderRadius.circular(4),
                                        ),
-                                       child: const Icon(
-                                         Icons.edit,
-                                         size: 16,
-                                         color: Colors.grey,
-                                       ),
+                                       child: _isUpdatingProfile
+                                           ? const SizedBox(
+                                               width: 16,
+                                               height: 16,
+                                               child: CircularProgressIndicator(
+                                                 strokeWidth: 2,
+                                                 color: Colors.grey,
+                                               ),
+                                             )
+                                           : const Icon(
+                                               Icons.edit,
+                                               size: 16,
+                                               color: Colors.grey,
+                                             ),
                                      ),
                                    ),
                                  ),
@@ -570,14 +770,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       padding: const EdgeInsets.all(8),
       itemCount: _userPosts.length,
       itemBuilder: (context, index) {
-        final post = _userPosts[index].data() as Map<String, dynamic>;
-        final createdAt = (post['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final myPost = _userPosts[index].data() as Map<String, dynamic>;
+        final createdAt = (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 4),
           child: ListTile(
             title: Text(
-              post['title'] ?? '제목 없음',
+              myPost['title'] ?? '제목 없음',
               style: const TextStyle(fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -586,9 +786,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _removeHtmlTags(post['contentHtml'] ?? ''),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  '작성한 게시글',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -597,25 +799,24 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 ),
               ],
             ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.favorite, size: 14, color: Colors.pink[300]),
-                    const SizedBox(width: 2),
-                    Text('${post['likesCount'] ?? 0}', style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 8),
-                    Icon(Icons.comment, size: 14, color: Colors.blue[300]),
-                    const SizedBox(width: 2),
-                    Text('${post['commentsCount'] ?? 0}', style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
-              ],
+            trailing: Icon(
+              Icons.article_outlined,
+              size: 20,
+              color: Colors.blue[300],
             ),
             onTap: () {
-              // 게시글 상세로 이동
+              // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
+              final postPath = myPost['postPath'] as String?;
+              if (postPath != null) {
+                final pathParts = postPath.split('/');
+                if (pathParts.length >= 4) {
+                  final dateString = pathParts[1];
+                  final postId = pathParts[3];
+                  
+                  // 게시글 상세 화면으로 이동 (추후 구현)
+                  // Navigator.push(context, MaterialPageRoute(...));
+                }
+              }
             },
           ),
         );
@@ -647,32 +848,58 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       padding: const EdgeInsets.all(8),
       itemCount: _userComments.length,
       itemBuilder: (context, index) {
-        final comment = _userComments[index].data() as Map<String, dynamic>;
-        final createdAt = (comment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final myComment = _userComments[index].data() as Map<String, dynamic>;
+        final createdAt = (myComment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 4),
           child: ListTile(
             title: Text(
-              _removeHtmlTags(comment['contentHtml'] ?? '댓글 내용 없음'),
+              _removeHtmlTags(myComment['contentHtml'] ?? '댓글 내용 없음'),
               style: const TextStyle(fontWeight: FontWeight.w500),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            subtitle: Text(
-              DateFormat('MM.dd').format(createdAt),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.favorite, size: 14, color: Colors.pink[300]),
-                const SizedBox(width: 2),
-                Text('${comment['likesCount'] ?? 0}', style: const TextStyle(fontSize: 12)),
+                Text(
+                  '작성한 댓글',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('MM.dd').format(createdAt),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
               ],
             ),
+            trailing: Icon(
+              Icons.comment_outlined,
+              size: 20,
+              color: Colors.blue[300],
+            ),
             onTap: () {
-              // 댓글이 있는 게시글로 이동
+              // commentPath와 postPath에서 정보 추출해서 게시글 상세로 이동
+              final postPath = myComment['postPath'] as String?;
+              final commentPath = myComment['commentPath'] as String?;
+              
+              if (postPath != null && commentPath != null) {
+                final postPathParts = postPath.split('/');
+                final commentPathParts = commentPath.split('/');
+                
+                if (postPathParts.length >= 4 && commentPathParts.length >= 6) {
+                  final dateString = postPathParts[1];
+                  final postId = postPathParts[3];
+                  final commentId = commentPathParts[5];
+                  
+                  // 게시글 상세 화면으로 이동하면서 댓글 위치로 스크롤 (추후 구현)
+                  // Navigator.push(context, MaterialPageRoute(...));
+                }
+              }
             },
           ),
         );

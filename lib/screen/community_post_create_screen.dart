@@ -415,14 +415,52 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
             .collection('posts')
             .doc(postId)
             .update(postData);
+            
+        // 사용자의 my_posts 서브컬렉션도 업데이트
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('my_posts')
+            .doc(postId)
+            .update({
+              'title': title,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
       } else {
         // 새 게시글일 때는 생성
-        await FirebaseFirestore.instance
+        final batch = FirebaseFirestore.instance.batch();
+        
+        // 게시글 생성
+        final postRef = FirebaseFirestore.instance
             .collection('posts')
             .doc(dateString)
             .collection('posts')
-            .doc(postId)
-            .set(postData);
+            .doc(postId);
+        batch.set(postRef, postData);
+        
+        // 사용자의 my_posts 서브컬렉션에도 추가
+        final myPostRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('my_posts')
+            .doc(postId);
+        batch.set(myPostRef, {
+          'postPath': 'posts/$dateString/posts/$postId',
+          'title': title,
+          'boardId': selectedBoardId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        
+        // 사용자의 postsCount 증가
+        final userRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid);
+        batch.update(userRef, {
+          'postsCount': FieldValue.increment(1),
+        });
+        
+        // 배치 실행
+        await batch.commit();
       }
 
       // 10. 로딩 다이얼로그 닫기
