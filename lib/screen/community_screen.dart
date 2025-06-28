@@ -7,6 +7,7 @@ import 'login_screen.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_screen.dart';
 import 'community_search_screen.dart';
+import 'my_page_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({Key? key}) : super(key: key);
@@ -345,6 +346,37 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 ),
                 Row(
                   children: [
+                    // 프로필 이미지 (로그인 상태일 때만 표시)
+                    if (AuthService.currentUser != null && userProfile != null)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyPageScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          child: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.white,
+                            backgroundImage: userProfile!['photoURL'] != null &&
+                                userProfile!['photoURL'].toString().isNotEmpty
+                                ? NetworkImage(userProfile!['photoURL'])
+                                : null,
+                            child: userProfile!['photoURL'] == null ||
+                                userProfile!['photoURL'].toString().isEmpty
+                                ? const Icon(
+                              Icons.person,
+                              size: 20,
+                              color: Colors.grey,
+                            )
+                                : null,
+                          ),
+                        ),
+                      ),
                     // 뷰 모드 토글 버튼
                     IconButton(
                       icon: Icon(

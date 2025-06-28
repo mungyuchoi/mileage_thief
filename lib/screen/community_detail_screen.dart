@@ -436,11 +436,28 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .doc(widget.postId);
 
       final likeRef = postRef.collection('likes').doc(_currentUser!.uid);
+      
+      // 사용자 문서 참조
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid);
+      
+      // 사용자의 liked_posts 서브컬렉션 참조
+      final userLikedPostRef = userRef
+          .collection('liked_posts')
+          .doc(widget.postId);
 
       if (_isLiked) {
         // 좋아요 취소
         batch.delete(likeRef);
         batch.update(postRef, {'likesCount': FieldValue.increment(-1)});
+        
+        // 사용자의 likesCount 감소
+        batch.update(userRef, {'likesCount': FieldValue.increment(-1)});
+        
+        // 사용자의 liked_posts에서 제거
+        batch.delete(userLikedPostRef);
+        
         setState(() {
           _isLiked = false;
           if (_post != null) {
@@ -454,6 +471,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           'likedAt': FieldValue.serverTimestamp(),
         });
         batch.update(postRef, {'likesCount': FieldValue.increment(1)});
+        
+        // 사용자의 likesCount 증가
+        batch.update(userRef, {'likesCount': FieldValue.increment(1)});
+        
+        // 사용자의 liked_posts에 추가
+        batch.set(userLikedPostRef, {
+          'postPath': 'posts/${widget.dateString}/posts/${widget.postId}',
+          'title': _post?['title'] ?? '제목 없음',
+          'likedAt': FieldValue.serverTimestamp(),
+        });
+        
         setState(() {
           _isLiked = true;
           if (_post != null) {

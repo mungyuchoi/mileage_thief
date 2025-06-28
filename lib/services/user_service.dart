@@ -18,6 +18,7 @@ class UserService {
       'postCount': 0,
       'commentCount': 0,
       'likesReceived': 0,
+      'likesCount': 0,
       'reportedCount': 0,
       'reportSubmittedCount': 0,
       'grade': '이코노미',
