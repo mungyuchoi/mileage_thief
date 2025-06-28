@@ -29,7 +29,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   bool _isPostsLoading = false;
   bool _isCommentsLoading = false;
   bool _isLikedPostsLoading = false;
-  bool _isUpdatingProfile = false;
+  bool _isUpdatingProfileImage = false;
+  bool _isUpdatingDisplayName = false;
   
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -38,7 +39,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     super.initState();
     _initializeTabController();
     _loadUserProfile();
-    _loadUserPosts();
+    _loadAllTabData();
   }
 
   void _initializeTabController() {
@@ -64,6 +65,15 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadAllTabData() async {
+    // 모든 탭의 데이터를 병렬로 로드
+    await Future.wait([
+      _loadUserPosts(),
+      _loadUserComments(),
+      _loadLikedPosts(),
+    ]);
   }
 
   Future<void> _loadUserPosts() async {
@@ -177,7 +187,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       }
 
       setState(() {
-        _isUpdatingProfile = true;
+        _isUpdatingProfileImage = true;
       });
 
       // 2. Firebase Storage에 업로드
@@ -213,7 +223,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         if (userProfile != null) {
           userProfile!['photoURL'] = downloadUrl;
         }
-        _isUpdatingProfile = false;
+        _isUpdatingProfileImage = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -226,7 +236,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     } catch (e) {
       print('프로필 이미지 업데이트 오류: $e');
       setState(() {
-        _isUpdatingProfile = false;
+        _isUpdatingProfileImage = false;
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -240,9 +250,6 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
   Future<void> _updateExistingPostsAndComments(String uid, String newPhotoURL) async {
     try {
-      print('🔄 기존 게시글과 댓글의 프로필 이미지 업데이트 시작...');
-      print('📸 새 프로필 이미지 URL: $newPhotoURL');
-      
       // 1. 사용자의 모든 게시글 업데이트
       final myPostsSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -250,12 +257,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           .collection('my_posts')
           .get();
 
-      print('📝 업데이트할 게시글 수: ${myPostsSnapshot.docs.length}');
-
       for (final myPostDoc in myPostsSnapshot.docs) {
         final myPostData = myPostDoc.data();
         final postPath = myPostData['postPath'] as String?;
-        print('📄 게시글 경로: $postPath');
         
         if (postPath != null) {
           final pathParts = postPath.split('/');
@@ -263,10 +267,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             final dateString = pathParts[1];
             final postId = pathParts[3];
             
-            print('🎯 게시글 업데이트: posts/$dateString/posts/$postId');
-            
             try {
-              // 실제 게시글 문서 업데이트 (개별로 처리)
+              // 실제 게시글 문서 업데이트
               await FirebaseFirestore.instance
                   .collection('posts')
                   .doc(dateString)
@@ -276,9 +278,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 'author.photoURL': newPhotoURL,
                 'updatedAt': FieldValue.serverTimestamp(),
               });
-              print('✅ 게시글 업데이트 성공: $postId');
             } catch (e) {
-              print('❌ 게시글 업데이트 실패: $postId, 오류: $e');
+              // 개별 게시글 업데이트 실패는 무시하고 계속 진행
             }
           }
         }
@@ -291,12 +292,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           .collection('my_comments')
           .get();
 
-      print('💬 업데이트할 댓글 수: ${myCommentsSnapshot.docs.length}');
-
       for (final myCommentDoc in myCommentsSnapshot.docs) {
         final myCommentData = myCommentDoc.data();
         final commentPath = myCommentData['commentPath'] as String?;
-        print('💭 댓글 경로: $commentPath');
         
         if (commentPath != null) {
           final pathParts = commentPath.split('/');
@@ -305,10 +303,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             final postId = pathParts[3];
             final commentId = pathParts[5];
             
-            print('🎯 댓글 업데이트: posts/$dateString/posts/$postId/comments/$commentId');
-            
             try {
-              // 실제 댓글 문서 업데이트 (개별로 처리)
+              // 실제 댓글 문서 업데이트
               await FirebaseFirestore.instance
                   .collection('posts')
                   .doc(dateString)
@@ -320,24 +316,202 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 'profileImageUrl': newPhotoURL,
                 'updatedAt': FieldValue.serverTimestamp(),
               });
-              print('✅ 댓글 업데이트 성공: $commentId');
             } catch (e) {
-              print('❌ 댓글 업데이트 실패: $commentId, 오류: $e');
+              // 개별 댓글 업데이트 실패는 무시하고 계속 진행
             }
           }
         }
       }
 
-      print('🎉 프로필 이미지 업데이트 완료!');
-
     } catch (e) {
-      print('💥 기존 게시글/댓글 프로필 이미지 업데이트 오류: $e');
       // 에러가 발생해도 프로필 이미지 업데이트 자체는 성공했으므로 
-      // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 로그만 남김
+      // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 조용히 처리
     }
   }
 
+  Future<void> _editDisplayName() async {
+    final TextEditingController controller = TextEditingController();
+    final currentDisplayName = userProfile?['displayName'] ?? '';
+    controller.text = currentDisplayName;
 
+    final newDisplayName = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('닉네임 변경'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: '새 닉네임을 입력하세요',
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 20,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                final newName = controller.text.trim();
+                if (newName.isNotEmpty && newName != currentDisplayName) {
+                  Navigator.pop(context, newName);
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('변경'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newDisplayName != null) {
+      await _updateDisplayName(newDisplayName);
+    }
+  }
+
+  Future<void> _updateDisplayName(String newDisplayName) async {
+    try {
+      final user = AuthService.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      setState(() {
+        _isUpdatingDisplayName = true;
+      });
+
+      // 1. Firestore 사용자 정보 업데이트
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'displayName': newDisplayName,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Firebase Auth 프로필 업데이트
+      await user.updateDisplayName(newDisplayName);
+
+      // 3. 기존 게시글과 댓글의 displayName 업데이트
+      await _updateExistingPostsAndCommentsDisplayName(user.uid, newDisplayName);
+
+      // 4. 로컬 상태 업데이트
+      setState(() {
+        if (userProfile != null) {
+          userProfile!['displayName'] = newDisplayName;
+        }
+        _isUpdatingDisplayName = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('닉네임이 업데이트되었습니다.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      setState(() {
+        _isUpdatingDisplayName = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('닉네임 업데이트 중 오류가 발생했습니다.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateExistingPostsAndCommentsDisplayName(String uid, String newDisplayName) async {
+    try {
+      // 1. 사용자의 모든 게시글 업데이트
+      final myPostsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('my_posts')
+          .get();
+
+      for (final myPostDoc in myPostsSnapshot.docs) {
+        final myPostData = myPostDoc.data();
+        final postPath = myPostData['postPath'] as String?;
+        
+        if (postPath != null) {
+          final pathParts = postPath.split('/');
+          if (pathParts.length >= 4) {
+            final dateString = pathParts[1];
+            final postId = pathParts[3];
+            
+            try {
+              // 실제 게시글 문서 업데이트
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(dateString)
+                  .collection('posts')
+                  .doc(postId)
+                  .update({
+                'author.displayName': newDisplayName,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+            } catch (e) {
+              // 개별 게시글 업데이트 실패는 무시하고 계속 진행
+            }
+          }
+        }
+      }
+
+      // 2. 사용자의 모든 댓글 업데이트
+      final myCommentsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('my_comments')
+          .get();
+
+      for (final myCommentDoc in myCommentsSnapshot.docs) {
+        final myCommentData = myCommentDoc.data();
+        final commentPath = myCommentData['commentPath'] as String?;
+        
+        if (commentPath != null) {
+          final pathParts = commentPath.split('/');
+          if (pathParts.length >= 6) {
+            final dateString = pathParts[1];
+            final postId = pathParts[3];
+            final commentId = pathParts[5];
+            
+            try {
+              // 실제 댓글 문서 업데이트
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(dateString)
+                  .collection('posts')
+                  .doc(postId)
+                  .collection('comments')
+                  .doc(commentId)
+                  .update({
+                'displayName': newDisplayName,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+            } catch (e) {
+              // 개별 댓글 업데이트 실패는 무시하고 계속 진행
+            }
+          }
+        }
+      }
+
+    } catch (e) {
+      // 에러가 발생해도 닉네임 업데이트 자체는 성공했으므로 
+      // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 조용히 처리
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -405,16 +579,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                    bottom: 0,
                                    right: 0,
                                    child: GestureDetector(
-                                     onTap: _isUpdatingProfile ? null : _updateProfileImage,
+                                     onTap: _isUpdatingProfileImage ? null : _updateProfileImage,
                                      child: Container(
                                        padding: const EdgeInsets.all(4),
                                        decoration: BoxDecoration(
-                                         color: _isUpdatingProfile 
+                                         color: _isUpdatingProfileImage 
                                              ? Colors.grey[300] 
                                              : Colors.grey[100],
                                          borderRadius: BorderRadius.circular(4),
                                        ),
-                                       child: _isUpdatingProfile
+                                       child: _isUpdatingProfileImage
                                            ? const SizedBox(
                                                width: 16,
                                                height: 16,
@@ -466,20 +640,29 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                        ),
                                        const SizedBox(width: 40),
                                        GestureDetector(
-                                         onTap: () {
-                                           // 닉네임 편집 기능 추후 구현
-                                         },
+                                         onTap: _isUpdatingDisplayName ? null : _editDisplayName,
                                          child: Container(
                                            padding: const EdgeInsets.all(4),
                                            decoration: BoxDecoration(
-                                             color: Colors.grey[100],
+                                             color: _isUpdatingDisplayName 
+                                                 ? Colors.grey[300] 
+                                                 : Colors.grey[100],
                                              borderRadius: BorderRadius.circular(4),
                                            ),
-                                           child: const Icon(
-                                             Icons.edit,
-                                             size: 16,
-                                             color: Colors.grey,
-                                           ),
+                                           child: _isUpdatingDisplayName
+                                               ? const SizedBox(
+                                                   width: 16,
+                                                   height: 16,
+                                                   child: CircularProgressIndicator(
+                                                     strokeWidth: 2,
+                                                     color: Colors.grey,
+                                                   ),
+                                                 )
+                                               : const Icon(
+                                                   Icons.edit,
+                                                   size: 16,
+                                                   color: Colors.grey,
+                                                 ),
                                          ),
                                        ),
                                      ],
@@ -644,11 +827,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                             indicatorColor: const Color(0xFF74512D),
                             indicatorWeight: 2,
                             onTap: (index) {
-                              if (index == 1 && _userComments.isEmpty && !_isCommentsLoading) {
-                                _loadUserComments();
-                              } else if (index == 2 && _likedPosts.isEmpty && !_isLikedPostsLoading) {
-                                _loadLikedPosts();
-                              }
+                              // 모든 데이터는 이미 로드되어 있으므로 추가 로딩 불필요
                             },
                             tabs: [
                               Tab(
@@ -664,7 +843,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
-                                        '${userProfile?['postCount'] ?? _userPosts.length}',
+                                        '${_userPosts.length}',
                                         style: const TextStyle(fontSize: 12),
                                       ),
                                     ),
@@ -684,7 +863,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
-                                        '${userProfile?['commentCount'] ?? _userComments.length}',
+                                        '${_userComments.length}',
                                         style: const TextStyle(fontSize: 12),
                                       ),
                                     ),
