@@ -1118,7 +1118,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ),
             ),
           const SizedBox(height: 16),
-          // 좋아요 받은 수
+          // 좋아요/땅콩 수
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1133,6 +1133,21 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Image.asset(
+                'asset/img/peanuts.png',
+                width: 18,
+                height: 18,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${userProfile!['peanutCount'] ?? 0}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600]!,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
