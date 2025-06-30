@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import 'community_detail_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -1283,6 +1284,21 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
+  // boardId로 게시판 이름 가져오기
+  String _getBoardName(String boardId) {
+    final boardNameMap = {
+      'free': '자유게시판',
+      'question': '마일리지',
+      'deal': '적립/카드 혜택',
+      'seat_share': '좌석 공유',
+      'review': '항공 리뷰',
+      'error_report': '오류 신고',
+      'suggestion': '건의사항',
+      'notice': '운영 공지사항',
+    };
+    return boardNameMap[boardId] ?? '알 수 없음';
+  }
+
   Widget _buildPostsList() {
     if (_isPostsLoading) {
       return const Center(
@@ -1309,6 +1325,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       itemBuilder: (context, index) {
         final myPost = _userPosts[index].data() as Map<String, dynamic>;
         final createdAt = (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final boardId = myPost['boardId'] ?? 'free';
+        final boardName = _getBoardName(boardId);
         
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1350,8 +1368,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   final dateString = pathParts[1];
                   final postId = pathParts[3];
                   
-                  // 게시글 상세 화면으로 이동 (추후 구현)
-                  // Navigator.push(context, MaterialPageRoute(...));
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => CommunityDetailScreen(
+                      postId: postId,
+                      boardId: boardId,
+                      boardName: boardName,
+                      dateString: dateString,
+                    ),
+                  ));
                 }
               }
             },
@@ -1359,6 +1383,30 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         );
       },
     );
+  }
+
+  // 게시글의 boardId와 boardName을 가져오는 함수
+  Future<Map<String, String>> _getPostBoardInfo(String dateString, String postId) async {
+    try {
+      final postDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(dateString)
+          .collection('posts')
+          .doc(postId)
+          .get();
+      
+      if (postDoc.exists) {
+        final postData = postDoc.data() as Map<String, dynamic>;
+        final boardId = postData['boardId'] ?? 'free';
+        final boardName = _getBoardName(boardId);
+        return {'boardId': boardId, 'boardName': boardName};
+      }
+    } catch (e) {
+      print('게시글 boardId 조회 오류: $e');
+    }
+    
+    // 기본값 반환
+    return {'boardId': 'free', 'boardName': '자유게시판'};
   }
 
   Widget _buildCommentsList() {
@@ -1419,7 +1467,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               size: 20,
               color: Colors.blue[300],
             ),
-            onTap: () {
+            onTap: () async {
               // commentPath와 postPath에서 정보 추출해서 게시글 상세로 이동
               final postPath = myComment['postPath'] as String?;
               final commentPath = myComment['commentPath'] as String?;
@@ -1433,8 +1481,19 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   final postId = postPathParts[3];
                   final commentId = commentPathParts[5];
                   
-                  // 게시글 상세 화면으로 이동하면서 댓글 위치로 스크롤 (추후 구현)
-                  // Navigator.push(context, MaterialPageRoute(...));
+                  // 게시글의 boardId와 boardName 조회
+                  final boardInfo = await _getPostBoardInfo(dateString, postId);
+                  
+                  // 게시글 상세 화면으로 이동하면서 댓글 위치로 스크롤
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => CommunityDetailScreen(
+                      postId: postId,
+                      boardId: boardInfo['boardId']!,
+                      boardName: boardInfo['boardName']!,
+                      dateString: dateString,
+                      scrollToCommentId: commentId, // 댓글 위치로 스크롤
+                    ),
+                  ));
                 }
               }
             },
@@ -1502,7 +1561,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               size: 20,
               color: Colors.pink[300],
             ),
-            onTap: () {
+            onTap: () async {
               // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
               final postPath = likedPost['postPath'] as String?;
               if (postPath != null) {
@@ -1511,8 +1570,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   final dateString = pathParts[1];
                   final postId = pathParts[3];
                   
-                  // 게시글 상세 화면으로 이동 (추후 구현)
-                  // Navigator.push(context, MaterialPageRoute(...));
+                  // 게시글의 boardId와 boardName 조회
+                  final boardInfo = await _getPostBoardInfo(dateString, postId);
+                  
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => CommunityDetailScreen(
+                      postId: postId,
+                      boardId: boardInfo['boardId']!,
+                      boardName: boardInfo['boardName']!,
+                      dateString: dateString,
+                    ),
+                  ));
                 }
               }
             },
