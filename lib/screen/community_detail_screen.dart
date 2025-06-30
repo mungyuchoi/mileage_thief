@@ -10,6 +10,8 @@ import 'dart:io';
 import '../services/user_service.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'community_post_create_screen.dart';
+import 'user_profile_screen.dart';
+import 'my_page_screen.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -1153,25 +1155,36 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   Row(
                                     children: [
                                       // 프로필 이미지
-                                      CircleAvatar(
-                                        radius: 12,
-                                        backgroundColor: Colors.grey,
-                                        backgroundImage: (_post!['author']?['photoURL'] ??
-                                                         _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
-                                            ? NetworkImage(_post!['author']['photoURL'] ??
-                                                         _post!['author']['profileImageUrl'])
-                                            : null,
-                                        child: (_post!['author']?['photoURL'] ??
-                                               _post!['author']?['profileImageUrl'] ?? '').isEmpty
-                                            ? Text(
-                                                (_post!['author']?['displayName'] ?? '익명')[0],
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              )
-                                            : null,
+                                      GestureDetector(
+                                        onTap: () {
+                                          final currentUser = FirebaseAuth.instance.currentUser;
+                                          final authorUid = _post?['author']?['uid'];
+                                          if (currentUser != null && authorUid == currentUser.uid) {
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPageScreen()));
+                                          } else if (authorUid != null) {
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: authorUid)));
+                                          }
+                                        },
+                                        child: CircleAvatar(
+                                          radius: 12,
+                                          backgroundColor: Colors.grey,
+                                          backgroundImage: (_post!['author']?['photoURL'] ??
+                                                           _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
+                                              ? NetworkImage(_post!['author']['photoURL'] ??
+                                                           _post!['author']['profileImageUrl'])
+                                              : null,
+                                          child: (_post!['author']?['photoURL'] ??
+                                                 _post!['author']?['profileImageUrl'] ?? '').isEmpty
+                                              ? Text(
+                                                  (_post!['author']?['displayName'] ?? '익명')[0],
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
                                       // 닉네임
@@ -1587,22 +1600,33 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 댓글 작성자 프로필
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.purple,
-              backgroundImage: (comment['profileImageUrl'] ?? '').isNotEmpty
-                  ? NetworkImage(comment['profileImageUrl'])
-                  : null,
-              child: (comment['profileImageUrl'] ?? '').isEmpty
-                  ? Text(
-                      (comment['displayName'] ?? '익명')[0],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    )
-                  : null,
+            GestureDetector(
+              onTap: () {
+                final currentUser = FirebaseAuth.instance.currentUser;
+                final commentUid = comment['uid'];
+                if (currentUser != null && commentUid == currentUser.uid) {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPageScreen()));
+                } else if (commentUid != null) {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: commentUid)));
+                }
+              },
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.purple,
+                backgroundImage: (comment['profileImageUrl'] ?? '').isNotEmpty
+                    ? NetworkImage(comment['profileImageUrl'])
+                    : null,
+                child: (comment['profileImageUrl'] ?? '').isEmpty
+                    ? Text(
+                        (comment['displayName'] ?? '익명')[0],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

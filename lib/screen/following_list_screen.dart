@@ -75,12 +75,38 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
       ),
     );
     if (shouldUnfollow == true) {
-      await FirebaseFirestore.instance
+      final batch = FirebaseFirestore.instance.batch();
+      
+      // 1. 내 following 서브컬렉션에서 제거
+      batch.delete(FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('following')
+          .doc(targetUid));
+      
+      // 2. 상대방 followers 서브컬렉션에서 제거
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
           .doc(targetUid)
-          .delete();
+          .collection('followers')
+          .doc(user.uid));
+      
+      // 3. 내 followingCount 감소
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid), {
+        'followingCount': FieldValue.increment(-1)
+      });
+      
+      // 4. 상대방 followerCount 감소
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid), {
+        'followerCount': FieldValue.increment(-1)
+      });
+      
+      await batch.commit();
+      
       setState(() {
         following.removeWhere((f) => f['uid'] == targetUid);
       });

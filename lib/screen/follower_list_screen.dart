@@ -67,25 +67,78 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
   Future<void> _toggleFollow(String targetUid, bool isFollowing) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+    
+    final batch = FirebaseFirestore.instance.batch();
+    
     if (isFollowing) {
       // 언팔로우
-      await FirebaseFirestore.instance
+      // 1. 내 following 서브컬렉션에서 제거
+      batch.delete(FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('following')
+          .doc(targetUid));
+      
+      // 2. 상대방 followers 서브컬렉션에서 제거
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
           .doc(targetUid)
-          .delete();
+          .collection('followers')
+          .doc(user.uid));
+      
+      // 3. 내 followingCount 감소
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid), {
+        'followingCount': FieldValue.increment(-1)
+      });
+      
+      // 4. 상대방 followerCount 감소
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid), {
+        'followerCount': FieldValue.increment(-1)
+      });
+      
       setState(() { followingUids.remove(targetUid); });
     } else {
       // 팔로우
-      await FirebaseFirestore.instance
+      // 1. 내 following 서브컬렉션에 추가
+      batch.set(FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('following')
+          .doc(targetUid), {
+        'followedAt': FieldValue.serverTimestamp()
+      });
+      
+      // 2. 상대방 followers 서브컬렉션에 추가
+      batch.set(FirebaseFirestore.instance
+          .collection('users')
           .doc(targetUid)
-          .set({'followedAt': FieldValue.serverTimestamp()});
+          .collection('followers')
+          .doc(user.uid), {
+        'followedAt': FieldValue.serverTimestamp()
+      });
+      
+      // 3. 내 followingCount 증가
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid), {
+        'followingCount': FieldValue.increment(1)
+      });
+      
+      // 4. 상대방 followerCount 증가
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid), {
+        'followerCount': FieldValue.increment(1)
+      });
+      
       setState(() { followingUids.add(targetUid); });
     }
+    
+    await batch.commit();
   }
 
   @override

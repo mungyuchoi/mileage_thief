@@ -18,7 +18,7 @@ class MyPageScreen extends StatefulWidget {
   State<MyPageScreen> createState() => _MyPageScreenState();
 }
 
-class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderStateMixin {
+class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
   TabController? _tabController;
@@ -55,6 +55,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeTabController();
     _loadUserProfile();
     _loadAllTabData();
@@ -63,17 +64,33 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
   }
 
-  void _initializeTabController() {
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController?.dispose();
     _postsScrollController.dispose();
     _commentsScrollController.dispose();
     _likedPostsScrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // 앱이 다시 활성화될 때 프로필 새로 로드
+      _loadUserProfile();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 포커스될 때마다 프로필 새로 로드
+    _loadUserProfile();
+  }
+
+  void _initializeTabController() {
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   void _onPostsScroll() {
