@@ -1320,65 +1320,90 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(12),
       itemCount: _userPosts.length,
       itemBuilder: (context, index) {
         final myPost = _userPosts[index].data() as Map<String, dynamic>;
         final createdAt = (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final boardId = myPost['boardId'] ?? 'free';
         final boardName = _getBoardName(boardId);
+        final title = myPost['title'] ?? '제목 없음';
         
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text(
-              myPost['title'] ?? '제목 없음',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '작성한 게시글',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
+        return GestureDetector(
+          onTap: () {
+            final postPath = myPost['postPath'] as String?;
+            if (postPath != null) {
+              final pathParts = postPath.split('/');
+              if (pathParts.length >= 4) {
+                final dateString = pathParts[1];
+                final postId = pathParts[3];
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => CommunityDetailScreen(
+                    postId: postId,
+                    boardId: boardId,
+                    boardName: boardName,
+                    dateString: dateString,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('MM.dd').format(createdAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ));
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            trailing: Icon(
-              Icons.article_outlined,
-              size: 20,
-              color: Colors.blue[300],
-            ),
-            onTap: () {
-              // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
-              final postPath = myPost['postPath'] as String?;
-              if (postPath != null) {
-                final pathParts = postPath.split('/');
-                if (pathParts.length >= 4) {
-                  final dateString = pathParts[1];
-                  final postId = pathParts[3];
-                  
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => CommunityDetailScreen(
-                      postId: postId,
-                      boardId: boardId,
-                      boardName: boardName,
-                      dateString: dateString,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 게시판명
+                  Text(
+                    boardName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.brown[300],
+                      fontWeight: FontWeight.w600,
                     ),
-                  ));
-                }
-              }
-            },
+                  ),
+                  const SizedBox(height: 6),
+                  // 제목
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  // 작성일
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        DateFormat('yyyy.MM.dd').format(createdAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
