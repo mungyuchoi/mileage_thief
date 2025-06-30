@@ -1272,6 +1272,51 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     return {'boardId': 'free', 'boardName': '자유게시판'};
   }
 
+  Widget _buildMentionText(String content) {
+    final mentionRegex = RegExp(r'@([\w가-힣]+)');
+    final matches = mentionRegex.allMatches(content);
+
+    if (matches.isEmpty) {
+      return Text(
+        content,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    List<TextSpan> spans = [];
+    int last = 0;
+    for (final match in matches) {
+      if (match.start > last) {
+        spans.add(TextSpan(
+          text: content.substring(last, match.start),
+          style: const TextStyle(color: Colors.black),
+        ));
+      }
+      spans.add(TextSpan(
+        text: match.group(0),
+        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+      ));
+      last = match.end;
+    }
+    if (last < content.length) {
+      spans.add(TextSpan(
+        text: content.substring(last),
+        style: const TextStyle(color: Colors.black),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        children: spans,
+      ),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   Widget _buildCommentsList() {
     if (_isCommentsLoading) {
       return const Center(
@@ -1293,73 +1338,81 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(12),
       itemCount: _userComments.length,
       itemBuilder: (context, index) {
         final myComment = _userComments[index].data() as Map<String, dynamic>;
         final createdAt = (myComment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final content = _removeHtmlTags(myComment['contentHtml'] ?? '댓글 내용 없음');
         
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text(
-              _removeHtmlTags(myComment['contentHtml'] ?? '댓글 내용 없음'),
-              style: const TextStyle(fontWeight: FontWeight.w500),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '작성한 댓글',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
+        return GestureDetector(
+          onTap: () async {
+            // commentPath와 postPath에서 정보 추출해서 게시글 상세로 이동
+            final postPath = myComment['postPath'] as String?;
+            final commentPath = myComment['commentPath'] as String?;
+            
+            if (postPath != null && commentPath != null) {
+              final postPathParts = postPath.split('/');
+              final commentPathParts = commentPath.split('/');
+              
+              if (postPathParts.length >= 4 && commentPathParts.length >= 6) {
+                final dateString = postPathParts[1];
+                final postId = postPathParts[3];
+                final commentId = commentPathParts[5];
+                
+                // 게시글의 boardId와 boardName 조회
+                final boardInfo = await _getPostBoardInfo(dateString, postId);
+                
+                // 게시글 상세 화면으로 이동하면서 댓글 위치로 스크롤
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => CommunityDetailScreen(
+                    postId: postId,
+                    boardId: boardInfo['boardId']!,
+                    boardName: boardInfo['boardName']!,
+                    dateString: dateString,
+                    scrollToCommentId: commentId, // 댓글 위치로 스크롤
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('MM.dd').format(createdAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ));
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            trailing: Icon(
-              Icons.comment_outlined,
-              size: 20,
-              color: Colors.blue[300],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 댓글 내용 (멘션 파란색)
+                  _buildMentionText(content),
+                  const SizedBox(height: 10),
+                  // 작성일
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        DateFormat('yyyy.MM.dd').format(createdAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            onTap: () async {
-              // commentPath와 postPath에서 정보 추출해서 게시글 상세로 이동
-              final postPath = myComment['postPath'] as String?;
-              final commentPath = myComment['commentPath'] as String?;
-              
-              if (postPath != null && commentPath != null) {
-                final postPathParts = postPath.split('/');
-                final commentPathParts = commentPath.split('/');
-                
-                if (postPathParts.length >= 4 && commentPathParts.length >= 6) {
-                  final dateString = postPathParts[1];
-                  final postId = postPathParts[3];
-                  final commentId = commentPathParts[5];
-                  
-                  // 게시글의 boardId와 boardName 조회
-                  final boardInfo = await _getPostBoardInfo(dateString, postId);
-                  
-                  // 게시글 상세 화면으로 이동하면서 댓글 위치로 스크롤
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => CommunityDetailScreen(
-                      postId: postId,
-                      boardId: boardInfo['boardId']!,
-                      boardName: boardInfo['boardName']!,
-                      dateString: dateString,
-                      scrollToCommentId: commentId, // 댓글 위치로 스크롤
-                    ),
-                  ));
-                }
-              }
-            },
           ),
         );
       },
