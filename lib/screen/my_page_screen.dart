@@ -8,6 +8,8 @@ import 'dart:io';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'community_detail_screen.dart';
+import 'follower_list_screen.dart';
+import 'following_list_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -1157,25 +1159,33 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           Row(
             children: [
               Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      '${userProfile!['followerCount'] ?? 0}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FollowerListScreen()),
+                    );
+                  },
+                  child: Column(
+                    children: [
+                      Text(
+                        '${userProfile!['followerCount'] ?? 0}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '팔로워',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                      const SizedBox(height: 4),
+                      Text(
+                        '팔로워',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -1184,25 +1194,33 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 color: Colors.grey[300],
               ),
               Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      '${userProfile!['followingCount'] ?? 0}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FollowingListScreen()),
+                    );
+                  },
+                  child: Column(
+                    children: [
+                      Text(
+                        '${userProfile!['followingCount'] ?? 0}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '팔로잉',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                      const SizedBox(height: 4),
+                      Text(
+                        '팔로잉',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
