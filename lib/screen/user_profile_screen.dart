@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'community_detail_screen.dart';
+import 'follower_list_screen.dart';
+import 'following_list_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userUid;
@@ -286,22 +288,48 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: Column(
-                                children: [
-                                  Text('$followerCount', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                                  const SizedBox(height: 2),
-                                  const Text('팔로워', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                                ],
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FollowerListScreen(
+                                        userUid: widget.userUid,
+                                        userName: userProfile!['displayName'],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    Text('$followerCount', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                                    const SizedBox(height: 2),
+                                    const Text('팔로워', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                                  ],
+                                ),
                               ),
                             ),
                             Container(width: 1, height: 32, color: Colors.grey[200]),
                             Expanded(
-                              child: Column(
-                                children: [
-                                  Text('$followingCount', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                                  const SizedBox(height: 2),
-                                  const Text('팔로잉', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                                ],
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FollowingListScreen(
+                                        userUid: widget.userUid,
+                                        userName: userProfile!['displayName'],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    Text('$followingCount', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                                    const SizedBox(height: 2),
+                                    const Text('팔로잉', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                                  ],
+                                ),
                               ),
                             ),
                           ],

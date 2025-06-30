@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FollowingListScreen extends StatefulWidget {
-  const FollowingListScreen({Key? key}) : super(key: key);
+  final String? userUid; // null이면 본인, 있으면 해당 유저
+  final String? userName; // 상단 타이틀용
+  const FollowingListScreen({Key? key, this.userUid, this.userName}) : super(key: key);
 
   @override
   State<FollowingListScreen> createState() => _FollowingListScreenState();
@@ -11,28 +13,44 @@ class FollowingListScreen extends StatefulWidget {
 
 class _FollowingListScreenState extends State<FollowingListScreen> {
   List<Map<String, dynamic>> following = [];
+  Set<String> myFollowingUids = {}; // 내가 팔로우하는 유저들
   bool isLoading = true;
+  bool isMyProfile = true; // 본인 프로필인지 여부
 
   @override
   void initState() {
     super.initState();
+    final currentUser = FirebaseAuth.instance.currentUser;
+    isMyProfile = widget.userUid == null || widget.userUid == currentUser?.uid;
     _loadFollowing();
   }
 
   Future<void> _loadFollowing() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+    
+    // 조회할 대상 유저 (본인이거나 다른 유저)
+    final targetUid = widget.userUid ?? user.uid;
+    
     setState(() { isLoading = true; });
     try {
-      // 1. following uid 리스트
+      // 1. 대상 유저의 following uid 리스트
       final followingSnap = await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(targetUid)
           .collection('following')
           .get();
       final followingUids = followingSnap.docs.map((doc) => doc.id).toList();
 
-      // 2. 각 팔로잉의 프로필 정보
+      // 2. 내가 팔로우하고 있는 uid set (팔로우 버튼 상태 표시용)
+      final myFollowingSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('following')
+          .get();
+      myFollowingUids = myFollowingSnap.docs.map((doc) => doc.id).toSet();
+
+      // 3. 각 팔로잉의 프로필 정보
       List<Map<String, dynamic>> followingList = [];
       for (final uid in followingUids) {
         final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
@@ -117,18 +135,90 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
       
       setState(() {
         following.removeWhere((f) => f['uid'] == targetUid);
+        myFollowingUids.remove(targetUid);
       });
     }
   }
 
+  Future<void> _toggleFollow(String targetUid, bool isFollowing) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    final batch = FirebaseFirestore.instance.batch();
+    
+    if (isFollowing) {
+      // 언팔로우
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('following')
+          .doc(targetUid));
+      
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid)
+          .collection('followers')
+          .doc(user.uid));
+      
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid), {
+        'followingCount': FieldValue.increment(-1)
+      });
+      
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid), {
+        'followerCount': FieldValue.increment(-1)
+      });
+      
+      setState(() { myFollowingUids.remove(targetUid); });
+    } else {
+      // 팔로우
+      batch.set(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('following')
+          .doc(targetUid), {
+        'followedAt': FieldValue.serverTimestamp()
+      });
+      
+      batch.set(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid)
+          .collection('followers')
+          .doc(user.uid), {
+        'followedAt': FieldValue.serverTimestamp()
+      });
+      
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid), {
+        'followingCount': FieldValue.increment(1)
+      });
+      
+      batch.update(FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid), {
+        'followerCount': FieldValue.increment(1)
+      });
+      
+      setState(() { myFollowingUids.add(targetUid); });
+    }
+    
+    await batch.commit();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayTitle = isMyProfile ? '팔로잉' : '${widget.userName ?? "사용자"}님의 팔로잉';
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
-        title: Text('팔로잉 (${following.length})', style: const TextStyle(color: Colors.black)),
+        title: Text('$displayTitle (${following.length})', style: const TextStyle(color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: isLoading
@@ -140,31 +230,24 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
                     children: [
                       Icon(Icons.person_add_alt_1, size: 60, color: Colors.grey[400]),
                       const SizedBox(height: 18),
-                      const Text(
-                        '아직 팔로잉한 사용자가 없습니다',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      Text(
+                        isMyProfile ? '아직 팔로잉한 사용자가 없습니다' : '아직 팔로잉한 사용자가 없습니다',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
                   itemCount: following.length,
                   itemBuilder: (context, index) {
                     final user = following[index];
+                    final userUid = user['uid'];
+                    final isFollowing = myFollowingUids.contains(userUid);
+                    final isMyself = FirebaseAuth.instance.currentUser?.uid == userUid;
+                    
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+                      margin: const EdgeInsets.only(bottom: 1),
+                      color: Colors.white,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
@@ -209,25 +292,47 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
                                 ],
                               ),
                             ),
-                            // 팔로잉 버튼
-                            GestureDetector(
-                              onTap: () => _unfollow(user['uid'], user['displayName']),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(24),
+                            // 팔로우/팔로잉 버튼
+                            if (isMyProfile && !isMyself)
+                              // 본인 팔로잉 리스트에서는 팔로잉 버튼 (취소)
+                              GestureDetector(
+                                onTap: () => _unfollow(userUid, user['displayName']),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: const Text(
+                                    '팔로잉',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
                                 ),
-                                child: const Text(
-                                  '팔로잉',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                              )
+                            else if (!isMyProfile && !isMyself)
+                              // 다른 사람 팔로잉 리스트에서는 팔로우/팔로잉 토글 버튼
+                              GestureDetector(
+                                onTap: () => _toggleFollow(userUid, isFollowing),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isFollowing ? Colors.grey[200] : const Color(0xFF74512D),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Text(
+                                    isFollowing ? '팔로잉' : '팔로우',
+                                    style: TextStyle(
+                                      color: isFollowing ? Colors.black : Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),

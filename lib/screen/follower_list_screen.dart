@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FollowerListScreen extends StatefulWidget {
-  const FollowerListScreen({Key? key}) : super(key: key);
+  final String? userUid; // null이면 본인, 있으면 해당 유저
+  final String? userName; // 상단 타이틀용
+  const FollowerListScreen({Key? key, this.userUid, this.userName}) : super(key: key);
 
   @override
   State<FollowerListScreen> createState() => _FollowerListScreenState();
@@ -13,27 +15,34 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
   List<Map<String, dynamic>> followers = [];
   Set<String> followingUids = {};
   bool isLoading = true;
+  bool isMyProfile = true; // 본인 프로필인지 여부
 
   @override
   void initState() {
     super.initState();
+    final currentUser = FirebaseAuth.instance.currentUser;
+    isMyProfile = widget.userUid == null || widget.userUid == currentUser?.uid;
     _loadFollowers();
   }
 
   Future<void> _loadFollowers() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+    
+    // 조회할 대상 유저 (본인이거나 다른 유저)
+    final targetUid = widget.userUid ?? user.uid;
+    
     setState(() { isLoading = true; });
     try {
-      // 1. followers uid 리스트
+      // 1. 대상 유저의 followers uid 리스트
       final followersSnap = await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(targetUid)
           .collection('followers')
           .get();
       final followerUids = followersSnap.docs.map((doc) => doc.id).toList();
 
-      // 2. following uid set
+      // 2. 내가 팔로우하고 있는 uid set (팔로우 버튼 상태 표시용)
       final followingSnap = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -143,12 +152,14 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final displayTitle = isMyProfile ? '팔로워' : '${widget.userName ?? "사용자"}님의 팔로워';
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
-        title: Text('팔로워 (${followers.length})', style: const TextStyle(color: Colors.black)),
+        title: Text('$displayTitle (${followers.length})', style: const TextStyle(color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: isLoading
@@ -160,32 +171,24 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
                     children: [
                       Icon(Icons.person_add_alt_1, size: 60, color: Colors.grey[400]),
                       const SizedBox(height: 18),
-                      const Text(
-                        '아직 팔로워가 없습니다',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      Text(
+                        isMyProfile ? '아직 팔로워가 없습니다' : '아직 팔로워가 없습니다',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
                   itemCount: followers.length,
                   itemBuilder: (context, index) {
                     final follower = followers[index];
-                    final isFollowing = followingUids.contains(follower['uid']);
+                    final followerUid = follower['uid'];
+                    final isFollowing = followingUids.contains(followerUid);
+                    final isMyself = FirebaseAuth.instance.currentUser?.uid == followerUid;
+                    
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+                      margin: const EdgeInsets.only(bottom: 1),
+                      color: Colors.white,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
@@ -230,25 +233,26 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
                                 ],
                               ),
                             ),
-                            // 팔로우/팔로잉 버튼
-                            GestureDetector(
-                              onTap: () => _toggleFollow(follower['uid'], isFollowing),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isFollowing ? Colors.grey[200] : const Color(0xFF74512D),
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Text(
-                                  isFollowing ? '팔로잉' : '팔로우',
-                                  style: TextStyle(
-                                    color: isFollowing ? Colors.black : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                            // 팔로우/팔로잉 버튼 (본인이 아닌 경우에만 표시)
+                            if (!isMyself)
+                              GestureDetector(
+                                onTap: () => _toggleFollow(followerUid, isFollowing),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isFollowing ? Colors.grey[200] : const Color(0xFF74512D),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Text(
+                                    isFollowing ? '팔로잉' : '팔로우',
+                                    style: TextStyle(
+                                      color: isFollowing ? Colors.black : Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
