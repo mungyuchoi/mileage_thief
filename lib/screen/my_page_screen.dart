@@ -168,6 +168,102 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
   Future<void> _updateProfileImage() async {
     try {
+      final user = AuthService.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      // 변경 가능 여부 확인
+      final canChange = await UserService.canChangePhotoURL(user.uid);
+      bool needsPurchaseDialog = false;
+      if (!canChange) {
+        // 변경권 구매 다이얼로그 표시
+        final shouldPurchase = await _showChangePurchaseDialog('photoURL');
+        if (!shouldPurchase) return;
+        needsPurchaseDialog = true; // 구매 다이얼로그를 거쳤음을 표시
+      }
+
+      // 땅콩 소모 확인 다이얼로그 (이미지 선택 전)
+      final userData = await UserService.getUserFromFirestore(user.uid);
+      if (userData != null) {
+        final changeCount = userData['photoURLChangeCount'] ?? 0;
+        final peanutCount = userData['peanutCount'] ?? 0;
+        
+        // 변경 횟수가 1 이상이고 땅콩이 충분하거나, 구매 다이얼로그를 거친 경우
+        if ((changeCount >= 1 && peanutCount >= 50) || needsPurchaseDialog) {
+          final shouldProceed = await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                title: const Text(
+                  '프로필 이미지 변경',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '땅콩 50개가 소모될 예정입니다.',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '현재 보유 땅콩: ${peanutCount}개',
+                      style: TextStyle(
+                        color: peanutCount >= 50 ? Colors.green : Colors.red,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '변경하시겠습니까?',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text(
+                      '취소',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text(
+                      '변경',
+                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (shouldProceed != true) return;
+        }
+      }
+
+      setState(() {
+        _isUpdatingProfileImage = true;
+      });
+
       // 1. 이미지 선택
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -177,18 +273,6 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       );
 
       if (image == null) return;
-
-      final user = AuthService.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로그인이 필요합니다.')),
-        );
-        return;
-      }
-
-      setState(() {
-        _isUpdatingProfileImage = true;
-      });
 
       // 2. Firebase Storage에 업로드
       final File imageFile = File(image.path);
@@ -203,14 +287,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // 3. Firestore 사용자 정보 업데이트
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
-        'photoURL': downloadUrl,
-        'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
+      // 3. UserService를 통한 변경 처리 (땅콩 차감 포함)
+      await UserService.changePhotoURL(user.uid, downloadUrl);
 
       // 4. Firebase Auth 프로필 업데이트
       await user.updatePhotoURL(downloadUrl);
@@ -219,10 +297,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       await _updateExistingPostsAndComments(user.uid, downloadUrl);
 
       // 6. 로컬 상태 업데이트
+      await _loadUserProfile(); // 전체 프로필 다시 로드하여 변경된 데이터 반영
+
       setState(() {
-        if (userProfile != null) {
-          userProfile!['photoURL'] = downloadUrl;
-        }
         _isUpdatingProfileImage = false;
       });
 
@@ -240,8 +317,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('프로필 이미지 업데이트 중 오류가 발생했습니다.'),
+        SnackBar(
+          content: Text('프로필 이미지 업데이트 중 오류가 발생했습니다: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -330,6 +407,22 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   Future<void> _editDisplayName() async {
+    final user = AuthService.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
+
+    // 변경 가능 여부 확인
+    final canChange = await UserService.canChangeDisplayName(user.uid);
+    if (!canChange) {
+      // 변경권 구매 다이얼로그 표시
+      final shouldPurchase = await _showChangePurchaseDialog('displayName');
+      if (!shouldPurchase) return;
+    }
+
     final TextEditingController controller = TextEditingController();
     final currentDisplayName = userProfile?['displayName'] ?? '';
     controller.text = currentDisplayName;
@@ -338,20 +431,66 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('닉네임 변경'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: '새 닉네임을 입력하세요',
-              border: OutlineInputBorder(),
+          backgroundColor: Colors.white,
+          title: const Text(
+            '닉네임 변경',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
             ),
-            maxLength: 20,
-            autofocus: true,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.black),
+                decoration: const InputDecoration(
+                  hintText: '새 닉네임을 입력하세요',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                ),
+                maxLength: 20,
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '땅콩 30개가 소모될 예정입니다.',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '현재 보유 땅콩: ${userProfile?['peanutCount'] ?? 0}개',
+                style: TextStyle(
+                  color: (userProfile?['peanutCount'] ?? 0) >= 30 ? Colors.green : Colors.red,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '변경하시겠습니까?',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -362,7 +501,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   Navigator.pop(context);
                 }
               },
-              child: const Text('변경'),
+              child: const Text(
+                '변경',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );
@@ -388,14 +530,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         _isUpdatingDisplayName = true;
       });
 
-      // 1. Firestore 사용자 정보 업데이트
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
-        'displayName': newDisplayName,
-        'lastUpdatedAt': FieldValue.serverTimestamp(),
-      });
+      // 1. UserService를 통한 변경 처리 (땅콩 차감 포함)
+      await UserService.changeDisplayName(user.uid, newDisplayName);
 
       // 2. Firebase Auth 프로필 업데이트
       await user.updateDisplayName(newDisplayName);
@@ -404,10 +540,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       await _updateExistingPostsAndCommentsDisplayName(user.uid, newDisplayName);
 
       // 4. 로컬 상태 업데이트
+      await _loadUserProfile(); // 전체 프로필 다시 로드하여 변경된 데이터 반영
+
       setState(() {
-        if (userProfile != null) {
-          userProfile!['displayName'] = newDisplayName;
-        }
         _isUpdatingDisplayName = false;
       });
 
@@ -424,8 +559,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('닉네임 업데이트 중 오류가 발생했습니다.'),
+        SnackBar(
+          content: Text('닉네임 업데이트 중 오류가 발생했습니다: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -511,6 +646,100 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       // 에러가 발생해도 닉네임 업데이트 자체는 성공했으므로 
       // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 조용히 처리
     }
+  }
+
+  // 변경권 구매 다이얼로그
+  Future<bool> _showChangePurchaseDialog(String type) async {
+    final prices = UserService.getChangePrices();
+    final price = prices[type] ?? 0;
+    final typeName = type == 'photoURL' ? '프로필 이미지' : '닉네임';
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Text(
+            '$typeName 변경권 구매',
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$typeName을 변경하려면 $price땅콩이 필요합니다.',
+                style: const TextStyle(color: Colors.black),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '현재 보유 땅콩: ${userProfile?['peanutCount'] ?? 0}개',
+                style: TextStyle(
+                  color: (userProfile?['peanutCount'] ?? 0) >= price 
+                      ? Colors.green 
+                      : Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if ((userProfile?['peanutCount'] ?? 0) < price)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.red[600], size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '땅콩이 부족합니다!',
+                          style: TextStyle(
+                            color: Colors.red[600],
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: (userProfile?['peanutCount'] ?? 0) >= price 
+                  ? () => Navigator.pop(context, true)
+                  : null,
+              child: Text(
+                '구매',
+                style: TextStyle(
+                  color: (userProfile?['peanutCount'] ?? 0) >= price 
+                      ? Colors.blue 
+                      : Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    
+    return result ?? false;
   }
 
   @override
@@ -918,6 +1147,135 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                             ),
                           ),
                         ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // 변경 횟수 정보
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '변경 횟수',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            size: 16,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '프로필 이미지',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${userProfile?['photoURLChangeCount'] ?? 0}/1',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: (userProfile?['photoURLChangeCount'] ?? 0) >= 1 
+                                              ? Colors.orange[700] 
+                                              : Colors.green[700],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        (userProfile?['photoURLChangeCount'] ?? 0) >= 1 
+                                            ? '50땅콩 필요' 
+                                            : '무료',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: (userProfile?['photoURLChangeCount'] ?? 0) >= 1 
+                                              ? Colors.orange[600] 
+                                              : Colors.green[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 50,
+                                  color: Colors.grey[300],
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.edit,
+                                            size: 16,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '닉네임',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${userProfile?['displayNameChangeCount'] ?? 0}/1',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: (userProfile?['displayNameChangeCount'] ?? 0) >= 1 
+                                              ? Colors.orange[700] 
+                                              : Colors.green[700],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        (userProfile?['displayNameChangeCount'] ?? 0) >= 1 
+                                            ? '30땅콩 필요' 
+                                            : '무료',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: (userProfile?['displayNameChangeCount'] ?? 0) >= 1 
+                                              ? Colors.orange[600] 
+                                              : Colors.green[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                       
                     ],
                   ),

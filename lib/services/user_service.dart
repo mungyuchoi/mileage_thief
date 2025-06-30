@@ -36,6 +36,10 @@ class UserService {
       'fcmToken': fcmToken ?? '',
       'followingCount': 0,
       'followerCount': 0,
+      'photoURLChangeCount': 0,
+      'displayNameChangeCount': 0,
+      'photoURLEnable': true,
+      'displayNameEnable': true,
     };
   }
 
@@ -231,6 +235,123 @@ class UserService {
     await batch.commit();
     print('회원 탈퇴 관련 모든 데이터 삭제 완료: $uid');
   }
+
+  // 변경권 관련 메서드들
+  // 프로필 이미지 변경 가능 여부 확인
+  static Future<bool> canChangePhotoURL(String uid) async {
+    try {
+      final userData = await getUserFromFirestore(uid);
+      if (userData == null) return false;
+      
+      final changeCount = userData['photoURLChangeCount'] ?? 0;
+      final peanutCount = userData['peanutCount'] ?? 0;
+      
+      // 1회 무료 변경 가능하거나 땅콩이 50개 이상 있으면 변경 가능
+      return changeCount < 1 || peanutCount >= 50;
+    } catch (e) {
+      print('프로필 이미지 변경 가능 여부 확인 오류: $e');
+      return false;
+    }
+  }
+
+  // 닉네임 변경 가능 여부 확인
+  static Future<bool> canChangeDisplayName(String uid) async {
+    try {
+      final userData = await getUserFromFirestore(uid);
+      if (userData == null) return false;
+      
+      final changeCount = userData['displayNameChangeCount'] ?? 0;
+      final peanutCount = userData['peanutCount'] ?? 0;
+      
+      // 1회 무료 변경 가능하거나 땅콩이 30개 이상 있으면 변경 가능
+      return changeCount < 1 || peanutCount >= 30;
+    } catch (e) {
+      print('닉네임 변경 가능 여부 확인 오류: $e');
+      return false;
+    }
+  }
+
+  // 프로필 이미지 변경 처리 (땅콩 차감 포함)
+  static Future<void> changePhotoURL(String uid, String newPhotoURL) async {
+    try {
+      final userData = await getUserFromFirestore(uid);
+      if (userData == null) throw Exception('사용자 정보를 찾을 수 없습니다.');
+      
+      final changeCount = userData['photoURLChangeCount'] ?? 0;
+      final currentPeanutCount = userData['peanutCount'] ?? 0;
+      
+      // 변경 횟수 증가
+      final newChangeCount = changeCount + 1;
+      
+      // 땅콩 차감 (무료 변경이 아닌 경우)
+      int newPeanutCount = currentPeanutCount;
+      if (changeCount >= 1) {
+        if (currentPeanutCount < 50) {
+          throw Exception('땅콩이 부족합니다. (필요: 50개, 보유: $currentPeanutCount개)');
+        }
+        newPeanutCount = currentPeanutCount - 50;
+      }
+      
+      // Firestore 업데이트
+      await _firestore.collection(_usersCollection).doc(uid).update({
+        'photoURL': newPhotoURL,
+        'photoURLChangeCount': newChangeCount,
+        'photoURLEnable': false, // 변경 후 비활성화
+        'peanutCount': newPeanutCount,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      print('프로필 이미지 변경 완료: $uid, 변경 횟수: $newChangeCount, 땅콩 차감: ${changeCount >= 1 ? 50 : 0}');
+    } catch (e) {
+      print('프로필 이미지 변경 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 닉네임 변경 처리 (땅콩 차감 포함)
+  static Future<void> changeDisplayName(String uid, String newDisplayName) async {
+    try {
+      final userData = await getUserFromFirestore(uid);
+      if (userData == null) throw Exception('사용자 정보를 찾을 수 없습니다.');
+      
+      final changeCount = userData['displayNameChangeCount'] ?? 0;
+      final currentPeanutCount = userData['peanutCount'] ?? 0;
+      
+      // 변경 횟수 증가
+      final newChangeCount = changeCount + 1;
+      
+      // 땅콩 차감 (무료 변경이 아닌 경우)
+      int newPeanutCount = currentPeanutCount;
+      if (changeCount >= 1) {
+        if (currentPeanutCount < 30) {
+          throw Exception('땅콩이 부족합니다. (필요: 30개, 보유: $currentPeanutCount개)');
+        }
+        newPeanutCount = currentPeanutCount - 30;
+      }
+      
+      // Firestore 업데이트
+      await _firestore.collection(_usersCollection).doc(uid).update({
+        'displayName': newDisplayName,
+        'displayNameChangeCount': newChangeCount,
+        'displayNameEnable': false, // 변경 후 비활성화
+        'peanutCount': newPeanutCount,
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      print('닉네임 변경 완료: $uid, 변경 횟수: $newChangeCount, 땅콩 차감: ${changeCount >= 1 ? 30 : 0}');
+    } catch (e) {
+      print('닉네임 변경 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 변경권 구매 가격 조회
+  static Map<String, int> getChangePrices() {
+    return {
+      'photoURL': 50,
+      'displayName': 30,
+    };
+  }
 }
 
 Future<void> migrateAllUsersToCommunitySchema() async {
@@ -265,4 +386,26 @@ Future<void> migrateAllUsersToCommunitySchema() async {
     }
   }
   print('모든 기존 사용자 문서가 커뮤니티 스키마로 마이그레이션 완료!');
+}
+
+// 변경권 시스템 필드 마이그레이션
+Future<void> migrateUsersToChangeSystem() async {
+  final users = await FirebaseFirestore.instance.collection('users').get();
+  for (final doc in users.docs) {
+    final data = doc.data();
+    final updates = <String, dynamic>{};
+
+    // 변경권 시스템 필드 추가
+    if (!data.containsKey('photoURLChangeCount')) updates['photoURLChangeCount'] = 0;
+    if (!data.containsKey('displayNameChangeCount')) updates['displayNameChangeCount'] = 0;
+    if (!data.containsKey('photoURLEnable')) updates['photoURLEnable'] = true;
+    if (!data.containsKey('displayNameEnable')) updates['displayNameEnable'] = true;
+
+    // 이미 있는 필드는 건드리지 않음
+    if (updates.isNotEmpty) {
+      await doc.reference.update(updates);
+      print('사용자 ${doc.id}의 변경권 시스템 필드 추가 완료');
+    }
+  }
+  print('모든 기존 사용자 문서에 변경권 시스템 필드 마이그레이션 완료!');
 }
