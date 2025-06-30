@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'community_detail_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userUid;
@@ -171,6 +172,40 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     }
     
     await batch.commit();
+  }
+
+  Future<Map<String, String>> _getPostBoardInfo(String dateString, String postId) async {
+    try {
+      final postDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(dateString)
+          .collection('posts')
+          .doc(postId)
+          .get();
+      if (postDoc.exists) {
+        final postData = postDoc.data() as Map<String, dynamic>;
+        final boardId = postData['boardId'] ?? 'free';
+        final boardName = _getBoardName(boardId);
+        return {'boardId': boardId, 'boardName': boardName};
+      }
+    } catch (e) {
+      print('게시글 boardId 조회 오류: $e');
+    }
+    return {'boardId': 'free', 'boardName': '자유게시판'};
+  }
+
+  String _getBoardName(String boardId) {
+    // boardId에 따른 boardName 반환 (예시)
+    switch (boardId) {
+      case 'free':
+        return '자유게시판';
+      case 'qna':
+        return '질문답변';
+      case 'review':
+        return '후기게시판';
+      default:
+        return '자유게시판';
+    }
   }
 
   @override
@@ -349,48 +384,72 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         final myPost = _userPosts[index].data() as Map<String, dynamic>;
         final createdAt = (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final title = myPost['title'] ?? '제목 없음';
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+        final postPath = myPost['postPath'] as String?;
+        return GestureDetector(
+          onTap: () async {
+            if (postPath != null) {
+              final pathParts = postPath.split('/');
+              if (pathParts.length >= 4) {
+                final dateString = pathParts[1];
+                final postId = pathParts[3];
+                final boardInfo = await _getPostBoardInfo(dateString, postId);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CommunityDetailScreen(
+                      postId: postId,
+                      boardId: boardInfo['boardId']!,
+                      boardName: boardInfo['boardName']!,
+                      dateString: dateString,
                     ),
-                  ],
+                  ),
+                );
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -414,48 +473,76 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         final myComment = _userComments[index].data() as Map<String, dynamic>;
         final createdAt = (myComment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final content = _removeHtmlTags(myComment['contentHtml'] ?? '댓글 내용 없음');
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  content,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+        final postPath = myComment['postPath'] as String?;
+        final commentPath = myComment['commentPath'] as String?;
+        return GestureDetector(
+          onTap: () async {
+            if (postPath != null && commentPath != null) {
+              final postPathParts = postPath.split('/');
+              final commentPathParts = commentPath.split('/');
+              if (postPathParts.length >= 4 && commentPathParts.length >= 6) {
+                final dateString = postPathParts[1];
+                final postId = postPathParts[3];
+                final commentId = commentPathParts[5];
+                final boardInfo = await _getPostBoardInfo(dateString, postId);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CommunityDetailScreen(
+                      postId: postId,
+                      boardId: boardInfo['boardId']!,
+                      boardName: boardInfo['boardName']!,
+                      dateString: dateString,
+                      scrollToCommentId: commentId,
                     ),
-                  ],
+                  ),
+                );
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    content,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

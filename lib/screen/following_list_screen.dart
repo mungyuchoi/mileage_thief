@@ -61,15 +61,23 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
     final shouldUnfollow = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        content: Text('$displayName 님 팔로우를 취소할까요?'),
+        backgroundColor: Colors.white,
+        content: Text(
+          '$displayName 님 팔로우를 취소할까요?',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: const Text('취소', style: TextStyle(color: Colors.black)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('팔로우 취소'),
+            child: const Text('팔로우 취소', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
