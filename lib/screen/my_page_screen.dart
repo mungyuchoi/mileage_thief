@@ -21,15 +21,30 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   bool isLoading = true;
   TabController? _tabController;
   
-  // 탭별 데이터
+  // 페이징 관련 변수 추가
+  final int _pageSize = 50;
+
+  // 게시글 페이징
   List<DocumentSnapshot> _userPosts = [];
-  List<DocumentSnapshot> _userComments = [];
-  List<DocumentSnapshot> _likedPosts = [];
-  
-  // 로딩 상태
+  DocumentSnapshot? _lastPostDoc;
+  bool _hasMorePosts = true;
   bool _isPostsLoading = false;
+  final ScrollController _postsScrollController = ScrollController();
+
+  // 댓글 페이징
+  List<DocumentSnapshot> _userComments = [];
+  DocumentSnapshot? _lastCommentDoc;
+  bool _hasMoreComments = true;
   bool _isCommentsLoading = false;
+  final ScrollController _commentsScrollController = ScrollController();
+
+  // 좋아요 페이징
+  List<DocumentSnapshot> _likedPosts = [];
+  DocumentSnapshot? _lastLikedDoc;
+  bool _hasMoreLikedPosts = true;
   bool _isLikedPostsLoading = false;
+  final ScrollController _likedPostsScrollController = ScrollController();
+  
   bool _isUpdatingProfileImage = false;
   bool _isUpdatingDisplayName = false;
   
@@ -41,6 +56,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _initializeTabController();
     _loadUserProfile();
     _loadAllTabData();
+    _postsScrollController.addListener(_onPostsScroll);
+    _commentsScrollController.addListener(_onCommentsScroll);
+    _likedPostsScrollController.addListener(_onLikedPostsScroll);
   }
 
   void _initializeTabController() {
@@ -50,7 +68,32 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _tabController?.dispose();
+    _postsScrollController.dispose();
+    _commentsScrollController.dispose();
+    _likedPostsScrollController.dispose();
     super.dispose();
+  }
+
+  void _onPostsScroll() {
+    if (_postsScrollController.position.pixels >= _postsScrollController.position.maxScrollExtent - 200) {
+      if (!_isPostsLoading && _hasMorePosts) {
+        _loadUserPosts(loadMore: true);
+      }
+    }
+  }
+  void _onCommentsScroll() {
+    if (_commentsScrollController.position.pixels >= _commentsScrollController.position.maxScrollExtent - 200) {
+      if (!_isCommentsLoading && _hasMoreComments) {
+        _loadUserComments(loadMore: true);
+      }
+    }
+  }
+  void _onLikedPostsScroll() {
+    if (_likedPostsScrollController.position.pixels >= _likedPostsScrollController.position.maxScrollExtent - 200) {
+      if (!_isLikedPostsLoading && _hasMoreLikedPosts) {
+        _loadLikedPosts(loadMore: true);
+      }
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -77,7 +120,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     ]);
   }
 
-  Future<void> _loadUserPosts() async {
+  Future<void> _loadUserPosts({bool loadMore = false}) async {
     final user = AuthService.currentUser;
     if (user == null) return;
 
@@ -86,17 +129,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     });
 
     try {
-      // 사용자의 my_posts 서브컬렉션에서 직접 가져오기
-      final myPostsQuery = await FirebaseFirestore.instance
+      Query query = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('my_posts')
           .orderBy('createdAt', descending: true)
-          .limit(20)
-          .get();
-
+          .limit(_pageSize);
+      if (loadMore && _lastPostDoc != null) {
+        query = query.startAfterDocument(_lastPostDoc!);
+      }
+      final querySnapshot = await query.get();
+      if (loadMore) {
+        _userPosts.addAll(querySnapshot.docs);
+      } else {
+        _userPosts = querySnapshot.docs;
+      }
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastPostDoc = querySnapshot.docs.last;
+      }
+      _hasMorePosts = querySnapshot.docs.length == _pageSize;
       setState(() {
-        _userPosts = myPostsQuery.docs;
         _isPostsLoading = false;
       });
     } catch (e) {
@@ -107,7 +159,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
   }
 
-  Future<void> _loadUserComments() async {
+  Future<void> _loadUserComments({bool loadMore = false}) async {
     final user = AuthService.currentUser;
     if (user == null) return;
 
@@ -116,17 +168,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     });
 
     try {
-      // 사용자의 my_comments 서브컬렉션에서 직접 가져오기
-      final myCommentsQuery = await FirebaseFirestore.instance
+      Query query = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('my_comments')
           .orderBy('createdAt', descending: true)
-          .limit(20)
-          .get();
-
+          .limit(_pageSize);
+      if (loadMore && _lastCommentDoc != null) {
+        query = query.startAfterDocument(_lastCommentDoc!);
+      }
+      final querySnapshot = await query.get();
+      if (loadMore) {
+        _userComments.addAll(querySnapshot.docs);
+      } else {
+        _userComments = querySnapshot.docs;
+      }
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastCommentDoc = querySnapshot.docs.last;
+      }
+      _hasMoreComments = querySnapshot.docs.length == _pageSize;
       setState(() {
-        _userComments = myCommentsQuery.docs;
         _isCommentsLoading = false;
       });
     } catch (e) {
@@ -137,7 +198,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
   }
 
-  Future<void> _loadLikedPosts() async {
+  Future<void> _loadLikedPosts({bool loadMore = false}) async {
     final user = AuthService.currentUser;
     if (user == null) return;
 
@@ -146,17 +207,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     });
 
     try {
-      // 사용자의 liked_posts 서브컬렉션에서 직접 가져오기
-      final likedPostsQuery = await FirebaseFirestore.instance
+      Query query = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('liked_posts')
           .orderBy('likedAt', descending: true)
-          .limit(20)
-          .get();
-
+          .limit(_pageSize);
+      if (loadMore && _lastLikedDoc != null) {
+        query = query.startAfterDocument(_lastLikedDoc!);
+      }
+      final querySnapshot = await query.get();
+      if (loadMore) {
+        _likedPosts.addAll(querySnapshot.docs);
+      } else {
+        _likedPosts = querySnapshot.docs;
+      }
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastLikedDoc = querySnapshot.docs.last;
+      }
+      _hasMoreLikedPosts = querySnapshot.docs.length == _pageSize;
       setState(() {
-        _likedPosts = likedPostsQuery.docs;
         _isLikedPostsLoading = false;
       });
     } catch (e) {
@@ -1204,9 +1274,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
+      controller: _postsScrollController,
       padding: const EdgeInsets.all(12),
-      itemCount: _userPosts.length,
+      itemCount: _userPosts.length + 1,
       itemBuilder: (context, index) {
+        if (index == _userPosts.length) {
+          return const SizedBox(height: 32);
+        }
         final myPost = _userPosts[index].data() as Map<String, dynamic>;
         final createdAt = (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final boardId = myPost['boardId'] ?? 'free';
@@ -1384,9 +1458,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
+      controller: _commentsScrollController,
       padding: const EdgeInsets.all(12),
-      itemCount: _userComments.length,
+      itemCount: _userComments.length + 1,
       itemBuilder: (context, index) {
+        if (index == _userComments.length) {
+          return const SizedBox(height: 32);
+        }
         final myComment = _userComments[index].data() as Map<String, dynamic>;
         final createdAt = (myComment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final content = _removeHtmlTags(myComment['contentHtml'] ?? '댓글 내용 없음');
@@ -1486,9 +1564,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
+      controller: _likedPostsScrollController,
       padding: const EdgeInsets.all(12),
-      itemCount: _likedPosts.length,
+      itemCount: _likedPosts.length + 1,
       itemBuilder: (context, index) {
+        if (index == _likedPosts.length) {
+          return const SizedBox(height: 32);
+        }
         final likedPost = _likedPosts[index].data() as Map<String, dynamic>;
         final likedAt = (likedPost['likedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final title = likedPost['title'] ?? '제목 없음';
