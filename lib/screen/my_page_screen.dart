@@ -229,6 +229,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                     ),
                     const SizedBox(height: 8),
                     const Text(
+                      '선정적인 이미지로 변경 시 제재의 대상이 될 수 있습니다.',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
                       '변경하시겠습니까?',
                       style: TextStyle(
                         color: Colors.grey,
@@ -427,94 +435,132 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     final TextEditingController controller = TextEditingController();
     final currentDisplayName = userProfile?['displayName'] ?? '';
     controller.text = currentDisplayName;
+    String? errorText;
+    bool isValid = false;
 
-    final newDisplayName = await showDialog<String>(
+    await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text(
-            '닉네임 변경',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: controller,
-                style: const TextStyle(color: Colors.black),
-                decoration: const InputDecoration(
-                  hintText: '새 닉네임을 입력하세요',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                ),
-                maxLength: 20,
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '땅콩 30개가 소모될 예정입니다.',
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void validate(String value) {
+              // 띄어쓰기, 특수문자 체크
+              final hasWhitespace = value.contains(RegExp(r'\s'));
+              final hasSpecial = value.contains(RegExp(r'[^a-zA-Z0-9가-힣_]'));
+              if (value.isEmpty) {
+                errorText = null;
+                isValid = false;
+              } else if (hasWhitespace) {
+                errorText = '닉네임에 띄어쓰기를 포함할 수 없습니다.';
+                isValid = false;
+              } else if (hasSpecial) {
+                errorText = '닉네임에 특수문자를 포함할 수 없습니다.';
+                isValid = false;
+              } else {
+                errorText = null;
+                isValid = true;
+              }
+              setState(() {});
+            }
+
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text(
+                '닉네임 변경',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '현재 보유 땅콩: ${userProfile?['peanutCount'] ?? 0}개',
-                style: TextStyle(
-                  color: (userProfile?['peanutCount'] ?? 0) >= 30 ? Colors.green : Colors.red,
-                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                '변경하시겠습니까?',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    style: const TextStyle(color: Colors.black),
+                    decoration: const InputDecoration(
+                      hintText: '새 닉네임을 입력하세요',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      border: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                    maxLength: 20,
+                    autofocus: true,
+                    onChanged: validate,
+                  ),
+                  if (errorText != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 2),
+                      child: Text(
+                        errorText!,
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '땅콩 30개가 소모될 예정입니다.',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '현재 보유 땅콩: ${userProfile?['peanutCount'] ?? 0}개',
+                    style: TextStyle(
+                      color: (userProfile?['peanutCount'] ?? 0) >= 30 ? Colors.green : Colors.red,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '선정적인 닉네임은 사용할 수 없습니다. 선정적인 닉네임 사용시 추후 제재가 될 수 있습니다',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '변경하시겠습니까?',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(color: Colors.black),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                '취소',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                final newName = controller.text.trim();
-                if (newName.isNotEmpty && newName != currentDisplayName) {
-                  Navigator.pop(context, newName);
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text(
-                '변경',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+                TextButton(
+                  onPressed: isValid && controller.text.trim() != currentDisplayName
+                      ? () => Navigator.pop(context, controller.text.trim())
+                      : null,
+                  child: const Text(
+                    '변경',
+                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
-    );
-
-    if (newDisplayName != null) {
-      await _updateDisplayName(newDisplayName);
-    }
+    ).then((newDisplayName) async {
+      if (newDisplayName != null) {
+        await _updateDisplayName(newDisplayName);
+      }
+    });
   }
 
   Future<void> _updateDisplayName(String newDisplayName) async {
@@ -1440,66 +1486,81 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(12),
       itemCount: _likedPosts.length,
       itemBuilder: (context, index) {
         final likedPost = _likedPosts[index].data() as Map<String, dynamic>;
         final likedAt = (likedPost['likedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final title = likedPost['title'] ?? '제목 없음';
         
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text(
-              likedPost['title'] ?? '제목 없음',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '좋아요한 게시글',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
+        return GestureDetector(
+          onTap: () async {
+            // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
+            final postPath = likedPost['postPath'] as String?;
+            if (postPath != null) {
+              final pathParts = postPath.split('/');
+              if (pathParts.length >= 4) {
+                final dateString = pathParts[1];
+                final postId = pathParts[3];
+                // 게시글의 boardId와 boardName 조회
+                final boardInfo = await _getPostBoardInfo(dateString, postId);
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => CommunityDetailScreen(
+                    postId: postId,
+                    boardId: boardInfo['boardId']!,
+                    boardName: boardInfo['boardName']!,
+                    dateString: dateString,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('MM.dd').format(likedAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ));
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            trailing: Icon(
-              Icons.favorite,
-              size: 20,
-              color: Colors.pink[300],
-            ),
-            onTap: () async {
-              // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
-              final postPath = likedPost['postPath'] as String?;
-              if (postPath != null) {
-                final pathParts = postPath.split('/');
-                if (pathParts.length >= 4) {
-                  final dateString = pathParts[1];
-                  final postId = pathParts[3];
-                  
-                  // 게시글의 boardId와 boardName 조회
-                  final boardInfo = await _getPostBoardInfo(dateString, postId);
-                  
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => CommunityDetailScreen(
-                      postId: postId,
-                      boardId: boardInfo['boardId']!,
-                      boardName: boardInfo['boardName']!,
-                      dateString: dateString,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 제목
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
-                  ));
-                }
-              }
-            },
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  // 좋아요한 날짜
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        DateFormat('yyyy.MM.dd').format(likedAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
