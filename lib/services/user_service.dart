@@ -40,6 +40,8 @@ class UserService {
       'displayNameChangeCount': 0,
       'photoURLEnable': true,
       'displayNameEnable': true,
+      'ownedEffects': [],
+      'currentSkyEffect': null,
     };
   }
 
@@ -408,4 +410,24 @@ Future<void> migrateUsersToChangeSystem() async {
     }
   }
   print('모든 기존 사용자 문서에 변경권 시스템 필드 마이그레이션 완료!');
+}
+
+// 스카이 이펙트 시스템 필드 마이그레이션
+Future<void> migrateUsersToSkyEffectSystem() async {
+  final users = await FirebaseFirestore.instance.collection('users').get();
+  for (final doc in users.docs) {
+    final data = doc.data();
+    final updates = <String, dynamic>{};
+
+    // 스카이 이펙트 시스템 필드 추가
+    if (!data.containsKey('ownedEffects')) updates['ownedEffects'] = [];
+    if (!data.containsKey('currentSkyEffect')) updates['currentSkyEffect'] = null;
+
+    // 업데이트가 필요한 경우만 실행
+    if (updates.isNotEmpty) {
+      await doc.reference.update(updates);
+      print('사용자 ${doc.id}의 스카이 이펙트 시스템 필드 추가 완료');
+    }
+  }
+  print('모든 기존 사용자 문서에 스카이 이펙트 시스템 필드 마이그레이션 완료!');
 }

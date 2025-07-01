@@ -11,6 +11,8 @@ import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
 import 'level_detail_screen.dart';
+import 'sky_effect_screen.dart';
+import 'package:lottie/lottie.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -902,6 +904,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                       // 레벨 영역
                       _buildLevelSection(),
                       const SizedBox(height: 8),
+                      // 스카이 이펙트 영역
+                      _buildSkyEffectSection(),
+                      const SizedBox(height: 8),
                       // 탭바
                       Container(
                         color: Colors.white,
@@ -1304,19 +1309,207 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
-  // boardId로 게시판 이름 가져오기
-  String _getBoardName(String boardId) {
-    final boardNameMap = {
-      'free': '자유게시판',
-      'question': '마일리지',
-      'deal': '적립/카드 혜택',
-      'seat_share': '좌석 공유',
-      'review': '항공 리뷰',
-      'error_report': '오류 신고',
-      'suggestion': '건의사항',
-      'notice': '운영 공지사항',
-    };
-    return boardNameMap[boardId] ?? '알 수 없음';
+  Widget _buildSkyEffectSection() {
+    if (userProfile == null) {
+      return const SizedBox.shrink();
+    }
+    final currentEffect = userProfile!["currentSkyEffect"] as String?;
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SkyEffectScreen(userProfile: userProfile!),
+          ),
+        );
+        // 이펙트가 변경되었든 안 되었든 항상 최신 프로필을 새로고침하여 미리보기 동기화
+        await _loadUserProfile();
+        setState(() {});
+      },
+      child: Container(
+        width: double.infinity,
+        color: Colors.white,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '스카이 이펙트',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[200]!, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage: userProfile!['photoURL'] != null &&
+                                  userProfile!['photoURL'].toString().isNotEmpty
+                              ? NetworkImage(userProfile!['photoURL'])
+                              : null,
+                          child: userProfile!['photoURL'] == null ||
+                                  userProfile!['photoURL'].toString().isEmpty
+                              ? const Icon(Icons.person, size: 16, color: Colors.grey)
+                              : null,
+                        ),
+                        const SizedBox(width: 2),
+                        // FutureBuilder로 Lottie 미리보기와 effectName
+                        _buildEffectPreviewLottieAndName(currentEffect, userProfile!['displayName'] ?? '사용자'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // effectName을 우측에 표시
+                    _buildEffectNameText(currentEffect),
+                    if (currentEffect != null) ...[
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF74512D).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '착용 중',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: const Color(0xFF74512D),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEffectPreviewLottieAndName(String? effectId, String displayName) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: _fetchEffectDoc(effectId),
+      builder: (context, snapshot) {
+        if (effectId == null) {
+          return Row(
+            children: [
+              const SizedBox(width: 32, height: 20),
+              const SizedBox(width: 8),
+              Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+            ],
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Row(
+            children: [
+              const SizedBox(width: 32, height: 20),
+              const SizedBox(width: 8),
+              Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+            ],
+          );
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          print('Lottie effectId $effectId: 문서 없음');
+          return Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 20),
+              const SizedBox(width: 8),
+              Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+            ],
+          );
+        }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final lottieUrl = data['lottieUrl'] as String?;
+        final effectName = data['name'] as String?;
+        print('Lottie effectId $effectId: $lottieUrl, name: $effectName');
+        return Row(
+          children: [
+            if (lottieUrl != null && lottieUrl.isNotEmpty)
+              SizedBox(
+                width: 32,
+                height: 20,
+                child: Lottie.network(
+                  lottieUrl,
+                  width: 32,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  repeat: true,
+                  animate: true,
+                ),
+              )
+            else
+              const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 20),
+            const SizedBox(width: 2),
+            Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEffectNameText(String? effectId) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: _fetchEffectDoc(effectId),
+      builder: (context, snapshot) {
+        if (effectId == null) {
+          return const Text('미착용', style: TextStyle(fontSize: 14, color: Colors.grey));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Text('...', style: TextStyle(fontSize: 14, color: Colors.grey));
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Text('커스텀 이펙트', style: TextStyle(fontSize: 14, color: Colors.grey));
+        }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final effectName = data['name'] as String?;
+        return Text(
+          effectName ?? '커스텀 이펙트',
+          style: const TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500),
+        );
+      },
+    );
+  }
+
+  Future<DocumentSnapshot> _fetchEffectDoc(String? effectId) async {
+    if (effectId == null) return Future.value(null);
+    try {
+      final doc = await FirebaseFirestore.instance.collection('effects').doc(effectId).get();
+      return doc;
+    } catch (e) {
+      print('Firestore fetch error: $e');
+      return Future.value(null);
+    }
   }
 
   Widget _buildPostsList() {
@@ -1720,4 +1913,18 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     return htmlString.replaceAll(exp, '');
   }
 
+  // boardId로 게시판 이름 가져오기
+  String _getBoardName(String boardId) {
+    final boardNameMap = {
+      'free': '자유게시판',
+      'question': '마일리지',
+      'deal': '적립/카드 혜택',
+      'seat_share': '좌석 공유',
+      'review': '항공 리뷰',
+      'error_report': '오류 신고',
+      'suggestion': '건의사항',
+      'notice': '운영 공지사항',
+    };
+    return boardNameMap[boardId] ?? '알 수 없음';
+  }
 }
