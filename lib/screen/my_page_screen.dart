@@ -10,6 +10,7 @@ import '../services/user_service.dart';
 import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
+import 'level_detail_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -1162,11 +1163,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ),
               const SizedBox(width: 4),
               Text(
-                '${userProfile!['peanutCount'] ?? 0}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600]!,
-                  fontWeight: FontWeight.bold,
+                                  '${userProfile!['peanutCount'] ?? 0}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600]!,
+                    fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -1251,39 +1252,54 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     if (userProfile == null) {
       return const SizedBox.shrink();
     }
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '레벨',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LevelDetailScreen(userProfile: userProfile!),
+          ),
+        );
+        
+        // 레벨이 업데이트되었으면 프로필 정보 새로고침
+        if (result == true) {
+          _loadUserProfile();
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        color: Colors.white,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '레벨',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
-          ),
-          Row(
-            children: [
-              Text(
-                userProfile!['displayGrade'] ?? '이코노미 Lv.1',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+            Row(
+              children: [
+                Text(
+                  userProfile!['displayGrade'] ?? '이코노미 Lv.1',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
