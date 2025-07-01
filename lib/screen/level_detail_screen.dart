@@ -600,20 +600,18 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
           Container(
             height: 12,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: _getGradeColor(grade),
               borderRadius: BorderRadius.circular(6),
             ),
             child: AnimatedBuilder(
               animation: _progressAnimationController,
               builder: (context, child) {
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: progress * _progressAnimationController.value,
                     backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(_getGradeColor(grade)),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[200]!),
                     minHeight: 12,
                   ),
                 );
