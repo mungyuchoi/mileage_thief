@@ -200,6 +200,26 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
     }
   }
 
+  // 등급별 + 레벨별 색상 (레벨에 따라 색상 강도 변화)
+  Color _getGradeColorByLevel(String grade, String level) {
+    // 레벨에서 숫자 추출 (Lv.1 → 1)
+    final levelNum = int.tryParse(level.replaceAll('Lv.', '')) ?? 1;
+    
+    // 색상 강도 계산 (Lv.1=100, Lv.2=200, ..., Lv.5=500)
+    final colorShade = (levelNum * 100).clamp(100, 900);
+    
+    switch (grade) {
+      case '이코노미':
+        return Colors.grey[colorShade] ?? Colors.grey[600]!;
+      case '비즈니스':
+        return Colors.blue[colorShade] ?? Colors.blue[600]!;
+      case '퍼스트':
+        return Colors.red[colorShade] ?? Colors.red[600]!;
+      default:
+        return Colors.grey[colorShade] ?? Colors.grey[600]!;
+    }
+  }
+
   // 업그레이드 버튼 클릭
   Future<void> _upgradeLevel() async {
     if (!canUpgrade) return;
@@ -246,6 +266,12 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
   }
 
   void _showUpgradeDialog(String newGrade) {
+    // 새로운 등급에서 등급명과 레벨 추출 (예: "이코노미 Lv.2" → "이코노미", "Lv.2")
+    final parts = newGrade.split(' ');
+    final grade = parts.length > 0 ? parts[0] : '이코노미';
+    final level = parts.length > 1 ? parts[1] : 'Lv.1';
+    final levelColor = _getGradeColorByLevel(grade, level);
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -261,22 +287,22 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF74512D).withOpacity(0.1),
+                  color: levelColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.emoji_events,
+                child: Icon(
+                  Icons.airline_seat_recline_extra,
                   size: 40,
-                  color: Color(0xFF74512D),
+                  color: levelColor,
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '🎉 레벨 업!',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF74512D),
+                  color: levelColor,
                 ),
               ),
               const SizedBox(height: 16),
@@ -306,7 +332,7 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
                     Navigator.pop(context, true); // 업데이트되었음을 알림
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF74512D),
+                    backgroundColor: levelColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -405,7 +431,7 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
           _buildProgressSection(),
           const SizedBox(height: 20),
           if (canUpgrade) _buildUpgradeButton(),
-          const SizedBox(height: 32),
+          const SizedBox(height: 60),
         ],
       ),
     );
@@ -467,8 +493,8 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.diamond,
-                    color: Colors.white,
+                    Icons.airline_seat_recline_extra,
+                    color: _getGradeColorByLevel(current['grade'], current['level']),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -724,11 +750,11 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _getGradeColor(next['grade']),
+                    color: _getGradeColorByLevel(next['grade'], next['level']),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
-                    Icons.emoji_events, 
+                    Icons.airline_seat_recline_extra, 
                     color: Colors.white, 
                     size: 20,
                   ),
@@ -1016,10 +1042,6 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    '🚀',
-                    style: TextStyle(fontSize: 16),
-                  ),
                 ],
               ),
       ),
