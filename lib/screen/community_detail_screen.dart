@@ -1974,7 +1974,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     try {
       final commentId = comment['commentId'];
       
-      // 댓글 삭제
+      // 댓글 삭제 (posts의 서브컬렉션)
       await FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
@@ -1994,8 +1994,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             'commentCount': FieldValue.increment(-1),
           });
 
-      // 사용자 댓글 수 감소
+      // my_comments에서도 삭제
       if (_currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('my_comments')
+            .doc(commentId)
+            .delete();
+
+        // 사용자 댓글 수 감소
         await FirebaseFirestore.instance
             .collection('users')
             .doc(_currentUser!.uid)

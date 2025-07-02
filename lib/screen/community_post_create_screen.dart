@@ -373,6 +373,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
             'displayName': userProfile['displayName'] ?? '익명',
             'photoURL': userProfile['photoURL'] ?? '',
             'displayGrade': userProfile['displayGrade'] ?? '이코노미 Lv.1',
+            'currentSkyEffect': userProfile['currentSkyEffect'] ?? '',
           },
           'viewsCount': 0,
           'likesCount': 0,
