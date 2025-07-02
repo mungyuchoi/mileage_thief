@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
@@ -109,7 +110,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       drawer: Drawer(
         child: Container(
           color: Colors.white,
@@ -161,42 +162,53 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             userProfile!['displayName'] ?? '사용자';
                         final displayGrade =
                             userProfile!['displayGrade'] ?? '이코노미 Lv.1';
-                        return Row(
-                          children: [
-                            Builder(
-                              builder: (context) {
-                                // 사용자 프로필에서 photoURL 가져오기 (fallback 포함)
-                                final photoURL = userProfile!['photoURL'] ?? '';
-                                
-                                return CircleAvatar(
-                                  backgroundColor: Colors.grey[300],
-                                  radius: 18,
-                                  backgroundImage: photoURL.isNotEmpty
-                                      ? NetworkImage(photoURL)
-                                      : null,
-                                  child: photoURL.isEmpty
-                                      ? const Icon(Icons.person,
-                                          color: Colors.black, size: 20)
-                                      : null,
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(displayName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.black)),
-                                Text('등급: $displayGrade',
-                                    style: const TextStyle(
-                                        fontSize: 13, color: Colors.black54)),
-                              ],
-                            ),
-                          ],
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context); // drawer 닫기
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MyPageScreen(),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Builder(
+                                builder: (context) {
+                                  // 사용자 프로필에서 photoURL 가져오기 (fallback 포함)
+                                  final photoURL = userProfile!['photoURL'] ?? '';
+                                  
+                                  return CircleAvatar(
+                                    backgroundColor: Colors.grey[300],
+                                    radius: 18,
+                                    backgroundImage: photoURL.isNotEmpty
+                                        ? NetworkImage(photoURL)
+                                        : null,
+                                    child: photoURL.isEmpty
+                                        ? const Icon(Icons.person,
+                                            color: Colors.black, size: 20)
+                                        : null,
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(displayName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.black)),
+                                  Text('등급: $displayGrade',
+                                      style: const TextStyle(
+                                          fontSize: 13, color: Colors.black54)),
+                                ],
+                              ),
+                            ],
+                          ),
                         );
                       } else {
                         return const Text(
@@ -359,21 +371,36 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         },
                         child: Container(
                           margin: const EdgeInsets.only(right: 8),
-                          child: CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.white,
-                            backgroundImage: userProfile!['photoURL'] != null &&
-                                userProfile!['photoURL'].toString().isNotEmpty
-                                ? NetworkImage(userProfile!['photoURL'])
-                                : null,
-                            child: userProfile!['photoURL'] == null ||
-                                userProfile!['photoURL'].toString().isEmpty
-                                ? const Icon(
-                              Icons.person,
-                              size: 20,
-                              color: Colors.grey,
-                            )
-                                : null,
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Colors.white,
+                                backgroundImage: userProfile!['photoURL'] != null &&
+                                    userProfile!['photoURL'].toString().isNotEmpty
+                                    ? NetworkImage(userProfile!['photoURL'])
+                                    : null,
+                                child: userProfile!['photoURL'] == null ||
+                                    userProfile!['photoURL'].toString().isEmpty
+                                    ? const Icon(
+                                  Icons.person,
+                                  size: 20,
+                                  color: Colors.grey,
+                                )
+                                    : null,
+                              ),
+                              // currentSkyEffect 표시
+                              if (userProfile!['currentSkyEffect'] != null)
+                                Positioned(
+                                  right: -2,
+                                  bottom: -2,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    child: _buildSkyEffectPreview(userProfile!['currentSkyEffect']),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
@@ -517,14 +544,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(18),
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFF8FAFF), // 연한 파랑-하양
-                                    Color(0xFFFDF6FF), // 연한 보라-하양
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
+                                color: Colors.white,
                               ),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 14),
@@ -541,16 +561,31 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                           final photoURL = post['author']?['photoURL'] ?? 
                                                           post['author']?['profileImageUrl'] ?? '';
                                           
-                                          return CircleAvatar(
-                                            backgroundColor: Colors.grey[300],
-                                            radius: 12,
-                                            backgroundImage: photoURL.isNotEmpty
-                                                ? NetworkImage(photoURL)
-                                                : null,
-                                            child: photoURL.isEmpty
-                                                ? const Icon(Icons.person,
-                                                    color: Colors.black54, size: 18)
-                                                : null,
+                                          return Stack(
+                                            children: [
+                                              CircleAvatar(
+                                                backgroundColor: Colors.grey[300],
+                                                radius: 12,
+                                                backgroundImage: photoURL.isNotEmpty
+                                                    ? NetworkImage(photoURL)
+                                                    : null,
+                                                child: photoURL.isEmpty
+                                                    ? const Icon(Icons.person,
+                                                        color: Colors.black54, size: 18)
+                                                    : null,
+                                              ),
+                                              // currentSkyEffect 표시 (작성자에게만)
+                                              if (post['author']?['currentSkyEffect'] != null)
+                                                Positioned(
+                                                  right: -2,
+                                                  bottom: -2,
+                                                  child: Container(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
+                                                  ),
+                                                ),
+                                            ],
                                           );
                                         },
                                       ),
@@ -578,16 +613,39 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   ),
                                   const SizedBox(height: 12),
 
-                                  // 제목 (굵게)
-                                  Text(
-                                    post['title'] ?? '제목 없음',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 17,
-                                      color: Colors.black,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                  // 제목 (굵게) + 최신 키워드
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          post['title'] ?? '제목 없음',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 17,
+                                            color: Colors.black,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      // 최신 키워드 (2시간 이내)
+                                      if (DateTime.now().difference(createdAt).inHours < 2)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            '최신',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
 
@@ -620,7 +678,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       Row(
                                         children: [
                                           const Icon(
-                                              Icons.mode_comment_outlined,
+                                              Icons.comment,
                                               size: 16,
                                               color: Colors.black54),
                                           const SizedBox(width: 4),
@@ -916,7 +974,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           color: Colors.black45,
                         ),
                       ),
-                      const Icon(Icons.mode_comment_outlined, size: 12, color: Colors.black45),
+                      const Icon(Icons.comment, size: 12, color: Colors.black45),
                       const SizedBox(width: 2),
                       Text(
                         '${post['commentCount'] ?? 0}',
@@ -957,6 +1015,39 @@ class _CommunityScreenState extends State<CommunityScreen> {
           endIndent: 16,
         ),
       ],
+    );
+  }
+
+  // 스카이 이펙트 미리보기 위젯
+  Widget _buildSkyEffectPreview(String? effectId) {
+    if (effectId == null) return const SizedBox.shrink();
+    
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+        }
+        
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final lottieUrl = data['lottieUrl'] as String?;
+        
+        if (lottieUrl != null && lottieUrl.isNotEmpty) {
+          return Lottie.network(
+            lottieUrl,
+            width: 20,
+            height: 20,
+            fit: BoxFit.contain,
+            repeat: true,
+            animate: true,
+          );
+        } else {
+          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+        }
+      },
     );
   }
 }

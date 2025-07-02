@@ -101,7 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: buildPage(_currentIndex),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         currentIndex: _currentIndex,
         selectedItemColor: Colors.black54,
         unselectedItemColor: Colors.black38,
@@ -117,7 +117,7 @@ class _SearchScreenState extends State<SearchScreen> {
             icon: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.forum),
+                Icon(Icons.people_outline_sharp),
                 SizedBox(height: 2),
                 Text('커뮤니티', style: TextStyle(fontSize: 12)),
               ],

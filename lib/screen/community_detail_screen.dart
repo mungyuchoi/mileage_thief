@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lottie/lottie.dart';
 import 'dart:io';
 import '../services/user_service.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -523,14 +524,43 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
-  void _sharePost() {
+  void _sharePost() async {
     if (_post != null) {
       final title = _post!['title'] ?? '제목 없음';
       final content = _getPlainTextFromHtml(_post!['contentHtml'] ?? '');
+      
+      // 간단한 공유 텍스트 (Dynamic Links 구현 전까지)
       final shareText = '$title\n\n$content\n\n마일리지도둑 커뮤니티에서 공유';
       Share.share(shareText);
+      
+      // TODO: Firebase Dynamic Links 구현
+      // final dynamicLink = await _createDynamicLink();
+      // Share.share('$title\n\n$content\n\n$dynamicLink');
     }
   }
+
+  // TODO: Firebase Dynamic Links 생성 메서드
+  // Future<String> _createDynamicLink() async {
+  //   final dynamicLinkParams = DynamicLinkParameters(
+  //     uriPrefix: 'https://your-app.page.link',
+  //     link: Uri.parse('https://mileage-thief.com/post/${widget.postId}'),
+  //     androidParameters: AndroidParameters(
+  //       packageName: 'com.mungyu.mileage_thief',
+  //       minimumVersion: 1,
+  //     ),
+  //     iosParameters: IOSParameters(
+  //       bundleId: 'com.mungyu.mileageThief',
+  //       minimumVersion: '1.0.0',
+  //     ),
+  //     socialMetaTagParameters: SocialMetaTagParameters(
+  //       title: _post!['title'] ?? '제목 없음',
+  //       description: _getPlainTextFromHtml(_post!['contentHtml'] ?? ''),
+  //     ),
+  //   );
+  //   
+  //   final shortLink = await FirebaseDynamicLinks.instance.buildShortLink(dynamicLinkParams);
+  //   return shortLink.shortUrl.toString();
+  // }
 
   Widget _buildMoreOptionsMenu() {
     // 본인 게시글인지 확인
@@ -721,11 +751,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
-  void _reportPost() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('신고가 접수되었습니다.')),
-    );
-  }
+
 
   void _blockUser() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1165,25 +1191,40 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                             Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: authorUid)));
                                           }
                                         },
-                                        child: CircleAvatar(
-                                          radius: 12,
-                                          backgroundColor: Colors.grey,
-                                          backgroundImage: (_post!['author']?['photoURL'] ??
-                                                           _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
-                                              ? NetworkImage(_post!['author']['photoURL'] ??
-                                                           _post!['author']['profileImageUrl'])
-                                              : null,
-                                          child: (_post!['author']?['photoURL'] ??
-                                                 _post!['author']?['profileImageUrl'] ?? '').isEmpty
-                                              ? Text(
-                                                  (_post!['author']?['displayName'] ?? '익명')[0],
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                  ),
-                                                )
-                                              : null,
+                                        child: Stack(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 12,
+                                              backgroundColor: Colors.grey,
+                                              backgroundImage: (_post!['author']?['photoURL'] ??
+                                                               _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
+                                                  ? NetworkImage(_post!['author']['photoURL'] ??
+                                                               _post!['author']['profileImageUrl'])
+                                                  : null,
+                                              child: (_post!['author']?['photoURL'] ??
+                                                     _post!['author']?['profileImageUrl'] ?? '').isEmpty
+                                                  ? Text(
+                                                      (_post!['author']?['displayName'] ?? '익명')[0],
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 12,
+                                                      ),
+                                                    )
+                                                  : null,
+                                            ),
+                                            // currentSkyEffect 표시
+                                            if (_post!['author']?['currentSkyEffect'] != null)
+                                              Positioned(
+                                                right: -2,
+                                                bottom: -2,
+                                                child: Container(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                       const SizedBox(width: 8),
@@ -1208,7 +1249,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       ),
                                       const Spacer(),
                                       // 댓글 아이콘 + 수
-                                      Icon(Icons.mode_comment_outlined, size: 16, color: Colors.grey[600]),
+                                      Icon(Icons.comment, size: 16, color: Colors.grey[600]),
                                       const SizedBox(width: 4),
                                       Text(
                                         '${_post!['commentCount'] ?? 0}',
@@ -1610,22 +1651,37 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: commentUid)));
                 }
               },
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.purple,
-                backgroundImage: (comment['profileImageUrl'] ?? '').isNotEmpty
-                    ? NetworkImage(comment['profileImageUrl'])
-                    : null,
-                child: (comment['profileImageUrl'] ?? '').isEmpty
-                    ? Text(
-                        (comment['displayName'] ?? '익명')[0],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      )
-                    : null,
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Colors.purple,
+                    backgroundImage: (comment['profileImageUrl'] ?? '').isNotEmpty
+                        ? NetworkImage(comment['profileImageUrl'])
+                        : null,
+                    child: (comment['profileImageUrl'] ?? '').isEmpty
+                        ? Text(
+                            (comment['displayName'] ?? '익명')[0],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          )
+                        : null,
+                  ),
+                  // currentSkyEffect 표시
+                  if (comment['currentSkyEffect'] != null)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        child: _buildSkyEffectPreview(comment['currentSkyEffect']),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 12),
@@ -1701,6 +1757,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                         ),
                       ),
+                      const Spacer(),
+                      // 댓글 더보기 버튼
+                      _buildCommentMoreOptions(comment),
                     ],
                   ),
                 ],
@@ -1801,5 +1860,326 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         });
       }
     });
+  }
+
+  // 댓글 더보기 옵션 위젯
+  Widget _buildCommentMoreOptions(Map<String, dynamic> comment) {
+    // 본인 댓글인지 확인
+    final isMyComment = _currentUser?.uid == comment['uid'];
+    
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert, size: 16, color: Colors.grey[500]),
+      color: Colors.white,
+      onSelected: (String value) {
+        switch (value) {
+          case 'edit':
+            _editComment(comment);
+            break;
+          case 'delete':
+            _deleteComment(comment);
+            break;
+          case 'report':
+            _reportComment(comment);
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        if (isMyComment) {
+          // 본인 댓글일 때
+          return [
+            const PopupMenuItem<String>(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit_outlined, size: 20, color: Colors.black87),
+                  SizedBox(width: 12),
+                  Text('수정하기'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                  SizedBox(width: 12),
+                  Text('삭제하기', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ];
+        } else {
+          // 다른 사람 댓글일 때
+          return [
+            const PopupMenuItem<String>(
+              value: 'report',
+              child: Row(
+                children: [
+                  Icon(Icons.report_outlined, size: 20, color: Colors.black87),
+                  SizedBox(width: 12),
+                  Text('신고하기'),
+                ],
+              ),
+            ),
+          ];
+        }
+      },
+    );
+  }
+
+  // 댓글 수정
+  void _editComment(Map<String, dynamic> comment) {
+    // TODO: 댓글 수정 기능 구현
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('댓글 수정 기능은 준비 중입니다.')),
+    );
+  }
+
+  // 댓글 삭제
+  void _deleteComment(Map<String, dynamic> comment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('댓글 삭제'),
+        content: const Text('정말로 이 댓글을 삭제하시겠습니까?\n삭제된 댓글은 복구할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _confirmDeleteComment(comment);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteComment(Map<String, dynamic> comment) async {
+    try {
+      final commentId = comment['commentId'];
+      
+      // 댓글 삭제
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('comments')
+          .doc(commentId)
+          .delete();
+
+      // 게시글 댓글 수 감소
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .update({
+            'commentCount': FieldValue.increment(-1),
+          });
+
+      // 사용자 댓글 수 감소
+      if (_currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .update({'commentCount': FieldValue.increment(-1)});
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글이 삭제되었습니다.')),
+      );
+
+      // 댓글 목록 새로고침
+      _loadComments();
+    } catch (e) {
+      print('댓글 삭제 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글 삭제 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  // 댓글 신고
+  void _reportComment(Map<String, dynamic> comment) {
+    _showReportDialog('comment', comment);
+  }
+
+  // 게시글 신고
+  void _reportPost() {
+    _showReportDialog('post', null);
+  }
+
+  // 신고 다이얼로그
+  void _showReportDialog(String type, Map<String, dynamic>? comment) {
+    String? selectedReason;
+    final TextEditingController reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text('${type == 'post' ? '게시글' : '댓글'} 신고'),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('신고 이유를 선택해주세요:'),
+                const SizedBox(height: 16),
+                // 신고 이유 선택
+                RadioListTile<String>(
+                  title: const Text('비방/욕설'),
+                  value: 'abuse',
+                  groupValue: selectedReason,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedReason = value;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('저작권'),
+                  value: 'copyright',
+                  groupValue: selectedReason,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedReason = value;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('광고'),
+                  value: 'advertisement',
+                  groupValue: selectedReason,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedReason = value;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('기타'),
+                  value: 'other',
+                  groupValue: selectedReason,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedReason = value;
+                    });
+                  },
+                ),
+                if (selectedReason == 'other') ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: reasonController,
+                    decoration: const InputDecoration(
+                      hintText: '신고 이유를 입력해주세요',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (selectedReason != null) {
+                Navigator.pop(context);
+                await _submitReport(type, comment, selectedReason!, reasonController.text);
+              }
+            },
+            child: const Text('신고'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitReport(String type, Map<String, dynamic>? comment, String reason, String detail) async {
+    try {
+      final reportData = {
+        'type': type,
+        'reason': reason,
+        'detail': detail,
+        'reporterUid': _currentUser!.uid,
+        'reporterName': _currentUser!.displayName ?? '익명',
+        'reportedAt': FieldValue.serverTimestamp(),
+        'status': 'pending', // pending, reviewed, resolved
+      };
+
+      if (type == 'post') {
+        reportData['postId'] = widget.postId;
+        reportData['dateString'] = widget.dateString;
+        reportData['boardId'] = widget.boardId;
+        reportData['postTitle'] = _post!['title'];
+        reportData['postAuthor'] = _post!['author'];
+      } else {
+        reportData['commentId'] = comment!['commentId'];
+        reportData['postId'] = widget.postId;
+        reportData['dateString'] = widget.dateString;
+        reportData['commentAuthor'] = comment['displayName'];
+        reportData['commentContent'] = comment['contentHtml'] ?? comment['content'];
+      }
+
+      await FirebaseFirestore.instance
+          .collection('reports')
+          .add(reportData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('신고가 접수되었습니다. 검토 후 처리하겠습니다.')),
+      );
+    } catch (e) {
+      print('신고 제출 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('신고 제출 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  // 스카이 이펙트 미리보기 위젯
+  Widget _buildSkyEffectPreview(String? effectId) {
+    if (effectId == null) return const SizedBox.shrink();
+    
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+        }
+        
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final lottieUrl = data['lottieUrl'] as String?;
+        
+        if (lottieUrl != null && lottieUrl.isNotEmpty) {
+          return Lottie.network(
+            lottieUrl,
+            width: 20,
+            height: 20,
+            fit: BoxFit.contain,
+            repeat: true,
+            animate: true,
+          );
+        } else {
+          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+        }
+      },
+    );
   }
 } 

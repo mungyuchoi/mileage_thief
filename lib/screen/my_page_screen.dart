@@ -986,6 +986,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ],
               body: TabBarView(
                 controller: _tabController!,
+                physics: const NeverScrollableScrollPhysics(), // 스와이프 비활성화
                 children: [
                   _buildPostsList(),
                   _buildCommentsList(),
@@ -1708,7 +1709,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.comment_outlined, size: 48, color: Colors.grey),
+            Icon(Icons.comment, size: 48, color: Colors.grey),
             SizedBox(height: 16),
             Text('작성한 댓글이 없습니다', style: TextStyle(color: Colors.grey)),
           ],
