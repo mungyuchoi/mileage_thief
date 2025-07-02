@@ -626,17 +626,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Text('신고하기'),
                 ],
               ),
-            ),
-            const PopupMenuItem<String>(
-              value: 'block',
-              child: Row(
-                children: [
-                  Icon(Icons.block_outlined, size: 20, color: Colors.black87),
-                  SizedBox(width: 12),
-                  Text('차단하기'),
-                ],
-              ),
-            ),
+            )
           ];
         }
       },
@@ -2147,17 +2137,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         reportData['boardId'] = widget.boardId;
         reportData['postTitle'] = _post!['title'];
         reportData['postAuthor'] = _post!['author'];
+        reportData['detailPath'] = 'posts/${widget.dateString}/posts/${widget.postId}';
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc('posts')
+            .collection('posts')
+            .add(reportData);
       } else {
         reportData['commentId'] = comment!['commentId'];
         reportData['postId'] = widget.postId;
         reportData['dateString'] = widget.dateString;
         reportData['commentAuthor'] = comment['displayName'];
         reportData['commentContent'] = comment['contentHtml'] ?? comment['content'];
+        reportData['detailPath'] = 'posts/${widget.dateString}/posts/${widget.postId}/comments/${comment['commentId']}';
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc('comments')
+            .collection('comments')
+            .add(reportData);
       }
-
-      await FirebaseFirestore.instance
-          .collection('reports')
-          .add(reportData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('신고가 접수되었습니다. 검토 후 처리하겠습니다.')),
