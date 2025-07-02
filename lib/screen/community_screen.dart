@@ -541,7 +541,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // 프로필 영역 (프로필 이미지, 닉네임, 시간)
-                                  _buildCardAuthorRow(post),
+                                  _buildCardAuthorRow(post, createdAt),
                                   const SizedBox(height: 12),
 
                                   // 제목 (굵게) + 최신 키워드
@@ -559,23 +559,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      // 최신 키워드 (2시간 이내)
-                                      if (DateTime.now().difference(createdAt).inHours < 2)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Text(
-                                            '최신',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
                                     ],
                                   ),
                                   const SizedBox(height: 8),
@@ -983,30 +966,64 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   // 카드 작성자 Row를 반드시 함수로 분리해서 사용하도록 수정합니다.
-  Widget _buildCardAuthorRow(Map<String, dynamic> post) {
+  Widget _buildCardAuthorRow(Map<String, dynamic> post, DateTime createdAt) {
     final photoURL = post['author']?['photoURL'] ?? post['author']?['profileImageUrl'] ?? '';
+    final displayName = post['author']['displayName'] ?? '익명';
+    final isRecent = DateTime.now().difference(createdAt).inHours < 2;
+
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CircleAvatar(
-          backgroundColor: Colors.grey[300],
-          radius: 16,
-          backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
-          child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.black54, size: 18) : null,
+        Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.grey[300],
+              radius: 16,
+              backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+              child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.black54, size: 18) : null,
+            ),
+            const SizedBox(width: 4),
+            if (post['author']?['currentSkyEffect'] != null)
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
+              ),
+            const SizedBox(width: 4),
+            Text(
+              displayName,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            if (isRecent)
+              Container(
+                margin: const EdgeInsets.only(left: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '최신',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
         ),
-        const SizedBox(width: 4),
-        if (post['author']?['currentSkyEffect'] != null)
-          SizedBox(
-            width: 32,
-            height: 20,
-            child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
-          ),
-        const SizedBox(width: 4),
+        // 우측 상단에 시간
         Text(
-          post['author']['displayName'] ?? '익명',
+          _formatTime(createdAt),
           style: const TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Colors.black54,
           ),
         ),
       ],
