@@ -63,12 +63,35 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   String? _editingCommentId;
   String? _editingOriginalContent;
 
+  // 내가 신고한 댓글 ID 목록
+  Set<String> _reportedCommentIds = {};
+
   @override
   void initState() {
     super.initState();
     _loadPostDetail();
     _loadComments();
     _checkUserStatus();
+    _loadMyReportedComments(); // ← 신고한 댓글 목록도 불러오기
+  }
+
+  // 내가 신고한 댓글 ID 목록 불러오기
+  Future<void> _loadMyReportedComments() async {
+    final myUid = _currentUser?.uid;
+    if (myUid == null) return;
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('reports')
+          .doc('comments')
+          .collection('comments')
+          .where('reporterUid', isEqualTo: myUid)
+          .get();
+      setState(() {
+        _reportedCommentIds = snapshot.docs.map((doc) => doc['commentId'] as String).toSet();
+      });
+    } catch (e) {
+      print('내가 신고한 댓글 목록 로드 오류: $e');
+    }
   }
 
   @override
@@ -904,6 +927,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       final profileImageUrl = userData?['photoURL'] ?? '';
       final displayName = userData?['displayName'] ?? '익명';
       final displayGrade = userData?['displayGrade'] ?? '이코노미 Lv.1';
+      final currentSkyEffect = userData?['currentSkyEffect'] ?? '';
 
       // 마지막 로그인 시간 업데이트
       await UserService.updateLastLogin(_currentUser!.uid);
@@ -914,6 +938,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         'displayName': displayName,
         'profileImageUrl': profileImageUrl,
         'displayGrade': displayGrade,
+        'currentSkyEffect': currentSkyEffect,
         'contentHtml': contentHtml.isEmpty ? '<p>이미지</p>' : '<p>$contentHtml</p>',
         'contentType': 'html',
         'attachments': attachments,
@@ -1821,7 +1846,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   Widget _buildCommentMoreOptions(Map<String, dynamic> comment) {
     // 본인 댓글인지 확인
     final isMyComment = _currentUser?.uid == comment['uid'];
-    
+    // 내가 이미 신고한 댓글이면 ... 버튼 숨김
+    if (_reportedCommentIds.contains(comment['commentId'])) {
+      return const SizedBox.shrink();
+    }
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert, size: 16, color: Colors.grey[500]),
       color: Colors.white,
@@ -2160,6 +2188,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('신고가 접수되었습니다. 검토 후 처리하겠습니다.')),
       );
+
+      // 신고 완료 후 내가 신고한 댓글 목록 즉시 갱신
+      await _loadMyReportedComments();
     } catch (e) {
       print('신고 제출 오류: $e');
       ScaffoldMessenger.of(context).showSnackBar(
