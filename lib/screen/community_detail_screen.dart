@@ -59,6 +59,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   final Map<String, GlobalKey> _commentKeys = {};
   final ScrollController _scrollController = ScrollController();
 
+  // 댓글 수정 상태 관리 변수 추가
+  String? _editingCommentId;
+  String? _editingOriginalContent;
+
   @override
   void initState() {
     super.initState();
@@ -1212,16 +1216,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                           color: Colors.black87,
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
-                                      // 등급
-                                      Text(
-                                        _post!['author']?['displayGrade'] ?? '이코노미 Lv.1',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 16),
@@ -1512,7 +1506,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     child: TextField(
                                       controller: _commentController,
                                       decoration: InputDecoration(
-                                        hintText: '댓글을 입력하세요',
+                                        hintText: _editingCommentId != null ? '댓글 수정' : '댓글을 입력하세요',
                                         hintStyle: TextStyle(color: Colors.grey[500]),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(24),
@@ -1533,29 +1527,47 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       ),
                                       maxLines: null,
                                       textInputAction: TextInputAction.send,
-                                      onSubmitted: (_) => _addComment(),
+                                      onSubmitted: (_) {
+                                        if (_editingCommentId != null) {
+                                          _updateComment();
+                                        } else {
+                                          _addComment();
+                                        }
+                                      },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
 
-                                  // 전송 버튼
-                                  FloatingActionButton(
-                                    onPressed: (_isUploadingImage || _isAddingComment) ? null : _addComment,
-                                    backgroundColor: (_isUploadingImage || _isAddingComment)
-                                        ? Colors.grey[400]
-                                        : const Color(0xFF74512D),
-                                    mini: true,
-                                    child: (_isUploadingImage || _isAddingComment)
-                                        ? const SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Color(0xFF74512D),
-                                            ),
-                                          )
-                                        : const Icon(Icons.send, color: Colors.white, size: 20),
-                                  ),
+                                  if (_editingCommentId != null) ...[
+                                    ElevatedButton(
+                                      onPressed: _updateComment,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF74512D),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      ),
+                                      child: const Text('수정 완료', style: TextStyle(color: Colors.white)),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    TextButton(
+                                      onPressed: _cancelEditComment,
+                                      child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                                    ),
+                                  ] else ...[
+                                    ElevatedButton(
+                                      onPressed: _addComment,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF74512D),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      ),
+                                      child: const Text('등록', style: TextStyle(color: Colors.white)),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ],
@@ -1882,10 +1894,54 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // 댓글 수정
   void _editComment(Map<String, dynamic> comment) {
-    // TODO: 댓글 수정 기능 구현
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('댓글 수정 기능은 준비 중입니다.')),
-    );
+    setState(() {
+      _editingCommentId = comment['commentId'];
+      _editingOriginalContent = _getPlainTextFromHtml(comment['contentHtml'] ?? '');
+      _commentController.text = _editingOriginalContent ?? '';
+    });
+    FocusScope.of(context).requestFocus(FocusNode()); // 입력창 포커스
+  }
+
+  // 댓글 수정 취소
+  void _cancelEditComment() {
+    setState(() {
+      _editingCommentId = null;
+      _editingOriginalContent = null;
+      _commentController.clear();
+    });
+  }
+
+  // 댓글 수정 완료
+  Future<void> _updateComment() async {
+    if (_editingCommentId == null || _commentController.text.trim().isEmpty) return;
+    try {
+      final newContent = _commentController.text.trim();
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('comments')
+          .doc(_editingCommentId)
+          .update({
+        'contentHtml': '<p>$newContent</p>',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      setState(() {
+        _editingCommentId = null;
+        _editingOriginalContent = null;
+        _commentController.clear();
+      });
+      _loadComments();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글이 수정되었습니다.')),
+      );
+    } catch (e) {
+      print('댓글 수정 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글 수정 중 오류가 발생했습니다.')),
+      );
+    }
   }
 
   // 댓글 삭제
