@@ -316,18 +316,59 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('스카이 이펙트', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          title: const Text('스카이 이펙트', style: TextStyle(color: Colors.black)),
+          backgroundColor: Colors.white,
+          elevation: 0.5,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: _isLoading ? 
+          const Center(child: CircularProgressIndicator(color: Color(0xFF74512D))) :
+          _buildContent(),
       ),
-      body: _isLoading ? 
-        const Center(child: CircularProgressIndicator(color: Color(0xFF74512D))) :
-        _buildContent(),
     );
+  }
+
+  Future<bool> _onWillPop() async {
+    // 스카이 이펙트가 변경된 경우에만 업데이트
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return true;
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final skyEffect = userDoc.data()?['currentSkyEffect'];
+    if (skyEffect == null) return true;
+
+    // 로딩 다이얼로그 표시
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: Color(0xFF74512D))),
+    );
+
+    // 1. 내가 쓴 게시글 일괄 업데이트
+    final posts = await FirebaseFirestore.instance
+        .collectionGroup('posts')
+        .where('author.uid', isEqualTo: user.uid)
+        .get();
+    for (final doc in posts.docs) {
+      await doc.reference.update({'author.currentSkyEffect': skyEffect});
+    }
+
+    // 2. 내가 쓴 댓글 일괄 업데이트
+    final comments = await FirebaseFirestore.instance
+        .collectionGroup('comments')
+        .where('uid', isEqualTo: user.uid)
+        .get();
+    for (final doc in comments.docs) {
+      await doc.reference.update({'currentSkyEffect': skyEffect});
+    }
+
+    // 로딩 다이얼로그 닫기
+    Navigator.of(context).pop();
+    return true;
   }
 
   Widget _buildContent() {

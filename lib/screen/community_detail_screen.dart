@@ -751,8 +751,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
-
-
   void _blockUser() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('사용자를 차단했습니다.')),
@@ -1180,60 +1178,37 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   // 4. 프로필 정보 + 댓글/좋아요 - 한줄로 짧게
                                   Row(
                                     children: [
-                                      // 프로필 이미지
-                                      GestureDetector(
-                                        onTap: () {
-                                          final currentUser = FirebaseAuth.instance.currentUser;
-                                          final authorUid = _post?['author']?['uid'];
-                                          if (currentUser != null && authorUid == currentUser.uid) {
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPageScreen()));
-                                          } else if (authorUid != null) {
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: authorUid)));
-                                          }
-                                        },
-                                        child: Stack(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 12,
-                                              backgroundColor: Colors.grey,
-                                              backgroundImage: (_post!['author']?['photoURL'] ??
-                                                               _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
-                                                  ? NetworkImage(_post!['author']['photoURL'] ??
-                                                               _post!['author']['profileImageUrl'])
-                                                  : null,
-                                              child: (_post!['author']?['photoURL'] ??
-                                                     _post!['author']?['profileImageUrl'] ?? '').isEmpty
-                                                  ? Text(
-                                                      (_post!['author']?['displayName'] ?? '익명')[0],
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 12,
-                                                      ),
-                                                    )
-                                                  : null,
-                                            ),
-                                            // currentSkyEffect 표시
-                                            if (_post!['author']?['currentSkyEffect'] != null)
-                                              Positioned(
-                                                right: -2,
-                                                bottom: -2,
-                                                child: Container(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
+                                      // 프로필 + skyEffect + 닉네임
+                                      CircleAvatar(
+                                        radius: 16,
+                                        backgroundColor: Colors.grey,
+                                        backgroundImage: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
+                                            ? NetworkImage(_post!['author']['photoURL'] ?? _post!['author']['profileImageUrl'])
+                                            : null,
+                                        child: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isEmpty
+                                            ? Text(
+                                                (_post!['author']?['displayName'] ?? '익명')[0],
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
                                                 ),
-                                              ),
-                                          ],
-                                        ),
+                                              )
+                                            : null,
                                       ),
-                                      const SizedBox(width: 8),
-                                      // 닉네임
+                                      const SizedBox(width: 4),
+                                      if (_post!['author']?['currentSkyEffect'] != null)
+                                        SizedBox(
+                                          width: 32,
+                                          height: 20,
+                                          child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
+                                        ),
+                                      const SizedBox(width: 4),
                                       Text(
                                         _post!['author']?['displayName'] ?? '익명',
                                         style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
                                           color: Colors.black87,
                                         ),
                                       ),
@@ -1245,29 +1220,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                           fontSize: 12,
                                           color: Colors.grey[600],
                                           fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      // 댓글 아이콘 + 수
-                                      Icon(Icons.comment, size: 16, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_post!['commentCount'] ?? 0}',
-                                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // 좋아요 아이콘 + 수
-                                      Icon(
-                                        _isLiked ? Icons.favorite : Icons.favorite_border,
-                                        size: 16,
-                                        color: _isLiked ? Colors.red : Colors.grey[600],
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_post!['likesCount'] ?? 0}',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: _isLiked ? Colors.red : Colors.grey[600],
                                         ),
                                       ),
                                     ],
@@ -1348,7 +1300,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                           child: Column(
                                             children: [
                                               Icon(
-                                                Icons.chat_bubble_outline,
+                                                Icons.comment,
                                                 size: 48,
                                                 color: Colors.grey[400],
                                               ),
@@ -1651,7 +1603,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: commentUid)));
                 }
               },
-              child: Stack(
+              child: Row(
                 children: [
                   CircleAvatar(
                     radius: 16,
@@ -1670,6 +1622,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           )
                         : null,
                   ),
+                  const SizedBox(width: 4),
                   // currentSkyEffect 표시
                   if (comment['currentSkyEffect'] != null)
                     Positioned(
@@ -1684,7 +1637,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 4),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2180,6 +2133,55 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
         }
       },
+    );
+  }
+
+  Widget _buildCommentAuthorRow(Map<String, dynamic> comment) {
+    final photoURL = comment['profileImageUrl'] ?? '';
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 16,
+          backgroundColor: Colors.grey[300],
+          backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+          child: photoURL.isEmpty
+              ? Text(
+                  (comment['displayName'] ?? '익명')[0],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                )
+              : null,
+        ),
+        const SizedBox(width: 4),
+        if (comment['currentSkyEffect'] != null)
+          SizedBox(
+            width: 32,
+            height: 20,
+            child: _buildSkyEffectPreview(comment['currentSkyEffect']),
+          ),
+        const SizedBox(width: 4),
+        Text(
+          comment['displayName'] ?? '익명',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          comment['displayGrade'] ?? '이코노미 Lv.1',
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 시간 등 추가 가능
+      ],
     );
   }
 } 

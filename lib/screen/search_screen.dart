@@ -320,42 +320,12 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _launchOpenChat() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('카카오 오픈채팅 안내', style: TextStyle(color: Colors.black)),
-        content: const Text('입장 비밀번호는 1987입니다.', style: TextStyle(color: Colors.black)),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              const url = 'https://open.kakao.com/o/grMdcJ7e';
-              if (await canLaunch(url)) {
-                await launch(url);
-              } else {
-                throw 'Could not launch $url';
-              }
-            },
-            child: const Text('확인'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('취소'),
-          ),
-        ],
-      ),
-    );
+    const url = 'https://open.kakao.com/o/grMdcJ7e';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   void setNotificationToggle(bool value) async {

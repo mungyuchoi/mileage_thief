@@ -389,17 +389,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 )
                                     : null,
                               ),
-                              // currentSkyEffect 표시
-                              if (userProfile!['currentSkyEffect'] != null)
-                                Positioned(
-                                  right: -2,
-                                  bottom: -2,
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    child: _buildSkyEffectPreview(userProfile!['currentSkyEffect']),
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -552,65 +541,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // 프로필 영역 (프로필 이미지, 닉네임, 시간)
-                                  Row(
-                                    children: [
-                                      // 프로필 이미지
-                                      Builder(
-                                        builder: (context) {
-                                          // 두 키 모두 체크하여 fallback 처리
-                                          final photoURL = post['author']?['photoURL'] ?? 
-                                                          post['author']?['profileImageUrl'] ?? '';
-                                          
-                                          return Stack(
-                                            children: [
-                                              CircleAvatar(
-                                                backgroundColor: Colors.grey[300],
-                                                radius: 12,
-                                                backgroundImage: photoURL.isNotEmpty
-                                                    ? NetworkImage(photoURL)
-                                                    : null,
-                                                child: photoURL.isEmpty
-                                                    ? const Icon(Icons.person,
-                                                        color: Colors.black54, size: 18)
-                                                    : null,
-                                              ),
-                                              // currentSkyEffect 표시 (작성자에게만)
-                                              if (post['author']?['currentSkyEffect'] != null)
-                                                Positioned(
-                                                  right: -2,
-                                                  bottom: -2,
-                                                  child: Container(
-                                                    width: 16,
-                                                    height: 16,
-                                                    child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
-                                                  ),
-                                                ),
-                                            ],
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // 닉네임
-                                      Expanded(
-                                        child: Text(
-                                          post['author']['displayName'] ?? '익명',
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                      // 시간
-                                      Text(
-                                        _formatTime(createdAt),
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  _buildCardAuthorRow(post),
                                   const SizedBox(height: 12),
 
                                   // 제목 (굵게) + 최신 키워드
@@ -1048,6 +979,37 @@ class _CommunityScreenState extends State<CommunityScreen> {
           return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
         }
       },
+    );
+  }
+
+  // 카드 작성자 Row를 반드시 함수로 분리해서 사용하도록 수정합니다.
+  Widget _buildCardAuthorRow(Map<String, dynamic> post) {
+    final photoURL = post['author']?['photoURL'] ?? post['author']?['profileImageUrl'] ?? '';
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: Colors.grey[300],
+          radius: 16,
+          backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+          child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.black54, size: 18) : null,
+        ),
+        const SizedBox(width: 4),
+        if (post['author']?['currentSkyEffect'] != null)
+          SizedBox(
+            width: 32,
+            height: 20,
+            child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
+          ),
+        const SizedBox(width: 4),
+        Text(
+          post['author']['displayName'] ?? '익명',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }
