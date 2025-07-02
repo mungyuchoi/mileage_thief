@@ -1976,7 +1976,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+            child: const Text('취소', style: TextStyle(color: Colors.black)),
           ),
           TextButton(
             onPressed: () async {
@@ -2107,6 +2107,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   title: const Text('기타'),
                   value: 'other',
                   groupValue: selectedReason,
+                  activeColor: Colors.black,
                   onChanged: (value) {
                     setState(() {
                       selectedReason = value;
@@ -2117,9 +2118,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: reasonController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '신고 이유를 입력해주세요',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black, width: 2),
+                      ),
                     ),
                     maxLines: 3,
                   ),
@@ -2131,7 +2137,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+            child: const Text('취소', style: TextStyle(color: Colors.black)),
           ),
           TextButton(
             onPressed: () async {
@@ -2140,7 +2146,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 await _submitReport(type, comment, selectedReason!, reasonController.text);
               }
             },
-            child: const Text('신고'),
+            child: const Text('신고', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
