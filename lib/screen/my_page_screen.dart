@@ -1479,7 +1479,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildEffectNameText(String? effectId) {
+  Widget _buildEffectNameText(String? effectId) { 
     return FutureBuilder<DocumentSnapshot>(
       future: _fetchEffectDoc(effectId),
       builder: (context, snapshot) {
@@ -1515,26 +1515,15 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
   Widget _buildPostsList() {
     if (_isPostsLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF74512D)),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
-
     if (_userPosts.isEmpty) {
       return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.post_add_outlined, size: 48, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('작성한 게시글이 없습니다', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
+        child: Text('작성한 게시글이 없습니다', style: TextStyle(color: Colors.grey)),
       );
     }
-
     return ListView.builder(
-      controller: _postsScrollController,
+      primary: true,
       padding: const EdgeInsets.all(12),
       itemCount: _userPosts.length + 1,
       itemBuilder: (context, index) {
@@ -1718,7 +1707,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
-      controller: _commentsScrollController,
+      primary: true,
       padding: const EdgeInsets.all(12),
       itemCount: _userComments.length + 1,
       itemBuilder: (context, index) {
@@ -1824,7 +1813,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
 
     return ListView.builder(
-      controller: _likedPostsScrollController,
+      primary: true,
       padding: const EdgeInsets.all(12),
       itemCount: _likedPosts.length + 1,
       itemBuilder: (context, index) {

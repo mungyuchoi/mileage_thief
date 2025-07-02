@@ -406,6 +406,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       );
     }
     return ListView.builder(
+      primary: true,
       padding: const EdgeInsets.all(12),
       itemCount: _userPosts.length,
       itemBuilder: (context, index) {
@@ -495,6 +496,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       );
     }
     return ListView.builder(
+      primary: true,
       padding: const EdgeInsets.all(12),
       itemCount: _userComments.length,
       itemBuilder: (context, index) {
