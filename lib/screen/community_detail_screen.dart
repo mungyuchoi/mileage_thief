@@ -1835,6 +1835,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert, size: 16, color: Colors.grey[500]),
       color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16), // 둥근 팝업
+      ),
       onSelected: (String value) {
         switch (value) {
           case 'edit':
