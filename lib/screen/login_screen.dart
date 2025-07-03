@@ -405,12 +405,10 @@ class _LoginScreenState extends State<LoginScreen> {
     
     Fluttertoast.showToast(
       msg: "땅콩 $peanuts개를 얻었습니다.",
-      gravity: ToastGravity.BOTTOM,
       timeInSecForIosWeb: 5,
-      backgroundColor: Colors.grey,
-      fontSize: 20,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black38,
       textColor: Colors.white,
-      toastLength: Toast.LENGTH_SHORT,
     );
   }
 

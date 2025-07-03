@@ -768,7 +768,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       Fluttertoast.showToast(
                         msg: "도착지를 선택해주세요.",
                         gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.black54,
+                        backgroundColor: Colors.black38,
                         textColor: Colors.white,
                       );
                       return;

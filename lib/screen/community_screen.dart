@@ -627,29 +627,47 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // 현재 선택된 게시판이 'all'이 아닌 경우 초기값으로 전달
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => selectedBoardId != 'all'
-                  ? CommunityPostCreateScreen(
-                      initialBoardId: selectedBoardId,
-                      initialBoardName: selectedBoardName,
-                    )
-                  : const CommunityPostCreateScreen(),
+      floatingActionButton: (selectedBoardId == 'notice')
+          ? ((userProfile?['roles'] ?? []).contains('admin')
+              ? FloatingActionButton(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CommunityPostCreateScreen(
+                          initialBoardId: selectedBoardId,
+                          initialBoardName: selectedBoardName,
+                        ),
+                      ),
+                    );
+                    if (result == true || result == false) {
+                      _refreshPosts();
+                    }
+                  },
+                  backgroundColor: const Color(0xFF74512D),
+                  child: const Icon(Icons.edit, color: Colors.white),
+                )
+              : null)
+          : FloatingActionButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => selectedBoardId != 'all'
+                        ? CommunityPostCreateScreen(
+                            initialBoardId: selectedBoardId,
+                            initialBoardName: selectedBoardName,
+                          )
+                        : const CommunityPostCreateScreen(),
+                  ),
+                );
+                if (result == true || result == false) {
+                  _refreshPosts();
+                }
+              },
+              backgroundColor: const Color(0xFF74512D),
+              child: const Icon(Icons.edit, color: Colors.white),
             ),
-          );
-          
-          // 게시글 작성이 완료되면 목록 새로고침
-          if (result == true || result == false) {
-            _refreshPosts();
-          }
-        },
-        backgroundColor: const Color(0xFF74512D),
-        child: const Icon(Icons.edit, color: Colors.white),
-      ),
     );
   }
 
