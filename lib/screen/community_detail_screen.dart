@@ -776,8 +776,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         const SnackBar(content: Text('게시글이 삭제되었습니다.')),
       );
 
-      // 상위 화면으로 돌아가기 (변경사항 알림)
-      Navigator.pop(context, true);
+      // SnackBar가 표시된 후 잠시 대기한 다음 화면 나가기
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          // 상위 화면으로 돌아가기 (변경사항 알림)
+          Navigator.pop(context, true);
+        }
+      });
     } catch (e) {
       print('게시글 삭제 오류: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2016,8 +2021,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _confirmDeleteComment(Map<String, dynamic> comment) async {
     try {
+      setState(() {
+        _isLoadingComments = true;
+      });
       final commentId = comment['commentId'];
-      
       // 댓글 삭제 (posts의 서브컬렉션)
       await FirebaseFirestore.instance
           .collection('posts')
@@ -2058,10 +2065,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         const SnackBar(content: Text('댓글이 삭제되었습니다.')),
       );
 
-      // 댓글 목록 새로고침
-      _loadComments();
+      // 잠시 후 댓글 목록 새로고침 및 로딩 해제
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          _loadComments();
+          setState(() {
+            _isLoadingComments = false;
+          });
+        }
+      });
     } catch (e) {
       print('댓글 삭제 오류: $e');
+      setState(() {
+        _isLoadingComments = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('댓글 삭제 중 오류가 발생했습니다.')),
       );
