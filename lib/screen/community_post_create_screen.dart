@@ -157,7 +157,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   Future<String> _processImagesInHtml(String htmlContent, String postId, String dateString) async {
     String processedHtml = htmlContent;
     
-    print('HTML 처리 시작, 원본 크기: ${htmlContent.length} 바이트');
+    print('HTML 처리 시작, 원본 크기: [33m${htmlContent.length}[0m 바이트');
     
     // file:// 형태의 로컬 이미지 경로 처리
     final RegExp fileImgRegex = RegExp(r'<img[^>]*src="file://([^"]*)"[^>]*>', caseSensitive: false);
@@ -188,7 +188,14 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         processedHtml = processedHtml.replaceAll(fullMatch, '');
       }
     }
-    
+
+    // <p> 태그 내부에 <img>와 <br>이 같이 있는 경우 <br>을 제거 (공백 이슈 해결)
+    // 예: <p>...<img ...><br></p> → <p>...<img ...></p>
+    final RegExp imgBrInP = RegExp(r'(<p[^>]*>[^<]*<img[^>]*>)(<br\s*/?>)+(</p>)', caseSensitive: false);
+    processedHtml = processedHtml.replaceAllMapped(imgBrInP, (match) {
+      return match.group(1)! + match.group(3)!;
+    });
+
     print('HTML 처리 완료, 최종 크기: ${processedHtml.length} 바이트');
     return processedHtml;
   }
