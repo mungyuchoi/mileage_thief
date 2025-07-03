@@ -322,6 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       onAdDismissedFullScreenContent: (InterstitialAd ad) {
         print('$ad onAdDismissedFullScreenContent.');
+        _incrementPeanutCount(10); // 전면광고 완료 시 +10 보상
         setState(() {
           ad.dispose();
         });
@@ -329,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
         print('$ad onAdFailedToShowFullScreenContent: $error');
-        _incrementPeanutCount(2);
+        _incrementPeanutCount(10);
         setState(() {
           ad.dispose();
         });
@@ -376,7 +377,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showRewardsAd() {
     print("showRewardsAd _rewardedAd:$_rewardedAd");
     _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-      _incrementPeanutCount(10);
+      _incrementPeanutCount(30); // +10에서 +30으로 증가
     });
   }
 
@@ -406,7 +407,7 @@ class _LoginScreenState extends State<LoginScreen> {
       msg: "땅콩 $peanuts개를 얻었습니다.",
       gravity: ToastGravity.BOTTOM,
       timeInSecForIosWeb: 5,
-      backgroundColor: Colors.green,
+      backgroundColor: Colors.grey,
       fontSize: 20,
       textColor: Colors.white,
       toastLength: Toast.LENGTH_SHORT,
@@ -617,23 +618,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(width: 20), // 마진 추가
-                          IconButton(
-                            onPressed: _isUpdatingName ? null : _showEditNameDialog,
-                            icon: _isUpdatingName 
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                                  ),
-                                )
-                              : const Icon(Icons.edit, size: 18, color: Colors.grey),
-                            splashRadius: 16,
-                            tooltip: '이름 편집',
-                            padding: EdgeInsets.zero, // 기존 padding 제거
-                          ),
                         ],
                       ),
                     ),
@@ -687,7 +671,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
                         }
                       },
-                      label: const Text("+ 2",
+                      label: const Text("+ 10",
                           style: TextStyle(color: Colors.black87)),
                       backgroundColor: Colors.white,
                       elevation: 3,
@@ -697,32 +681,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     FloatingActionButton.extended(
-                      onPressed: () async {
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: Colors.white,
-                            title: const Text('알림', style: TextStyle(color: Colors.black)),
-                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text('예', style: TextStyle(color: Colors.black)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (result == true) {
-                          _showRewardsAd();
-                        }
-                      },
-                      label: const Text("+ 10",
+                      onPressed: _rewardedAd == null
+                          ? null
+                          : () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(false),
+                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (result == true) {
+                                _showRewardsAd();
+                              }
+                            },
+                      label: const Text("+ 30",
                           style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
+                      backgroundColor: _rewardedAd == null ? Colors.grey[300] : Colors.white,
                       elevation: 3,
                       icon: Image.asset(
                         'asset/img/peanuts.png',
