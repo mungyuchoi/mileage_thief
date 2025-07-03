@@ -19,8 +19,6 @@ class UserService {
       'commentCount': 0,
       'likesReceived': 0,
       'likesCount': 0,
-      'reportedCount': 0,
-      'reportSubmittedCount': 0,
       'grade': '이코노미',
       'gradeLevel': 1,
       'displayGrade': '이코노미 Lv.1',
@@ -28,11 +26,6 @@ class UserService {
       'gradeUpdatedAt': FieldValue.serverTimestamp(),
       'peanutCount': peanutCount,
       'peanutCountLimit': 3,
-      'adBonusPercent': 0,
-      'badgeVisible': true,
-      'roles': ['user'],
-      'isBanned': false,
-      'warnCount': 0,
       'fcmToken': fcmToken ?? '',
       'followingCount': 0,
       'followerCount': 0,
@@ -430,4 +423,20 @@ Future<void> migrateUsersToSkyEffectSystem() async {
     }
   }
   print('모든 기존 사용자 문서에 스카이 이펙트 시스템 필드 마이그레이션 완료!');
+}
+
+/// users 컬렉션에서 adBonusPercent, badgeVisible, reportSubmittedCount, reportedCount, warnCount 필드 일괄 삭제
+Future<void> migrateRemoveUnusedFields() async {
+  final users = await FirebaseFirestore.instance.collection('users').get();
+  for (final doc in users.docs) {
+    final updates = <String, dynamic>{
+      'adBonusPercent': FieldValue.delete(),
+      'badgeVisible': FieldValue.delete(),
+      'reportSubmittedCount': FieldValue.delete(),
+      'reportedCount': FieldValue.delete(),
+      'warnCount': FieldValue.delete(),
+    };
+    await doc.reference.update(updates);
+  }
+  print('불필요 필드 일괄 삭제 완료!');
 }
