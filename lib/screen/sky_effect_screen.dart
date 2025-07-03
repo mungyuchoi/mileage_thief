@@ -22,12 +22,14 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
   List<String> _ownedEffects = [];
   String? _currentEffect;
   String? _previewEffectId; // 미리보기용 effectId
+  String? _originalEffectId;
 
   @override
   void initState() {
     super.initState();
     _loadEffects();
     _previewEffectId = null;
+    _originalEffectId = widget.userProfile['currentSkyEffect'];
   }
 
   Future<void> _loadEffects() async {
@@ -334,12 +336,12 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
   }
 
   Future<bool> _onWillPop() async {
-    // 스카이 이펙트가 변경된 경우에만 업데이트
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return true;
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     final skyEffect = userDoc.data()?['currentSkyEffect'];
-    if (skyEffect == null) return true;
+    // 변경된 경우에만 업데이트
+    if (skyEffect == _originalEffectId) return true;
 
     // 로딩 다이얼로그 표시
     showDialog(
