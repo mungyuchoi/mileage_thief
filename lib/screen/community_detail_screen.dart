@@ -604,6 +604,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   // }
 
   Widget _buildMoreOptionsMenu() {
+    // 프로필 정보가 아직 로드되지 않았다면 ... 메뉴 숨김
+    if (_myUserProfile == null) {
+      return const SizedBox.shrink();
+    }
     // 본인 게시글인지 확인
     final isMyPost = _currentUser?.uid == _post?['author']?['uid'];
     // 내가 이미 신고한 게시글이면 ... 버튼 자체를 숨김
@@ -1973,8 +1977,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // 댓글 더보기 옵션 위젯
   Widget _buildCommentMoreOptions(Map<String, dynamic> comment) {
+    // 프로필 정보가 아직 로드되지 않았다면 ... 메뉴 숨김
+    if (_myUserProfile == null) {
+      return const SizedBox.shrink();
+    }
     // 본인 댓글인지 확인
     final isMyComment = _currentUser?.uid == comment['uid'];
+    // 관리자 권한 체크
+    final isAdmin = (_myUserProfile?['roles'] ?? []).contains('admin');
     // 내가 이미 신고한 댓글이면 ... 버튼 숨김
     if (_reportedCommentIds.contains(comment['commentId'])) {
       return const SizedBox.shrink();
@@ -1999,8 +2009,33 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         }
       },
       itemBuilder: (BuildContext context) {
+        // 관리자라면 무조건 수정/삭제 옵션 노출
+        if (isAdmin) {
+          return [
+            const PopupMenuItem<String>(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit_outlined, size: 20, color: Colors.black87),
+                  SizedBox(width: 12),
+                  Text('수정하기'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                  SizedBox(width: 12),
+                  Text('삭제하기', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ];
+        }
+        // 본인 댓글일 때
         if (isMyComment) {
-          // 본인 댓글일 때
           return [
             const PopupMenuItem<String>(
               value: 'edit',
