@@ -704,6 +704,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('취소'),
           ),
           TextButton(
@@ -711,7 +712,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               Navigator.pop(context);
               await _confirmDeletePost();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('삭제'),
           ),
         ],
