@@ -627,17 +627,40 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      floatingActionButton: (selectedBoardId == 'notice')
-          ? ((userProfile?['roles'] ?? []).contains('admin')
-              ? FloatingActionButton(
+      floatingActionButton: (userProfile?['isBanned'] == true)
+          ? null
+          : ((selectedBoardId == 'notice')
+              ? ((userProfile?['roles'] ?? []).contains('admin')
+                  ? FloatingActionButton(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CommunityPostCreateScreen(
+                              initialBoardId: selectedBoardId,
+                              initialBoardName: selectedBoardName,
+                            ),
+                          ),
+                        );
+                        if (result == true || result == false) {
+                          _refreshPosts();
+                        }
+                      },
+                      backgroundColor: const Color(0xFF74512D),
+                      child: const Icon(Icons.edit, color: Colors.white),
+                    )
+                  : null)
+              : FloatingActionButton(
                   onPressed: () async {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CommunityPostCreateScreen(
-                          initialBoardId: selectedBoardId,
-                          initialBoardName: selectedBoardName,
-                        ),
+                        builder: (context) => selectedBoardId != 'all'
+                            ? CommunityPostCreateScreen(
+                                initialBoardId: selectedBoardId,
+                                initialBoardName: selectedBoardName,
+                              )
+                            : const CommunityPostCreateScreen(),
                       ),
                     );
                     if (result == true || result == false) {
@@ -646,28 +669,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   },
                   backgroundColor: const Color(0xFF74512D),
                   child: const Icon(Icons.edit, color: Colors.white),
-                )
-              : null)
-          : FloatingActionButton(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => selectedBoardId != 'all'
-                        ? CommunityPostCreateScreen(
-                            initialBoardId: selectedBoardId,
-                            initialBoardName: selectedBoardName,
-                          )
-                        : const CommunityPostCreateScreen(),
-                  ),
-                );
-                if (result == true || result == false) {
-                  _refreshPosts();
-                }
-              },
-              backgroundColor: const Color(0xFF74512D),
-              child: const Icon(Icons.edit, color: Colors.white),
-            ),
+                )),
     );
   }
 

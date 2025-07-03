@@ -66,13 +66,24 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   // 내가 신고한 댓글 ID 목록
   Set<String> _reportedCommentIds = {};
 
+  Map<String, dynamic>? _myUserProfile;
+
   @override
   void initState() {
     super.initState();
     _loadPostDetail();
     _loadComments();
     _checkUserStatus();
-    _loadMyReportedComments(); // ← 신고한 댓글 목록도 불러오기
+    _loadMyReportedComments();
+    _loadMyUserProfile(); // 내 userProfile 불러오기
+  }
+
+  Future<void> _loadMyUserProfile() async {
+    if (_currentUser == null) return;
+    final data = await UserService.getUserFromFirestore(_currentUser!.uid);
+    setState(() {
+      _myUserProfile = data;
+    });
   }
 
   // 내가 신고한 댓글 ID 목록 불러오기
@@ -1506,10 +1517,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 children: [
                                   // 이미지 첨부 버튼
                                   IconButton(
-                                    onPressed: _pickImage,
+                                    onPressed: (_myUserProfile?['isBanned'] == true) ? null : _pickImage,
                                     icon: Icon(
                                       Icons.image_outlined,
-                                      color: Colors.grey[600],
+                                      color: (_myUserProfile?['isBanned'] == true) ? Colors.grey[300] : Colors.grey[600],
                                       size: 24,
                                     ),
                                     tooltip: '이미지 첨부',
@@ -1520,8 +1531,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   Expanded(
                                     child: TextField(
                                       controller: _commentController,
+                                      enabled: !(_myUserProfile?['isBanned'] == true),
                                       decoration: InputDecoration(
-                                        hintText: _editingCommentId != null ? '댓글 수정' : '댓글을 입력하세요',
+                                        hintText: _myUserProfile?['isBanned'] == true
+                                            ? '정지된 계정은 댓글을 작성할 수 없습니다'
+                                            : (_editingCommentId != null ? '댓글 수정' : '댓글을 입력하세요'),
                                         hintStyle: TextStyle(color: Colors.grey[500]),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(24),
@@ -1542,20 +1556,22 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       ),
                                       maxLines: null,
                                       textInputAction: TextInputAction.send,
-                                      onSubmitted: (_) {
-                                        if (_editingCommentId != null) {
-                                          _updateComment();
-                                        } else {
-                                          _addComment();
-                                        }
-                                      },
+                                      onSubmitted: (_myUserProfile?['isBanned'] == true)
+                                          ? null
+                                          : (_) {
+                                              if (_editingCommentId != null) {
+                                                _updateComment();
+                                              } else {
+                                                _addComment();
+                                              }
+                                            },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
 
                                   if (_editingCommentId != null) ...[
                                     ElevatedButton(
-                                      onPressed: _updateComment,
+                                      onPressed: (_myUserProfile?['isBanned'] == true) ? null : _updateComment,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFF74512D),
                                         shape: RoundedRectangleBorder(
@@ -1567,12 +1583,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     TextButton(
-                                      onPressed: _cancelEditComment,
+                                      onPressed: (_myUserProfile?['isBanned'] == true) ? null : _cancelEditComment,
                                       child: const Text('취소', style: TextStyle(color: Colors.grey)),
                                     ),
                                   ] else ...[
                                     ElevatedButton(
-                                      onPressed: _addComment,
+                                      onPressed: (_myUserProfile?['isBanned'] == true) ? null : _addComment,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFF74512D),
                                         shape: RoundedRectangleBorder(
