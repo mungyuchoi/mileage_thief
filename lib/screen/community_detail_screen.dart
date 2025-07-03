@@ -610,6 +610,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (_alreadyReportedPost) {
       return const SizedBox.shrink();
     }
+    // 관리자 권한 체크
+    final isAdmin = (_myUserProfile?['roles'] ?? []).contains('admin');
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert, color: Colors.grey[600]),
       color: Colors.white,
@@ -627,12 +629,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           case 'block':
             _blockUser();
             break;
+          case 'move':
+            _showMoveCategoryDialog();
+            break;
         }
       },
       itemBuilder: (BuildContext context) {
+        List<PopupMenuEntry<String>> items = [];
         if (isMyPost) {
-          // 본인 게시글일 때
-          return [
+          items.addAll([
             const PopupMenuItem<String>(
               value: 'edit',
               child: Row(
@@ -653,10 +658,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ],
               ),
             ),
-          ];
+          ]);
         } else {
-          // 다른 사람 게시글일 때
-          return [
+          items.add(
             const PopupMenuItem<String>(
               value: 'report',
               child: Row(
@@ -666,9 +670,106 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Text('신고하기'),
                 ],
               ),
-            )
-          ];
+            ),
+          );
         }
+        // 관리자라면 이동하기 옵션 추가 (본인/남의 게시글 상관없이)
+        if (isAdmin) {
+          items.add(
+            const PopupMenuItem<String>(
+              value: 'move',
+              child: Row(
+                children: [
+                  Icon(Icons.drive_file_move_outline, size: 20, color: Colors.blue),
+                  SizedBox(width: 12),
+                  Text('이동하기', style: TextStyle(color: Colors.blue)),
+                ],
+              ),
+            ),
+          );
+        }
+        return items;
+      },
+    );
+  }
+
+  // 카테고리 이동 다이얼로그
+  void _showMoveCategoryDialog() async {
+    // 카테고리 목록 (community_screen.dart 참고)
+    final List<Map<String, String>> boards = [
+      {'id': 'free', 'name': '자유게시판'},
+      {'id': 'question', 'name': '마일리지'},
+      {'id': 'deal', 'name': '적립/카드 혜택'},
+      {'id': 'seat_share', 'name': '좌석 공유'},
+      {'id': 'review', 'name': '항공 리뷰'},
+      {'id': 'error_report', 'name': '오류 신고'},
+      {'id': 'suggestion', 'name': '건의사항'},
+      {'id': 'notice', 'name': '운영 공지사항'},
+    ];
+    String selectedBoardId = _post?['boardId'] ?? widget.boardId;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('카테고리 이동', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('현재 카테고리: ${_getBoardDisplayName(_post?['boardId'] ?? widget.boardId)}', style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                  const SizedBox(height: 16),
+                  const Text('변경할 카테고리를 선택하세요:', style: TextStyle(fontSize: 13)),
+                  const SizedBox(height: 8),
+                  ...boards.map((board) => RadioListTile<String>(
+                        title: Text(board['name']!),
+                        value: board['id']!,
+                        groupValue: selectedBoardId,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedBoardId = value!;
+                          });
+                        },
+                      )),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (selectedBoardId == (_post?['boardId'] ?? widget.boardId)) {
+                      Navigator.pop(context);
+                      return;
+                    }
+                    // Firestore 업데이트
+                    await FirebaseFirestore.instance
+                        .collection('posts')
+                        .doc(widget.dateString)
+                        .collection('posts')
+                        .doc(widget.postId)
+                        .update({
+                          'boardId': selectedBoardId,
+                        });
+                    // 화면 갱신
+                    await _loadPostDetail();
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('카테고리가 변경되었습니다.')),
+                    );
+                  },
+                  style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                  child: const Text('이동'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1175,7 +1276,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 children: [
                                   // 1. 카테고리명 (boardId) - 작게
                                   Text(
-                                    _getBoardDisplayName(widget.boardId),
+                                    _getBoardDisplayName(_post?['boardId'] ?? widget.boardId),
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
