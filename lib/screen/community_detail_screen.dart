@@ -65,6 +65,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // 내가 신고한 댓글 ID 목록
   Set<String> _reportedCommentIds = {};
+  // 게시글 신고여부 상태
+  bool _alreadyReportedPost = false;
 
   Map<String, dynamic>? _myUserProfile;
 
@@ -76,6 +78,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _checkUserStatus();
     _loadMyReportedComments();
     _loadMyUserProfile(); // 내 userProfile 불러오기
+    _checkIfReportedPost(); // 게시글 신고여부 확인
   }
 
   Future<void> _loadMyUserProfile() async {
@@ -603,7 +606,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   Widget _buildMoreOptionsMenu() {
     // 본인 게시글인지 확인
     final isMyPost = _currentUser?.uid == _post?['author']?['uid'];
-    
+    // 내가 이미 신고한 게시글이면 ... 버튼 자체를 숨김
+    if (_alreadyReportedPost) {
+      return const SizedBox.shrink();
+    }
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert, color: Colors.grey[600]),
       color: Colors.white,
@@ -2189,11 +2195,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         reportData['postTitle'] = _post!['title'];
         reportData['postAuthor'] = _post!['author'];
         reportData['detailPath'] = 'posts/${widget.dateString}/posts/${widget.postId}';
+        // 1. posts/{dateString}/posts/{postId}/reports/{내uid}에 저장
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(widget.dateString)
+            .collection('posts')
+            .doc(widget.postId)
+            .collection('reports')
+            .doc(_currentUser!.uid)
+            .set(reportData);
+        // 2. reports/posts/posts에도 저장
         await FirebaseFirestore.instance
             .collection('reports')
             .doc('posts')
             .collection('posts')
             .add(reportData);
+        // 신고 성공 시 상태 갱신
+        setState(() {
+          _alreadyReportedPost = true;
+        });
       } else {
         reportData['commentId'] = comment!['commentId'];
         reportData['postId'] = widget.postId;
@@ -2208,17 +2228,28 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .add(reportData);
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('신고가 접수되었습니다. 검토 후 처리하겠습니다.')),
-      );
+      // 신고 성공 시 SnackBar가 항상 뜨도록 context 타이밍 보장
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('신고가 접수되었습니다. 검토 후 처리하겠습니다.')),
+          );
+        }
+      });
 
       // 신고 완료 후 내가 신고한 댓글 목록 즉시 갱신
-      await _loadMyReportedComments();
+      if (type == 'comment') {
+        await _loadMyReportedComments();
+      }
     } catch (e) {
       print('신고 제출 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('신고 제출 중 오류가 발생했습니다.')),
-      );
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('신고 제출 중 오류가 발생했습니다.')),
+          );
+        }
+      });
     }
   }
 
@@ -2302,5 +2333,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         // 시간 등 추가 가능
       ],
     );
+  }
+
+  // 게시글 신고여부 확인 (posts/{dateString}/posts/{postId}/reports/{내uid} 존재 여부)
+  Future<void> _checkIfReportedPost() async {
+    final myUid = _currentUser?.uid;
+    if (myUid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('reports')
+          .doc(myUid)
+          .get();
+      setState(() {
+        _alreadyReportedPost = doc.exists;
+      });
+    } catch (e) {
+      print('게시글 신고여부 확인 오류: $e');
+    }
   }
 } 
