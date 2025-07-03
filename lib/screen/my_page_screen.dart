@@ -7,12 +7,14 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../helper/AdHelper.dart';
 import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
 import 'level_detail_screen.dart';
 import 'sky_effect_screen.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -55,6 +57,32 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   
   final ImagePicker _imagePicker = ImagePicker();
 
+  BannerAd? _myPageBannerAd;
+  bool _isMyPageBannerAdLoaded = false;
+
+  // 광고 위젯 생성 함수
+  Widget _buildBannerAd(String adUnitId) {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Center(
+        child: Text(
+          '광고 영역 ($adUnitId)',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +93,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _postsScrollController.addListener(_onPostsScroll);
     _commentsScrollController.addListener(_onCommentsScroll);
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
+    _loadMyPageBannerAd();
   }
 
   @override
@@ -74,6 +103,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _postsScrollController.dispose();
     _commentsScrollController.dispose();
     _likedPostsScrollController.dispose();
+    _myPageBannerAd?.dispose();
     super.dispose();
   }
 
@@ -881,6 +911,24 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     return result ?? false;
   }
 
+  void _loadMyPageBannerAd() {
+    _myPageBannerAd = BannerAd(
+      adUnitId: AdHelper.myPageBannerAdUnitId,
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isMyPageBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -906,6 +954,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                       const SizedBox(height: 8),
                       // 스카이 이펙트 영역
                       _buildSkyEffectSection(),
+                      const SizedBox(height: 8),
+                      // 광고 영역: 스카이 이펙트와 탭바 사이
+                      _buildMyPageBannerAd(),
                       const SizedBox(height: 8),
                       // 탭바
                       Container(
@@ -1916,5 +1967,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       'notice': '운영 공지사항',
     };
     return boardNameMap[boardId] ?? '알 수 없음';
+  }
+
+  Widget _buildMyPageBannerAd() {
+    if (_isMyPageBannerAdLoaded && _myPageBannerAd != null) {
+      return Container(
+        width: _myPageBannerAd!.size.width.toDouble(),
+        height: _myPageBannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _myPageBannerAd!),
+      );
+    } else {
+      return const SizedBox(height: 50);
+    }
   }
 }

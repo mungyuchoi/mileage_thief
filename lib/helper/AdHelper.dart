@@ -145,4 +145,67 @@ class AdHelper {
       }
     }
   }
+
+  // 게시글 상세 - 프로필/스카이이펙트/닉네임 아래 배너 광고
+  static String get postDetailProfileBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/5003324282'; // 실제 Android 광고 ID로 교체 필요
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/3365457915'; // 실제 iOS 광고 ID로 교체 필요
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/2934735716'; // 테스트 광고 ID
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/6300978111'; // 테스트 광고 ID
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
+
+  // 게시글 상세 - 게시글과 댓글 사이 배너 광고
+  static String get postDetailContentBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/1314526567'; // 실제 Android 광고 ID로 교체 필요
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/7688363224'; // 실제 iOS 광고 ID로 교체 필요
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/2934735716'; // 테스트 광고 ID
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/6300978111'; // 테스트 광고 ID
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
+
+  // 마이페이지 - 스카이이펙트와 탭바 사이 배너 광고
+  static String get myPageBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/2801501072'; // 실제 Android 광고 ID로 교체 필요
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/5368804727'; // 실제 iOS 광고 ID로 교체 필요
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/2934735716'; // 테스트 광고 ID
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/6300978111'; // 테스트 광고 ID
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
 }

@@ -13,6 +13,8 @@ import 'package:flutter_html/flutter_html.dart';
 import 'community_post_create_screen.dart';
 import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
+import '../helper/AdHelper.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -70,6 +72,34 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Map<String, dynamic>? _myUserProfile;
 
+  // 광고 위젯 생성 함수
+  Widget _buildBannerAd(String adUnitId) {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Center(
+        child: Text(
+          '광고 영역 ($adUnitId)',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+    );
+  }
+
+  BannerAd? _profileBannerAd;
+  bool _isProfileBannerAdLoaded = false;
+  BannerAd? _contentBannerAd;
+  bool _isContentBannerAdLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +109,53 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _loadMyReportedComments();
     _loadMyUserProfile(); // 내 userProfile 불러오기
     _checkIfReportedPost(); // 게시글 신고여부 확인
+    _loadProfileBannerAd();
+    _loadContentBannerAd();
+  }
+
+  void _loadProfileBannerAd() {
+    _profileBannerAd = BannerAd(
+      adUnitId: AdHelper.postDetailProfileBannerAdUnitId,
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isProfileBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  void _loadContentBannerAd() {
+    _contentBannerAd = BannerAd(
+      adUnitId: AdHelper.postDetailContentBannerAdUnitId,
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isContentBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    _scrollController.dispose();
+    _profileBannerAd?.dispose();
+    _contentBannerAd?.dispose();
+    super.dispose();
   }
 
   Future<void> _loadMyUserProfile() async {
@@ -106,13 +183,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     } catch (e) {
       print('내가 신고한 댓글 목록 로드 오류: $e');
     }
-  }
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    _scrollController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadPostDetail() async {
@@ -1363,6 +1433,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   ),
                                   const SizedBox(height: 16),
 
+                                  // 광고 영역 1: 프로필/스카이이펙트/닉네임 아래
+                                  _buildProfileBannerAd(),
+                                  const SizedBox(height: 16),
+
                                   // 5. 게시글 내용 (contentHtml)
                                   Html(
                                     data: _post!['contentHtml'] ?? '',
@@ -1403,6 +1477,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 ],
                               ),
                             ),
+
+                          // 광고 영역 2: 게시글과 댓글 사이
+                          _buildContentBannerAd(),
 
                           // 댓글 섹션
                           Container(
@@ -2506,6 +2583,30 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       });
     } catch (e) {
       print('게시글 신고여부 확인 오류: $e');
+    }
+  }
+
+  Widget _buildProfileBannerAd() {
+    if (_isProfileBannerAdLoaded && _profileBannerAd != null) {
+      return Container(
+        width: _profileBannerAd!.size.width.toDouble(),
+        height: _profileBannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _profileBannerAd!),
+      );
+    } else {
+      return const SizedBox(height: 50);
+    }
+  }
+
+  Widget _buildContentBannerAd() {
+    if (_isContentBannerAdLoaded && _contentBannerAd != null) {
+      return Container(
+        width: _contentBannerAd!.size.width.toDouble(),
+        height: _contentBannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _contentBannerAd!),
+      );
+    } else {
+      return const SizedBox(height: 50);
     }
   }
 } 
