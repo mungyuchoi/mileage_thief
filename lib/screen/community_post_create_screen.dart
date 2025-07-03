@@ -58,6 +58,14 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       selectedBoardName = widget.initialBoardName;
       _titleController.text = widget.editTitle ?? '';
       // HTML 에디터 내용은 onInit 콜백에서 설정
+      // 기존 이미지 개수 파싱
+      if (widget.editContentHtml != null && widget.editContentHtml!.isNotEmpty) {
+        final imgTagRegex = RegExp(r'<img[^>]*src=["\"]([^"\"]+)["\"][^>]*>', caseSensitive: false);
+        final matches = imgTagRegex.allMatches(widget.editContentHtml!);
+        final int existingImageCount = matches.length;
+        // 기존 이미지 개수만큼 tempImagePaths에 더미값 추가
+        tempImagePaths = List.generate(existingImageCount, (index) => 'EXISTING_IMAGE_$index');
+      }
     } else {
       // 새 게시글 작성 모드
       selectedBoardId = widget.initialBoardId;
