@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../helper/AdHelper.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
@@ -421,13 +422,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return '로그인';
   }
 
-  IconData _getLoginIcon() {
+  Widget _getLoginIcon() {
     if (Platform.isAndroid) {
-      return Icons.login; // Google 아이콘 대신 일반 로그인 아이콘 사용
+      return const FaIcon(FontAwesomeIcons.google, size: 20);
     } else if (Platform.isIOS) {
-      return Icons.apple;
+      return const FaIcon(FontAwesomeIcons.apple, size: 20);
     }
-    return Icons.login;
+    return const Icon(Icons.login);
   }
 
   Future<void> _handleDeleteAccount() async {
@@ -545,7 +546,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : Icon(_getLoginIcon()),
+                      : _getLoginIcon(),
                     label: Text(
                       _isLoading ? '로그인 중...' : _getLoginButtonText(),
                       style: const TextStyle(fontSize: 16),

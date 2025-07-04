@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
@@ -89,6 +90,33 @@ class _CommunityScreenState extends State<CommunityScreen> {
         isProfileLoading = false;
       });
     }
+  }
+
+  // 로그인 확인 및 유도 함수
+  Future<bool> _checkLoginAndNavigate() async {
+    final user = AuthService.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(
+        msg: "로그인이 필요한 기능입니다. 로그인 페이지로 이동합니다.",
+        timeInSecForIosWeb: 3,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: const Color(0xFF74512D),
+        textColor: Colors.white,
+      );
+      
+      // 로그인 화면으로 이동
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+      
+      // 로그인 성공 시 프로필 다시 로드
+      if (result == true) {
+        await _loadUserProfile();
+        return true;
+      }
+      return false;
+    }
+    return true;
   }
 
   IconData getBoardIcon(String boardId) {
@@ -642,6 +670,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ? ((userProfile?['roles'] ?? []).contains('admin')
                   ? FloatingActionButton(
                       onPressed: () async {
+                        // 로그인 확인
+                        final isLoggedIn = await _checkLoginAndNavigate();
+                        if (!isLoggedIn) return;
+                        
                         final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -661,6 +693,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   : null)
               : FloatingActionButton(
                   onPressed: () async {
+                    // 로그인 확인
+                    final isLoggedIn = await _checkLoginAndNavigate();
+                    if (!isLoggedIn) return;
+                    
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(

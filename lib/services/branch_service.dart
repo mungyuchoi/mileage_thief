@@ -45,7 +45,25 @@ class BranchService {
       final data = await FlutterBranchSdk.getFirstReferringParams();
       if (data.isNotEmpty) {
         print('초기 딥링크 데이터: $data');
-        _handleDeepLinkData(data);
+        
+        // getFirstReferringParams는 앱 설치 후 첫 번째 링크를 계속 저장하므로
+        // 실제 새로운 클릭인지 확인 (최근 클릭만 처리)
+        final clickTimestamp = data['+click_timestamp'];
+        if (clickTimestamp != null) {
+          final clickTime = DateTime.fromMillisecondsSinceEpoch(clickTimestamp * 1000);
+          final now = DateTime.now();
+          final difference = now.difference(clickTime);
+          
+          // 30초 이내의 클릭만 처리 (앱이 딥링크로 실행된 경우)
+          if (difference.inSeconds <= 30) {
+            print('최근 딥링크 클릭 감지 (${difference.inSeconds}초 전) - 처리함');
+            _handleDeepLinkData(data);
+          } else {
+            print('오래된 딥링크 데이터 무시 (${difference.inMinutes}분 전)');
+          }
+        } else {
+          print('클릭 타임스탬프 없음 - 무시');
+        }
       }
     } catch (e) {
       print('초기 딥링크 처리 오류: $e');
@@ -54,6 +72,15 @@ class BranchService {
 
   /// 딥링크 데이터 처리
   void _handleDeepLinkData(Map<dynamic, dynamic> data) {
+    // Branch 링크를 실제로 클릭했는지 확인
+    final clickedBranchLink = data['+clicked_branch_link'];
+    
+    // 실제 딥링크 클릭이 아니면 처리하지 않음
+    if (clickedBranchLink != true) {
+      print('Branch 초기화 콜백 (딥링크 클릭 아님): $data');
+      return;
+    }
+    
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
     final boardId = data['boardId']?.toString() ?? 'free';
@@ -61,6 +88,7 @@ class BranchService {
     final scrollToCommentId = data['scrollToCommentId']?.toString();
 
     if (postId != null && dateString != null) {
+      print('실제 딥링크 클릭 감지 - 게시글로 이동: $postId');
       _navigateToPost(postId, dateString, boardId, boardName, scrollToCommentId);
     } else {
       print('딥링크 데이터 부족: postId=$postId, dateString=$dateString');
