@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:async';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'login_screen.dart';
@@ -48,6 +49,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
   
   // 초기 로딩 상태 관리
   bool _isInitialLoading = true;
+  
+  // 이펙트 캐시 (성능 최적화)
+  static final Map<String, Map<String, dynamic>> _effectCache = {};
+  
+  // 스크롤 상태 추적 (애니메이션 최적화)
+  bool _isScrolling = false;
+  Timer? _scrollTimer;
 
   @override
   void initState() {
@@ -60,6 +68,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _scrollTimer?.cancel();
     super.dispose();
   }
 
@@ -675,6 +684,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   // 스크롤 리스너
   void _onScroll() {
+    // 스크롤 상태 추적
+    if (!_isScrolling) {
+      setState(() {
+        _isScrolling = true;
+      });
+    }
+    
+    // 기존 타이머 취소
+    _scrollTimer?.cancel();
+    
+    // 스크롤 멈춤 감지 (300ms 후)
+    _scrollTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _isScrolling = false;
+        });
+      }
+    });
+    
+    // 무한 스크롤 로직
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasMoreData) {
@@ -952,16 +981,58 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  // 스카이 이펙트 미리보기 위젯
+  // 스카이 이펙트 미리보기 위젯 (캐시 최적화)
   Widget _buildSkyEffectPreview(String? effectId) {
     if (effectId == null) return const SizedBox.shrink();
     
+    // 캐시에서 먼저 확인
+    if (_effectCache.containsKey(effectId)) {
+      final cachedData = _effectCache[effectId]!;
+      final lottieUrl = cachedData['lottieUrl'] as String?;
+      
+      if (lottieUrl != null && lottieUrl.isNotEmpty) {
+        return Lottie.network(
+          lottieUrl,
+          width: 20,
+          height: 20,
+          fit: BoxFit.contain,
+          repeat: true,
+          animate: !_isScrolling, // 스크롤 중일 때는 애니메이션 멈춤
+          // 캐싱 옵션 추가
+          options: LottieOptions(
+            enableMergePaths: false, // 성능 최적화
+          ),
+          // 에러 처리
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+          },
+        );
+      } else {
+        return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+      }
+    }
+    
+    // 캐시에 없으면 Firestore에서 로드
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
+          return const SizedBox(
+            width: 20,
+            height: 20,
+            child: Center(
+              child: SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Color(0xFF74512D),
+                ),
+              ),
+            ),
+          );
         }
+        
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
         }
@@ -969,15 +1040,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final lottieUrl = data['lottieUrl'] as String?;
         
+        // 캐시에 저장
+        _effectCache[effectId] = data;
+        
         if (lottieUrl != null && lottieUrl.isNotEmpty) {
-          return Lottie.network(
-            lottieUrl,
-            width: 20,
-            height: 20,
-            fit: BoxFit.contain,
-            repeat: true,
-            animate: true,
-          );
+                      return Lottie.network(
+              lottieUrl,
+              width: 20,
+              height: 20,
+              fit: BoxFit.contain,
+              repeat: true,
+              animate: !_isScrolling, // 스크롤 중일 때는 애니메이션 멈춤
+              // 캐싱 옵션 추가
+              options: LottieOptions(
+                enableMergePaths: false, // 성능 최적화
+              ),
+              // 에러 처리
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+              },
+            );
         } else {
           return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
         }
