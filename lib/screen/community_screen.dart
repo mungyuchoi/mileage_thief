@@ -1019,7 +1019,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   // 스카이 이펙트 미리보기 위젯 (캐시 최적화)
   Widget _buildSkyEffectPreview(String? effectId) {
-    if (effectId == null) return const SizedBox.shrink();
+    if (effectId == null || effectId.isEmpty) return const SizedBox.shrink();
     
     // 캐시에서 먼저 확인
     if (_effectCache.containsKey(effectId)) {
