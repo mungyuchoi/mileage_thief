@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/dan_screen.dart';
@@ -41,12 +42,17 @@ class _SearchScreenState extends State<SearchScreen> {
   int _currentIndex = 0;
   final DatabaseReference _versionReference =
   FirebaseDatabase.instance.ref("VERSION");
+  
+  // 공지사항 제목을 저장할 변수
+  String _communityNoticeTitle = '';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
     super.initState();
     getVersion();
     _loadVersionFirebase();
+    _loadCommunityNoticeTitle();
   }
 
   @override
@@ -56,7 +62,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: Text(
           _currentIndex == 0
-              ? '커뮤니티'
+              ? '${_communityNoticeTitle.isNotEmpty ? ' $_communityNoticeTitle' : ''}'
               : _currentIndex == 1
                   ? '대한항공 마일리지 찾기'
                   : _currentIndex == 2
@@ -353,6 +359,24 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {});
       }
     });
+  }
+
+  void _loadCommunityNoticeTitle() async {
+    try {
+      DocumentSnapshot doc = await _firestore
+          .collection('notice')
+          .doc('community')
+          .get();
+      
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _communityNoticeTitle = data['title'] ?? '';
+        });
+      }
+    } catch (e) {
+      print('공지사항 제목 로드 실패: $e');
+    }
   }
 
   _launchMileageThief(String mileageTheifMarketUrl) async {
