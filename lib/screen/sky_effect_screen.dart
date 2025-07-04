@@ -197,7 +197,7 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
     }
   }
 
-  // 이펙트 착용
+  // 이펙트 착용/해제
   Future<void> _equipEffect(String effectId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -205,24 +205,29 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 현재 착용 중인 이펙트와 같으면 착용 해제
+      final newEffectId = (_currentEffect == effectId) ? null : effectId;
+      
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .update({'currentSkyEffect': effectId});
+          .update({'currentSkyEffect': newEffectId});
 
       setState(() {
-        _currentEffect = effectId;
+        _currentEffect = newEffectId;
         _previewEffectId = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이펙트가 적용되었습니다!')),
+        SnackBar(
+          content: Text(newEffectId == null ? '이펙트가 해제되었습니다!' : '이펙트가 적용되었습니다!'),
+        ),
       );
       
     } catch (e) {
-      print('착용 오류: $e');
+      print('착용/해제 오류: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('착용 중 오류가 발생했습니다: $e')),
+        SnackBar(content: Text('이펙트 변경 중 오류가 발생했습니다: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -807,10 +812,8 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
 
   void _onEffectTap(Map<String, dynamic> effect, bool isOwned, bool isEquipped) {
     if (isEquipped) {
-      // 이미 착용 중
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이미 착용 중인 이펙트입니다')),
-      );
+      // 착용 중인 이펙트를 다시 탭하면 해제
+      _equipEffect(effect['id']);
     } else if (isOwned) {
       // 보유 중이지만 미착용 -> 착용
       _equipEffect(effect['id']);

@@ -1554,7 +1554,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   Future<DocumentSnapshot> _fetchEffectDoc(String? effectId) async {
-    if (effectId == null) return Future.value(null);
+    if (effectId == null || effectId.isEmpty) return Future.value(null);
     try {
       final doc = await FirebaseFirestore.instance.collection('effects').doc(effectId).get();
       return doc;

@@ -1403,14 +1403,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                               )
                                             : null,
                                       ),
-                                      const SizedBox(width: 4),
-                                      if (_post!['author']?['currentSkyEffect'] != null)
+                                      SizedBox(width: _post!['author']?['currentSkyEffect'] != null && 
+                                                      (_post!['author']['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
+                                      if (_post!['author']?['currentSkyEffect'] != null && 
+                                          (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
                                         SizedBox(
                                           width: 32,
                                           height: 20,
                                           child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
                                         ),
-                                      const SizedBox(width: 4),
+                                      if (_post!['author']?['currentSkyEffect'] != null && 
+                                          (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
+                                        const SizedBox(width: 4),
                                       Text(
                                         _post!['author']?['displayName'] ?? '익명',
                                         style: const TextStyle(
@@ -1470,7 +1474,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
                           // 광고 영역 2: 게시글과 댓글 사이
                           _buildContentBannerAd(),
-
+                              const SizedBox(height: 16),
                           // 댓글 섹션
                           Container(
                             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1849,9 +1853,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           )
                         : null,
                   ),
-                  const SizedBox(width: 4),
                   // currentSkyEffect 표시
-                  if (comment['currentSkyEffect'] != null)
+                  if (comment['currentSkyEffect'] != null && 
+                      (comment['currentSkyEffect'] as String).isNotEmpty)
                     Positioned(
                       right: -2,
                       bottom: -2,
@@ -1864,7 +1868,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: comment['currentSkyEffect'] != null && 
+                            (comment['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2475,7 +2480,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // 스카이 이펙트 미리보기 위젯
   Widget _buildSkyEffectPreview(String? effectId) {
-    if (effectId == null) return const SizedBox.shrink();
+    if (effectId == null || effectId.isEmpty) return const SizedBox.shrink();
     
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
@@ -2508,6 +2513,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Widget _buildCommentAuthorRow(Map<String, dynamic> comment) {
     final photoURL = comment['profileImageUrl'] ?? '';
+    final hasSkyEffect = comment['currentSkyEffect'] != null && 
+                        (comment['currentSkyEffect'] as String).isNotEmpty;
+    
     return Row(
       children: [
         CircleAvatar(
@@ -2525,14 +2533,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 )
               : null,
         ),
-        const SizedBox(width: 4),
-        if (comment['currentSkyEffect'] != null)
+        SizedBox(width: hasSkyEffect ? 4 : 8),
+        if (hasSkyEffect)
           SizedBox(
             width: 32,
             height: 20,
             child: _buildSkyEffectPreview(comment['currentSkyEffect']),
           ),
-        const SizedBox(width: 4),
+        if (hasSkyEffect) const SizedBox(width: 4),
         Text(
           comment['displayName'] ?? '익명',
           style: const TextStyle(

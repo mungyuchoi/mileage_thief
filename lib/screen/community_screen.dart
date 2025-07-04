@@ -1108,6 +1108,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
     final photoURL = post['author']?['photoURL'] ?? post['author']?['profileImageUrl'] ?? '';
     final displayName = post['author']['displayName'] ?? '익명';
     final isRecent = DateTime.now().difference(createdAt).inHours < 2;
+    final hasSkyEffect = post['author']?['currentSkyEffect'] != null && 
+                        (post['author']['currentSkyEffect'] as String).isNotEmpty;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1121,14 +1123,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
               backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
               child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.black54, size: 18) : null,
             ),
-            const SizedBox(width: 4),
-            if (post['author']?['currentSkyEffect'] != null)
+            SizedBox(width: hasSkyEffect ? 4 : 8), // 스카이 이펙트가 있으면 4, 없으면 8
+            if (hasSkyEffect)
               SizedBox(
                 width: 24,
                 height: 24,
                 child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
               ),
-            const SizedBox(width: 4),
+            if (hasSkyEffect) const SizedBox(width: 4), // 스카이 이펙트가 있을 때만 추가 간격
             Text(
               displayName,
               style: const TextStyle(
