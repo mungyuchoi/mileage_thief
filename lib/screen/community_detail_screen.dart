@@ -1299,10 +1299,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
             onPressed: _toggleLike,
           ),
-          IconButton(
-            icon: Icon(Icons.share_outlined, color: Colors.grey[600]),
-            onPressed: _sharePost,
-          ),
+          // IconButton(
+          //   icon: Icon(Icons.share_outlined, color: Colors.grey[600]),
+          //   onPressed: _sharePost,
+          // ),
           _buildMoreOptionsMenu(),
         ],
       ),
