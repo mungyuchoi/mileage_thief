@@ -22,7 +22,6 @@ class UserService {
       'grade': '이코노미',
       'gradeLevel': 1,
       'displayGrade': '이코노미 Lv.1',
-      'title': '',
       'gradeUpdatedAt': FieldValue.serverTimestamp(),
       'peanutCount': peanutCount,
       'peanutCountLimit': 3,
@@ -347,6 +346,62 @@ class UserService {
       'displayName': 30,
     };
   }
+
+  /// 사용자 데이터 정리 마이그레이션 (title, postCount 삭제, commentCount/postsCount 추가)
+  static Future<void> migrateUserDataCleanup() async {
+    print('사용자 데이터 정리 마이그레이션 시작...');
+    
+    final users = await _firestore.collection(_usersCollection).get();
+    int processedCount = 0;
+    int updatedCount = 0;
+    
+    for (final doc in users.docs) {
+      final data = doc.data();
+      final updates = <String, dynamic>{};
+      
+      // title 필드 삭제
+      if (data.containsKey('title')) {
+        updates['title'] = FieldValue.delete();
+        print('사용자 ${doc.id}: title 필드 삭제');
+      }
+      
+      // postCount 필드 삭제 (postsCount와 중복)
+      if (data.containsKey('postCount')) {
+        updates['postCount'] = FieldValue.delete();
+        print('사용자 ${doc.id}: postCount 필드 삭제');
+      }
+      
+      // commentCount 필드 추가 (없는 경우)
+      if (!data.containsKey('commentCount')) {
+        updates['commentCount'] = 0;
+        print('사용자 ${doc.id}: commentCount 필드 추가');
+      }
+      
+      // postsCount 필드 추가 (없는 경우)
+      if (!data.containsKey('postsCount')) {
+        updates['postsCount'] = 0;
+        print('사용자 ${doc.id}: postsCount 필드 추가');
+      }
+      
+      // 업데이트가 필요한 경우만 실행
+      if (updates.isNotEmpty) {
+        await doc.reference.update(updates);
+        updatedCount++;
+        print('사용자 ${doc.id} 업데이트 완료');
+      }
+      
+      processedCount++;
+      
+      // 진행상황 출력 (100명마다)
+      if (processedCount % 100 == 0) {
+        print('진행상황: $processedCount/${users.docs.length} 처리됨');
+      }
+    }
+    
+    print('사용자 데이터 정리 마이그레이션 완료!');
+    print('전체 사용자: ${users.docs.length}명');
+    print('업데이트된 사용자: $updatedCount명');
+  }
 }
 
 Future<void> migrateAllUsersToCommunitySchema() async {
@@ -357,7 +412,6 @@ Future<void> migrateAllUsersToCommunitySchema() async {
 
     // md 기준 누락 필드 모두 추가
     if (!data.containsKey('joinedAt')) updates['joinedAt'] = FieldValue.serverTimestamp();
-    if (!data.containsKey('postCount')) updates['postCount'] = 0;
     if (!data.containsKey('commentCount')) updates['commentCount'] = 0;
     if (!data.containsKey('likesReceived')) updates['likesReceived'] = 0;
     if (!data.containsKey('reportedCount')) updates['reportedCount'] = 0;
@@ -365,7 +419,7 @@ Future<void> migrateAllUsersToCommunitySchema() async {
     if (!data.containsKey('grade')) updates['grade'] = '이코노미';
     if (!data.containsKey('gradeLevel')) updates['gradeLevel'] = 1;
     if (!data.containsKey('displayGrade')) updates['displayGrade'] = '이코노미 Lv.1';
-    if (!data.containsKey('title')) updates['title'] = '';
+
     if (!data.containsKey('gradeUpdatedAt')) updates['gradeUpdatedAt'] = FieldValue.serverTimestamp();
     if (!data.containsKey('adBonusPercent')) updates['adBonusPercent'] = 0;
     if (!data.containsKey('badgeVisible')) updates['badgeVisible'] = true;

@@ -934,7 +934,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(_currentUser!.uid)
-            .update({'postCount': FieldValue.increment(-1)});
+            .update({'postsCount': FieldValue.increment(-1)});
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
