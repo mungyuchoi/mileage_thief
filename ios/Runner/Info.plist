@@ -63,5 +63,32 @@
       <string>https</string>
       <string>http</string>
     </array>
+    
+    <!-- Flutter 기본 딥링크 비활성화 -->
+    <key>FlutterDeepLinkingEnabled</key>
+    <false/>
+    
+    <!-- Branch.io 설정 -->
+    <key>branch_key</key>
+    <string>key_live_gFtkAHtvCb21GOaphUeWfnjlCsgquMU8</string>
+    
+    	<!-- Associated Domains (Universal Links) -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:milecatch.app.link</string>
+	</array>
+	
+	<!-- Custom URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>milecatch</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>milecatch</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

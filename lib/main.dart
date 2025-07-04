@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
+import 'services/branch_service.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -37,6 +38,9 @@ Future<void> main() async {
   // 알림 서비스 초기화
   await NotificationService().initialize();
   NotificationService().setupTokenRefresh();
+
+  // Branch.io 초기화
+  await BranchService().initialize();
 
   MobileAds.instance.initialize();
 

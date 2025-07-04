@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:io';
 import '../services/user_service.dart';
+import '../services/branch_service.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'community_post_create_screen.dart';
 import 'user_profile_screen.dart';
@@ -640,38 +641,27 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       final title = _post!['title'] ?? '제목 없음';
       final content = _getPlainTextFromHtml(_post!['contentHtml'] ?? '');
       
-      // 간단한 공유 텍스트 (Dynamic Links 구현 전까지)
-      final shareText = '$title\n\n$content\n\n마일리지도둑 커뮤니티에서 공유';
-      Share.share(shareText);
-      
-      // TODO: Firebase Dynamic Links 구현
-      // final dynamicLink = await _createDynamicLink();
-      // Share.share('$title\n\n$content\n\n$dynamicLink');
+      try {
+        // Branch.io 딥링크 생성
+        await BranchService().showShareSheet(
+          postId: widget.postId,
+          dateString: widget.dateString,
+          boardId: widget.boardId,
+          boardName: widget.boardName,
+          scrollToCommentId: null, // 게시글 공유이므로 댓글 ID는 null
+          title: title,
+          description: content.length > 100 ? '${content.substring(0, 100)}...' : content,
+        );
+      } catch (e) {
+        print('Branch 공유 오류: $e');
+        // Branch 실패 시 기본 공유로 폴백
+        final shareText = '$title\n\n$content\n\n마일캐치 커뮤니티에서 공유';
+        Share.share(shareText);
+      }
     }
   }
 
-  // TODO: Firebase Dynamic Links 생성 메서드
-  // Future<String> _createDynamicLink() async {
-  //   final dynamicLinkParams = DynamicLinkParameters(
-  //     uriPrefix: 'https://your-app.page.link',
-  //     link: Uri.parse('https://mileage-thief.com/post/${widget.postId}'),
-  //     androidParameters: AndroidParameters(
-  //       packageName: 'com.mungyu.mileage_thief',
-  //       minimumVersion: 1,
-  //     ),
-  //     iosParameters: IOSParameters(
-  //       bundleId: 'com.mungyu.mileageThief',
-  //       minimumVersion: '1.0.0',
-  //     ),
-  //     socialMetaTagParameters: SocialMetaTagParameters(
-  //       title: _post!['title'] ?? '제목 없음',
-  //       description: _getPlainTextFromHtml(_post!['contentHtml'] ?? ''),
-  //     ),
-  //   );
-  //   
-  //   final shortLink = await FirebaseDynamicLinks.instance.buildShortLink(dynamicLinkParams);
-  //   return shortLink.shortUrl.toString();
-  // }
+
 
   Widget _buildMoreOptionsMenu() {
     // 프로필 정보가 아직 로드되지 않았다면 ... 메뉴 숨김
@@ -1299,10 +1289,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
             onPressed: _toggleLike,
           ),
-          // IconButton(
-          //   icon: Icon(Icons.share_outlined, color: Colors.grey[600]),
-          //   onPressed: _sharePost,
-          // ),
+          IconButton(
+            icon: Icon(Icons.share_outlined, color: Colors.grey[600]),
+            onPressed: _sharePost,
+          ),
           _buildMoreOptionsMenu(),
         ],
       ),
