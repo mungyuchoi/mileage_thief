@@ -380,10 +380,17 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   _launchMileageThief(String mileageTheifMarketUrl) async {
-    if (await canLaunch(mileageTheifMarketUrl)) {
-      await launch(mileageTheifMarketUrl);
+    String appLink;
+    if (Platform.isAndroid) {
+      appLink = 'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
     } else {
-      throw '마켓을 열 수 없습니다: $mileageTheifMarketUrl';
+      appLink = 'https://apps.apple.com/app/myapp/6446247689';
+    }
+    
+    if (await canLaunch(appLink)) {
+      await launch(appLink);
+    } else {
+      throw '마켓을 열 수 없습니다: $appLink';
     }
   }
 }

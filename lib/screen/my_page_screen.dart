@@ -333,22 +333,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '땅콩 50개가 소모될 예정입니다.',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    // 초기 1회 무료인지 확인
                     Text(
-                      '현재 보유 땅콩: ${peanutCount}개',
+                      changeCount == 0 ? '1회 무료로 변경할 수 있습니다.' : '땅콩 50개가 소모될 예정입니다.',
                       style: TextStyle(
-                        color: peanutCount >= 50 ? Colors.green : Colors.red,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        color: changeCount == 0 ? Colors.green : Colors.black,
+                        fontSize: 16,
+                        fontWeight: changeCount == 0 ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
+                    if (changeCount > 0) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '현재 보유 땅콩: ${peanutCount}개',
+                        style: TextStyle(
+                          color: peanutCount >= 50 ? Colors.green : Colors.red,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     const Text(
                       '선정적인 이미지로 변경 시 제재의 대상이 될 수 있습니다.',
@@ -622,21 +626,39 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                       ),
                     ),
                   const SizedBox(height: 12),
-                  const Text(
-                    '땅콩 30개가 소모될 예정입니다.',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '현재 보유 땅콩: ${userProfile?['peanutCount'] ?? 0}개',
-                    style: TextStyle(
-                      color: (userProfile?['peanutCount'] ?? 0) >= 30 ? Colors.green : Colors.red,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // 초기 1회 무료인지 확인
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: UserService.getUserFromFirestore(user.uid),
+                    builder: (context, snapshot) {
+                      final userData = snapshot.data;
+                      final displayNameChangeCount = userData?['displayNameChangeCount'] ?? 0;
+                      final peanutCount = userData?['peanutCount'] ?? 0;
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayNameChangeCount == 0 ? '1회 무료로 변경할 수 있습니다.' : '땅콩 30개가 소모될 예정입니다.',
+                            style: TextStyle(
+                              color: displayNameChangeCount == 0 ? Colors.green : Colors.black,
+                              fontSize: 16,
+                              fontWeight: displayNameChangeCount == 0 ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          if (displayNameChangeCount > 0) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              '현재 보유 땅콩: ${peanutCount}개',
+                              style: TextStyle(
+                                color: peanutCount >= 30 ? Colors.green : Colors.red,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
                   const Text(

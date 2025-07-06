@@ -1385,42 +1385,57 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   // 4. 프로필 정보 + 댓글/좋아요 - 한줄로 짧게
                                   Row(
                                     children: [
-                                      // 프로필 + skyEffect + 닉네임
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: Colors.grey,
-                                        backgroundImage: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
-                                            ? NetworkImage(_post!['author']['photoURL'] ?? _post!['author']['profileImageUrl'])
-                                            : null,
-                                        child: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isEmpty
-                                            ? Text(
-                                                (_post!['author']?['displayName'] ?? '익명')[0],
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      SizedBox(width: _post!['author']?['currentSkyEffect'] != null && 
-                                                      (_post!['author']['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
-                                      if (_post!['author']?['currentSkyEffect'] != null && 
-                                          (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
-                                        SizedBox(
-                                          width: 32,
-                                          height: 20,
-                                          child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
-                                        ),
-                                      if (_post!['author']?['currentSkyEffect'] != null && 
-                                          (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
-                                        const SizedBox(width: 4),
-                                      Text(
-                                        _post!['author']?['displayName'] ?? '익명',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
+                                      // 프로필 + skyEffect + 닉네임 (클릭 가능)
+                                      GestureDetector(
+                                        onTap: () {
+                                          final currentUser = FirebaseAuth.instance.currentUser;
+                                          final authorUid = _post!['author']?['uid'];
+                                          if (currentUser != null && authorUid == currentUser.uid) {
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPageScreen()));
+                                          } else if (authorUid != null) {
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: authorUid)));
+                                          }
+                                        },
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: Colors.grey,
+                                              backgroundImage: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
+                                                  ? NetworkImage(_post!['author']['photoURL'] ?? _post!['author']['profileImageUrl'])
+                                                  : null,
+                                              child: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isEmpty
+                                                  ? Text(
+                                                      (_post!['author']?['displayName'] ?? '익명')[0],
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 12,
+                                                      ),
+                                                    )
+                                                  : null,
+                                            ),
+                                            SizedBox(width: _post!['author']?['currentSkyEffect'] != null && 
+                                                            (_post!['author']['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
+                                            if (_post!['author']?['currentSkyEffect'] != null && 
+                                                (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
+                                              SizedBox(
+                                                width: 32,
+                                                height: 20,
+                                                child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
+                                              ),
+                                            if (_post!['author']?['currentSkyEffect'] != null && 
+                                                (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
+                                              const SizedBox(width: 4),
+                                            Text(
+                                              _post!['author']?['displayName'] ?? '익명',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
