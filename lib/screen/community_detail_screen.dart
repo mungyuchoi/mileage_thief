@@ -1851,35 +1851,40 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               },
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.purple,
-                    backgroundImage: (comment['profileImageUrl'] ?? '').isNotEmpty
-                        ? NetworkImage(comment['profileImageUrl'])
-                        : null,
-                    child: (comment['profileImageUrl'] ?? '').isEmpty
-                        ? Text(
-                            (comment['displayName'] ?? '익명')[0],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          )
-                        : null,
-                  ),
-                  // currentSkyEffect 표시
-                  if (comment['currentSkyEffect'] != null && 
-                      (comment['currentSkyEffect'] as String).isNotEmpty)
-                    Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        child: _buildSkyEffectPreview(comment['currentSkyEffect']),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.purple,
+                        backgroundImage: (comment['profileImageUrl'] ?? '').isNotEmpty
+                            ? NetworkImage(comment['profileImageUrl'])
+                            : null,
+                        child: (comment['profileImageUrl'] ?? '').isEmpty
+                            ? Text(
+                                (comment['displayName'] ?? '익명')[0],
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              )
+                            : null,
                       ),
-                    ),
+                      // currentSkyEffect 표시
+                      if (comment['currentSkyEffect'] != null && 
+                          (comment['currentSkyEffect'] as String).isNotEmpty)
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            child: _buildSkyEffectPreview(comment['currentSkyEffect']),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
