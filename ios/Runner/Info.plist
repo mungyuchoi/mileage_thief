@@ -90,5 +90,13 @@
 			</array>
 		</dict>
 	</array>
+	
+	<!-- Privacy - Photo Library Usage Description -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>사진 업로드를 위해 사진 접근 권한이 필요합니다.</string>
+	
+	<!-- Privacy - Camera Usage Description -->
+	<key>NSCameraUsageDescription</key>
+	<string>사진 촬영을 위해 카메라 접근 권한이 필요합니다.</string>
 </dict>
 </plist>
