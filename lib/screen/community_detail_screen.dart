@@ -1058,56 +1058,38 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Future<String?> _uploadImage(File imageFile, String commentId) async {
-    print('=== 이미지 업로드 디버깅 시작 ===');
-    print('업로드할 이미지 파일: ${imageFile.path}');
-    print('파일 존재 여부: ${await imageFile.exists()}');
-    print('파일 크기: ${await imageFile.length()} bytes');
-    print('commentId: $commentId');
-    
     try {
-      setState(() {
-        _isUploadingImage = true;
-      });
-      print('_isUploadingImage = true 설정 완료');
+      final fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/$commentId/images/$fileName';
+      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
 
-      final String fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final String storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/$commentId/images/$fileName';
-      print('생성된 파일명: $fileName');
-      print('Storage 경로: $storagePath');
-      
-      final Reference storageRef = FirebaseStorage.instance
-          .ref()
-          .child(storagePath);
-      print('Storage 참조 생성 완료');
-
-      print('Firebase Storage 업로드 시작...');
-      final UploadTask uploadTask = storageRef.putFile(imageFile);
-      final TaskSnapshot snapshot = await uploadTask;
-      print('Firebase Storage 업로드 완료');
-      print('업로드된 바이트 수: ${snapshot.bytesTransferred}');
-      
-      print('다운로드 URL 가져오기 시작...');
-      final String downloadUrl = await snapshot.ref.getDownloadURL();
-      print('다운로드 URL: $downloadUrl');
-
-      setState(() {
-        _isUploadingImage = false;
-      });
-      print('_isUploadingImage = false 설정 완료');
-
-      print('=== 이미지 업로드 성공 ===');
-      return downloadUrl;
+      if (Platform.isIOS) {
+        // ✅ iOS에서는 putData 사용
+        final bytes = await imageFile.readAsBytes();
+        final metadata = SettableMetadata(contentType: 'image/jpeg');
+        final uploadTask = storageRef.putData(bytes, metadata);
+        final snapshot = await uploadTask;
+        if (snapshot.state == TaskState.success) {
+          final downloadUrl = await snapshot.ref.getDownloadURL();
+          return downloadUrl;
+        } else {
+          print('iOS 업로드 실패 상태: \\${snapshot.state}');
+          return null;
+        }
+      } else {
+        // ✅ 기존 방식 (안드로이드 등)
+        final uploadTask = storageRef.putFile(imageFile);
+        final snapshot = await uploadTask;
+        if (snapshot.state == TaskState.success) {
+          final downloadUrl = await snapshot.ref.getDownloadURL();
+          return downloadUrl;
+        } else {
+          print('업로드 실패 상태: \\${snapshot.state}');
+          return null;
+        }
+      }
     } catch (e) {
-      print('=== 이미지 업로드 오류 발생 ===');
-      print('오류 타입: ${e.runtimeType}');
-      print('오류 메시지: $e');
-      print('오류 스택트레이스: ${StackTrace.current}');
-      
-      setState(() {
-        _isUploadingImage = false;
-      });
-      print('_isUploadingImage = false 설정 완료 (오류 시)');
-      
+      print('업로드 실패: $e');
       return null;
     }
   }
