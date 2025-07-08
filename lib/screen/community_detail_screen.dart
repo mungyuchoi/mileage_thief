@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:io';
+import 'dart:io' show Platform;
 import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -989,25 +990,65 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Future<void> _pickImage() async {
+    print('=== 이미지 선택 디버깅 시작 ===');
+    print('현재 시간: ${DateTime.now()}');
+    print('플랫폼: ${Platform.operatingSystem}');
+    
     try {
+      print('image_picker.pickImage() 호출 시작...');
+      
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 85,
       );
-
+      
+      print('image_picker.pickImage() 호출 완료');
+      print('반환된 image: $image');
+      
       if (image != null) {
+        print('이미지 선택 성공!');
+        print('이미지 경로: ${image.path}');
+        print('이미지 이름: ${image.name}');
+        print('이미지 크기: ${await image.length()} bytes');
+        
         setState(() {
           _selectedImage = File(image.path);
         });
+        
+        print('_selectedImage 설정 완료: ${_selectedImage?.path}');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('이미지 선택 성공: ${image.name}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        print('이미지 선택 취소됨 (null 반환)');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('이미지 선택이 취소되었습니다.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
     } catch (e) {
-      print('이미지 선택 오류: $e');
+      print('=== 이미지 선택 오류 발생 ===');
+      print('오류 타입: ${e.runtimeType}');
+      print('오류 메시지: $e');
+      print('오류 스택트레이스: ${StackTrace.current}');
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다.')),
+        SnackBar(
+          content: Text('이미지 선택 중 오류가 발생했습니다: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+    
+    print('=== 이미지 선택 디버깅 종료 ===');
   }
 
   void _removeSelectedImage() {
