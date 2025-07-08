@@ -1058,45 +1058,85 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Future<String?> _uploadImage(File imageFile, String commentId) async {
+    print('=== 이미지 업로드 디버깅 시작 ===');
+    print('업로드할 이미지 파일: ${imageFile.path}');
+    print('파일 존재 여부: ${await imageFile.exists()}');
+    print('파일 크기: ${await imageFile.length()} bytes');
+    print('commentId: $commentId');
+    
     try {
       setState(() {
         _isUploadingImage = true;
       });
+      print('_isUploadingImage = true 설정 완료');
 
       final String fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final String storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/$commentId/images/$fileName';
+      print('생성된 파일명: $fileName');
+      print('Storage 경로: $storagePath');
+      
       final Reference storageRef = FirebaseStorage.instance
           .ref()
           .child(storagePath);
+      print('Storage 참조 생성 완료');
 
+      print('Firebase Storage 업로드 시작...');
       final UploadTask uploadTask = storageRef.putFile(imageFile);
       final TaskSnapshot snapshot = await uploadTask;
+      print('Firebase Storage 업로드 완료');
+      print('업로드된 바이트 수: ${snapshot.bytesTransferred}');
+      
+      print('다운로드 URL 가져오기 시작...');
       final String downloadUrl = await snapshot.ref.getDownloadURL();
+      print('다운로드 URL: $downloadUrl');
 
       setState(() {
         _isUploadingImage = false;
       });
+      print('_isUploadingImage = false 설정 완료');
 
+      print('=== 이미지 업로드 성공 ===');
       return downloadUrl;
     } catch (e) {
-      print('이미지 업로드 오류: $e');
+      print('=== 이미지 업로드 오류 발생 ===');
+      print('오류 타입: ${e.runtimeType}');
+      print('오류 메시지: $e');
+      print('오류 스택트레이스: ${StackTrace.current}');
+      
       setState(() {
         _isUploadingImage = false;
       });
+      print('_isUploadingImage = false 설정 완료 (오류 시)');
+      
       return null;
     }
   }
 
   Future<void> _addComment() async {
+    print('=== 댓글 등록 디버깅 시작 ===');
+    print('현재 사용자: ${_currentUser?.uid}');
+    print('댓글 텍스트: "${_commentController.text.trim()}"');
+    print('선택된 이미지: ${_selectedImage?.path}');
+    print('_isUploadingImage: $_isUploadingImage');
+    print('_isAddingComment: $_isAddingComment');
+    
     if (_currentUser == null ||
-        (_commentController.text.trim().isEmpty && _selectedImage == null)) return;
+        (_commentController.text.trim().isEmpty && _selectedImage == null)) {
+      print('댓글 등록 조건 미충족으로 종료');
+      return;
+    }
 
-    if (_isUploadingImage || _isAddingComment) return; // 이미지 업로드 중이거나 댓글 등록 중일 때는 중복 방지
+    if (_isUploadingImage || _isAddingComment) {
+      print('이미 업로드 중이거나 등록 중이므로 종료');
+      return;
+    }
 
     try {
+      print('댓글 등록 시작...');
       setState(() {
         _isAddingComment = true;
       });
+      print('_isAddingComment = true 설정 완료');
 
       // 먼저 댓글 문서를 생성해서 commentId를 얻음
       final commentRef = FirebaseFirestore.instance
@@ -1136,8 +1176,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       // 이미지가 있으면 업로드
       if (_selectedImage != null) {
+        print('이미지 업로드 시작...');
+        print('선택된 이미지 파일: ${_selectedImage!.path}');
+        print('commentRef.id: ${commentRef.id}');
+        
         final imageUrl = await _uploadImage(_selectedImage!, commentRef.id);
+        print('이미지 업로드 결과: $imageUrl');
+        
         if (imageUrl != null) {
+          print('이미지 업로드 성공, HTML에 이미지 태그 추가');
           // HTML에 이미지 태그 추가
           contentHtml += '<br><img src="$imageUrl" alt="첨부이미지" style="max-width: 100%; border-radius: 8px;" />';
 
@@ -1147,7 +1194,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             'url': imageUrl,
             'filename': 'image_${DateTime.now().millisecondsSinceEpoch}.jpg',
           });
+          print('첨부파일 목록에 이미지 추가 완료');
+        } else {
+          print('이미지 업로드 실패');
         }
+      } else {
+        print('선택된 이미지가 없음');
       }
 
       // UserService를 통해 사용자 정보 가져오기
@@ -1235,14 +1287,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         const SnackBar(content: Text('댓글이 등록되었습니다.')),
       );
     } catch (e) {
-      print('댓글 등록 오류: $e');
+      print('=== 댓글 등록 오류 발생 ===');
+      print('오류 타입: ${e.runtimeType}');
+      print('오류 메시지: $e');
+      print('오류 스택트레이스: ${StackTrace.current}');
+      
       setState(() {
         _isAddingComment = false;
       });
+      print('_isAddingComment = false 설정 완료 (오류 시)');
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('댓글 등록 중 오류가 발생했습니다.')),
+        SnackBar(
+          content: Text('댓글 등록 중 오류가 발생했습니다: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+    
+    print('=== 댓글 등록 디버깅 종료 ===');
   }
 
   String _getPlainTextFromHtml(String htmlString) {
