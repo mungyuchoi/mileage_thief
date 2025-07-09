@@ -412,7 +412,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       // 2. Firebase Storage에 업로드
       final File imageFile = File(image.path);
       final String fileName = '${user.uid}.png';
-      final Reference storageRef = FirebaseStorage.instance
+      
+      // iOS에서는 올바른 bucket 사용
+      FirebaseStorage storage;
+      if (Platform.isIOS) {
+        storage = FirebaseStorage.instanceFor(bucket: 'mileagethief.firebasestorage.app');
+      } else {
+        storage = FirebaseStorage.instance;
+      }
+      
+      final Reference storageRef = storage
           .ref()
           .child('users')
           .child(fileName);

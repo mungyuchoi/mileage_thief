@@ -133,8 +133,16 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
 
   Future<String> _uploadImageAndGetUrl(String imagePath, String postId, String dateString) async {
     try {
+      // iOS에서는 올바른 bucket 사용
+      FirebaseStorage storage;
+      if (Platform.isIOS) {
+        storage = FirebaseStorage.instanceFor(bucket: 'mileagethief.firebasestorage.app');
+      } else {
+        storage = FirebaseStorage.instance;
+      }
+      
       final String fileName = '${postId}_${const Uuid().v4()}.${imagePath.split('.').last}';
-      final Reference ref = FirebaseStorage.instance
+      final Reference ref = storage
           .ref()
           .child('posts')
           .child(dateString)
@@ -157,7 +165,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   Future<String> _processImagesInHtml(String htmlContent, String postId, String dateString) async {
     String processedHtml = htmlContent;
     
-    print('HTML 처리 시작, 원본 크기: [33m${htmlContent.length}[0m 바이트');
+    print('HTML 처리 시작, 원본 크기:  [33m${htmlContent.length} [0m 바이트');
     
     // file:// 형태의 로컬 이미지 경로 처리
     final RegExp fileImgRegex = RegExp(r'<img[^>]*src="file://([^"]*)"[^>]*>', caseSensitive: false);

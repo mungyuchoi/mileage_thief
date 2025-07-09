@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:io';
-import 'dart:io' show Platform;
 import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -18,6 +17,9 @@ import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
 import '../helper/AdHelper.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -991,15 +993,42 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Future<void> _pickImage() async {
-    print('=== 이미지 선택 디버깅 시작 ===');
-    print('현재 시간: ${DateTime.now()}');
-    print('플랫폼: ${Platform.operatingSystem}');
-    
     try {
-      print('image_picker.pickImage() 호출 시작...');
+      // iOS에서 권한 확인 및 요청
       if (Platform.isIOS) {
-        await Permission.photosAddOnly.request();
+        final permission = Permission.photos;
+        final status = await permission.status;
+        
+        if (status.isDenied) {
+          final result = await permission.request();
+          
+          if (result.isDenied) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('사진 라이브러리 접근 권한이 필요합니다.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        } else if (status.isPermanentlyDenied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('설정에서 사진 접근 권한을 허용해주세요.'),
+              backgroundColor: Colors.red,
+              action: SnackBarAction(
+                label: '설정',
+                textColor: Colors.white,
+                onPressed: () {
+                  openAppSettings();
+                },
+              ),
+            ),
+          );
+          return;
+        }
       }
+      
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
@@ -1007,29 +1036,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         imageQuality: 85,
       );
       
-      print('image_picker.pickImage() 호출 완료');
-      print('반환된 image: $image');
-      
       if (image != null) {
-        print('이미지 선택 성공!');
-        print('이미지 경로: ${image.path}');
-        print('이미지 이름: ${image.name}');
-        print('이미지 크기: ${await image.length()} bytes');
-        
         setState(() {
           _selectedImage = File(image.path);
         });
-        
-        print('_selectedImage 설정 완료: ${_selectedImage?.path}');
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('이미지 선택 성공: ${image.name}'),
-            backgroundColor: Colors.green,
-          ),
-        );
       } else {
-        print('이미지 선택 취소됨 (null 반환)');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('이미지 선택이 취소되었습니다.'),
@@ -1038,11 +1049,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         );
       }
     } catch (e) {
-      print('=== 이미지 선택 오류 발생 ===');
-      print('오류 타입: ${e.runtimeType}');
-      print('오류 메시지: $e');
-      print('오류 스택트레이스: ${StackTrace.current}');
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('이미지 선택 중 오류가 발생했습니다: $e'),
@@ -1050,8 +1056,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ),
       );
     }
-    
-    print('=== 이미지 선택 디버깅 종료 ===');
   }
 
   void _removeSelectedImage() {
@@ -1062,49 +1066,50 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<String?> _uploadImage(File imageFile, String commentId) async {
     try {
-      final fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/$commentId/images/$fileName';
-      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+      // iOS에서는 올바른 bucket 사용
+      FirebaseStorage storage;
+      if (Platform.isIOS) {
+        storage = FirebaseStorage.instanceFor(bucket: 'mileagethief.firebasestorage.app');
+      } else {
+        storage = FirebaseStorage.instance;
+      }
+      
+      if (!await imageFile.exists()) {
+        return null;
+      }
+      
+      final fileName = 'test_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = fileName; // 루트 경로에 직접 업로드
+      
+      final storageRef = storage.ref().child(storagePath);
       final uploadTask = storageRef.putFile(imageFile);
       final snapshot = await uploadTask;
+      
       if (snapshot.state == TaskState.success) {
         final downloadUrl = await snapshot.ref.getDownloadURL();
         return downloadUrl;
       } else {
-        print('업로드 실패 상태: \\${snapshot.state}');
         return null;
       }
     } catch (e) {
-      print('업로드 실패: $e');
       return null;
     }
   }
 
   Future<void> _addComment() async {
-    print('=== 댓글 등록 디버깅 시작 ===');
-    print('현재 사용자: ${_currentUser?.uid}');
-    print('댓글 텍스트: "${_commentController.text.trim()}"');
-    print('선택된 이미지: ${_selectedImage?.path}');
-    print('_isUploadingImage: $_isUploadingImage');
-    print('_isAddingComment: $_isAddingComment');
-    
     if (_currentUser == null ||
         (_commentController.text.trim().isEmpty && _selectedImage == null)) {
-      print('댓글 등록 조건 미충족으로 종료');
       return;
     }
 
     if (_isUploadingImage || _isAddingComment) {
-      print('이미 업로드 중이거나 등록 중이므로 종료');
       return;
     }
 
     try {
-      print('댓글 등록 시작...');
       setState(() {
         _isAddingComment = true;
       });
-      print('_isAddingComment = true 설정 완료');
 
       // 먼저 댓글 문서를 생성해서 commentId를 얻음
       final commentRef = FirebaseFirestore.instance
@@ -1144,15 +1149,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       // 이미지가 있으면 업로드
       if (_selectedImage != null) {
-        print('이미지 업로드 시작...');
-        print('선택된 이미지 파일: ${_selectedImage!.path}');
-        print('commentRef.id: ${commentRef.id}');
-        
         final imageUrl = await _uploadImage(_selectedImage!, commentRef.id);
-        print('이미지 업로드 결과: $imageUrl');
         
         if (imageUrl != null) {
-          print('이미지 업로드 성공, HTML에 이미지 태그 추가');
           // HTML에 이미지 태그 추가
           contentHtml += '<br><img src="$imageUrl" alt="첨부이미지" style="max-width: 100%; border-radius: 8px;" />';
 
@@ -1162,12 +1161,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             'url': imageUrl,
             'filename': 'image_${DateTime.now().millisecondsSinceEpoch}.jpg',
           });
-          print('첨부파일 목록에 이미지 추가 완료');
-        } else {
-          print('이미지 업로드 실패');
         }
-      } else {
-        print('선택된 이미지가 없음');
       }
 
       // UserService를 통해 사용자 정보 가져오기
@@ -1255,15 +1249,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         const SnackBar(content: Text('댓글이 등록되었습니다.')),
       );
     } catch (e) {
-      print('=== 댓글 등록 오류 발생 ===');
-      print('오류 타입: ${e.runtimeType}');
-      print('오류 메시지: $e');
-      print('오류 스택트레이스: ${StackTrace.current}');
-      
       setState(() {
         _isAddingComment = false;
       });
-      print('_isAddingComment = false 설정 완료 (오류 시)');
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1272,8 +1260,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ),
       );
     }
-    
-    print('=== 댓글 등록 디버깅 종료 ===');
   }
 
   String _getPlainTextFromHtml(String htmlString) {
