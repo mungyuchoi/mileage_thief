@@ -1065,31 +1065,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       final fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/$commentId/images/$fileName';
       final storageRef = FirebaseStorage.instance.ref().child(storagePath);
-
-      if (Platform.isIOS) {
-        // ✅ iOS에서는 putData 사용
-        final bytes = await imageFile.readAsBytes();
-        final metadata = SettableMetadata(contentType: 'image/jpeg');
-        final uploadTask = storageRef.putData(bytes, metadata);
-        final snapshot = await uploadTask;
-        if (snapshot.state == TaskState.success) {
-          final downloadUrl = await snapshot.ref.getDownloadURL();
-          return downloadUrl;
-        } else {
-          print('iOS 업로드 실패 상태: \\${snapshot.state}');
-          return null;
-        }
+      final uploadTask = storageRef.putFile(imageFile);
+      final snapshot = await uploadTask;
+      if (snapshot.state == TaskState.success) {
+        final downloadUrl = await snapshot.ref.getDownloadURL();
+        return downloadUrl;
       } else {
-        // ✅ 기존 방식 (안드로이드 등)
-        final uploadTask = storageRef.putFile(imageFile);
-        final snapshot = await uploadTask;
-        if (snapshot.state == TaskState.success) {
-          final downloadUrl = await snapshot.ref.getDownloadURL();
-          return downloadUrl;
-        } else {
-          print('업로드 실패 상태: \\${snapshot.state}');
-          return null;
-        }
+        print('업로드 실패 상태: \\${snapshot.state}');
+        return null;
       }
     } catch (e) {
       print('업로드 실패: $e');
