@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -996,7 +997,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     
     try {
       print('image_picker.pickImage() 호출 시작...');
-      
+      if (Platform.isIOS) {
+        await Permission.photosAddOnly.request();
+      }
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
