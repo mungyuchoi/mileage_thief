@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mileage_thief/screen/user_profile_screen.dart';
+
+import 'my_page_screen.dart'; // Added import for UserProfileScreen
 
 class FollowerListScreen extends StatefulWidget {
   final String? userUid; // null이면 본인, 있으면 해당 유저
@@ -193,51 +196,70 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
                           children: [
-                            // 프로필 이미지
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: Colors.grey[200],
-                              backgroundImage: (follower['photoURL'] as String).isNotEmpty
-                                  ? NetworkImage(follower['photoURL'])
-                                  : null,
-                              child: (follower['photoURL'] as String).isEmpty
-                                  ? const Icon(Icons.person, color: Colors.grey, size: 28)
-                                  : null,
-                            ),
-                            const SizedBox(width: 14),
-                            // 닉네임/레벨
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    follower['displayName'],
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                              child: GestureDetector(
+                                onTap: () {
+                                  final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                                  if (followerUid == currentUid) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const MyPageScreen()),
+                                    );
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: followerUid)),
+                                    );
+                                  }
+                                },
+                                behavior: HitTestBehavior.translucent,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: Colors.grey[200],
+                                      backgroundImage: (follower['photoURL'] as String).isNotEmpty
+                                          ? NetworkImage(follower['photoURL'])
+                                          : null,
+                                      child: (follower['photoURL'] as String).isEmpty
+                                          ? const Icon(Icons.person, color: Colors.grey, size: 28)
+                                          : null,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    follower['displayGrade'],
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey,
+                                    const SizedBox(width: 14),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          follower['displayName'],
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          follower['displayGrade'],
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                            // 팔로우/팔로잉 버튼 (본인이 아닌 경우에만 표시)
                             if (!isMyself)
                               GestureDetector(
                                 onTap: () => _toggleFollow(followerUid, isFollowing),
                                 child: Container(
+                                  margin: const EdgeInsets.only(left: 8), // 버튼과 프로필 사이 여백
                                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: isFollowing ? Colors.grey[200] : const Color(0xFF74512D),

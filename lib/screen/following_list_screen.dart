@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mileage_thief/screen/user_profile_screen.dart';
+
+import 'my_page_screen.dart';
 
 class FollowingListScreen extends StatefulWidget {
   final String? userUid; // null이면 본인, 있으면 해당 유저
@@ -252,52 +255,71 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
                           children: [
-                            // 프로필 이미지
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: Colors.grey[200],
-                              backgroundImage: (user['photoURL'] as String).isNotEmpty
-                                  ? NetworkImage(user['photoURL'])
-                                  : null,
-                              child: (user['photoURL'] as String).isEmpty
-                                  ? const Icon(Icons.person, color: Colors.grey, size: 28)
-                                  : null,
-                            ),
-                            const SizedBox(width: 14),
-                            // 닉네임/레벨
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    user['displayName'],
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                              child: GestureDetector(
+                                onTap: () {
+                                  final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                                  if (userUid == currentUid) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const MyPageScreen()),
+                                    );
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: userUid)),
+                                    );
+                                  }
+                                },
+                                behavior: HitTestBehavior.translucent,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: Colors.grey[200],
+                                      backgroundImage: (user['photoURL'] as String).isNotEmpty
+                                          ? NetworkImage(user['photoURL'])
+                                          : null,
+                                      child: (user['photoURL'] as String).isEmpty
+                                          ? const Icon(Icons.person, color: Colors.grey, size: 28)
+                                          : null,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    user['displayGrade'],
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey,
+                                    const SizedBox(width: 14),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          user['displayName'],
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          user['displayGrade'],
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                            // 팔로우/팔로잉 버튼
+                            // 팔로우/언팔로우 버튼 (항상 오른쪽 끝)
                             if (isMyProfile && !isMyself)
-                              // 본인 팔로잉 리스트에서는 팔로잉 버튼 (취소)
                               GestureDetector(
                                 onTap: () => _unfollow(userUid, user['displayName']),
                                 child: Container(
+                                  margin: const EdgeInsets.only(left: 8),
                                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: Colors.grey[200],
@@ -314,10 +336,10 @@ class _FollowingListScreenState extends State<FollowingListScreen> {
                                 ),
                               )
                             else if (!isMyProfile && !isMyself)
-                              // 다른 사람 팔로잉 리스트에서는 팔로우/팔로잉 토글 버튼
                               GestureDetector(
                                 onTap: () => _toggleFollow(userUid, isFollowing),
                                 child: Container(
+                                  margin: const EdgeInsets.only(left: 8),
                                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: isFollowing ? Colors.grey[200] : const Color(0xFF74512D),
