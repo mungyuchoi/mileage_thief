@@ -1798,11 +1798,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     icon: Icon(
                                       Icons.image_outlined,
                                       color: (_myUserProfile?['isBanned'] == true) ? Colors.grey[300] : Colors.grey[600],
-                                      size: 24,
+                                      size: 24, // 기존 24 → 22
                                     ),
+                                    padding: EdgeInsets.zero, // 여백 최소화
+                                    constraints: BoxConstraints(minWidth: 32, minHeight: 32), // 최소 크기
                                     tooltip: '이미지 첨부',
                                   ),
-                                  const SizedBox(width: 8),
 
                                   // 텍스트 입력 필드
                                   Expanded(

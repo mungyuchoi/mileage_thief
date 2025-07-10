@@ -353,9 +353,13 @@ class _SearchScreenState extends State<SearchScreen> {
       final snapshot = event.snapshot;
       Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
       if (values != null) {
-        values.forEach((key, value) {
-          _latestVersion = value;
-        });
+        if (Platform.isAndroid && values.containsKey('androidLatest')) {
+          _latestVersion = values['androidLatest'];
+        } else if (Platform.isIOS && values.containsKey('iosLatest')) {
+          _latestVersion = values['iosLatest'];
+        } else {
+          _latestVersion = '';
+        }
         setState(() {});
       }
     });
