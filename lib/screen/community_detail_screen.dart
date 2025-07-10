@@ -1809,11 +1809,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     child: TextField(
                                       controller: _commentController,
                                       enabled: !(_myUserProfile?['isBanned'] == true),
+                                      style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         hintText: _myUserProfile?['isBanned'] == true
                                             ? '정지된 계정은 댓글을 작성할 수 없습니다'
                                             : (_editingCommentId != null ? '댓글 수정' : '댓글을 입력하세요'),
-                                        hintStyle: TextStyle(color: Colors.grey[500]),
+                                        hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(24),
                                           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1831,17 +1832,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                           vertical: 12,
                                         ),
                                       ),
-                                      maxLines: null,
-                                      textInputAction: TextInputAction.send,
-                                      onSubmitted: (_myUserProfile?['isBanned'] == true)
-                                          ? null
-                                          : (_) {
-                                              if (_editingCommentId != null) {
-                                                _updateComment();
-                                              } else {
-                                                _addComment();
-                                              }
-                                            },
+                                      maxLines: null, // 여러 줄 입력 가능
+                                      textInputAction: TextInputAction.newline, // 엔터키로 줄바꿈
                                     ),
                                   ),
                                   const SizedBox(width: 12),
