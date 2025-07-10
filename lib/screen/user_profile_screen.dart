@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
+import 'package:lottie/lottie.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userUid;
@@ -210,6 +211,40 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     }
   }
 
+  // 1. _buildSkyEffectPreview 함수 추가 (community_detail_screen.dart에서 복사)
+  Widget _buildSkyEffectPreview(String? effectId) {
+    if (effectId == null || effectId.isEmpty) return const SizedBox.shrink();
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 28);
+        }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final lottieUrl = data['lottieUrl'] as String?;
+        if (lottieUrl != null && lottieUrl.isNotEmpty) {
+          return SizedBox(
+            width: 36,
+            height: 36,
+            child: Lottie.network(
+              lottieUrl,
+              width: 36,
+              height: 36,
+              fit: BoxFit.contain,
+              repeat: true,
+              animate: true,
+            ),
+          );
+        } else {
+          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 28);
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,15 +278,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                     ),
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 44,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage: (userProfile!['photoURL'] as String?)?.isNotEmpty == true
-                              ? NetworkImage(userProfile!['photoURL'])
-                              : null,
-                          child: (userProfile!['photoURL'] as String?)?.isEmpty == true
-                              ? const Icon(Icons.person, color: Colors.grey, size: 48)
-                              : null,
+                        // 2. 프로필 카드 내 CircleAvatar + skyEffect Row로 감싸기
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Expanded(child: SizedBox()), // 1번(왼쪽) 빈 공간
+                            Expanded(
+                              child: Center(
+                                child: CircleAvatar(
+                                  radius: 44,
+                                  backgroundColor: Colors.grey[200],
+                                  backgroundImage: (userProfile!['photoURL'] as String?)?.isNotEmpty == true
+                                      ? NetworkImage(userProfile!['photoURL'])
+                                      : null,
+                                  child: (userProfile!['photoURL'] as String?)?.isEmpty == true
+                                      ? const Icon(Icons.person, color: Colors.grey, size: 48)
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: (userProfile?['currentSkyEffect'] ?? '').toString().isNotEmpty
+                                  ? Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: _buildSkyEffectPreview(userProfile?['currentSkyEffect']),
+                                    )
+                                  : const SizedBox(),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 14),
                         Text(
