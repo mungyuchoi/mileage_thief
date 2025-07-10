@@ -1945,18 +1945,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                               )
                             : null,
                       ),
-                      // currentSkyEffect 표시
-                      if (comment['currentSkyEffect'] != null && 
-                          (comment['currentSkyEffect'] as String).isNotEmpty)
-                        Positioned(
-                          right: -2,
-                          bottom: -2,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            child: _buildSkyEffectPreview(comment['currentSkyEffect']),
-                          ),
-                        ),
+                      // currentSkyEffect 표시 (댓글에서는 제거)
+                      // if (comment['currentSkyEffect'] != null && 
+                      //     (comment['currentSkyEffect'] as String).isNotEmpty)
+                      //   Positioned(
+                      //     right: -2,
+                      //     bottom: -2,
+                      //     child: Container(
+                      //       width: 20,
+                      //       height: 20,
+                      //       child: _buildSkyEffectPreview(comment['currentSkyEffect']),
+                      //     ),
+                      //   ),
                     ],
                   ),
                 ],
