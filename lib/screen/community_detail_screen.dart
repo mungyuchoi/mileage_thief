@@ -2687,8 +2687,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   Widget _buildProfileBannerAd() {
     if (_isProfileBannerAdLoaded && _profileBannerAd != null) {
       return Container(
-        width: _profileBannerAd!.size.width.toDouble(),
+        width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정
         height: _profileBannerAd!.size.height.toDouble(),
+        alignment: Alignment.center,
         child: AdWidget(ad: _profileBannerAd!),
       );
     } else {
