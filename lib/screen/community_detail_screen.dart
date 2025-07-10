@@ -49,6 +49,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isLiked = false;
   bool _isFollowing = false;
   Map<String, bool> _commentLikes = {}; // 댓글 좋아요 상태 저장
+  Set<String> _processingCommentLikes = {}; // 좋아요 처리 중인 댓글 ID들
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   final TextEditingController _commentController = TextEditingController();
   String _commentSortOrder = '등록순';
@@ -435,7 +436,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       return;
     }
 
+    // 이미 처리 중인 댓글이면 중복 클릭 방지
+    if (_processingCommentLikes.contains(commentId)) {
+      return;
+    }
+
     try {
+      // 처리 중 상태로 설정
+      setState(() {
+        _processingCommentLikes.add(commentId);
+      });
+
       final commentRef = FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
@@ -486,6 +497,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('오류가 발생했습니다.')),
       );
+    } finally {
+      // 처리 완료 후 처리 중 상태 해제
+      setState(() {
+        _processingCommentLikes.remove(commentId);
+      });
     }
   }
 
@@ -1987,7 +2003,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () => _toggleCommentLike(comment['commentId']),
+                        onTap: _processingCommentLikes.contains(comment['commentId'])
+                            ? null // 처리 중일 때는 클릭 비활성화
+                            : () => _toggleCommentLike(comment['commentId']),
                         child: Row(
                           children: [
                             Icon(
@@ -1995,18 +2013,22 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   ? Icons.favorite
                                   : Icons.favorite_border,
                               size: 16,
-                              color: (_commentLikes[comment['commentId']] ?? false)
-                                  ? Colors.red
-                                  : Colors.grey[500],
+                              color: (_processingCommentLikes.contains(comment['commentId']))
+                                  ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
+                                  : (_commentLikes[comment['commentId']] ?? false)
+                                      ? Colors.red
+                                      : Colors.grey[500],
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${comment['likesCount'] ?? 0}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: (_commentLikes[comment['commentId']] ?? false)
-                                    ? Colors.red
-                                    : Colors.grey[500],
+                                color: (_processingCommentLikes.contains(comment['commentId']))
+                                    ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
+                                    : (_commentLikes[comment['commentId']] ?? false)
+                                        ? Colors.red
+                                        : Colors.grey[500],
                               ),
                             ),
                           ],
