@@ -1808,7 +1808,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   Expanded(
                                     child: TextField(
                                       controller: _commentController,
-                                      enabled: !(_myUserProfile?['isBanned'] == true),
+                                      enabled: !(_myUserProfile?['isBanned'] == true || _isAddingComment), // 업로드 중엔 비활성화
                                       style: const TextStyle(fontSize: 14),
                                       decoration: InputDecoration(
                                         hintText: _myUserProfile?['isBanned'] == true
@@ -1840,7 +1840,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
                                   if (_editingCommentId != null) ...[
                                     ElevatedButton(
-                                      onPressed: (_myUserProfile?['isBanned'] == true) ? null : _updateComment,
+                                      onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _updateComment,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFF74512D),
                                         shape: RoundedRectangleBorder(
@@ -1852,21 +1852,27 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     TextButton(
-                                      onPressed: (_myUserProfile?['isBanned'] == true) ? null : _cancelEditComment,
+                                      onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _cancelEditComment,
                                       child: const Text('취소', style: TextStyle(color: Colors.grey)),
                                     ),
                                   ] else ...[
-                                    ElevatedButton(
-                                      onPressed: (_myUserProfile?['isBanned'] == true) ? null : _addComment,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF74512D),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
+                                    _isAddingComment
+                                      ? SizedBox(
+                                          width: 32,
+                                          height: 32,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF74512D)),
+                                        )
+                                      : ElevatedButton(
+                                          onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _addComment,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF74512D),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                          ),
+                                          child: const Text('등록', style: TextStyle(color: Colors.white)),
                                         ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                      ),
-                                      child: const Text('등록', style: TextStyle(color: Colors.white)),
-                                    ),
                                   ],
                                 ],
                               ),
