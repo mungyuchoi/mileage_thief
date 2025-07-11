@@ -39,8 +39,7 @@
 | postCount             | number   | 작성한 글 수 |
 | commentCount          | number   | 댓글 수 |
 | likesReceived         | number   | 받은 좋아요 수 |
-| reportedCount         | number   | 신고당한 횟수 |
-| reportSubmittedCount  | number   | 신고한 횟수 |
+| likesCount            | number   | 좋아요 수 |
 | grade                 | string   | 등급 (이코노미, 비즈니스, 퍼스트, 히든) |
 | gradeLevel            | number   | 등급 내 레벨 (1~5, 퍼스트는 1~2) |
 | displayGrade          | string   | UI용: "비즈니스 Lv.3" |
@@ -48,11 +47,6 @@
 | gradeUpdatedAt        | timestamp| 등급 갱신 일시 |
 | peanutCount           | number   | 커뮤니티 포인트 (기존 mileagePoints → peanutCount로 변경) |
 | peanutCountLimit      | number   | 포인트 최대치 (Flutter 구조 반영) |
-| adBonusPercent        | number   | 광고 시 보너스 (%) |
-| badgeVisible          | boolean  | 닉네임 옆 뱃지 표시 여부 |
-| roles                 | array    | 권한 (예: ["user"], ["admin"]) |
-| isBanned              | boolean  | 차단 여부 |
-| warnCount             | number   | 경고 횟수 누적 |
 | fcmToken              | string   | FCM 푸시 토큰 (Flutter 구조 반영) |
 | followingCount        | number   | 내가 팔로우한 유저 수 |
 | followerCount         | number   | 나를 팔로우한 유저 수 |
@@ -60,6 +54,8 @@
 | displayNameChangeCount| number   | 닉네임 변경 횟수 (0부터 시작, 1회 무료) |
 | photoURLEnable        | boolean  | 프로필 이미지 변경 가능 여부 (true/false) |
 | displayNameEnable     | boolean  | 닉네임 변경 가능 여부 (true/false) |
+| ownedEffects          | array    | 보유한 스카이 이펙트 목록 |
+| currentSkyEffect      | string   | 현재 적용된 스카이 이펙트 (null 가능) |
 
 ### 📂 서브컬렉션
 
