@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
@@ -16,6 +17,7 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> with SingleTickerProviderStateMixin {
   Map<String, dynamic>? userProfile;
+  Map<String, dynamic>? currentUserProfile; // 현재 로그인한 사용자의 프로필 추가
   int followerCount = 0;
   int followingCount = 0;
   bool isFollowing = false;
@@ -31,6 +33,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadUserProfile();
+    _loadCurrentUserProfile(); // 현재 로그인한 사용자 프로필 로드 추가
     _loadUserPosts();
     _loadUserComments();
     _checkFollowing();
@@ -47,6 +50,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       });
     } else {
       setState(() { isLoading = false; });
+    }
+  }
+
+  // 현재 로그인한 사용자의 프로필 로드
+  Future<void> _loadCurrentUserProfile() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+      if (doc.exists) {
+        setState(() {
+          currentUserProfile = doc.data();
+        });
+      }
     }
   }
 
@@ -247,6 +263,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    // 본인 프로필이 아니고, 로그인 유저가 admin인지 체크
+    bool isAdmin = false;
+    if (currentUser != null && currentUserProfile != null && currentUser.uid != widget.userUid) {
+      // 현재 로그인한 사용자의 roles 확인
+      final roles = currentUserProfile!['roles'] ?? [];
+      isAdmin = roles.contains('admin');
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FA),
       appBar: AppBar(
@@ -413,6 +438,76 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                             ),
                           ],
                         ),
+                        // 관리자용 ban/unban 버튼
+                        if (isAdmin) ...[
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: userProfile!['isBanned'] == true ? Colors.green : Colors.red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: Text(
+                                    userProfile!['isBanned'] == true ? '이용금지 해제' : '이용금지 처리',
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                  content: Text(
+                                    userProfile!['isBanned'] == true
+                                        ? '이 사용자의 이용금지를 해제하시겠습니까?'
+                                        : '이 사용자를 정말 이용금지 처리하시겠습니까?',
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('아니오', style: TextStyle(color: Colors.black)), 
+                                      onPressed: () => Navigator.pop(context, false)
+                                    ),
+                                    TextButton(
+                                      child: const Text('예', style: TextStyle(color: Colors.black)), 
+                                      onPressed: () => Navigator.pop(context, true)
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(widget.userUid)
+                                      .update({'isBanned': !(userProfile!['isBanned'] == true)});
+                                  setState(() {
+                                    userProfile!['isBanned'] = !(userProfile!['isBanned'] == true);
+                                  });
+                                  Fluttertoast.showToast(
+                                    msg: userProfile!['isBanned'] == true
+                                        ? '해당 사용자는 이용금지 처리되었습니다.'
+                                        : '이용금지가 해제되었습니다.',
+                                    backgroundColor: Colors.black87,
+                                    textColor: Colors.white,
+                                  );
+                                } catch (e) {
+                                  print('이용금지 처리 오류: $e');
+                                  Fluttertoast.showToast(
+                                    msg: '처리 중 오류가 발생했습니다.',
+                                    backgroundColor: Colors.red,
+                                    textColor: Colors.white,
+                                  );
+                                }
+                              }
+                            },
+                            child: Text(
+                              userProfile!['isBanned'] == true ? '이용금지 해제' : '이용금지 처리',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

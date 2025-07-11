@@ -35,6 +35,7 @@ class UserService {
       'ownedEffects': [],
       'currentSkyEffect': null,
       'roles': ['user'],
+      'isBanned': false,
     };
   }
 
@@ -497,6 +498,19 @@ Future<void> migrateUsersToRolesSystem() async {
     }
   }
   print('모든 기존 사용자 문서에 관리자 권한 시스템 필드 마이그레이션 완료!');
+}
+
+// isBanned 필드 마이그레이션
+Future<void> migrateUsersToIsBanned() async {
+  final users = await FirebaseFirestore.instance.collection('users').get();
+  for (final doc in users.docs) {
+    final data = doc.data();
+    if (!data.containsKey('isBanned')) {
+      await doc.reference.update({'isBanned': false});
+      print('사용자 ${doc.id}에 isBanned: false 추가 완료');
+    }
+  }
+  print('모든 기존 사용자 문서에 isBanned 필드 마이그레이션 완료!');
 }
 
 /// users 컬렉션에서 adBonusPercent, badgeVisible, reportSubmittedCount, reportedCount, warnCount 필드 일괄 삭제

@@ -57,6 +57,7 @@
 | ownedEffects          | array    | 보유한 스카이 이펙트 목록 |
 | currentSkyEffect      | string   | 현재 적용된 스카이 이펙트 (null 가능) |
 | roles                 | array    | 권한 (예: ["user"], ["admin"]) |
+| isBanned              | boolean  | 차단 여부 |
 
 ### 📂 서브컬렉션
 
