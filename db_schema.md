@@ -56,6 +56,7 @@
 | displayNameEnable     | boolean  | 닉네임 변경 가능 여부 (true/false) |
 | ownedEffects          | array    | 보유한 스카이 이펙트 목록 |
 | currentSkyEffect      | string   | 현재 적용된 스카이 이펙트 (null 가능) |
+| roles                 | array    | 권한 (예: ["user"], ["admin"]) |
 
 ### 📂 서브컬렉션
 

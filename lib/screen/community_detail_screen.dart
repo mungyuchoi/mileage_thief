@@ -716,6 +716,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           case 'move':
             _showMoveCategoryDialog();
             break;
+          case 'hide':
+            _hidePost();
+            break;
+          case 'unhide':
+            _unhidePost();
+            break;
         }
       },
       itemBuilder: (BuildContext context) {
@@ -759,7 +765,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         }
         // 관리자라면 이동하기 옵션 추가 (본인/남의 게시글 상관없이)
         if (isAdmin) {
-          items.add(
+          items.addAll([
             const PopupMenuItem<String>(
               value: 'move',
               child: Row(
@@ -770,7 +776,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ],
               ),
             ),
-          );
+            PopupMenuItem<String>(
+              value: _post?['isHidden'] == true ? 'unhide' : 'hide',
+              child: Row(
+                children: [
+                  Icon(
+                    _post?['isHidden'] == true ? Icons.visibility : Icons.visibility_off,
+                    size: 20,
+                    color: _post?['isHidden'] == true ? Colors.green : Colors.orange,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _post?['isHidden'] == true ? '숨김 해제' : '숨김처리',
+                    style: TextStyle(
+                      color: _post?['isHidden'] == true ? Colors.green : Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ]);
         }
         return items;
       },
@@ -980,6 +1005,112 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('사용자를 차단했습니다.')),
     );
+  }
+
+  // 게시글 숨김처리
+  void _hidePost() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('게시글 숨김처리'),
+        content: const Text('이 게시글을 숨김처리하시겠습니까?\n숨김처리된 게시글은 목록에서 보이지 않습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _confirmHidePost();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('숨김처리'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 게시글 숨김 해제
+  void _unhidePost() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('게시글 숨김 해제'),
+        content: const Text('이 게시글의 숨김을 해제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _confirmUnhidePost();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.green),
+            child: const Text('숨김 해제'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmHidePost() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .update({
+            'isHidden': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // 게시글 데이터 새로고침
+      await _loadPostDetail();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글이 숨김처리되었습니다.')),
+      );
+    } catch (e) {
+      print('게시글 숨김처리 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글 숨김처리 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  Future<void> _confirmUnhidePost() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .update({
+            'isHidden': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // 게시글 데이터 새로고침
+      await _loadPostDetail();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글 숨김이 해제되었습니다.')),
+      );
+    } catch (e) {
+      print('게시글 숨김 해제 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글 숨김 해제 중 오류가 발생했습니다.')),
+      );
+    }
   }
 
   Future<void> _launchUrl(String url) async {
@@ -1520,43 +1651,82 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   _buildProfileBannerAd(),
                                   const SizedBox(height: 16),
 
-                                  // 5. 게시글 내용 (contentHtml)
-                                  Html(
-                                    data: _post!['contentHtml'] ?? '',
-                                    style: {
-                                      "body": Style(
-                                        fontSize: FontSize(15),
-                                        color: Colors.black87,
-                                        lineHeight: LineHeight(1.5),
-                                        margin: Margins.zero,
+                                  // 5. 게시글 내용 (contentHtml) 또는 숨김처리 메시지
+                                  if (_post!['isHidden'] == true)
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.grey[300]!),
                                       ),
-                                      "p": Style(
-                                        margin: Margins.zero,
-                                        padding: HtmlPaddings.zero,
-                                        whiteSpace: WhiteSpace.pre,
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.visibility_off,
+                                            size: 48,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          const Text(
+                                            '관리자에 의해 숨김처리되었습니다.',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.grey,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            '이 게시글은 커뮤니티 운영 정책에 따라 숨김처리되었습니다.',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
                                       ),
-                                      "br": Style(
-                                        margin: Margins.only(bottom: 8),
-                                        display: Display.block,
-                                      ),
-                                      "img": Style(
-                                        margin: Margins.zero,
-                                        display: Display.block,
-                                      ),
-                                      "u": Style(
-                                        margin: Margins.zero,
-                                      ),
-                                      "a": Style(
-                                        color: Colors.blue,
-                                        textDecoration: TextDecoration.underline,
-                                      ),
-                                    },
-                                    onLinkTap: (url, _, __) {
-                                      if (url != null) {
-                                        _launchUrl(url);
-                                      }
-                                    },
-                                  ),
+                                    )
+                                  else
+                                    Html(
+                                      data: _post!['contentHtml'] ?? '',
+                                      style: {
+                                        "body": Style(
+                                          fontSize: FontSize(15),
+                                          color: Colors.black87,
+                                          lineHeight: LineHeight(1.5),
+                                          margin: Margins.zero,
+                                        ),
+                                        "p": Style(
+                                          margin: Margins.zero,
+                                          padding: HtmlPaddings.zero,
+                                          whiteSpace: WhiteSpace.pre,
+                                        ),
+                                        "br": Style(
+                                          margin: Margins.only(bottom: 8),
+                                          display: Display.block,
+                                        ),
+                                        "img": Style(
+                                          margin: Margins.zero,
+                                          display: Display.block,
+                                        ),
+                                        "u": Style(
+                                          margin: Margins.zero,
+                                        ),
+                                        "a": Style(
+                                          color: Colors.blue,
+                                          textDecoration: TextDecoration.underline,
+                                        ),
+                                      },
+                                      onLinkTap: (url, _, __) {
+                                        if (url != null) {
+                                          _launchUrl(url);
+                                        }
+                                      },
+                                    ),
                                 ],
                               ),
                             ),
@@ -2056,6 +2226,37 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Widget _buildCommentContent(Map<String, dynamic> comment) {
+    // 숨김처리된 댓글인 경우
+    if (comment['isHidden'] == true) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.visibility_off,
+              size: 16,
+              color: Colors.grey[600],
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              '관리자에 의해 숨김처리되었습니다.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final contentHtml = comment['contentHtml'] ?? comment['content'] ?? '';
     final hasMention = comment['hasMention'] == true;
     
@@ -2177,10 +2378,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           case 'report':
             _reportComment(comment);
             break;
+          case 'hide':
+            _hideComment(comment);
+            break;
+          case 'unhide':
+            _unhideComment(comment);
+            break;
         }
       },
       itemBuilder: (BuildContext context) {
-        // 관리자라면 무조건 수정/삭제 옵션 노출
+        // 관리자라면 무조건 수정/삭제/숨김처리 옵션 노출
         if (isAdmin) {
           return [
             const PopupMenuItem<String>(
@@ -2200,6 +2407,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Icon(Icons.delete_outline, size: 20, color: Colors.red),
                   SizedBox(width: 12),
                   Text('삭제하기', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: comment['isHidden'] == true ? 'unhide' : 'hide',
+              child: Row(
+                children: [
+                  Icon(
+                    comment['isHidden'] == true ? Icons.visibility : Icons.visibility_off,
+                    size: 20,
+                    color: comment['isHidden'] == true ? Colors.green : Colors.orange,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    comment['isHidden'] == true ? '숨김 해제' : '숨김처리',
+                    style: TextStyle(
+                      color: comment['isHidden'] == true ? Colors.green : Colors.orange,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -2705,6 +2931,116 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       );
     } else {
       return const SizedBox(height: 50);
+    }
+  }
+
+  // 댓글 숨김처리
+  void _hideComment(Map<String, dynamic> comment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('댓글 숨김처리'),
+        content: const Text('이 댓글을 숨김처리하시겠습니까?\n숨김처리된 댓글은 "관리자에 의해 숨김처리되었습니다."로 표시됩니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _confirmHideComment(comment);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('숨김처리'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 댓글 숨김 해제
+  void _unhideComment(Map<String, dynamic> comment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('댓글 숨김 해제'),
+        content: const Text('이 댓글의 숨김을 해제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _confirmUnhideComment(comment);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.green),
+            child: const Text('숨김 해제'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmHideComment(Map<String, dynamic> comment) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('comments')
+          .doc(comment['commentId'])
+          .update({
+            'isHidden': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // 댓글 목록 새로고침
+      await _loadComments();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글이 숨김처리되었습니다.')),
+      );
+    } catch (e) {
+      print('댓글 숨김처리 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글 숨김처리 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  Future<void> _confirmUnhideComment(Map<String, dynamic> comment) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.dateString)
+          .collection('posts')
+          .doc(widget.postId)
+          .collection('comments')
+          .doc(comment['commentId'])
+          .update({
+            'isHidden': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // 댓글 목록 새로고침
+      await _loadComments();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글 숨김이 해제되었습니다.')),
+      );
+    } catch (e) {
+      print('댓글 숨김 해제 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글 숨김 해제 중 오류가 발생했습니다.')),
+      );
     }
   }
 } 
