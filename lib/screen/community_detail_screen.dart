@@ -205,13 +205,34 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .get();
 
       if (docSnapshot.exists) {
+        final postData = docSnapshot.data() as Map<String, dynamic>;
+        
+        // 신고 수가 5건 이상이면 자동으로 숨김처리
+        final reportsCount = postData['reportsCount'] ?? 0;
+        if (reportsCount >= 5 && postData['isHidden'] != true) {
+          await docSnapshot.reference.update({
+            'isHidden': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          postData['isHidden'] = true;
+        }
+        
+        // 숨김처리된 게시글인 경우 접근 차단
+        if (postData['isHidden'] == true) {
+          setState(() {
+            _isLoading = false;
+          });
+          _showErrorAndGoBack('해당 게시글은 숨김처리되었습니다.');
+          return;
+        }
+
         // 조회수 증가
         await docSnapshot.reference.update({
           'viewsCount': FieldValue.increment(1),
         });
 
         setState(() {
-          _post = docSnapshot.data() as Map<String, dynamic>;
+          _post = postData;
           _post!['viewsCount'] = (_post!['viewsCount'] ?? 0) + 1;
           _isLoading = false;
         });
@@ -2226,7 +2247,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Widget _buildCommentContent(Map<String, dynamic> comment) {
-    // 숨김처리된 댓글인 경우
+    final reportsCount = comment['reportsCount'] ?? 0;
+
+    // 관리자에 의해 숨김처리된 댓글인 경우
     if (comment['isHidden'] == true) {
       return Container(
         width: double.infinity,
@@ -2250,6 +2273,77 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 fontSize: 14,
                 color: Colors.grey,
                 fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // 신고 누적으로 일시적으로 감춰진 댓글 (3건 이상)
+    if (reportsCount >= 3 && reportsCount < 6) {
+      return GestureDetector(
+        onTap: () => _showHiddenCommentDialog(comment),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.orange[300]!),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.warning_amber,
+                size: 16,
+                color: Colors.orange[600],
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '신고건 누적으로 일시적으로 감춰진 댓글입니다.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.orange[700],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // 신고 누적으로 완전히 감춰진 댓글 (6건 이상)
+    if (reportsCount >= 6) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red[300]!),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.block,
+              size: 16,
+              color: Colors.red[600],
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '신고건 누적으로 완전히 감춰진 댓글입니다.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.red[700],
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ],
@@ -2760,6 +2854,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .doc('posts')
             .collection('posts')
             .add(reportData);
+        // 3. 게시글 신고 수 증가
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(widget.dateString)
+            .collection('posts')
+            .doc(widget.postId)
+            .update({
+              'reportsCount': FieldValue.increment(1),
+            });
         // 신고 성공 시 상태 갱신
         setState(() {
           _alreadyReportedPost = true;
@@ -2776,6 +2879,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .doc('comments')
             .collection('comments')
             .add(reportData);
+        // 댓글 신고 수 증가
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(widget.dateString)
+            .collection('posts')
+            .doc(widget.postId)
+            .collection('comments')
+            .doc(comment['commentId'])
+            .update({
+              'reportsCount': FieldValue.increment(1),
+            });
       }
 
       // 신고 성공 시 SnackBar가 항상 뜨도록 context 타이밍 보장
@@ -3042,5 +3156,105 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         const SnackBar(content: Text('댓글 숨김 해제 중 오류가 발생했습니다.')),
       );
     }
+  }
+
+  // 숨겨진 댓글 보기 다이얼로그
+  void _showHiddenCommentDialog(Map<String, dynamic> comment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('숨겨진 댓글'),
+        content: const Text('비공개 처리된 댓글을 보시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('아니오'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showHiddenCommentContent(comment);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('예'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 숨겨진 댓글 내용 보기
+  void _showHiddenCommentContent(Map<String, dynamic> comment) {
+    final contentHtml = comment['contentHtml'] ?? comment['content'] ?? '';
+    final hasMention = comment['hasMention'] == true;
+    
+    // @사용자명 패턴을 파란색으로 스타일링
+    final processedHtml = contentHtml.replaceAllMapped(
+      RegExp(r'@([a-zA-Z0-9가-힣_]+[!]?)', multiLine: true),
+      (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.orange[600]),
+            const SizedBox(width: 8),
+            const Text('숨겨진 댓글 내용'),
+          ],
+        ),
+        content: Container(
+          width: double.maxFinite,
+          child: Html(
+            data: processedHtml,
+            style: {
+              "body": Style(
+                fontSize: FontSize(14),
+                color: Colors.black87,
+                lineHeight: LineHeight(1.4),
+                margin: Margins.zero,
+              ),
+              "p": Style(
+                margin: Margins.only(bottom: 2),
+                whiteSpace: WhiteSpace.pre,
+              ),
+              "br": Style(
+                margin: Margins.zero,
+              ),
+              "img": Style(
+                margin: Margins.zero,
+              ),
+              "u": Style(
+                margin: Margins.zero,
+              ),
+              "a": Style(
+                color: Colors.blue,
+                textDecoration: TextDecoration.underline,
+              ),
+              "span[data-mention]": Style(
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
+            },
+            onLinkTap: (url, _, __) {
+              if (url != null) {
+                _launchUrl(url);
+              }
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
+            child: const Text('닫기'),
+          ),
+        ],
+      ),
+    );
   }
 } 

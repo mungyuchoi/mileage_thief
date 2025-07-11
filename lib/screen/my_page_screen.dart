@@ -1619,13 +1619,51 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         final title = myPost['title'] ?? '제목 없음';
         
         return GestureDetector(
-          onTap: () {
+          onTap: () async {
             final postPath = myPost['postPath'] as String?;
             if (postPath != null) {
               final pathParts = postPath.split('/');
               if (pathParts.length >= 4) {
                 final dateString = pathParts[1];
                 final postId = pathParts[3];
+                
+                // 게시글 상태 확인
+                try {
+                  final postDoc = await FirebaseFirestore.instance
+                      .collection('posts')
+                      .doc(dateString)
+                      .collection('posts')
+                      .doc(postId)
+                      .get();
+                  
+                  if (postDoc.exists) {
+                    final postData = postDoc.data() as Map<String, dynamic>;
+                    
+                    // 신고 수가 5건 이상이면 자동으로 숨김처리
+                    final reportsCount = postData['reportsCount'] ?? 0;
+                    if (reportsCount >= 5 && postData['isHidden'] != true) {
+                      await postDoc.reference.update({
+                        'isHidden': true,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      });
+                      postData['isHidden'] = true;
+                    }
+                    
+                    // 숨김처리된 게시글인 경우 접근 차단
+                    if (postData['isHidden'] == true) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('해당 게시글은 숨김처리되었습니다.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                  }
+                } catch (e) {
+                  print('게시글 상태 확인 오류: $e');
+                }
+                
                 Navigator.push(context, MaterialPageRoute(
                   builder: (context) => CommunityDetailScreen(
                     postId: postId,
