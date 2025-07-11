@@ -988,7 +988,7 @@ class _AirportScreenState extends State<AirportScreen> {
                   ],
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
-                const Text("🥜 광고로 땅콩 받는 기능은 잠시 휴식 중이에요! \n 다른 기회를 통해 땅콩을 사용하는 재미를 준비하고 있어요.", textAlign: TextAlign.center),
+                const Text("땅콩을 모아서 커뮤니티의 다양한 혜택을 누려보세요!", textAlign: TextAlign.center),
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () {

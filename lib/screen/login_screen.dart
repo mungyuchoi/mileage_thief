@@ -43,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       adUnitId: AdHelper.bannerAdUnitId,
       request: const AdRequest(),
     )..load();
+    _loadFullScreenAd();
   }
 
   @override
@@ -629,55 +630,46 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     FloatingActionButton.extended(
-                      onPressed: () async {
-                        if (_isAdLoading) {
-                          Fluttertoast.showToast(
-                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
-                            gravity: ToastGravity.BOTTOM,
-                            backgroundColor: Colors.black54,
-                            textColor: Colors.white,
-                          );
-                          return;
-                        }
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: Colors.white,
-                            title: const Text('알림', style: TextStyle(color: Colors.black)),
-                            content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('아니오', style: TextStyle(color: Colors.black)),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text('예', style: TextStyle(color: Colors.black)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (result == true) {
-                          setState(() {
-                            _isAdLoading = true;
-                          });
-                          try {
-                            await _showFrontAd();
-                          } finally {
-                            setState(() {
-                              _isAdLoading = false;
-                            });
-                          }
-                        }
-                      },
-                      label: const Text("+ 10",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
+                      onPressed: _interstitialAd == null || _isAdLoading
+                          ? null
+                          : () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(false),
+                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (result == true) {
+                                setState(() {
+                                  _isAdLoading = true;
+                                });
+                                try {
+                                  _interstitialAd?.show();
+                                } finally {
+                                  setState(() {
+                                    _isAdLoading = false;
+                                    _interstitialAd = null;
+                                  });
+                                  _loadFullScreenAd();
+                                }
+                              }
+                            },
+                      label: const Text("+ 10", style: TextStyle(color: Colors.black87)),
+                      backgroundColor: _interstitialAd == null ? Colors.grey[300] : Colors.white,
                       elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanut.png',
-                        scale: 19,
-                      ),
+                      icon: Image.asset('asset/img/peanut.png', scale: 19),
                     ),
                     FloatingActionButton.extended(
                       onPressed: _rewardedAd == null
