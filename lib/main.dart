@@ -11,9 +11,156 @@ import 'services/branch_service.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:convert';
 
 // 전역 NavigatorKey (NotificationService에서 사용)
 final GlobalKey<NavigatorState> navigatorKey = NotificationService.navigatorKey;
+
+// 백그라운드 알림 생성 함수
+Future<void> _showBackgroundNotification(RemoteMessage message) async {
+  final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+  
+  // 로컬 알림 초기화
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/launcher_icon');
+  
+  const DarwinInitializationSettings initializationSettingsIOS =
+      DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
+  
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsIOS,
+  );
+  
+  await localNotifications.initialize(initializationSettings);
+  
+  // 알림 채널 생성
+  final androidImplementation = localNotifications
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  
+  if (androidImplementation != null) {
+    await androidImplementation.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'post_like_notifications',
+        '게시글 좋아요 알림',
+        description: '내 게시글에 좋아요가 눌렸을 때 알림을 받습니다.',
+        importance: Importance.high,
+      ),
+    );
+    await androidImplementation.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'post_comment_notifications',
+        '게시글 댓글 알림',
+        description: '내 게시글에 댓글이 달렸을 때 알림을 받습니다.',
+        importance: Importance.high,
+      ),
+    );
+    await androidImplementation.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'comment_reply_notifications',
+        '대댓글 알림',
+        description: '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.',
+        importance: Importance.high,
+      ),
+    );
+    await androidImplementation.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'comment_like_notifications',
+        '댓글 좋아요 알림',
+        description: '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.',
+        importance: Importance.high,
+      ),
+    );
+  }
+  
+  // 알림 데이터 추출
+  final data = message.data;
+  final type = data['type'];
+  final notificationTitle = data['notificationTitle'] ?? '알림';
+  final notificationBody = data['notificationBody'] ?? '';
+  
+  // 알림 타입에 따른 채널 ID 선택
+  String channelId;
+  switch (type) {
+    case 'post_like':
+      channelId = 'post_like_notifications';
+      break;
+    case 'post_comment':
+      channelId = 'post_comment_notifications';
+      break;
+    case 'comment_reply':
+      channelId = 'comment_reply_notifications';
+      break;
+    case 'comment_like':
+      channelId = 'comment_like_notifications';
+      break;
+    default:
+      channelId = 'post_like_notifications';
+  }
+  
+  // 알림 ID 생성
+  final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  
+  // 알림 생성
+  await localNotifications.show(
+    notificationId,
+    notificationTitle,
+    notificationBody,
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        channelId,
+        _getChannelName(channelId),
+        channelDescription: _getChannelDescription(channelId),
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/launcher_icon',
+      ),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    ),
+    payload: jsonEncode(data),
+  );
+}
+
+// 채널 이름 매핑
+String _getChannelName(String channelId) {
+  switch (channelId) {
+    case 'post_like_notifications':
+      return '게시글 좋아요 알림';
+    case 'post_comment_notifications':
+      return '게시글 댓글 알림';
+    case 'comment_reply_notifications':
+      return '대댓글 알림';
+    case 'comment_like_notifications':
+      return '댓글 좋아요 알림';
+    default:
+      return '알림';
+  }
+}
+
+// 채널 설명 매핑
+String _getChannelDescription(String channelId) {
+  switch (channelId) {
+    case 'post_like_notifications':
+      return '내 게시글에 좋아요가 눌렸을 때 알림을 받습니다.';
+    case 'post_comment_notifications':
+      return '내 게시글에 댓글이 달렸을 때 알림을 받습니다.';
+    case 'comment_reply_notifications':
+      return '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.';
+    case 'comment_like_notifications':
+      return '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.';
+    default:
+      return '';
+  }
+}
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -24,7 +171,36 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } catch (e) {
     print("Firebase initialization error in background handler: $e");
   }
+  
   print("Handling a background message: ${message.messageId}");
+  
+  // 개별 알림 설정 확인
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final type = message.data['type'];
+  bool specificNotificationEnabled = true;
+  
+  switch (type) {
+    case 'post_like':
+      specificNotificationEnabled = prefs.getBool('post_like_notification') ?? true;
+      break;
+    case 'post_comment':
+      specificNotificationEnabled = prefs.getBool('post_comment_notification') ?? true;
+      break;
+    case 'comment_reply':
+      specificNotificationEnabled = prefs.getBool('comment_reply_notification') ?? true;
+      break;
+    case 'comment_like':
+      specificNotificationEnabled = prefs.getBool('comment_like_notification') ?? true;
+      break;
+  }
+  
+  if (!specificNotificationEnabled) {
+    print('$type 알림이 꺼져있어서 백그라운드 알림을 생성하지 않습니다.');
+    return;
+  }
+  
+  // 알림 생성
+  await _showBackgroundNotification(message);
 }
 
 Future<void> main() async {
@@ -44,11 +220,8 @@ Future<void> main() async {
 
   MobileAds.instance.initialize();
 
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool value = prefs.getBool('notification') ?? true;
-  if (value) {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  }
+  // 백그라운드 메시지 핸들러는 항상 등록 (핸들러 내에서 설정값 확인)
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await initializeDateFormatting();
   runApp(MaterialApp(

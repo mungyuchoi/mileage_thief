@@ -17,11 +17,32 @@ class NotificationService {
   // 전역 네비게이션 키 (앱 전체에서 사용)
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  // 알림 채널 설정
-  static const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'post_notifications', // Cloud Functions에서 사용하는 채널 ID와 동일
-    '게시글 알림',
-    description: '게시글 관련 알림을 받습니다.',
+  // 알림 채널들 설정
+  static const AndroidNotificationChannel postLikeChannel = AndroidNotificationChannel(
+    'post_like_notifications',
+    '게시글 좋아요 알림',
+    description: '내 게시글에 좋아요가 눌렸을 때 알림을 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel postCommentChannel = AndroidNotificationChannel(
+    'post_comment_notifications',
+    '게시글 댓글 알림',
+    description: '내 게시글에 댓글이 달렸을 때 알림을 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel commentReplyChannel = AndroidNotificationChannel(
+    'comment_reply_notifications',
+    '대댓글 알림',
+    description: '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel commentLikeChannel = AndroidNotificationChannel(
+    'comment_like_notifications',
+    '댓글 좋아요 알림',
+    description: '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.',
     importance: Importance.high,
   );
 
@@ -86,47 +107,88 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onLocalNotificationTapped,
     );
 
-    // 알림 채널 생성 (Android만 해당)
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+    // 알림 채널들 생성 (Android만 해당)
+    final androidImplementation = _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    
+    if (androidImplementation != null) {
+      await androidImplementation.createNotificationChannel(postLikeChannel);
+      await androidImplementation.createNotificationChannel(postCommentChannel);
+      await androidImplementation.createNotificationChannel(commentReplyChannel);
+      await androidImplementation.createNotificationChannel(commentLikeChannel);
+    }
   }
 
   /// 포그라운드 메시지 처리 (앱이 열려있을 때)
   void _handleForegroundMessage(RemoteMessage message) async {
     print('포그라운드 메시지 수신: ${message.data}');
     
-    // 알림 설정 확인
+    // 개별 알림 설정 확인
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool notificationEnabled = prefs.getBool('notification') ?? true;
+    final type = message.data['type'];
+    bool specificNotificationEnabled = true;
     
-    if (notificationEnabled) {
-      // 알림이 켜져있을 때만 로컬 알림 생성
+    switch (type) {
+      case 'post_like':
+        specificNotificationEnabled = prefs.getBool('post_like_notification') ?? true;
+        break;
+      case 'post_comment':
+        specificNotificationEnabled = prefs.getBool('post_comment_notification') ?? true;
+        break;
+      case 'comment_reply':
+        specificNotificationEnabled = prefs.getBool('comment_reply_notification') ?? true;
+        break;
+      case 'comment_like':
+        specificNotificationEnabled = prefs.getBool('comment_like_notification') ?? true;
+        break;
+    }
+    
+    if (specificNotificationEnabled) {
+      // 개별 알림이 켜져있을 때만 로컬 알림 생성
       _showLocalNotification(message);
     } else {
-      print('알림이 꺼져있어서 포그라운드 알림을 생성하지 않습니다.');
+      print('$type 알림이 꺼져있어서 포그라운드 알림을 생성하지 않습니다.');
     }
   }
 
   /// 로컬 알림 생성
   void _showLocalNotification(RemoteMessage message) {
-    if (message.notification == null) return;
-
-    final notification = message.notification!;
     final data = message.data;
+    final type = data['type'];
+    final notificationTitle = data['notificationTitle'] ?? '알림';
+    final notificationBody = data['notificationBody'] ?? '';
+    
+    // 알림 타입에 따라 적절한 채널 선택
+    AndroidNotificationChannel selectedChannel;
+    switch (type) {
+      case 'post_like':
+        selectedChannel = postLikeChannel;
+        break;
+      case 'post_comment':
+        selectedChannel = postCommentChannel;
+        break;
+      case 'comment_reply':
+        selectedChannel = commentReplyChannel;
+        break;
+      case 'comment_like':
+        selectedChannel = commentLikeChannel;
+        break;
+      default:
+        selectedChannel = postLikeChannel; // 기본값
+    }
     
     // 알림 ID 생성 (중복 방지)
     final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     
     _localNotifications.show(
       notificationId,
-      notification.title ?? '알림',
-      notification.body ?? '',
+      notificationTitle,
+      notificationBody,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          channel.id,
-          channel.name,
-          channelDescription: channel.description,
+          selectedChannel.id,
+          selectedChannel.name,
+          channelDescription: selectedChannel.description,
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/launcher_icon',

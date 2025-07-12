@@ -115,16 +115,9 @@ exports.onPostLikeCreated = onDocumentCreated({
       return;
     }
 
-    // 5. 알림 메시지 생성
-    const notification = {
-      title: "좋아요 알림",
-      body: `${likerName}님이 게시글에 좋아요를 하였습니다.`,
-    };
-
-    // 6. FCM 메시지 발송
+    // 5. FCM 메시지 발송
     const message = {
       token: fcmToken,
-      notification: notification,
       data: {
         type: "post_like",
         postId: postId,
@@ -135,10 +128,13 @@ exports.onPostLikeCreated = onDocumentCreated({
         likedByName: likerName,
         date: date,
         path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+        // 알림 표시용 데이터
+        notificationTitle: "좋아요 알림",
+        notificationBody: `${likerName}님이 게시글에 좋아요를 하였습니다.`,
       },
       android: {
         notification: {
-          channelId: "post_notifications",
+          channelId: "post_like_notifications",
           priority: "high",
         },
       },
@@ -257,16 +253,9 @@ exports.onCommentCreated = onDocumentCreated({
       return;
     }
 
-    // 6. 알림 메시지 생성
-    const notification = {
-      title: "댓글 알림",
-      body: `${commenterName}님이 게시글에 댓글을 달았습니다.`,
-    };
-
-    // 7. FCM 메시지 발송
+    // 6. FCM 메시지 발송
     const message = {
       token: fcmToken,
-      notification: notification,
       data: {
         type: "post_comment",
         postId: postId,
@@ -278,10 +267,13 @@ exports.onCommentCreated = onDocumentCreated({
         commentedByName: commenterName,
         date: date,
         path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+        // 알림 표시용 데이터
+        notificationTitle: "댓글 알림",
+        notificationBody: `${commenterName}님이 게시글에 댓글을 달았습니다.`,
       },
       android: {
         notification: {
-          channelId: "post_notifications",
+          channelId: "post_comment_notifications",
           priority: "high",
         },
       },
@@ -417,16 +409,9 @@ exports.onReplyCreated = onDocumentCreated({
       boardName = boardNameMap[boardId] || "자유게시판";
     }
 
-    // 6. 알림 메시지 생성
-    const notification = {
-      title: "대댓글 알림",
-      body: `${replierName}님이 댓글에 댓글을 달았습니다.`,
-    };
-
-    // 7. FCM 메시지 발송
+    // 6. FCM 메시지 발송
     const message = {
       token: fcmToken,
-      notification: notification,
       data: {
         type: "comment_reply",
         postId: postId,
@@ -438,10 +423,13 @@ exports.onReplyCreated = onDocumentCreated({
         repliedByName: replierName,
         date: date,
         path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+        // 알림 표시용 데이터
+        notificationTitle: "대댓글 알림",
+        notificationBody: `${replierName}님이 댓글에 댓글을 달았습니다.`,
       },
       android: {
         notification: {
-          channelId: "post_notifications",
+          channelId: "comment_reply_notifications",
           priority: "high",
         },
       },
@@ -568,16 +556,9 @@ exports.onCommentLikeCreated = onDocumentCreated({
       boardName = boardNameMap[boardId] || "자유게시판";
     }
 
-    // 6. 알림 메시지 생성
-    const notification = {
-      title: "댓글 좋아요 알림",
-      body: `${likerName}님이 댓글에 좋아요를 하였습니다.`,
-    };
-
-    // 7. FCM 메시지 발송
+    // 6. FCM 메시지 발송
     const message = {
       token: fcmToken,
-      notification: notification,
       data: {
         type: "comment_like",
         postId: postId,
@@ -589,10 +570,13 @@ exports.onCommentLikeCreated = onDocumentCreated({
         commenterName: commenterName,
         date: date,
         path: `/community/detail/${date}/${postId}`, // deeplink용 경로
+        // 알림 표시용 데이터
+        notificationTitle: "댓글 좋아요 알림",
+        notificationBody: `${likerName}님이 댓글에 좋아요를 하였습니다.`,
       },
       android: {
         notification: {
-          channelId: "post_notifications",
+          channelId: "comment_like_notifications",
           priority: "high",
         },
       },

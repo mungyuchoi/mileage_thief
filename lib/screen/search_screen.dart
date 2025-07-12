@@ -57,6 +57,7 @@ class _SearchScreenState extends State<SearchScreen> {
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
+    _loadNotificationSettings();
   }
 
   // 뒤로가기 버튼 처리 메서드
@@ -260,7 +261,11 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  bool _notificationToggle = true;
+
+  bool _postLikeNotification = true;
+  bool _postCommentNotification = true;
+  bool _commentReplyNotification = true;
+  bool _commentLikeNotification = true;
   String _version = '';
   String _latestVersion = '';
 
@@ -275,20 +280,62 @@ class _SearchScreenState extends State<SearchScreen> {
             platform: DevicePlatform.iOS,
             sections: [
               SettingsSection(
+                title: const Text('알림 설정'),
                 tiles: [
+
                   SettingsTile.switchTile(
-                    initialValue: _notificationToggle,
+                    initialValue: _postLikeNotification,
                     onToggle: (bool value) {
-                      setNotificationToggle(value);
+                      setPostLikeNotification(value);
                       setState(() {
-                        _notificationToggle = value;
+                        _postLikeNotification = value;
                       });
                     },
-                    title: const Text('알림'),
-                    description: const Text('마일리지 캐치 알림'),
-                    leading: const Icon(Icons.notifications_none),
+                    title: const Text('게시글 좋아요 알림'),
+                    leading: const Icon(Icons.thumb_up_outlined),
                     activeSwitchColor: Colors.black54,
                   ),
+                  SettingsTile.switchTile(
+                    initialValue: _postCommentNotification,
+                    onToggle: (bool value) {
+                      setPostCommentNotification(value);
+                      setState(() {
+                        _postCommentNotification = value;
+                      });
+                    },
+                    title: const Text('게시글 댓글 알림'),
+                    leading: const Icon(Icons.comment_outlined),
+                    activeSwitchColor: Colors.black54,
+                  ),
+                  SettingsTile.switchTile(
+                    initialValue: _commentReplyNotification,
+                    onToggle: (bool value) {
+                      setCommentReplyNotification(value);
+                      setState(() {
+                        _commentReplyNotification = value;
+                      });
+                    },
+                    title: const Text('대댓글 알림'),
+                    leading: const Icon(Icons.reply_outlined),
+                    activeSwitchColor: Colors.black54,
+                  ),
+                  SettingsTile.switchTile(
+                    initialValue: _commentLikeNotification,
+                    onToggle: (bool value) {
+                      setCommentLikeNotification(value);
+                      setState(() {
+                        _commentLikeNotification = value;
+                      });
+                    },
+                    title: const Text('댓글 좋아요 알림'),
+                    leading: const Icon(Icons.favorite_border_outlined),
+                    activeSwitchColor: Colors.black54,
+                  ),
+                ],
+              ),
+              SettingsSection(
+                title: const Text('계정'),
+                tiles: [
                   SettingsTile(
                     onPressed: (context) => {
                       Navigator.push(
@@ -368,15 +415,59 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  void setNotificationToggle(bool value) async {
+
+
+  void setPostLikeNotification(bool value) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notification', value);
+    await prefs.setBool('post_like_notification', value);
     Fluttertoast.showToast(
-      msg: value ? "알림을 켰습니다." : "알림을 껐습니다.",
+      msg: value ? "게시글 좋아요 알림을 켰습니다." : "게시글 좋아요 알림을 껐습니다.",
       gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 5,
+      timeInSecForIosWeb: 3,
       backgroundColor: Colors.black38,
-      fontSize: 20,
+      fontSize: 16,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_SHORT,
+    );
+  }
+
+  void setPostCommentNotification(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('post_comment_notification', value);
+    Fluttertoast.showToast(
+      msg: value ? "게시글 댓글 알림을 켰습니다." : "게시글 댓글 알림을 껐습니다.",
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 3,
+      backgroundColor: Colors.black38,
+      fontSize: 16,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_SHORT,
+    );
+  }
+
+  void setCommentReplyNotification(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('comment_reply_notification', value);
+    Fluttertoast.showToast(
+      msg: value ? "대댓글 알림을 켰습니다." : "대댓글 알림을 껐습니다.",
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 3,
+      backgroundColor: Colors.black38,
+      fontSize: 16,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_SHORT,
+    );
+  }
+
+  void setCommentLikeNotification(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('comment_like_notification', value);
+    Fluttertoast.showToast(
+      msg: value ? "댓글 좋아요 알림을 켰습니다." : "댓글 좋아요 알림을 껐습니다.",
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 3,
+      backgroundColor: Colors.black38,
+      fontSize: 16,
       textColor: Colors.white,
       toastLength: Toast.LENGTH_SHORT,
     );
@@ -415,6 +506,17 @@ class _SearchScreenState extends State<SearchScreen> {
     } catch (e) {
       print('공지사항 제목 로드 실패: $e');
     }
+  }
+
+  void _loadNotificationSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+  
+      _postLikeNotification = prefs.getBool('post_like_notification') ?? true;
+      _postCommentNotification = prefs.getBool('post_comment_notification') ?? true;
+      _commentReplyNotification = prefs.getBool('comment_reply_notification') ?? true;
+      _commentLikeNotification = prefs.getBool('comment_like_notification') ?? true;
+    });
   }
 
   _launchMileageThief(String mileageTheifMarketUrl) async {
