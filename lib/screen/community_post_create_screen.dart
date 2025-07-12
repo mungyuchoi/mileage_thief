@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CommunityPostCreateScreen extends StatefulWidget {
   final String? initialBoardId;
@@ -47,6 +48,13 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   List<String> tempImagePaths = []; // 임시 이미지 경로들
   static const int maxImageCount = 10; // 최대 이미지 개수
   bool _isLoading = false; // 로딩 상태 관리
+  
+  // 임시 저장 관련 변수
+  static const String _tempTitleKey = 'temp_post_title';
+  static const String _tempContentKey = 'temp_post_content';
+  static const String _tempBoardIdKey = 'temp_board_id';
+  static const String _tempBoardNameKey = 'temp_board_name';
+  bool _hasUnsavedChanges = false;
 
   @override
   void initState() {
@@ -70,14 +78,322 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       // 새 게시글 작성 모드
       selectedBoardId = widget.initialBoardId;
       selectedBoardName = widget.initialBoardName;
+      _checkTempDataAndShowDialog(); // 임시 저장된 데이터 확인 후 선택 팝업
     }
+    
+    // 텍스트 변경 리스너 추가
+    _titleController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _titleController.removeListener(_onTextChanged);
     _titleController.dispose();
     super.dispose();
   }
+  
+  // 텍스트 변경 감지
+  void _onTextChanged() {
+    setState(() {
+      _hasUnsavedChanges = true;
+    });
+  }
+  
+  // 임시 저장된 데이터 확인 후 선택 팝업 표시
+  Future<void> _checkTempDataAndShowDialog() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tempTitle = prefs.getString(_tempTitleKey);
+      final tempContent = prefs.getString(_tempContentKey);
+      final tempBoardId = prefs.getString(_tempBoardIdKey);
+      final tempBoardName = prefs.getString(_tempBoardNameKey);
+      
+      // 임시 저장된 데이터가 있는지 확인
+      bool hasTempData = false;
+      if ((tempTitle != null && tempTitle.isNotEmpty) ||
+          (tempContent != null && tempContent.isNotEmpty && tempContent.trim() != '<p></p>') ||
+          (tempBoardId != null && tempBoardName != null)) {
+        hasTempData = true;
+      }
+      
+      if (hasTempData) {
+        // 임시 저장된 데이터가 있으면 선택 팝업 표시
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showTempDataDialog();
+        });
+      }
+    } catch (e) {
+      print('임시 저장 데이터 확인 실패: $e');
+    }
+  }
+  
+  // 임시 저장 데이터 선택 팝업
+  Future<void> _showTempDataDialog() async {
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false, // 배경 터치로 닫기 방지
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '임시 저장된 내용 불러오기',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        content: const Text(
+          '임시 저장된 내용을 불러오거나 새로 작성하세요.',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('new'),
+            child: const Text(
+              '새로 만들기',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('load'),
+            child: const Text(
+              '불러오기',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    
+    if (result == 'new') {
+      // 새로 만들기 선택 시 임시 저장 데이터 삭제
+      await _clearTempData();
+      
+      // 새로 만들기 선택 알림
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Fluttertoast.showToast(
+          msg: "새로운 게시글을 작성합니다",
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+        );
+      });
+    } else if (result == 'load') {
+      // 불러오기 선택 시 임시 저장 데이터 불러오기
+      await _loadTempData();
+      
+      // HTML 에디터 내용 복원
+      await _restoreHtmlContent();
+      
+      // 불러오기 완료 알림
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _showRestoredDataToast();
+      });
+    }
+  }
+
+  // 임시 저장된 데이터 불러오기
+  Future<void> _loadTempData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tempTitle = prefs.getString(_tempTitleKey);
+      final tempBoardId = prefs.getString(_tempBoardIdKey);
+      final tempBoardName = prefs.getString(_tempBoardNameKey);
+      
+      bool hasRestoredData = false;
+      
+      if (tempTitle != null && tempTitle.isNotEmpty) {
+        _titleController.text = tempTitle;
+        _hasUnsavedChanges = true;
+        hasRestoredData = true;
+      }
+      
+      if (tempBoardId != null && tempBoardName != null) {
+        setState(() {
+          selectedBoardId = tempBoardId;
+          selectedBoardName = tempBoardName;
+        });
+        hasRestoredData = true;
+      }
+      
+      if (hasRestoredData) {
+        setState(() {
+          _hasUnsavedChanges = true;
+        });
+      }
+      
+    } catch (e) {
+      print('임시 저장 데이터 불러오기 실패: $e');
+    }
+  }
+  
+  // HTML 에디터 내용 복원
+  Future<void> _restoreHtmlContent() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tempContent = prefs.getString(_tempContentKey);
+      
+      if (tempContent != null && tempContent.isNotEmpty && tempContent.trim() != '<p></p>') {
+        print('임시 저장된 HTML 내용 복원: ${tempContent.length > 100 ? tempContent.substring(0, 100) + "..." : tempContent}');
+        
+        // HTML 에디터가 준비될 때까지 대기
+        int attempts = 0;
+        while (attempts < 10) {
+          try {
+            _htmlController.setText(tempContent);
+            print('HTML 내용 복원 성공');
+            break;
+          } catch (e) {
+            print('HTML 내용 복원 시도 ${attempts + 1}: $e');
+            await Future.delayed(const Duration(milliseconds: 500));
+            attempts++;
+          }
+        }
+        
+        if (attempts >= 10) {
+          print('HTML 내용 복원 실패: 최대 시도 횟수 초과');
+        }
+      }
+    } catch (e) {
+      print('HTML 내용 복원 실패: $e');
+    }
+  }
+  
+  // 임시 저장 데이터 복원 완료 토스트 메시지
+  void _showRestoredDataToast() {
+    String message = "임시 저장된 내용을 불러왔습니다";
+    
+    Fluttertoast.showToast(
+      msg: message,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black26,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_LONG,
+    );
+  }
+  
+  // 임시 저장
+  Future<void> _saveTempData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final title = _titleController.text.trim();
+      final content = await _htmlController.getText();
+      
+      if (title.isNotEmpty || (content.isNotEmpty && content.trim() != '<p></p>')) {
+        await prefs.setString(_tempTitleKey, title);
+        await prefs.setString(_tempContentKey, content);
+        
+        if (selectedBoardId != null && selectedBoardName != null) {
+          await prefs.setString(_tempBoardIdKey, selectedBoardId!);
+          await prefs.setString(_tempBoardNameKey, selectedBoardName!);
+        }
+        
+        print('임시 저장 완료');
+      }
+    } catch (e) {
+      print('임시 저장 실패: $e');
+    }
+  }
+  
+  // 임시 저장 데이터 삭제
+  Future<void> _clearTempData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // SharedPreferences 데이터 삭제
+      await prefs.remove(_tempTitleKey);
+      await prefs.remove(_tempContentKey);
+      await prefs.remove(_tempBoardIdKey);
+      await prefs.remove(_tempBoardNameKey);
+      print('임시 저장 데이터 삭제 완료');
+    } catch (e) {
+      print('임시 저장 데이터 삭제 실패: $e');
+    }
+  }
+  
+  // 뒤로가기 처리
+  Future<bool> _onWillPop() async {
+    if (!_hasUnsavedChanges) {
+      return true; // 변경사항이 없으면 바로 나가기
+    }
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '작성 중인 내용이 있습니다',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        content: const Text(
+          '이 게시글을 임시 저장할까요?\n(이미지는 저장되지 않습니다.)',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('cancel'),
+            child: const Text(
+              '취소',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('no_save'),
+            child: const Text(
+              '저장 안함',
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('save'),
+            child: const Text(
+              '저장',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    
+    // 다이얼로그 결과 처리
+    if (result == 'cancel') {
+      return false; // 취소 - 나가지 않음
+    } else if (result == 'no_save') {
+      // 저장 안함 - 임시 저장 데이터 삭제 후 나가기
+      await _clearTempData();
+      return true;
+    } else if (result == 'save') {
+      // 저장 - 임시 저장 후 나가기
+      await _saveTempData();
+      return true;
+    }
+    
+    return false;
+  }
+
+
 
   Future<void> _addImageToEditor() async {
     try {
@@ -102,6 +418,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       if (image != null) {
         setState(() {
           tempImagePaths.add(image.path);
+          _hasUnsavedChanges = true; // 변경 사항 감지
         });
         
         print('이미지 선택됨: ${image.path}');
@@ -493,7 +810,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         _isLoading = false;
       });
 
-      // 11. 성공 메시지
+      // 11. 임시 저장 데이터 삭제 (새 게시글 등록 시에만)
+      if (!widget.isEditMode) {
+        await _clearTempData();
+      }
+
+      // 12. 성공 메시지
       Fluttertoast.showToast(
         msg: widget.isEditMode 
             ? "게시글이 성공적으로 수정되었습니다"
@@ -503,7 +825,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         textColor: Colors.white,
       );
 
-      // 12. 화면 닫기 (편집 완료 신호와 함께)
+      // 13. 화면 닫기 (편집 완료 신호와 함께)
       Navigator.pop(context, widget.isEditMode ? true : false);
 
     } catch (e) {
@@ -526,35 +848,79 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F1F3),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          widget.isEditMode ? '게시글 수정' : '커뮤니티 게시글 작성',
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : () async {
-              await _handleSubmit();
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF1F1F3),
+              appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () async {
+              final shouldPop = await _onWillPop();
+              if (shouldPop) {
+                Navigator.pop(context);
+              }
             },
-            child: Text(
-              _isLoading ? '등록 중...' : '등록',
-              style: TextStyle(
-                color: _isLoading ? Colors.grey : Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+          ),
+          title: Text(
+            widget.isEditMode 
+                ? '게시글 수정' 
+                : _hasUnsavedChanges 
+                    ? '커뮤니티 게시글 작성 *' 
+                    : '커뮤니티 게시글 작성',
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            // 임시 저장 데이터 삭제 버튼 (편집 모드가 아닐 때만 표시)
+            if (!widget.isEditMode)
+              PopupMenuButton<String>(
+                onSelected: (value) async {
+                  if (value == 'clear_temp') {
+                    await _clearTempData();
+                    setState(() {
+                      _hasUnsavedChanges = false;
+                      // 화면 상태도 초기화
+                      _titleController.clear();
+                      selectedBoardId = widget.initialBoardId;
+                      selectedBoardName = widget.initialBoardName;
+                      tempImagePaths.clear();
+                    });
+                    // HTML 에디터도 초기화
+                    _htmlController.clear();
+                    
+                    Fluttertoast.showToast(
+                      msg: "임시 저장된 데이터를 삭제했습니다",
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: Colors.orange,
+                      textColor: Colors.white,
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'clear_temp',
+                    child: Text('임시 저장 데이터 삭제'),
+                  ),
+                ],
+                icon: const Icon(Icons.more_vert, color: Colors.black),
+              ),
+            TextButton(
+              onPressed: _isLoading ? null : () async {
+                await _handleSubmit();
+              },
+              child: Text(
+                _isLoading ? '등록 중...' : '등록',
+                style: TextStyle(
+                  color: _isLoading ? Colors.grey : Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         child: SingleChildScrollView(
@@ -576,6 +942,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                     setState(() {
                       selectedBoardId = result['boardId'];
                       selectedBoardName = result['boardName'];
+                      _hasUnsavedChanges = true;
                     });
                     print('선택된 게시판: ID=$selectedBoardId, Name=$selectedBoardName');
                   }
@@ -646,7 +1013,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                 otherOptions: OtherOptions(height: 400),
                 callbacks: Callbacks(
                   onChangeContent: (String? changed) {
-                    // 내용 변경 시 콜백
+                    // 내용 변경 시 콜백 - 변경 사항 감지
+                    if (changed != null) {
+                      setState(() {
+                        _hasUnsavedChanges = true;
+                      });
+                    }
                   },
                   onInit: () async {
                     // 초기화 완료 시 콜백
@@ -708,6 +1080,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
