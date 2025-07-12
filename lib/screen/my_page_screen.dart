@@ -15,6 +15,7 @@ import 'level_detail_screen.dart';
 import 'sky_effect_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../utils/image_compressor.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -409,8 +410,20 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
       if (image == null) return;
 
-      // 2. Firebase Storage에 업로드
-      final File imageFile = File(image.path);
+      // 2. 이미지 압축
+      final originalFile = File(image.path);
+      
+      // 이미지 정보 출력 (디버깅용)
+      await ImageCompressor.printImageInfo(originalFile);
+      
+      // 이미지 압축
+      final compressedFile = await ImageCompressor.compressImage(originalFile);
+      
+      // 압축된 이미지 정보 출력 (디버깅용)
+      await ImageCompressor.printImageInfo(compressedFile);
+
+      // 3. Firebase Storage에 업로드
+      final File imageFile = compressedFile;
       final String fileName = '${user.uid}.png';
       
       // iOS에서는 올바른 bucket 사용

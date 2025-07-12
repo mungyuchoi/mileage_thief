@@ -20,6 +20,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../utils/image_compressor.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -1205,9 +1206,21 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       );
       
       if (image != null) {
+        final originalFile = File(image.path);
+        
+        // 이미지 정보 출력 (디버깅용)
+        await ImageCompressor.printImageInfo(originalFile);
+        
+        // 이미지 압축
+        final compressedFile = await ImageCompressor.compressImage(originalFile);
+        
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImage = compressedFile;
         });
+        
+        // 압축된 이미지 정보 출력 (디버깅용)
+        await ImageCompressor.printImageInfo(compressedFile);
+        
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1246,8 +1259,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         return null;
       }
       
-      final fileName = 'test_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storagePath = fileName; // 루트 경로에 직접 업로드
+      final fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/${commentId}/images/$fileName';
       
       final storageRef = storage.ref().child(storagePath);
       final uploadTask = storageRef.putFile(imageFile);

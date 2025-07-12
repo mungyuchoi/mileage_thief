@@ -11,6 +11,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/image_compressor.dart';
 
 class CommunityPostCreateScreen extends StatefulWidget {
   final String? initialBoardId;
@@ -416,17 +417,28 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       );
       
       if (image != null) {
+        final originalFile = File(image.path);
+        
+        // 이미지 정보 출력 (디버깅용)
+        await ImageCompressor.printImageInfo(originalFile);
+        
+        // 이미지 압축
+        final compressedFile = await ImageCompressor.compressImage(originalFile);
+        
         setState(() {
-          tempImagePaths.add(image.path);
+          tempImagePaths.add(compressedFile.path);
           _hasUnsavedChanges = true; // 변경 사항 감지
         });
         
-        print('이미지 선택됨: ${image.path}');
+        print('이미지 선택됨: ${compressedFile.path}');
         print('총 이미지 개수: ${tempImagePaths.length}/$maxImageCount');
         
         // HTML 에디터에 직접 이미지 태그 삽입
-        final String imageHtml = '<img src="file://${image.path}" style="max-width: 100%; border-radius: 8px;" /><br/>';
+        final String imageHtml = '<img src="file://${compressedFile.path}" style="max-width: 100%; border-radius: 8px;" /><br/>';
         _htmlController.insertHtml(imageHtml);
+        
+        // 압축된 이미지 정보 출력 (디버깅용)
+        await ImageCompressor.printImageInfo(compressedFile);
         
         Fluttertoast.showToast(
           msg: "이미지가 추가되었습니다 (${tempImagePaths.length}/$maxImageCount)",
