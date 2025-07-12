@@ -47,6 +47,10 @@ class _SearchScreenState extends State<SearchScreen> {
   String _communityNoticeTitle = '';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // 뒤로가기 버튼 처리 관련 변수
+  DateTime? _lastBackPressTime;
+  final Duration _backPressTimeLimit = const Duration(seconds: 2);
+
   @override
   void initState() {
     super.initState();
@@ -55,10 +59,39 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadCommunityNoticeTitle();
   }
 
+  // 뒤로가기 버튼 처리 메서드
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    final difference = _lastBackPressTime == null 
+        ? const Duration(seconds: 3) 
+        : now.difference(_lastBackPressTime!);
+    
+    if (difference >= _backPressTimeLimit) {
+      _lastBackPressTime = now;
+      
+      // 토스트 메시지 표시
+      Fluttertoast.showToast(
+        msg: "'뒤로' 버튼을 한번 더 누르면 종료됩니다.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      
+      return false; // 앱 종료 방지
+    } else {
+      return true; // 앱 종료 허용
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       appBar: AppBar(
         title: Text(
           _currentIndex == 0
@@ -164,6 +197,7 @@ class _SearchScreenState extends State<SearchScreen> {
             label: '',
           ),
         ],
+      ),
       ),
     );
   }
