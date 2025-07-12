@@ -110,6 +110,123 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     });
   }
 
+  // 관리자용 땅콩 주기 다이얼로그
+  void _showGivePeanutsDialog() {
+    final TextEditingController amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text(
+            '땅콩 주기',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${userProfile!['displayName'] ?? '사용자'}님에게 땅콩을 주시겠습니까?',
+                style: const TextStyle(color: Colors.black),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Image.asset(
+                    'asset/img/peanuts.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        hintText: '땅콩 개수 입력',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        hintStyle: TextStyle(color: Colors.grey),
+                      ),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                final amount = int.tryParse(amountController.text);
+                if (amount == null || amount <= 0) {
+                  Fluttertoast.showToast(
+                    msg: '올바른 숫자를 입력해주세요.',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                  );
+                  return;
+                }
+                
+                Navigator.of(context).pop();
+                await _givePeanuts(amount);
+              },
+              child: const Text(
+                '주기',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 땅콩 주기 실행
+  Future<void> _givePeanuts(int amount) async {
+    try {
+      // 현재 사용자의 땅콩 개수 가져오기
+      final currentPeanutCount = userProfile!['peanutCount'] ?? 0;
+      final newPeanutCount = currentPeanutCount + amount;
+      
+      // Firestore 업데이트
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userUid)
+          .update({
+        'peanutCount': newPeanutCount,
+      });
+      
+      // 로컬 상태 업데이트
+      setState(() {
+        userProfile!['peanutCount'] = newPeanutCount;
+      });
+      
+      // 성공 메시지
+      Fluttertoast.showToast(
+        msg: '${userProfile!['displayName'] ?? '사용자'}님에게 땅콩 $amount개를 주었습니다.',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+      
+    } catch (e) {
+      print('땅콩 주기 오류: $e');
+      Fluttertoast.showToast(
+        msg: '땅콩 주기 중 오류가 발생했습니다.',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
   Future<void> _toggleFollow() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -279,6 +396,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         elevation: 0.5,
         title: const Text('프로필', style: TextStyle(color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          // 관리자인 경우에만 땅콩 주기 버튼 표시
+          if (isAdmin)
+            IconButton(
+              onPressed: _showGivePeanutsDialog,
+              icon: Image.asset(
+                'asset/img/peanuts.png',
+                width: 24,
+                height: 24,
+              ),
+              tooltip: '땅콩 주기',
+            ),
+        ],
       ),
       body: isLoading || userProfile == null
           ? const Center(child: CircularProgressIndicator())
