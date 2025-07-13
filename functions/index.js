@@ -16,6 +16,39 @@ const admin = require("firebase-admin");
 // Firebase Admin SDK 초기화
 admin.initializeApp();
 
+/**
+ * boardId로 boardName을 가져오는 함수
+ * @param {string} boardId - 게시판 ID
+ * @return {Promise<string>} 게시판 이름
+ */
+async function getBoardName(boardId) {
+  try {
+    const snapshot = await admin.database()
+        .ref(`categories/boards/${boardId}`)
+        .once("value");
+
+    if (snapshot.exists()) {
+      return snapshot.val().name || "자유게시판";
+    }
+  } catch (error) {
+    logger.error(`카테고리 정보 조회 실패: ${error.message}`);
+  }
+
+  // 기본값 반환
+  const defaultBoardNames = {
+    "free": "자유게시판",
+    "question": "마일리지",
+    "deal": "적립/카드 혜택",
+    "seat_share": "좌석 공유",
+    "review": "항공 리뷰",
+    "error_report": "오류 신고",
+    "suggestion": "건의사항",
+    "notice": "운영 공지사항",
+  };
+
+  return defaultBoardNames[boardId] || "자유게시판";
+}
+
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
 // traffic spikes by instead downgrading performance. This limit is a
@@ -63,18 +96,8 @@ exports.onPostLikeCreated = onDocumentCreated({
     const postTitle = postData.title;
     const boardId = postData.boardId || "free"; // 게시판 ID
 
-    // boardId 기반으로 boardName 매핑
-    const boardNameMap = {
-      "free": "자유게시판",
-      "question": "마일리지",
-      "deal": "적립/카드 혜택",
-      "seat_share": "좌석 공유",
-      "review": "항공 리뷰",
-      "error_report": "오류 신고",
-      "suggestion": "건의사항",
-      "notice": "운영 공지사항",
-    };
-    const boardName = boardNameMap[boardId] || "자유게시판";
+    // boardId 기반으로 boardName 가져오기
+    const boardName = await getBoardName(boardId);
 
     // 2. 자기 자신이 좋아요한 경우 알림 발송하지 않음
     if (authorUid === uid) {
@@ -194,18 +217,8 @@ exports.onCommentCreated = onDocumentCreated({
     const postTitle = postData.title;
     const boardId = postData.boardId || "free"; // 게시판 ID
 
-    // boardId 기반으로 boardName 매핑
-    const boardNameMap = {
-      "free": "자유게시판",
-      "question": "마일리지",
-      "deal": "적립/카드 혜택",
-      "seat_share": "좌석 공유",
-      "review": "항공 리뷰",
-      "error_report": "오류 신고",
-      "suggestion": "건의사항",
-      "notice": "운영 공지사항",
-    };
-    const boardName = boardNameMap[boardId] || "자유게시판";
+    // boardId 기반으로 boardName 가져오기
+    const boardName = await getBoardName(boardId);
     const commenterUid = commentData.uid;
 
     // 2. 대댓글인 경우 게시글 작성자에게 알림 발송하지 않음

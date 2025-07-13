@@ -1,21 +1,60 @@
 import 'package:flutter/material.dart';
+import '../services/category_service.dart';
 
-class CommunityBoardSelectScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> boards = const [
-    {'id': 'question', 'name': '마일리지', 'group': '마일리지/혜택', 'description': '마일리지, 항공사 정책, 발권 문의 등'},
-    {'id': 'deal', 'name': '적립/카드 혜택', 'group': '마일리지/혜택', 'description': '상테크, 카드 추천, 이벤트 정보'},
-    {'id': 'seat_share', 'name': '좌석 공유', 'group': '마일리지/혜택', 'description': '좌석 오픈 알림, 취소표 공유'},
-    {'id': 'review', 'name': '항공 리뷰', 'group': '여행/리뷰', 'description': '라운지, 기내식, 좌석 후기 등'},
-    {'id': 'free', 'name': '자유게시판', 'group': '여행/리뷰', 'description': '일상, 후기, 질문 섞인 잡담'},
-    {'id': 'error_report', 'name': '오류 신고', 'group': '운영/소통', 'description': '앱/서비스 오류 제보'},
-    {'id': 'suggestion', 'name': '건의사항', 'group': '운영/소통', 'description': '사용자 의견, 개선 요청'},
-    {'id': 'notice', 'name': '운영 공지사항', 'group': '운영/소통', 'description': '관리자 공지, 업데이트 안내'},
-  ];
-
+class CommunityBoardSelectScreen extends StatefulWidget {
   const CommunityBoardSelectScreen({Key? key}) : super(key: key);
 
   @override
+  State<CommunityBoardSelectScreen> createState() => _CommunityBoardSelectScreenState();
+}
+
+class _CommunityBoardSelectScreenState extends State<CommunityBoardSelectScreen> {
+  final CategoryService _categoryService = CategoryService();
+  List<Map<String, dynamic>> boards = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBoards();
+  }
+
+  Future<void> _loadBoards() async {
+    try {
+      final loadedBoards = await _categoryService.getBoards();
+      setState(() {
+        boards = loadedBoards;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF1F1F3),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text('게시판 선택', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     // 그룹별로 묶기
     final groups = <String, List<Map<String, dynamic>>>{};
     for (var board in boards) {

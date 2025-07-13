@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/category_service.dart';
 import 'login_screen.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_screen.dart';
@@ -20,17 +21,9 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
-  // 게시판 목록 (md파일 boards 표 기반, 아이콘 포함)
-  final List<Map<String, dynamic>> boards = [
-    {'id': 'free', 'name': '자유게시판'},
-    {'id': 'question', 'name': '마일리지'},
-    {'id': 'deal', 'name': '적립/카드 혜택'},
-    {'id': 'seat_share', 'name': '좌석 공유'},
-    {'id': 'review', 'name': '항공 리뷰'},
-    {'id': 'error_report', 'name': '오류 신고'},
-    {'id': 'suggestion', 'name': '건의사항'},
-    {'id': 'notice', 'name': '운영 공지사항'}
-  ];
+  final CategoryService _categoryService = CategoryService();
+  List<Map<String, dynamic>> boards = [];
+  bool isLoadingBoards = true;
 
   String selectedBoardId = 'all';
   String selectedBoardName = '전체글';
@@ -62,6 +55,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadBoards();
     _loadInitialPosts();
     _scrollController.addListener(_onScroll);
   }
@@ -71,6 +65,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
     _scrollController.dispose();
     _scrollTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadBoards() async {
+    try {
+      final loadedBoards = await _categoryService.getBoards();
+      setState(() {
+        boards = loadedBoards;
+        isLoadingBoards = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingBoards = false;
+      });
+    }
   }
 
   Future<void> _loadUserProfile() async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
+import '../services/category_service.dart';
 import 'community_detail_screen.dart';
 
 class CommunitySearchScreen extends StatefulWidget {
@@ -14,32 +15,41 @@ class CommunitySearchScreen extends StatefulWidget {
 class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final CategoryService _categoryService = CategoryService();
   
   List<DocumentSnapshot> _searchResults = [];
   bool _isSearching = false;
   String _selectedBoardFilter = 'all';
-  
-  // 게시판 목록 (커뮤니티 스크린과 동일)
-  final List<Map<String, dynamic>> boards = [
-    {'id': 'all', 'name': '전체'},
-    {'id': 'question', 'name': '마일리지'},
-    {'id': 'deal', 'name': '적립/카드 혜택'},
-    {'id': 'seat_share', 'name': '좌석 공유'},
-    {'id': 'review', 'name': '항공 리뷰'},
-    {'id': 'error_report', 'name': '오류 신고'},
-    {'id': 'suggestion', 'name': '건의사항'},
-    {'id': 'free', 'name': '자유게시판'},
-    {'id': 'notice', 'name': '운영 공지사항'},
-    {'id': 'popular', 'name': '인기글 모음'},
-  ];
+  List<Map<String, dynamic>> boards = [];
+  bool isLoadingBoards = true;
 
   @override
   void initState() {
     super.initState();
+    _loadBoards();
     // 화면 진입 시 자동으로 검색창에 포커스
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchFocusNode.requestFocus();
     });
+  }
+
+  Future<void> _loadBoards() async {
+    try {
+      final loadedBoards = await _categoryService.getBoards();
+      // 'all' 옵션 추가
+      final allBoards = [
+        {'id': 'all', 'name': '전체'},
+        ...loadedBoards,
+      ];
+      setState(() {
+        boards = allBoards;
+        isLoadingBoards = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingBoards = false;
+      });
+    }
   }
 
   @override

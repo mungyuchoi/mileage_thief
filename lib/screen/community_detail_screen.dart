@@ -11,6 +11,7 @@ import 'package:lottie/lottie.dart';
 import 'dart:io';
 import '../services/user_service.dart';
 import '../services/branch_service.dart';
+import '../services/category_service.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'community_post_create_screen.dart';
 import 'user_profile_screen.dart';
@@ -826,17 +827,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // 카테고리 이동 다이얼로그
   void _showMoveCategoryDialog() async {
-    // 카테고리 목록 (community_screen.dart 참고)
-    final List<Map<String, String>> boards = [
-      {'id': 'free', 'name': '자유게시판'},
-      {'id': 'question', 'name': '마일리지'},
-      {'id': 'deal', 'name': '적립/카드 혜택'},
-      {'id': 'seat_share', 'name': '좌석 공유'},
-      {'id': 'review', 'name': '항공 리뷰'},
-      {'id': 'error_report', 'name': '오류 신고'},
-      {'id': 'suggestion', 'name': '건의사항'},
-      {'id': 'notice', 'name': '운영 공지사항'},
-    ];
+    final CategoryService categoryService = CategoryService();
+    final List<Map<String, dynamic>> boards = await categoryService.getBoards();
     String selectedBoardId = _post?['boardId'] ?? widget.boardId;
     await showDialog(
       context: context,
