@@ -24,7 +24,6 @@ import '../model/search_history.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../screen/community_screen.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import '../services/remote_config_service.dart';
 import '../services/notice_preference_service.dart';
 
@@ -52,6 +51,38 @@ class NoticePopupDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: onConfirm,
+          child: Text(buttonText, style: const TextStyle(color: Colors.black)),
+        ),
+      ],
+    );
+  }
+}
+
+class ForceUpdateDialog extends StatelessWidget {
+  final String title;
+  final String content;
+  final String buttonText;
+  final String url;
+
+  const ForceUpdateDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    required this.buttonText,
+    required this.url,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      title: Text(title, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      content: Text(content, style: const TextStyle(color: Colors.black)),
+      actions: [
+        TextButton(
+          onPressed: () async {
+            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          },
           child: Text(buttonText, style: const TextStyle(color: Colors.black)),
         ),
       ],
@@ -94,7 +125,62 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
     _loadNotificationSettings();
+    _checkForceUpdateAndNotice();
+  }
+
+  Future<void> _checkForceUpdateAndNotice() async {
+    await _remoteConfig.initialize();
+    print('[강업] RemoteConfig initialized');
+    print('[강업] forceUpdateEnabled: ${_remoteConfig.forceUpdateEnabled}');
+    if (_remoteConfig.forceUpdateEnabled) {
+      final info = await PackageInfo.fromPlatform();
+      final currentVersion = info.version;
+      final isAndroid = Platform.isAndroid;
+      final requiredVersion = isAndroid
+          ? _remoteConfig.forceUpdateVersionAndroid
+          : _remoteConfig.forceUpdateVersionIos;
+      print('[강업] currentVersion: $currentVersion, requiredVersion: $requiredVersion');
+      final isLower = _isVersionLower(currentVersion, requiredVersion);
+      print('[강업] _isVersionLower: $isLower');
+      if (isLower) {
+        if (!mounted) {
+          print('[강업] 위젯이 이미 dispose됨');
+          return;
+        }
+        print('[강업] 강제 업데이트 다이얼로그 진입');
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => ForceUpdateDialog(
+            title: _remoteConfig.forceUpdateTitle,
+            content: _remoteConfig.forceUpdateContent,
+            buttonText: _remoteConfig.forceUpdateButtonText,
+            url: isAndroid
+                ? _remoteConfig.forceUpdateUrlAndroid
+                : _remoteConfig.forceUpdateUrlIos,
+          ),
+        );
+        return;
+      }
+    }
+    print('[강업] 공지사항 팝업 체크로 이동');
     _checkAndShowNotice();
+  }
+
+  bool _isVersionLower(String current, String required) {
+    try {
+      final cur = current.split('.').map(int.parse).toList();
+      final req = required.split('.').map(int.parse).toList();
+      print('[강업] 버전 배열 current: $cur, required: $req');
+      for (int i = 0; i < req.length; i++) {
+        if (cur.length <= i || cur[i] < req[i]) return true;
+        if (cur[i] > req[i]) return false;
+      }
+      return false;
+    } catch (e) {
+      print('[강업] 버전 비교 오류: $e');
+      return false;
+    }
   }
 
   Future<void> _checkAndShowNotice() async {
