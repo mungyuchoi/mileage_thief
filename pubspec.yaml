@@ -47,6 +47,7 @@ dependencies:
   flutter_image_compress: ^2.4.0
   path_provider: ^2.1.2
   path: ^1.8.3
+  firebase_remote_config: ^5.4.7
 
 dev_dependencies:
   flutter_test:

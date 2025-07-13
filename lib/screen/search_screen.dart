@@ -24,6 +24,40 @@ import '../model/search_history.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../screen/community_screen.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import '../services/remote_config_service.dart';
+import '../services/notice_preference_service.dart';
+
+// NoticePopupDialog
+class NoticePopupDialog extends StatelessWidget {
+  final String title;
+  final String content;
+  final String buttonText;
+  final VoidCallback onConfirm;
+
+  const NoticePopupDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    required this.buttonText,
+    required this.onConfirm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      title: Text(title, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      content: Text(content, style: const TextStyle(color: Colors.black)),
+      actions: [
+        TextButton(
+          onPressed: onConfirm,
+          child: Text(buttonText, style: const TextStyle(color: Colors.black)),
+        ),
+      ],
+    );
+  }
+}
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -46,6 +80,8 @@ class _SearchScreenState extends State<SearchScreen> {
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final RemoteConfigService _remoteConfig = RemoteConfigService();
+  final NoticePreferenceService _noticePref = NoticePreferenceService();
 
   // 뒤로가기 버튼 처리 관련 변수
   DateTime? _lastBackPressTime;
@@ -58,6 +94,29 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
     _loadNotificationSettings();
+    _checkAndShowNotice();
+  }
+
+  Future<void> _checkAndShowNotice() async {
+    await _remoteConfig.initialize();
+    if (!_remoteConfig.noticePopupEnabled) return;
+    final version = _remoteConfig.noticePopupVersion;
+    final hasSeen = await _noticePref.hasSeenNotice(version);
+    if (_remoteConfig.noticePopupShowOnce && hasSeen) return;
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => NoticePopupDialog(
+        title: _remoteConfig.noticePopupTitle,
+        content: _remoteConfig.noticePopupContent,
+        buttonText: _remoteConfig.noticePopupButtonText,
+        onConfirm: () async {
+          await _noticePref.markNoticeAsSeen(version);
+          if (mounted) Navigator.of(context).pop();
+        },
+      ),
+    );
   }
 
   // 뒤로가기 버튼 처리 메서드
