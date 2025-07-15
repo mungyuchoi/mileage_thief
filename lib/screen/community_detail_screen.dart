@@ -23,6 +23,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../utils/image_compressor.dart';
 
+// 무지개 그라데이션 텍스트 위젯
+class GradientText extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final Gradient gradient;
+
+  const GradientText(this.text, {required this.style, required this.gradient, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) => gradient.createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+      child: Text(
+        text,
+        style: style.copyWith(color: Colors.white),
+      ),
+    );
+  }
+}
+
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
   final String boardId;
@@ -1661,7 +1681,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                             Text(
                                               _post!['author']?['displayName'] ?? '익명',
                                               style: const TextStyle(
-                                                fontSize: 12,
+                                                fontSize: 14,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.black87,
                                               ),
@@ -1670,14 +1690,33 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 (_post!['author']['displayGrade'] as String).isNotEmpty)
                                               Padding(
                                                 padding: const EdgeInsets.only(left: 6.0),
-                                                child: Text(
-                                                  _post!['author']['displayGrade'],
-                                                  style: const TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.grey,
-                                                    fontWeight: FontWeight.normal,
-                                                  ),
-                                                ),
+                                                child: _post!['author']['displayGrade'] == '★★★'
+                                                    ? GradientText(
+                                                        '★★★',
+                                                        style: const TextStyle(
+                                                          fontSize: 18,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                        gradient: const LinearGradient(
+                                                          colors: [
+                                                            Colors.red,
+                                                            Colors.orange,
+                                                            Colors.yellow,
+                                                            Colors.green,
+                                                            Colors.blue,
+                                                            Colors.indigo,
+                                                            Colors.purple,
+                                                          ],
+                                                        ),
+                                                      )
+                                                    : Text(
+                                                        _post!['author']['displayGrade'],
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          color: Colors.grey,
+                                                          fontWeight: FontWeight.normal,
+                                                        ),
+                                                      ),
                                               ),
                                           ],
                                         ),
