@@ -3044,9 +3044,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   Widget _buildContentBannerAd() {
     if (_isContentBannerAdLoaded && _contentBannerAd != null) {
       return Container(
-        width: _contentBannerAd!.size.width.toDouble(),
+        width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정
         height: _contentBannerAd!.size.height.toDouble(),
-        child: AdWidget(ad: _contentBannerAd!),
+        alignment: Alignment.center,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: _contentBannerAd!.size.height.toDouble(),
+            child: AdWidget(ad: _contentBannerAd!),
+          ),
+        ),
       );
     } else {
       return const SizedBox(height: 50);
