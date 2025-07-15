@@ -763,7 +763,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
         _isInitialLoading = true;
       });
 
+      // 차단 유저 제외 처리
+      List<String> blockedUids = [];
+      final user = AuthService.currentUser;
+      if (user != null) {
+        final blockedSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('blocked')
+            .get();
+        blockedUids = blockedSnapshot.docs.map((doc) => doc.id).toList();
+      }
+
       Query query = _getQuery();
+      if (blockedUids.isNotEmpty) {
+        query = query.where('author.uid', whereNotIn: blockedUids);
+      }
       query = query.limit(_postsPerPage);
 
       final querySnapshot = await query.get();
@@ -797,8 +812,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
     });
 
     try {
+      List<String> blockedUids = [];
+      final user = AuthService.currentUser;
+      if (user != null) {
+        final blockedSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('blocked')
+            .get();
+        blockedUids = blockedSnapshot.docs.map((doc) => doc.id).toList();
+      }
+
       Query query = _getQuery();
       query = query.startAfterDocument(_lastDocument!);
+      if (blockedUids.isNotEmpty) {
+        query = query.where('author.uid', whereNotIn: blockedUids);
+      }
       query = query.limit(_postsPerPage);
 
       final querySnapshot = await query.get();

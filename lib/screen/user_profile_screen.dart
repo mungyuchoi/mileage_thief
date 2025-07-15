@@ -378,6 +378,71 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     );
   }
 
+  // 멤버 차단 다이얼로그 및 Firestore 저장
+  void _showBlockDialog(BuildContext context) {
+    final displayName = userProfile?['displayName'] ?? '사용자';
+    final photoURL = userProfile?['photoURL'] ?? '';
+    final targetUid = widget.userUid;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          '$displayName님을 차단할까요?',
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('취소', style: TextStyle(color: Colors.black)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection('blocked')
+                    .doc(targetUid)
+                    .set({
+                  'displayName': displayName,
+                  'photoURL': photoURL,
+                  'blockedAt': FieldValue.serverTimestamp(),
+                });
+              }
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              Navigator.of(context).pop(); // 프로필 화면 닫기
+            },
+            child: const Text('차단', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 차단 인원 체크 후 다이얼로그 또는 Toast
+  void _onBlockMember(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    print("user.uid:${user.uid}");
+    final blockedSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('blocked')
+        .get();
+    if (blockedSnapshot.docs.length >= 10) {
+      Fluttertoast.showToast(
+        msg: "멤버 차단은 10명을 초과할 수 없습니다.",
+        backgroundColor: Colors.black87,
+        textColor: Colors.white,
+      );
+      return;
+    }
+    _showBlockDialog(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -408,6 +473,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
               ),
               tooltip: '땅콩 주기',
             ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'block') {
+                _onBlockMember(context);
+              }
+            },
+            itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'block',
+                  child: Text('멤버 차단'),
+                ),
+            ],
+          ),
         ],
       ),
       body: isLoading || userProfile == null

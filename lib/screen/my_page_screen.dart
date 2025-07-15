@@ -973,6 +973,78 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     )..load();
   }
 
+  // 차단된 멤버 리스트 다이얼로그
+  void _showBlockedUsersDialog() async {
+    final user = AuthService.currentUser;
+    if (user == null) return;
+    final blockedSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('blocked')
+        .get();
+    List<QueryDocumentSnapshot> blockedList = blockedSnapshot.docs;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('차단된 멤버', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              content: blockedList.isEmpty
+                  ? const Text('차단된 멤버가 없습니다.', style: TextStyle(color: Colors.black))
+                  : SizedBox(
+                      width: 320,
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: blockedList.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, idx) {
+                          final doc = blockedList[idx];
+                          final displayName = doc['displayName'] ?? '사용자';
+                          final photoURL = doc['photoURL'] ?? '';
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+                              backgroundColor: Colors.grey[300],
+                              child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.grey) : null,
+                            ),
+                            title: Text(displayName, style: const TextStyle(color: Colors.black)),
+                            trailing: TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () async {
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(user.uid)
+                                    .collection('blocked')
+                                    .doc(doc.id)
+                                    .delete();
+                                setState(() {
+                                  blockedList.removeAt(idx);
+                                });
+                              },
+                              child: const Text('차단해제'),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기', style: TextStyle(color: Colors.black)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -982,6 +1054,21 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         backgroundColor: Colors.white,
         elevation: 0.5,
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'blocked') {
+                _showBlockedUsersDialog();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'blocked',
+                child: const Text('차단됨', style: TextStyle(color: Colors.black)),
+              ),
+            ],
+          ),
+        ],
       ),
       body: _tabController == null
           ? const Center(child: CircularProgressIndicator())
