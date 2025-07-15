@@ -9,6 +9,7 @@ import '../helper/AdHelper.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/fcm_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -116,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Fluttertoast.showToast(
             msg: "로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.black38,
             textColor: Colors.white,
           );
         } else {
@@ -129,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Fluttertoast.showToast(
             msg: "로그인 성공! (땅콩은 로컬에만 저장됩니다)",
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.black38,
             textColor: Colors.white,
           );
         }
@@ -485,6 +486,87 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // 동의 다이얼로그 함수 추가
+  Future<void> _showAgreementDialog() async {
+    bool agreeNoAbuse = false;
+    bool agreePolicy = false;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text(
+                '서비스 이용 동의',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CheckboxListTile(
+                    value: agreeNoAbuse,
+                    onChanged: (val) => setState(() => agreeNoAbuse = val!),
+                    title: const Text(
+                      '본인은 불쾌한 콘텐츠 또는 악의적 사용자에 대한 무관용 정책에 동의합니다. (필수)',
+                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: const Text(
+                      '불쾌한 콘텐츠, 욕설, 혐오, 차별, 악의적 사용자는 허용되지 않으며, 위반 시 이용이 제한될 수 있습니다.',
+                      style: TextStyle(color: Colors.black54, fontSize: 13),
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: Colors.black,
+                  ),
+                  CheckboxListTile(
+                    value: agreePolicy,
+                    onChanged: (val) => setState(() => agreePolicy = val!),
+                    title: const Text(
+                      '개인정보처리방침 동의 (필수)',
+                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: GestureDetector(
+                      onTap: () async {
+                        const url = 'https://moonque.tistory.com/entry/%EB%A7%88%EC%9D%BC%EB%A6%AC%EC%A7%80%EB%8F%84%EB%91%91-%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%EC%B2%98%EB%A6%AC%EB%B0%A9%EC%B9%A8';
+                        if (await canLaunchUrl(Uri.parse(url))) {
+                          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: const Text(
+                        '개인정보처리방침 보기',
+                        style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline, fontSize: 13),
+                      ),
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: Colors.black,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: (agreeNoAbuse && agreePolicy)
+                      ? () {
+                          Navigator.of(context).pop();
+                          _handleLogin();
+                        }
+                      : null,
+                  style: TextButton.styleFrom(
+                    backgroundColor: (agreeNoAbuse && agreePolicy) ? Colors.black : Colors.grey[300],
+                  ),
+                  child: const Text(
+                    '로그인',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -537,7 +619,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: _isLoading ? null : _showAgreementDialog,
                     icon: _isLoading 
                       ? const SizedBox(
                           width: 20,
