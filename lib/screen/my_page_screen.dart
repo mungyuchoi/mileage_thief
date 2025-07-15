@@ -635,7 +635,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                         borderSide: BorderSide(color: Colors.blue),
                       ),
                     ),
-                    maxLength: 20,
+                    maxLength: 10,
                     autofocus: true,
                     onChanged: validate,
                   ),

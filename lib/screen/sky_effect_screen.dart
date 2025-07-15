@@ -453,9 +453,13 @@ class _SkyEffectScreenState extends State<SkyEffectScreen> {
                 _buildPreviewLottie(effectId),
                 const SizedBox(width: 8),
                 // 닉네임(텍스트)
-                Text(
-                  widget.userProfile['displayName'] ?? '사용자',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Flexible(
+                  child: Text(
+                    widget.userProfile['displayName'] ?? '사용자',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
