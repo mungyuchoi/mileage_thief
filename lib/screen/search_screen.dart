@@ -10,6 +10,7 @@ import 'package:mileage_thief/screen/detail/search_detail__round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_one_way_screen.dart';
 import 'package:mileage_thief/screen/login_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -502,6 +503,32 @@ class _SearchScreenState extends State<SearchScreen> {
                     },
                     title: const Text("스토어로 이동"),
                     leading: const Icon(Icons.info_outline),
+                  ),
+                  SettingsTile(
+                    onPressed: (context) async {
+                      final info = await PackageInfo.fromPlatform();
+                      final deviceInfoPlugin = DeviceInfoPlugin();
+                      String os = '';
+                      String model = '';
+                      if (Platform.isAndroid) {
+                        final androidInfo = await deviceInfoPlugin.androidInfo;
+                        os = 'Android ${androidInfo.version.release}';
+                        model = androidInfo.model ?? '';
+                      } else if (Platform.isIOS) {
+                        final iosInfo = await deviceInfoPlugin.iosInfo;
+                        os = 'iOS ${iosInfo.systemVersion}';
+                        model = iosInfo.utsname.machine ?? '';
+                      }
+                      final body = Uri.encodeComponent('문의내역:\n버전: ${info.version}\nOS: $os\n모델명: $model');
+                      final uri = Uri.parse('mailto:skylife927@gmail.com?subject=FAQ 문의&body=$body');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        Fluttertoast.showToast(msg: '이메일 앱을 열 수 없습니다.');
+                      }
+                    },
+                    title: const Text('FAQ'),
+                    leading: const Icon(Icons.question_answer_outlined),
                   ),
                   SettingsTile(
                     onPressed: (context) => {
