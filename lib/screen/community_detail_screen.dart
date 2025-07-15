@@ -1666,6 +1666,19 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 color: Colors.black87,
                                               ),
                                             ),
+                                            if (_post!['author']?['displayGrade'] != null &&
+                                                (_post!['author']['displayGrade'] as String).isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(left: 6.0),
+                                                child: Text(
+                                                  _post!['author']['displayGrade'],
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.grey,
+                                                    fontWeight: FontWeight.normal,
+                                                  ),
+                                                ),
+                                              ),
                                           ],
                                         ),
                                       ),
