@@ -32,15 +32,16 @@ class CategoryService {
     _isLoading = true;
     
     try {
-      final snapshot = await _database.child('CATEGORIES/boards').get();
+      final snapshot = await _database.child('CATEGORIES').get();
       
       if (snapshot.exists) {
-        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-        _cachedBoards = data.values.map((board) => Map<String, dynamic>.from(board)).toList();
-        
+        final List<dynamic> data = snapshot.value as List<dynamic>;
+        _cachedBoards = data
+            .where((board) => board != null)
+            .map((board) => Map<String, dynamic>.from(board as Map))
+            .toList();
         // order 필드로 정렬
         _cachedBoards!.sort((a, b) => (a['order'] ?? 0).compareTo(b['order'] ?? 0));
-        
         if (kDebugMode) {
           print('카테고리 데이터 로드 완료: ${_cachedBoards!.length}개');
         }
@@ -83,14 +84,16 @@ class CategoryService {
   /// 기본 카테고리 데이터 (서버 연결 실패 시 사용)
   List<Map<String, dynamic>> _getDefaultBoards() {
     return const [
-      {'id': 'question', 'name': '마일리지', 'group': '마일리지/혜택', 'description': '마일리지, 항공사 정책, 발권 문의 등', 'order': 1},
-      {'id': 'deal', 'name': '적립/카드 혜택', 'group': '마일리지/혜택', 'description': '상테크, 카드 추천, 이벤트 정보', 'order': 2},
-      {'id': 'seat_share', 'name': '좌석 공유', 'group': '마일리지/혜택', 'description': '좌석 오픈 알림, 취소표 공유', 'order': 3},
-      {'id': 'review', 'name': '항공 리뷰', 'group': '여행/리뷰', 'description': '라운지, 기내식, 좌석 후기 등', 'order': 4},
-      {'id': 'free', 'name': '자유게시판', 'group': '여행/리뷰', 'description': '일상, 후기, 질문 섞인 잡담', 'order': 5},
-      {'id': 'error_report', 'name': '오류 신고', 'group': '운영/소통', 'description': '앱/서비스 오류 제보', 'order': 6},
-      {'id': 'suggestion', 'name': '건의사항', 'group': '운영/소통', 'description': '사용자 의견, 개선 요청', 'order': 7},
-      {'id': 'notice', 'name': '운영 공지사항', 'group': '운영/소통', 'description': '관리자 공지, 업데이트 안내', 'order': 8},
+      {'id': 'question', 'name': '마일리지', 'group': '마일리지/혜택', 'description': '마일리지, 항공사 정책, 발권 문의 등', 'order': 1, 'icon': 'help_outline', 'fabEnabled': true},
+      {'id': 'deal', 'name': '적립/카드 혜택', 'group': '마일리지/혜택', 'description': '상테크, 카드 추천, 이벤트 정보', 'order': 2, 'icon': 'card_giftcard', 'fabEnabled': true},
+      {'id': 'seat_share', 'name': '좌석 공유', 'group': '마일리지/혜택', 'description': '좌석 오픈 알림, 취소표 공유', 'order': 3, 'icon': 'event_seat', 'fabEnabled': true},
+      {'id': 'review', 'name': '항공 리뷰', 'group': '여행/리뷰', 'description': '라운지, 기내식, 좌석 후기 등', 'order': 4, 'icon': 'rate_review', 'fabEnabled': true},
+      {'id': 'free', 'name': '자유게시판', 'group': '여행/리뷰', 'description': '일상, 후기, 질문 섞인 잡담', 'order': 5, 'icon': 'chat_bubble_outline', 'fabEnabled': true},
+      {'id': 'seats', 'name': '오늘의 좌석', 'group': '마일리지/혜택', 'description': '마일리지 비즈니스, 퍼스트 좌석 확인', 'order': 6, 'icon': 'airline_seat_recline_extra', 'fabEnabled': false},
+      {'id': 'news', 'name': '오늘의 뉴스', 'group': '마일리지/혜택', 'description': '호텔, 카드, 라운지, 상테크, 마일리지 전략', 'order': 7, 'icon': 'newspaper_outlined', 'fabEnabled': false},
+      {'id': 'error_report', 'name': '오류 신고', 'group': '운영/소통', 'description': '앱/서비스 오류 제보', 'order': 8, 'icon': 'bug_report', 'fabEnabled': true},
+      {'id': 'suggestion', 'name': '건의사항', 'group': '운영/소통', 'description': '사용자 의견, 개선 요청', 'order': 8, 'icon': 'lightbulb_outline', 'fabEnabled': true},
+      {'id': 'notice', 'name': '운영 공지사항', 'group': '운영/소통', 'description': '관리자 공지, 업데이트 안내', 'order': 9, 'icon': 'campaign', 'fabEnabled': false},
     ];
   }
 } 

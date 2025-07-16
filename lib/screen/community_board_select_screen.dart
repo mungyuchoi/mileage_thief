@@ -55,10 +55,12 @@ class _CommunityBoardSelectScreenState extends State<CommunityBoardSelectScreen>
       );
     }
 
-    // 그룹별로 묶기
+    // 그룹별로 묶기 (fabEnabled==false만)
     final groups = <String, List<Map<String, dynamic>>>{};
     for (var board in boards) {
-      groups.putIfAbsent(board['group'], () => []).add(board);
+      if (board['fabEnabled'] == true) {
+        groups.putIfAbsent(board['group'], () => []).add(board);
+      }
     }
     return Scaffold(
       backgroundColor: const Color(0xFFF1F1F3),

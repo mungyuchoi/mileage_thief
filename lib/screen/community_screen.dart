@@ -127,29 +127,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return true;
   }
 
-  IconData getBoardIcon(String boardId) {
-    switch (boardId) {
-      case 'question':
-        return Icons.help_outline;
-      case 'deal':
-        return Icons.card_giftcard;
-      case 'seat_share':
-        return Icons.event_seat;
-      case 'review':
-        return Icons.rate_review;
-      case 'error_report':
-        return Icons.bug_report;
-      case 'suggestion':
-        return Icons.lightbulb_outline;
-      case 'free':
-        return Icons.chat_bubble_outline;
-      case 'notice':
-        return Icons.campaign;
-      case 'popular':
-        return Icons.star_border;
-      default:
-        return Icons.list;
-    }
+  // 아이콘 이름(String) → IconData 매핑
+  Map<String, IconData> IconsMap = {
+    'help_outline': Icons.help_outline,
+    'card_giftcard': Icons.card_giftcard,
+    'event_seat': Icons.event_seat,
+    'rate_review': Icons.rate_review,
+    'bug_report': Icons.bug_report,
+    'lightbulb_outline': Icons.lightbulb_outline,
+    'chat_bubble_outline': Icons.chat_bubble_outline,
+    'campaign': Icons.campaign,
+    'star_border': Icons.star_border,
+    'newspaper_outlined': Icons.newspaper_outlined,
+    'airline_seat_recline_extra': Icons.airline_seat_recline_extra,
+  };
+
+  IconData getBoardIcon(String? iconName) {
+    return IconsMap[iconName] ?? Icons.list;
   }
 
   @override
@@ -324,7 +318,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         : null,
                     child: ListTile(
                       leading: Icon(
-                        getBoardIcon(board['id'] as String),
+                        getBoardIcon(board['icon']),
                         color: selectedBoardId == board['id']
                             ? Colors.white
                             : Colors.black54,
@@ -674,32 +668,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       floatingActionButton: (userProfile?['isBanned'] == true)
           ? null
-          : ((selectedBoardId == 'notice')
-              ? ((userProfile?['roles'] ?? []).contains('admin')
-                  ? FloatingActionButton(
-                      onPressed: () async {
-                        // 로그인 확인
-                        final isLoggedIn = await _checkLoginAndNavigate();
-                        if (!isLoggedIn) return;
-                        
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CommunityPostCreateScreen(
-                              initialBoardId: selectedBoardId,
-                              initialBoardName: selectedBoardName,
-                            ),
-                          ),
-                        );
-                        if (result == true || result == false) {
-                          _refreshPosts();
-                        }
-                      },
-                      backgroundColor: const Color(0xFF74512D),
-                      child: const Icon(Icons.edit, color: Colors.white),
-                    )
-                  : null)
-              : FloatingActionButton(
+          : (() {
+              final board = boards.firstWhere(
+                (b) => b['id'] == selectedBoardId,
+                orElse: () => {'_notFound':true},
+              );
+              final fabEnabled = board == null ? true : (board['fabEnabled'] ?? true);
+              print("FloatingAction fabEnabled:$fabEnabled, selectedBoardId:$selectedBoardId");
+              final isAdmin = (userProfile?['roles'] ?? []).contains('admin');
+              if (fabEnabled || isAdmin) {
+                return FloatingActionButton(
                   onPressed: () async {
                     // 로그인 확인
                     final isLoggedIn = await _checkLoginAndNavigate();
@@ -722,7 +700,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   },
                   backgroundColor: const Color(0xFF74512D),
                   child: const Icon(Icons.edit, color: Colors.white),
-                )),
+                );
+              } else {
+                return null;
+              }
+            })(),
     );
   }
 
