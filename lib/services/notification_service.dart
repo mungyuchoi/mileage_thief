@@ -159,23 +159,7 @@ class NotificationService {
     final notificationBody = data['notificationBody'] ?? '';
     
     // 알림 타입에 따라 적절한 채널 선택
-    AndroidNotificationChannel selectedChannel;
-    switch (type) {
-      case 'post_like':
-        selectedChannel = postLikeChannel;
-        break;
-      case 'post_comment':
-        selectedChannel = postCommentChannel;
-        break;
-      case 'comment_reply':
-        selectedChannel = commentReplyChannel;
-        break;
-      case 'comment_like':
-        selectedChannel = commentLikeChannel;
-        break;
-      default:
-        selectedChannel = postLikeChannel; // 기본값
-    }
+    final channelId = data['channelId'] ?? 'post_like_notifications';
     
     // 알림 ID 생성 (중복 방지)
     final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -186,9 +170,9 @@ class NotificationService {
       notificationBody,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          selectedChannel.id,
-          selectedChannel.name,
-          channelDescription: selectedChannel.description,
+          channelId,
+          _getChannelName(channelId),
+          channelDescription: _getChannelDescription(channelId),
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/launcher_icon',
@@ -363,6 +347,38 @@ class NotificationService {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  /// 채널 이름 가져오기
+  String _getChannelName(String channelId) {
+    switch (channelId) {
+      case 'post_like_notifications':
+        return '게시글 좋아요 알림';
+      case 'post_comment_notifications':
+        return '게시글 댓글 알림';
+      case 'comment_reply_notifications':
+        return '대댓글 알림';
+      case 'comment_like_notifications':
+        return '댓글 좋아요 알림';
+      default:
+        return '알림';
+    }
+  }
+
+  /// 채널 설명 가져오기
+  String _getChannelDescription(String channelId) {
+    switch (channelId) {
+      case 'post_like_notifications':
+        return '내 게시글에 좋아요가 눌렸을 때 알림을 받습니다.';
+      case 'post_comment_notifications':
+        return '내 게시글에 댓글이 달렸을 때 알림을 받습니다.';
+      case 'comment_reply_notifications':
+        return '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.';
+      case 'comment_like_notifications':
+        return '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.';
+      default:
+        return '알림';
     }
   }
 } 

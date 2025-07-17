@@ -154,12 +154,10 @@ exports.onPostLikeCreated = onDocumentCreated({
         // 알림 표시용 데이터
         notificationTitle: "좋아요 알림",
         notificationBody: `${likerName}님이 게시글에 좋아요를 하였습니다.`,
+        channelId: "post_like_notifications", // ✅ data로 이동
       },
       android: {
-        notification: {
-          channelId: "post_like_notifications",
-          priority: "high",
-        },
+        priority: "high", // ✅ 알림 필드 없음
       },
       apns: {
         payload: {
@@ -283,12 +281,10 @@ exports.onCommentCreated = onDocumentCreated({
         // 알림 표시용 데이터
         notificationTitle: "댓글 알림",
         notificationBody: `${commenterName}님이 게시글에 댓글을 달았습니다.`,
+        channelId: "post_comment_notifications", // ✅ data로 이동
       },
       android: {
-        notification: {
-          channelId: "post_comment_notifications",
-          priority: "high",
-        },
+        priority: "high", // ✅ 알림 필드 없음
       },
       apns: {
         payload: {
@@ -439,12 +435,10 @@ exports.onReplyCreated = onDocumentCreated({
         // 알림 표시용 데이터
         notificationTitle: "대댓글 알림",
         notificationBody: `${replierName}님이 댓글에 댓글을 달았습니다.`,
+        channelId: "comment_reply_notifications", // ✅ data로 이동
       },
       android: {
-        notification: {
-          channelId: "comment_reply_notifications",
-          priority: "high",
-        },
+        priority: "high", // ✅ 알림 필드 없음
       },
       apns: {
         payload: {
@@ -586,12 +580,10 @@ exports.onCommentLikeCreated = onDocumentCreated({
         // 알림 표시용 데이터
         notificationTitle: "댓글 좋아요 알림",
         notificationBody: `${likerName}님이 댓글에 좋아요를 하였습니다.`,
+        channelId: "comment_like_notifications", // ✅ data로 이동
       },
       android: {
-        notification: {
-          channelId: "comment_like_notifications",
-          priority: "high",
-        },
+        priority: "high", // ✅ 알림 필드 없음
       },
       apns: {
         payload: {

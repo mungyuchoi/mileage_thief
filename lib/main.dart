@@ -85,23 +85,7 @@ Future<void> _showBackgroundNotification(RemoteMessage message) async {
   final notificationBody = data['notificationBody'] ?? '';
   
   // 알림 타입에 따른 채널 ID 선택
-  String channelId;
-  switch (type) {
-    case 'post_like':
-      channelId = 'post_like_notifications';
-      break;
-    case 'post_comment':
-      channelId = 'post_comment_notifications';
-      break;
-    case 'comment_reply':
-      channelId = 'comment_reply_notifications';
-      break;
-    case 'comment_like':
-      channelId = 'comment_like_notifications';
-      break;
-    default:
-      channelId = 'post_like_notifications';
-  }
+  final channelId = data['channelId'] ?? 'post_like_notifications';
   
   // 알림 ID 생성
   final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
