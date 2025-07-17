@@ -202,22 +202,7 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
 
   // 등급별 + 레벨별 색상 (레벨에 따라 색상 강도 변화)
   Color _getGradeColorByLevel(String grade, String level) {
-    // 레벨에서 숫자 추출 (Lv.1 → 1)
-    final levelNum = int.tryParse(level.replaceAll('Lv.', '')) ?? 1;
-    
-    // 색상 강도 계산 (Lv.1=100, Lv.2=200, ..., Lv.5=500)
-    final colorShade = (levelNum * 100).clamp(100, 900);
-    
-    switch (grade) {
-      case '이코노미':
-        return Colors.grey[colorShade] ?? Colors.grey[600]!;
-      case '비즈니스':
-        return Colors.blue[colorShade] ?? Colors.blue[600]!;
-      case '퍼스트':
-        return Colors.red[colorShade] ?? Colors.red[600]!;
-      default:
-        return Colors.grey[colorShade] ?? Colors.grey[600]!;
-    }
+    return Colors.black;
   }
 
   // 업그레이드 버튼 클릭
