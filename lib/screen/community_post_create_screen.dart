@@ -839,6 +839,24 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         textColor: Colors.white,
       );
 
+      // 새 글 작성 시 땅콩 10개 추가
+      if (!widget.isEditMode) {
+        try {
+          final userData = await UserService.getUserFromFirestore(currentUser.uid);
+          final currentPeanut = userData?['peanutCount'] ?? 0;
+          final newPeanut = currentPeanut + 10;
+          await UserService.updatePeanutCount(currentUser.uid, newPeanut);
+          Fluttertoast.showToast(
+            msg: "땅콩 10개가 추가되었습니다.",
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black38,
+            textColor: Colors.white,
+          );
+        } catch (e) {
+          print('땅콩 추가 오류: $e');
+        }
+      }
+
       // 13. 화면 닫기 (편집 완료 신호와 함께)
       Navigator.pop(context, widget.isEditMode ? true : false);
 

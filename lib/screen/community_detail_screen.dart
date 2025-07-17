@@ -666,6 +666,21 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             _post!['likesCount'] = (_post!['likesCount'] ?? 0) + 1;
           }
         });
+        // 땅콩 1개 지급
+        final userData = await UserService.getUserFromFirestore(_currentUser!.uid);
+        if (userData != null) {
+          final currentPeanut = userData['peanutCount'] ?? 0;
+          final newPeanut = currentPeanut + 1;
+          await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('땅콩 1개가 추가되었습니다.'),
+              backgroundColor: Colors.black38,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
 
       await batch.commit();
@@ -1421,6 +1436,21 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('users')
           .doc(_currentUser!.uid)
           .update({'commentCount': FieldValue.increment(1)});
+
+      // 땅콩 2개 지급 로직 추가
+      if (userData != null) {
+        final currentPeanut = userData['peanutCount'] ?? 0;
+        final newPeanut = currentPeanut + 2;
+        await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('땅콩 2개가 추가되었습니다.'),
+            backgroundColor: Colors.black38,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
 
       _commentController.clear();
       _removeSelectedImage();
