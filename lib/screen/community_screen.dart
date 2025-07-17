@@ -975,9 +975,34 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // 2줄: 조회수 | 댓글수 | 좋아요수
+                  // 2줄: displayName displayGrade | 조회수 | 댓글수 | 좋아요수
                   Row(
                     children: [
+                      // displayName
+                      Text(
+                        post['author']?['displayName'] ?? '익명',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // displayGrade
+                      Text(
+                        post['author']?['displayGrade'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+                      const Text(
+                        ' | ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ),
                       Text(
                         '조회 ${post['viewsCount'] ?? 0}회',
                         style: const TextStyle(
