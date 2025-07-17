@@ -287,10 +287,11 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: buildPage(_currentIndex),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Colors.grey[200],
         currentIndex: _currentIndex,
-        selectedItemColor: Colors.black54,
-        unselectedItemColor: Colors.black38,
+        selectedItemColor: Colors.black, // kPrimaryDarkColor 대체
+        unselectedItemColor: Colors.black, // kPrimaryDarkColor 대체
+        type: BottomNavigationBarType.fixed, // 아이콘과 텍스트가 항상 함께 보임
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
         onTap: (index) {
