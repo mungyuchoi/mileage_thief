@@ -12,6 +12,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/image_compressor.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:git2/git2.dart';
 
 class CommunityPostCreateScreen extends StatefulWidget {
   final String? initialBoardId;
