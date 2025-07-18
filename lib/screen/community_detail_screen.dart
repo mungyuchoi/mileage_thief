@@ -1023,12 +1023,21 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             });
       }
 
-      // 사용자 게시글 수 감소
+      // 사용자 게시글 수 감소 및 my_posts에서 제거
       if (_currentUser != null) {
+        // 사용자 게시글 수 감소
         await FirebaseFirestore.instance
             .collection('users')
             .doc(_currentUser!.uid)
             .update({'postsCount': FieldValue.increment(-1)});
+        
+        // my_posts에서 해당 게시글 삭제
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('my_posts')
+            .doc(widget.postId)
+            .delete();
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
