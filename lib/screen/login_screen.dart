@@ -151,6 +151,132 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleAppleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await AuthService.signInWithApple();
+      
+      if (userCredential?.user != null) {
+        final user = userCredential!.user!;
+        await user.reload();
+        final updatedUser = AuthService.currentUser;
+        setState(() {
+          _currentUser = updatedUser;
+        });
+        
+        // 사용자 확인 다이얼로그 표시
+        final shouldSave = await _showConfirmDialog();
+        
+        if (shouldSave) {
+          // FCM 토큰 가져오기
+          final fcmToken = await FCMService.getCurrentToken();
+          
+          // Firestore에 사용자 정보와 FCM 토큰 저장
+          await UserService.saveUserToFirestore(user, _currentPeanutCount, fcmToken: fcmToken);
+          
+          Fluttertoast.showToast(
+            msg: "Apple 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black38,
+            textColor: Colors.white,
+          );
+        } else {
+          // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
+          final fcmToken = await FCMService.getCurrentToken();
+          if (fcmToken != null) {
+            await UserService.updateFcmToken(user.uid, fcmToken);
+          }
+          
+          Fluttertoast.showToast(
+            msg: "Apple 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black38,
+            textColor: Colors.white,
+          );
+        }
+        
+        _getCurrentUser();
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Apple 로그인 실패: ${e.toString()}",
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await AuthService.signInWithGoogle();
+      
+      if (userCredential?.user != null) {
+        final user = userCredential!.user!;
+        await user.reload();
+        final updatedUser = AuthService.currentUser;
+        setState(() {
+          _currentUser = updatedUser;
+        });
+        
+        // 사용자 확인 다이얼로그 표시
+        final shouldSave = await _showConfirmDialog();
+        
+        if (shouldSave) {
+          // FCM 토큰 가져오기
+          final fcmToken = await FCMService.getCurrentToken();
+          
+          // Firestore에 사용자 정보와 FCM 토큰 저장
+          await UserService.saveUserToFirestore(user, _currentPeanutCount, fcmToken: fcmToken);
+          
+          Fluttertoast.showToast(
+            msg: "Google 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black38,
+            textColor: Colors.white,
+          );
+        } else {
+          // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
+          final fcmToken = await FCMService.getCurrentToken();
+          if (fcmToken != null) {
+            await UserService.updateFcmToken(user.uid, fcmToken);
+          }
+          
+          Fluttertoast.showToast(
+            msg: "Google 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black38,
+            textColor: Colors.white,
+          );
+        }
+        
+        _getCurrentUser();
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Google 로그인 실패: ${e.toString()}",
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<bool> _showConfirmDialog() async {
     return await showDialog<bool>(
       context: context,
@@ -487,7 +613,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // 동의 다이얼로그 함수 추가
-  Future<void> _showAgreementDialog() async {
+  Future<void> _showAgreementDialog({String loginType = 'Google'}) async {
     bool agreeNoAbuse = false;
     bool agreePolicy = false;
     await showDialog(
@@ -498,9 +624,9 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              title: const Text(
-                '서비스 이용 동의',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              title: Text(
+                '$loginType 로그인 - 서비스 이용 동의',
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -548,7 +674,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: (agreeNoAbuse && agreePolicy)
                       ? () {
                           Navigator.of(context).pop();
-                          _handleLogin();
+                          if (loginType == 'Apple') {
+                            _handleAppleLogin();
+                          } else if (loginType == 'Google') {
+                            _handleGoogleLogin();
+                          } else {
+                            _handleLogin();
+                          }
                         }
                       : null,
                   style: TextButton.styleFrom(
@@ -620,7 +752,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _showAgreementDialog,
+                      onPressed: _isLoading ? null : () => _showAgreementDialog(loginType: 'Apple'),
                       icon: const FaIcon(FontAwesomeIcons.apple, size: 20),
                       label: Text(
                         _isLoading ? '로그인 중...' : 'Apple로 로그인',
@@ -640,7 +772,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _showAgreementDialog,
+                      onPressed: _isLoading ? null : () => _showAgreementDialog(loginType: 'Google'),
                       icon: const FaIcon(FontAwesomeIcons.google, size: 20),
                       label: Text(
                         _isLoading ? '로그인 중...' : 'Google로 로그인',
@@ -660,7 +792,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _showAgreementDialog,
+                      onPressed: _isLoading ? null : () => _showAgreementDialog(loginType: 'Google'),
                       icon: _isLoading 
                         ? const SizedBox(
                             width: 20,

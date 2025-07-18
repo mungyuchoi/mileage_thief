@@ -89,6 +89,14 @@
 				<string>milecatch</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi</string>
+			</array>
+		</dict>
 	</array>
 	
 	<!-- Privacy - Photo Library Usage Description -->
