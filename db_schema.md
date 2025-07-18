@@ -122,7 +122,7 @@
 
 ---
 
-## 📁 posts/{yyyyMMdd}/{postId}
+## 📁 posts/{yyyyMMdd}/posts/{postId}
 
 **게시글 본문 정보**
 
