@@ -1469,7 +1469,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('댓글이 등록되었습니다.')),
+        const SnackBar(
+          content: Text('댓글이 등록되었습니다.'),
+          duration: Duration(seconds: 1),
+        ),
       );
     } catch (e) {
       setState(() {

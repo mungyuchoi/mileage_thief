@@ -72,6 +72,12 @@
     <key>branch_key</key>
     <string>key_live_gFtkAHtvCb21GOaphUeWfnjlCsgquMU8</string>
     
+	<key>branch_universal_link_domains</key>
+    <array>
+        <string>milecatch.app.link</string>
+        <string>milecatch-alternate.app.link</string>
+    </array>
+
     	<!-- Associated Domains (Universal Links) -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
