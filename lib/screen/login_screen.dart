@@ -10,6 +10,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/fcm_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'my_page_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -136,6 +137,19 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         
         _getCurrentUser();
+        
+        // MyPageScreen으로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyPageScreen()),
+        );
+        
+        // 로그인 성공 시 MyPageScreen으로 이동
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MyPageScreen()),
+          );
+        }
       }
     } catch (e) {
       Fluttertoast.showToast(
@@ -199,6 +213,12 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         
         _getCurrentUser();
+        
+        // MyPageScreen으로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyPageScreen()),
+        );
       }
     } catch (e) {
       Fluttertoast.showToast(
@@ -262,6 +282,12 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         
         _getCurrentUser();
+        
+        // MyPageScreen으로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyPageScreen()),
+        );
       }
     } catch (e) {
       Fluttertoast.showToast(
