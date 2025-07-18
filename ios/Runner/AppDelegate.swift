@@ -11,6 +11,13 @@ import Branch
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
     
+    // Google Sign-In 설정 (Branch 초기화 전에 먼저)
+    if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+       let plist = NSDictionary(contentsOfFile: path),
+       let clientId = plist["CLIENT_ID"] as? String {
+      GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientId)
+    }
+    
     // Branch.io 초기화
     Branch.getInstance().initSession(launchOptions: launchOptions) { (params, error) in
       print("Branch 초기화 완료: \(String(describing: params))")
@@ -19,24 +26,23 @@ import Branch
       }
     }
     
-    // Google Sign-In 설정
-    if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
-       let plist = NSDictionary(contentsOfFile: path),
-       let clientId = plist["CLIENT_ID"] as? String {
-      GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientId)
-    }
-    
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
   
   override func application(_ app: UIApplication,
                            open url: URL,
                            options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-    // Branch.io URL 처리
-    Branch.getInstance().application(app, open: url, options: options)
+    print("URL 처리 시도: \(url)")
     
-    // Google Sign-In URL 처리
-    return GIDSignIn.sharedInstance.handle(url)
+    // Google Sign-In URL 먼저 처리
+    if GIDSignIn.sharedInstance.handle(url) {
+      print("Google Sign-In URL 처리됨")
+      return true
+    }
+    
+    // Google Sign-In에서 처리되지 않은 경우 Branch.io로 전달
+    print("Branch.io URL 처리")
+    return Branch.getInstance().application(app, open: url, options: options)
   }
   
   override func application(_ application: UIApplication,

@@ -62,6 +62,7 @@
     <array>
       <string>https</string>
       <string>http</string>
+      <string>googlegmail</string>
     </array>
     
     <!-- Flutter 기본 딥링크 비활성화 -->

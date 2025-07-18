@@ -19,25 +19,40 @@ class AuthService {
   // 구글 로그인 (Android)
   static Future<UserCredential?> signInWithGoogle() async {
     try {
+      print('[구글 로그인] 시작');
+      
       // 구글 계정 선택
+      print('[구글 로그인] 계정 선택 시작');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
       if (googleUser == null) {
+        print('[구글 로그인] 사용자가 취소함');
         return null; // 사용자가 취소함
       }
+      
+      print('[구글 로그인] 계정 선택 완료: ${googleUser.email}');
 
       // 구글 인증 정보 가져오기
+      print('[구글 로그인] 인증 정보 가져오기 시작');
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      print('[구글 로그인] 인증 정보 가져오기 완료');
 
       // Firebase 자격 증명 생성
+      print('[구글 로그인] Firebase 자격 증명 생성');
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       // Firebase에 로그인
-      return await _auth.signInWithCredential(credential);
+      print('[구글 로그인] Firebase 로그인 시작');
+      final result = await _auth.signInWithCredential(credential);
+      print('[구글 로그인] Firebase 로그인 완료: ${result.user?.email}');
+      
+      return result;
     } catch (e) {
-      print('구글 로그인 오류: $e');
+      print('[구글 로그인] 오류 발생: $e');
+      print('[구글 로그인] 오류 타입: ${e.runtimeType}');
       rethrow;
     }
   }
