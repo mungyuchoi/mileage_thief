@@ -1,7 +1,7 @@
 import UIKit
 import Flutter
 import GoogleSignIn
-import Branch
+import BranchSDK
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -16,6 +16,8 @@ import Branch
        let plist = NSDictionary(contentsOfFile: path),
        let clientId = plist["CLIENT_ID"] as? String {
       GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientId)
+    } else {
+      print("GoogleService-Info.plist 파일을 찾을 수 없거나 CLIENT_ID가 없습니다.")
     }
     
     // Branch.io 초기화

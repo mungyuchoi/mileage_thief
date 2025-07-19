@@ -28,6 +28,8 @@
 	<string>ca-app-pub-8549606613390169~3500255527</string>
 	<key>GADIsAdManagerApp</key>
 	<true/>
+	<key>GIDClientID</key>
+	<string>962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
