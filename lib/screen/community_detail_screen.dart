@@ -23,6 +23,88 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../utils/image_compressor.dart';
 
+// Details/Summary 접기펼치기 위젯
+class DetailsExpansionWidget extends StatefulWidget {
+  final String summary;
+  final String content;
+  final Map<String, Style> htmlStyle;
+  final Function(String?) onLinkTap;
+
+  const DetailsExpansionWidget({
+    Key? key,
+    required this.summary,
+    required this.content,
+    required this.htmlStyle,
+    required this.onLinkTap,
+  }) : super(key: key);
+
+  @override
+  State<DetailsExpansionWidget> createState() => _DetailsExpansionWidgetState();
+}
+
+class _DetailsExpansionWidgetState extends State<DetailsExpansionWidget> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey[50],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(
+                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: const Color(0xFF0d47a1),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Html(
+                      data: widget.summary,
+                      style: {
+                        "body": Style(
+                          fontSize: FontSize(14),
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0d47a1),
+                          margin: Margins.zero,
+                        ),
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Html(
+                data: widget.content,
+                style: widget.htmlStyle,
+                onLinkTap: (url, _, __) => widget.onLinkTap(url),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 // 무지개 그라데이션 텍스트 위젯
 class GradientText extends StatelessWidget {
   final String text;
@@ -42,6 +124,8 @@ class GradientText extends StatelessWidget {
     );
   }
 }
+
+
 
 class CommunityDetailScreen extends StatefulWidget {
   final String postId;
@@ -1561,6 +1645,620 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
+
+
+  // HTML 콘텐츠 전처리 (날짜 형식 변환)
+  String _processContentHtml(String htmlContent) {
+    String processedHtml = htmlContent;
+    
+    // 8자리 날짜 형식을 점 구분 형식으로 변환 (예: 20250801 -> 2025.08.01)
+    processedHtml = processedHtml.replaceAllMapped(
+      RegExp(r'(\d{4})(\d{2})(\d{2})'),
+      (match) {
+        final year = match.group(1);
+        final month = match.group(2);
+        final day = match.group(3);
+        return '$year.$month.$day';
+      },
+    );
+    
+    return processedHtml;
+  }
+
+  // HTML 콘텐츠를 sections로 분할하고 각 section의 details를 처리
+  List<Map<String, dynamic>> _parseContentSections(String htmlContent) {
+    final List<Map<String, dynamic>> sections = [];
+    
+    // h2 태그를 기준으로 섹션을 나눔
+    final h2Regex = RegExp(r'<h2[^>]*>(.*?)</h2>', caseSensitive: false);
+    final h2Matches = h2Regex.allMatches(htmlContent).toList();
+    
+    if (h2Matches.isEmpty) {
+      // h2가 없으면 전체를 하나의 섹션으로 처리
+      sections.add(_parseSingleSection(htmlContent));
+      return sections;
+    }
+    
+    for (int i = 0; i < h2Matches.length; i++) {
+      final currentMatch = h2Matches[i];
+      final nextMatch = i + 1 < h2Matches.length ? h2Matches[i + 1] : null;
+      
+      // 현재 h2부터 다음 h2 전까지의 내용을 추출
+      final startIndex = currentMatch.start;
+      final endIndex = nextMatch?.start ?? htmlContent.length;
+      final sectionContent = htmlContent.substring(startIndex, endIndex);
+      
+      sections.add(_parseSingleSection(sectionContent));
+    }
+    
+    return sections;
+  }
+  
+  // 단일 섹션을 파싱 (제목, 기본 테이블, details 블록들)
+  Map<String, dynamic> _parseSingleSection(String sectionContent) {
+    // details 태그들을 추출
+    final detailsRegex = RegExp(r'<details[^>]*>(.*?)</details>', caseSensitive: false, dotAll: true);
+    final detailsMatches = detailsRegex.allMatches(sectionContent).toList();
+    
+    List<Map<String, String>> detailsBlocks = [];
+    for (final match in detailsMatches) {
+      final detailsContent = match.group(1) ?? '';
+      
+      // summary 추출
+      final summaryMatch = RegExp(r'<summary[^>]*>(.*?)</summary>', 
+          caseSensitive: false, dotAll: true).firstMatch(detailsContent);
+      final summaryText = summaryMatch?.group(1) ?? '더 보기';
+      
+      // summary 제거한 나머지 내용
+      final contentWithoutSummary = detailsContent.replaceAll(
+        RegExp(r'<summary[^>]*>.*?</summary>', caseSensitive: false, dotAll: true), 
+        ''
+      ).trim();
+      
+      detailsBlocks.add({
+        'summary': summaryText,
+        'content': contentWithoutSummary,
+      });
+    }
+    
+    // details 태그들을 제거한 메인 콘텐츠
+    final mainContent = sectionContent.replaceAll(
+      RegExp(r'<details[^>]*>.*?</details>', caseSensitive: false, dotAll: true), 
+      ''
+    );
+    
+    return {
+      'mainContent': mainContent,
+      'detailsBlocks': detailsBlocks,
+    };
+  }
+
+  // 콘텐츠와 details 블록들을 함께 구성하는 위젯
+  Widget _buildContentWithDetails() {
+    final contentHtml = _post!['contentHtml'] ?? '';
+    print('=== 원본 HTML ===');
+    print(contentHtml);
+    
+    // 완전히 새로운 접근: 원본 HTML 구조를 그대로 파싱
+    return _buildFromOriginalHtml(contentHtml);
+  }
+
+  // 원본 HTML 구조에 맞는 완전히 새로운 파싱 방법
+  Widget _buildFromOriginalHtml(String htmlContent) {
+    final processedContent = _processContentHtml(htmlContent);
+    print('=== _buildFromOriginalHtml 호출됨 ===');
+    
+    List<Widget> widgets = [];
+    
+    // 1. 헤더 부분 (h1, p) 추출
+    final headerMatch = RegExp(r'(.*?)(?=<h2)', caseSensitive: false, dotAll: true).firstMatch(processedContent);
+    if (headerMatch != null) {
+      final headerHtml = headerMatch.group(1)?.trim() ?? '';
+      if (headerHtml.isNotEmpty) {
+        widgets.add(_buildHeaderSection(headerHtml));
+      }
+    }
+    
+    // 2. 각 섹션 (h2 + 기본테이블 + details) 추출 - 더 정확한 정규식 사용
+    final sectionRegex = RegExp(r'<h2[^>]*>.*?</h2>.*?<table[^>]*>.*?</table>.*?<details.*?</details>', caseSensitive: false, dotAll: true);
+    final sectionMatches = sectionRegex.allMatches(processedContent);
+    
+    print('=== 발견된 섹션 개수: ${sectionMatches.length} ===');
+    print('=== 전체 HTML 길이: ${processedContent.length} ===');
+    
+    for (final match in sectionMatches) {
+      final sectionHtml = match.group(0) ?? '';
+      widgets.add(_buildFlightSection(sectionHtml));
+    }
+    
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: widgets,
+      ),
+    );
+  }
+  
+  // 헤더 섹션 (h1, p) 빌드
+  Widget _buildHeaderSection(String headerHtml) {
+    // h1 태그 추출
+    final h1Match = RegExp(r'<h1[^>]*>(.*?)</h1>', caseSensitive: false, dotAll: true).firstMatch(headerHtml);
+    final h1Text = h1Match?.group(1)?.replaceAll(RegExp(r'<[^>]*>'), '')?.trim() ?? '';
+    
+    // p 태그 추출
+    final pMatch = RegExp(r'<p[^>]*>(.*?)</p>', caseSensitive: false, dotAll: true).firstMatch(headerHtml);
+    final pText = pMatch?.group(1)?.replaceAll(RegExp(r'<[^>]*>'), '')?.trim() ?? '';
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          if (h1Text.isNotEmpty)
+            Text(
+              h1Text,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1a237e),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          if (pText.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              pText,
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  // 각 항공편 섹션 빌드
+  Widget _buildFlightSection(String sectionHtml) {
+    print('=== 항공편 섹션 처리 중 ===');
+    print('섹션 HTML 길이: ${sectionHtml.length}');
+    
+    // h2 태그 추출
+    final h2Match = RegExp(r'<h2[^>]*>(.*?)</h2>', caseSensitive: false, dotAll: true).firstMatch(sectionHtml);
+    final h2Text = h2Match?.group(1)?.replaceAll(RegExp(r'<[^>]*>'), '')?.trim() ?? '';
+    
+    // 기본 테이블 추출 (첫 번째 테이블)
+    final mainTableMatch = RegExp(r'<table[^>]*>.*?</table>', caseSensitive: false, dotAll: true).firstMatch(sectionHtml);
+    final mainTableHtml = mainTableMatch?.group(0) ?? '';
+    
+    // details 블록이 있는지 먼저 확인
+    final hasDetails = sectionHtml.contains('<details');
+    print('Details 태그 포함 여부: $hasDetails');
+    
+    // details 블록 추출
+    final detailsMatch = RegExp(r'<details[^>]*>(.*?)</details>', caseSensitive: false, dotAll: true).firstMatch(sectionHtml);
+    final detailsHtml = detailsMatch?.group(1) ?? '';
+    
+    // summary 텍스트 추출
+    final summaryMatch = RegExp(r'<summary[^>]*>(.*?)</summary>', caseSensitive: false, dotAll: true).firstMatch(detailsHtml);
+    final summaryText = summaryMatch?.group(1)?.replaceAll(RegExp(r'<[^>]*>'), '')?.trim() ?? '더 보기';
+    
+    // details 내부 테이블 추출
+    final detailsTableMatch = RegExp(r'<table[^>]*>.*?</table>', caseSensitive: false, dotAll: true).firstMatch(detailsHtml);
+    final detailsTableHtml = detailsTableMatch?.group(0) ?? '';
+    
+    print('h2: $h2Text');
+    print('메인 테이블 있음: ${mainTableHtml.isNotEmpty}');
+    print('Details HTML 길이: ${detailsHtml.length}');
+    print('Summary 텍스트: $summaryText');
+    print('확장 테이블 있음: ${detailsTableHtml.isNotEmpty}');
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 섹션 제목
+          if (h2Text.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              child: Text(
+                h2Text,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0d47a1),
+                ),
+              ),
+            ),
+          
+          // 기본 테이블
+          if (mainTableHtml.isNotEmpty)
+            _buildTableFromHtmlString(mainTableHtml),
+          
+          // 확장 가능한 부분
+          if (detailsTableHtml.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ExpansionTile(
+                title: Text(
+                  summaryText,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0d47a1),
+                  ),
+                ),
+                trailing: const Icon(Icons.expand_more),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    child: _buildTableFromHtmlString(detailsTableHtml),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  // HTML 테이블을 Flutter 위젯으로 변환
+  Widget _buildTableFromHtmlString(String tableHtml) {
+    final List<List<String>> tableData = [];
+    
+    // 테이블 행 추출
+    final rowMatches = RegExp(r'<tr[^>]*>(.*?)</tr>', caseSensitive: false, dotAll: true).allMatches(tableHtml);
+    
+    for (final rowMatch in rowMatches) {
+      final rowHtml = rowMatch.group(1) ?? '';
+      final List<String> rowData = [];
+      
+      // 셀 데이터 추출 (th 또는 td)
+      final cellMatches = RegExp(r'<t[hd][^>]*>(.*?)</t[hd]>', caseSensitive: false, dotAll: true).allMatches(rowHtml);
+      
+      for (final cellMatch in cellMatches) {
+        String cellText = cellMatch.group(1) ?? '';
+        cellText = cellText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+        
+        // 날짜 포맷 변경 (YYYYMMDD -> YYYY-MM-DD)
+        if (RegExp(r'^\d{8}$').hasMatch(cellText)) {
+          cellText = '${cellText.substring(0, 4)}-${cellText.substring(4, 6)}-${cellText.substring(6, 8)}';
+        }
+        
+        rowData.add(cellText);
+      }
+      
+      if (rowData.isNotEmpty) {
+        tableData.add(rowData);
+      }
+    }
+    
+    if (tableData.isEmpty) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[400]!),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Table(
+        border: TableBorder.all(color: Colors.grey[400]!),
+        columnWidths: const {
+          0: FlexColumnWidth(2),
+          1: FlexColumnWidth(1),
+          2: FlexColumnWidth(1),
+        },
+        children: tableData.map((row) {
+          final isHeader = tableData.indexOf(row) == 0;
+          return TableRow(
+            children: row.map((cell) {
+              return Container(
+                padding: const EdgeInsets.all(8),
+                color: isHeader ? Colors.grey[100] : Colors.white,
+                child: Text(
+                  cell,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // 더 단순한 방법으로 HTML 파싱 및 ExpansionTile 구현
+  Widget _buildSimpleContentWithExpansion(String htmlContent) {
+    final processedContent = _processContentHtml(htmlContent);
+    print('=== _buildSimpleContentWithExpansion 호출됨 ===');
+    
+    // details 태그들을 찾아서 위젯으로 변환
+    final detailsRegex = RegExp(r'<details[^>]*>(.*?)</details>', caseSensitive: false, dotAll: true);
+    final detailsMatches = detailsRegex.allMatches(processedContent).toList();
+    
+    print('=== 발견된 Details 태그 개수: ${detailsMatches.length} ===');
+    
+    final List<Widget> allWidgets = [];
+    
+    // 전체 제목과 설명 부분 (첫 번째 h2 전까지)
+    final firstH2Index = processedContent.indexOf('<h2');
+    if (firstH2Index > 0) {
+      final headerContent = processedContent.substring(0, firstH2Index).trim();
+      if (headerContent.isNotEmpty) {
+        print('=== 헤더 섹션 추가 ===');
+        allWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Html(
+              data: headerContent,
+              style: _getHtmlStyle(),
+            ),
+          ),
+        );
+      }
+    }
+    
+    // h2 태그를 기준으로 섹션 분할
+    final h2Regex = RegExp(r'<h2[^>]*>.*?</h2>', caseSensitive: false);
+    final h2Matches = h2Regex.allMatches(processedContent).toList();
+    
+    for (int i = 0; i < h2Matches.length; i++) {
+      final currentH2 = h2Matches[i];
+      final nextH2 = i + 1 < h2Matches.length ? h2Matches[i + 1] : null;
+      
+      // 현재 h2부터 다음 h2 전까지의 내용 추출
+      final sectionStart = currentH2.start;
+      final sectionEnd = nextH2?.start ?? processedContent.length;
+      final sectionContent = processedContent.substring(sectionStart, sectionEnd);
+      
+      print('=== 섹션 ${i + 1} 처리 중 ===');
+      print('섹션 길이: ${sectionContent.length}');
+      
+      // 이 섹션에서 details 태그 찾기
+      final sectionDetailsMatches = detailsRegex.allMatches(sectionContent).toList();
+      
+      if (sectionDetailsMatches.isNotEmpty) {
+        // details 태그가 있는 경우: 메인 부분과 details 부분으로 분리
+        final detailsMatch = sectionDetailsMatches.first;
+        
+        // details 전까지의 메인 콘텐츠 (h2 + 기본 테이블)
+        final mainPart = sectionContent.substring(0, detailsMatch.start).trim();
+        
+        if (mainPart.isNotEmpty) {
+          print('메인 파트 길이: ${mainPart.length}');
+          print('메인 파트 내용 확인: h2와 table이 포함되어 있는가?');
+          
+          // HTML을 Flutter 네이티브 위젯으로 변환
+          allWidgets.add(_buildTableFromHtmlString(mainPart));
+        }
+        
+        // details 부분을 ExpansionTile로 변환
+        final detailsContent = detailsMatch.group(1) ?? '';
+        final summaryMatch = RegExp(r'<summary[^>]*>(.*?)</summary>', 
+            caseSensitive: false, dotAll: true).firstMatch(detailsContent);
+        final summaryText = summaryMatch?.group(1) ?? '더 보기';
+        final contentWithoutSummary = detailsContent.replaceAll(
+          RegExp(r'<summary[^>]*>.*?</summary>', caseSensitive: false, dotAll: true), 
+          ''
+        ).trim();
+        
+        print('ExpansionTile 추가: $summaryText');
+        print('ExpansionTile 콘텐츠 길이: ${contentWithoutSummary.length}');
+        
+        // 더 안정적인 ExpansionTile 구현
+        allWidgets.add(
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: ExpansionTile(
+                initiallyExpanded: false,
+                maintainState: true,
+                tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                childrenPadding: const EdgeInsets.all(0),
+                title: Row(
+                  children: [
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Color(0xFF0d47a1),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        summaryText.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('▼ ', ''),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0d47a1),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.white,
+                collapsedBackgroundColor: Colors.white,
+                iconColor: Colors.transparent, // 기본 아이콘 숨기기
+                collapsedIconColor: Colors.transparent,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      border: Border(
+                        top: BorderSide(color: Colors.grey[300]!, width: 1),
+                      ),
+                    ),
+                    child: Html(
+                      data: contentWithoutSummary,
+                      style: _getHtmlStyle(),
+                      onLinkTap: (url, _, __) {
+                        if (url != null) {
+                          _launchUrl(url);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      } else {
+        // details 태그가 없는 경우: 전체를 그대로 표시
+        print('Details 없는 섹션, 전체 표시');
+        allWidgets.add(
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Html(
+              data: sectionContent,
+              style: _getHtmlStyle(),
+              onLinkTap: (url, _, __) {
+                if (url != null) {
+                  _launchUrl(url);
+                }
+              },
+            ),
+          ),
+        );
+      }
+    }
+    
+    print('=== 최종 위젯 개수: ${allWidgets.length} ===');
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: allWidgets,
+    );
+  }
+  
+  // 개별 섹션을 위한 위젯
+  Widget _buildSectionWidget(Map<String, dynamic> section) {
+    final mainContent = section['mainContent'] as String;
+    final detailsBlocks = section['detailsBlocks'] as List<Map<String, String>>;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 섹션 메인 콘텐츠 (h2 + 기본 테이블)
+        Html(
+          data: mainContent,
+          style: _getHtmlStyle(),
+          onLinkTap: (url, _, __) {
+            if (url != null) {
+              _launchUrl(url);
+            }
+          },
+        ),
+        
+        // details 블록들
+        ...detailsBlocks.map((block) => _buildDetailsWidget(block)).toList(),
+        
+        const SizedBox(height: 8), // 섹션 간 간격
+      ],
+    );
+  }
+
+  // HTML 스타일 정의를 별도 메서드로 분리
+  Map<String, Style> _getHtmlStyle() {
+    return {
+      "body": Style(
+        fontSize: FontSize(15),
+        color: Colors.black87,
+        lineHeight: LineHeight(1.5),
+        margin: Margins.zero,
+      ),
+      "p": Style(
+        margin: Margins.zero,
+        padding: HtmlPaddings.zero,
+        whiteSpace: WhiteSpace.pre,
+      ),
+      "br": Style(
+        margin: Margins.only(bottom: 8),
+        display: Display.block,
+      ),
+      "img": Style(
+        margin: Margins.zero,
+        display: Display.block,
+      ),
+      "u": Style(
+        margin: Margins.zero,
+      ),
+      "a": Style(
+        color: Colors.blue,
+        textDecoration: TextDecoration.underline,
+      ),
+      "h1": Style(
+        margin: Margins.only(bottom: 16),
+        fontSize: FontSize(18),
+        fontWeight: FontWeight.bold,
+      ),
+      "h2": Style(
+        margin: Margins.only(top: 16, bottom: 12),
+        fontSize: FontSize(16),
+        fontWeight: FontWeight.bold,
+      ),
+      "table": Style(
+        margin: Margins.only(top: 8, bottom: 16),
+        padding: HtmlPaddings.zero,
+        width: Width(100, Unit.percent),
+        border: Border.all(color: Colors.grey[400]!, width: 1),
+      ),
+      "td": Style(
+        padding: HtmlPaddings.all(8),
+        border: Border.all(color: Colors.grey[400]!, width: 1),
+        textAlign: TextAlign.center,
+        fontSize: FontSize(14),
+        color: Colors.black87,
+        backgroundColor: Colors.white,
+      ),
+      "th": Style(
+        padding: HtmlPaddings.all(8),
+        border: Border.all(color: Colors.grey[400]!, width: 1),
+        textAlign: TextAlign.center,
+        fontSize: FontSize(14),
+        fontWeight: FontWeight.bold,
+        backgroundColor: Colors.grey[200],
+        color: Colors.black87,
+      ),
+      "tr": Style(
+        border: Border.all(color: Colors.grey[400]!, width: 1),
+      ),
+      "div": Style(
+        margin: Margins.only(bottom: 4),
+      ),
+    };
+  }
+
+  // 개별 details 블록을 위한 위젯 (StatefulWidget으로 상태 관리)
+  Widget _buildDetailsWidget(Map<String, String> block) {
+    return DetailsExpansionWidget(
+      summary: block['summary'] ?? '더 보기',
+      content: block['content'] ?? '',
+      htmlStyle: _getHtmlStyle(),
+      onLinkTap: (url) {
+        if (url != null) {
+          _launchUrl(url);
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1811,42 +2509,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       ),
                                     )
                                   else
-                                    Html(
-                                      data: _post!['contentHtml'] ?? '',
-                                      style: {
-                                        "body": Style(
-                                          fontSize: FontSize(15),
-                                          color: Colors.black87,
-                                          lineHeight: LineHeight(1.5),
-                                          margin: Margins.zero,
-                                        ),
-                                        "p": Style(
-                                          margin: Margins.zero,
-                                          padding: HtmlPaddings.zero,
-                                          whiteSpace: WhiteSpace.pre,
-                                        ),
-                                        "br": Style(
-                                          margin: Margins.only(bottom: 8),
-                                          display: Display.block,
-                                        ),
-                                        "img": Style(
-                                          margin: Margins.zero,
-                                          display: Display.block,
-                                        ),
-                                        "u": Style(
-                                          margin: Margins.zero,
-                                        ),
-                                        "a": Style(
-                                          color: Colors.blue,
-                                          textDecoration: TextDecoration.underline,
-                                        ),
-                                      },
-                                      onLinkTap: (url, _, __) {
-                                        if (url != null) {
-                                          _launchUrl(url);
-                                        }
-                                      },
-                                    ),
+                                    _buildContentWithDetails(),
                                 ],
                               ),
                             ),
