@@ -16,6 +16,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'community_post_create_screen.dart';
 import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
+import '../widgets/image_viewer.dart';
 import '../helper/AdHelper.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:typed_data';
@@ -1197,6 +1198,51 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
+  // 이미지 뷰어 열기
+  void _openImageViewer(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SingleImageViewer(
+          imageUrl: imageUrl,
+          heroTag: 'image_$imageUrl',
+        ),
+      ),
+    );
+  }
+
+  // 이미지 URL인지 확인하는 헬퍼 메서드
+  bool _isImageUrl(String url) {
+    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+    final lowerUrl = url.toLowerCase();
+    
+    // Firebase Storage 이미지 URL 패턴 확인
+    if (lowerUrl.contains('firebasestorage.googleapis.com') || 
+        lowerUrl.contains('storage.googleapis.com')) {
+      return true;
+    }
+    
+    // 일반적인 이미지 확장자 확인
+    return imageExtensions.any((ext) => lowerUrl.contains(ext));
+  }
+
+  // HTML의 이미지를 클릭 가능한 링크로 변환
+  String _makeImagesClickable(String htmlContent) {
+    // <img src="..." /> 형태의 이미지를 <a href="..."><img src="..." /></a> 형태로 변환
+    return htmlContent.replaceAllMapped(
+      RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false),
+      (match) {
+        final fullMatch = match.group(0) ?? '';
+        final beforeSrc = match.group(1) ?? '';
+        final srcUrl = match.group(2) ?? '';
+        final afterSrc = match.group(3) ?? '';
+        
+        // 이미지를 링크로 감싸기
+        return '<a href="$srcUrl"><img${beforeSrc}src="$srcUrl"${afterSrc}/></a>';
+      },
+    );
+  }
+
   Future<void> _pickImage() async {
     try {
       // iOS에서 권한 확인 및 요청
@@ -1815,7 +1861,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     widget.boardId == 'seats'
                                         ? _buildContentWithDetails()
                                         : Html(
-                                            data: _post!['contentHtml'] ?? '',
+                                            data: _makeImagesClickable(_post!['contentHtml'] ?? ''),
                                             style: {
                                               "body": Style(
                                                 fontSize: FontSize(15),
@@ -1846,7 +1892,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                             },
                                             onLinkTap: (url, _, __) {
                                               if (url != null) {
-                                                _launchUrl(url);
+                                                // 이미지 URL인지 확인
+                                                if (_isImageUrl(url)) {
+                                                  _openImageViewer(url);
+                                                } else {
+                                                  _launchUrl(url);
+                                                }
                                               }
                                             },
                                           ),
@@ -2463,7 +2514,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     );
     
     return Html(
-      data: processedHtml,
+      data: _makeImagesClickable(processedHtml),
       style: {
         "body": Style(
           fontSize: FontSize(14),
@@ -2480,6 +2531,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ),
         "img": Style(
           margin: Margins.zero,
+          width: Width(100, Unit.percent),
         ),
         "u": Style(
           margin: Margins.zero,
@@ -2496,7 +2548,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       },
       onLinkTap: (url, _, __) {
         if (url != null) {
-          _launchUrl(url);
+          // 이미지 URL인지 확인
+          if (_isImageUrl(url)) {
+            _openImageViewer(url);
+          } else {
+            _launchUrl(url);
+          }
         }
       },
     );
