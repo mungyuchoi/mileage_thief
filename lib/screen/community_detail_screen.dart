@@ -878,7 +878,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('현재 카테고리: ${_getBoardDisplayName(_post?['boardId'] ?? widget.boardId)}', style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                  Text('현재 카테고리: ${widget.boardName}', style: const TextStyle(fontSize: 14, color: Colors.black87)),
                   const SizedBox(height: 16),
                   const Text('변경할 카테고리를 선택하세요:', style: TextStyle(fontSize: 13)),
                   const SizedBox(height: 8),
@@ -1578,34 +1578,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return level != null ? '$gradeName Lv.$level' : gradeName;
   }
 
-  String _getBoardDisplayName(String boardId) {
-    final boardMap = {
-      'question': '마일리지',
-      'deal': '적립/카드 혜택',
-      'seat_share': '좌석 공유',
-      'review': '항공 리뷰',
-      'error_report': '오류 신고',
-      'suggestion': '건의사항',
-      'free': '자유게시판',
-      'notice': '운영 공지사항',
-    };
-    return boardMap[boardId] ?? boardId;
-  }
-
-  Color _getGradeColor(String? grade) {
-    switch (grade) {
-      case 'economy':
-        return Colors.grey;
-      case 'business':
-        return Colors.purple;
-      case 'first':
-        return Colors.amber;
-      case 'hidden':
-        return Colors.black;
-      default:
-        return Colors.grey;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1679,7 +1651,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 children: [
                                   // 1. 카테고리명 (boardId) - 작게
                                   Text(
-                                    _getBoardDisplayName(_post?['boardId'] ?? widget.boardId),
+                                    widget.boardName,
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
