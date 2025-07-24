@@ -106,10 +106,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (user == null) {
       Fluttertoast.showToast(
         msg: "로그인이 필요한 기능입니다. 로그인 페이지로 이동합니다.",
-        timeInSecForIosWeb: 3,
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: const Color(0xFF74512D),
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
+        fontSize: 16.0,
       );
       
       // 로그인 화면으로 이동

@@ -19,10 +19,10 @@ import 'my_page_screen.dart';
 import '../widgets/image_viewer.dart';
 import '../helper/AdHelper.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../utils/image_compressor.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 // 무지개 그라데이션 텍스트 위젯
 class GradientText extends StatelessWidget {
@@ -665,13 +665,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           final currentPeanut = userData['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 1;
           await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('땅콩 1개가 추가되었습니다.'),
-              backgroundColor: Colors.black38,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 2),
-            ),
+          Fluttertoast.showToast(
+            msg: '땅콩 1개가 추가되었습니다.',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
+            textColor: Colors.white,
+            fontSize: 16.0,
           );
         }
       }
@@ -1494,13 +1495,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         final currentPeanut = userData['peanutCount'] ?? 0;
         final newPeanut = currentPeanut + 2;
         await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('땅콩 2개가 추가되었습니다.'),
-            backgroundColor: Colors.black38,
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
-          ),
+        Fluttertoast.showToast(
+          msg: '땅콩 2개가 추가되었습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
+          textColor: Colors.white,
+          fontSize: 16.0,
         );
       }
 

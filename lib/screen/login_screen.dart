@@ -117,9 +117,12 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Fluttertoast.showToast(
             msg: "로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         } else {
           // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
@@ -130,9 +133,12 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Fluttertoast.showToast(
             msg: "로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         }
         
@@ -154,9 +160,12 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       Fluttertoast.showToast(
         msg: "로그인 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     } finally {
       setState(() {
@@ -193,9 +202,12 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Fluttertoast.showToast(
             msg: "Apple 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         } else {
           // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
@@ -206,9 +218,12 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Fluttertoast.showToast(
             msg: "Apple 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         }
         
@@ -223,9 +238,12 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       Fluttertoast.showToast(
         msg: "Apple 로그인 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     } finally {
       setState(() {
@@ -262,9 +280,12 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Fluttertoast.showToast(
             msg: "Google 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         } else {
           // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
@@ -275,9 +296,12 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Fluttertoast.showToast(
             msg: "Google 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         }
         
@@ -292,9 +316,12 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       Fluttertoast.showToast(
         msg: "Google 로그인 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     } finally {
       setState(() {
@@ -348,16 +375,22 @@ class _LoginScreenState extends State<LoginScreen> {
       
       Fluttertoast.showToast(
         msg: "로그아웃 되었습니다.",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.grey,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     } catch (e) {
       Fluttertoast.showToast(
         msg: "로그아웃 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }
@@ -441,16 +474,22 @@ class _LoginScreenState extends State<LoginScreen> {
       
       Fluttertoast.showToast(
         msg: "이름이 '$newName'으로 변경되었습니다.",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.green,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     } catch (e) {
       Fluttertoast.showToast(
         msg: "이름 변경 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     } finally {
       setState(() {
@@ -560,10 +599,12 @@ class _LoginScreenState extends State<LoginScreen> {
     
     Fluttertoast.showToast(
       msg: "땅콩 $peanuts개를 얻었습니다.",
-      timeInSecForIosWeb: 5,
+      toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
       backgroundColor: Colors.black38,
       textColor: Colors.white,
+      fontSize: 16.0,
     );
   }
 
@@ -623,17 +664,23 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       Fluttertoast.showToast(
         msg: "회원탈퇴가 완료되었습니다.",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
       // 로그인 화면으로 이동(필요시)
     } catch (e) {
       Fluttertoast.showToast(
         msg: "회원탈퇴 실패: "+e.toString(),
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }

@@ -183,9 +183,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       Future.delayed(const Duration(milliseconds: 500), () {
         Fluttertoast.showToast(
           msg: "새로운 게시글을 작성합니다",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.blue,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
       });
     } else if (result == 'load') {
@@ -275,10 +278,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
     
     Fluttertoast.showToast(
       msg: message,
+      toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.black26,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.grey[800],
       textColor: Colors.white,
-      toastLength: Toast.LENGTH_LONG,
+      fontSize: 16.0,
     );
   }
   
@@ -402,9 +407,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       if (tempImagePaths.length >= maxImageCount) {
         Fluttertoast.showToast(
           msg: "최대 $maxImageCount개까지만 사진을 추가할 수 있습니다",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.orange,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -442,18 +450,24 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         
         Fluttertoast.showToast(
           msg: "이미지가 추가되었습니다 (${tempImagePaths.length}/$maxImageCount)",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Color(0xFF74512D),
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
       }
     } catch (e) {
       print('이미지 선택 오류: $e');
       Fluttertoast.showToast(
         msg: "이미지 선택 중 오류가 발생했습니다",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }
@@ -598,9 +612,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         });
         Fluttertoast.showToast(
           msg: "로그인이 필요합니다",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -613,9 +630,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         });
         Fluttertoast.showToast(
           msg: "게시판을 선택해주세요",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.orange,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -629,9 +649,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         });
         Fluttertoast.showToast(
           msg: "제목을 입력해주세요",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.orange,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -649,9 +672,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         });
         Fluttertoast.showToast(
           msg: "내용을 입력해주세요",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.orange,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -669,9 +695,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         });
         Fluttertoast.showToast(
           msg: "사용자 정보를 가져올 수 없습니다",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -834,9 +863,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
         msg: widget.isEditMode 
             ? "게시글이 성공적으로 수정되었습니다"
             : "게시글이 성공적으로 등록되었습니다",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.black38,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
+        fontSize: 16.0,
       );
 
       // 새 글 작성 시 땅콩 10개 추가
@@ -848,9 +880,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
           await UserService.updatePeanutCount(currentUser.uid, newPeanut);
           Fluttertoast.showToast(
             msg: "땅콩 10개가 추가되었습니다.",
+            toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black38,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
             textColor: Colors.white,
+            fontSize: 16.0,
           );
         } catch (e) {
           print('땅콩 추가 오류: $e');
@@ -871,9 +906,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
       
       Fluttertoast.showToast(
         msg: "게시글 등록 중 오류가 발생했습니다",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }
@@ -924,9 +962,12 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
                     
                     Fluttertoast.showToast(
                       msg: "임시 저장된 데이터를 삭제했습니다",
+                      toastLength: Toast.LENGTH_SHORT,
                       gravity: ToastGravity.BOTTOM,
+                      timeInSecForIosWeb: 1,
                       backgroundColor: Colors.orange,
                       textColor: Colors.white,
+                      fontSize: 16.0,
                     );
                   }
                 },

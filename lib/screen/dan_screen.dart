@@ -228,12 +228,12 @@ class _SearchDanScreen extends State<SearchDanScreen> {
       
       Fluttertoast.showToast(
         msg: "땅콩 $peanuts개를 얻었습니다.",
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 5,
-        backgroundColor: Colors.black38,
-        fontSize: 20,
-        textColor: Colors.white,
         toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
     });
   }
@@ -250,12 +250,12 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     if (_counter <= 0) {
       Fluttertoast.showToast(
         msg: "땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black38,
-        fontSize: 13,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
-        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
       );
       return false;
     }
@@ -758,9 +758,12 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                     if (start.isAfter(end)) {
                       Fluttertoast.showToast(
                         msg: "잘못된 시작일과 종료일입니다.",
+                        toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.black54,
+                        timeInSecForIosWeb: 1,
+                        backgroundColor: Colors.grey[800],
                         textColor: Colors.white,
+                        fontSize: 16.0,
                       );
                       return;
                     }
@@ -771,18 +774,24 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       });
                       Fluttertoast.showToast(
                         msg: "도착지를 선택해주세요.",
+                        toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.black38,
+                        timeInSecForIosWeb: 1,
+                        backgroundColor: Colors.grey[800],
                         textColor: Colors.white,
+                        fontSize: 16.0,
                       );
                       return;
                     }
                     if (departureSelectedValue == null || departureSelectedValue!.isEmpty) {
                       Fluttertoast.showToast(
                         msg: "출발지를 선택해주세요.",
+                        toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.black54,
+                        timeInSecForIosWeb: 1,
+                        backgroundColor: Colors.grey[800],
                         textColor: Colors.white,
+                        fontSize: 16.0,
                       );
                       return;
                     }
@@ -792,9 +801,12 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       });
                       Fluttertoast.showToast(
                         msg: "출발지와 도착지가 같을 수 없습니다.",
+                        toastLength: Toast.LENGTH_SHORT,
                         gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.black54,
+                        timeInSecForIosWeb: 1,
+                        backgroundColor: Colors.grey[800],
                         textColor: Colors.white,
+                        fontSize: 16.0,
                       );
                       return;
                     }

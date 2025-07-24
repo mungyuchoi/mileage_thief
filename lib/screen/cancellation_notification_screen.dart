@@ -56,9 +56,12 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
     if (currentUser == null) {
       Fluttertoast.showToast(
         msg: "로그인이 필요합니다",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
+        fontSize: 16.0,
       );
       return;
     }
@@ -81,10 +84,12 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
         // 제한에 도달한 경우
         Fluttertoast.showToast(
           msg: "현재 사용자는 취소표 알림이 ${limit}개까지만 허용됩니다",
+          toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.orange,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey[800],
           textColor: Colors.white,
-          toastLength: Toast.LENGTH_LONG,
+          fontSize: 16.0,
         );
         return;
       }
@@ -101,9 +106,12 @@ class _CancellationNotificationScreenState extends State<CancellationNotificatio
       print('알림 개수 확인 오류: $e');
       Fluttertoast.showToast(
         msg: "오류가 발생했습니다. 다시 시도해주세요",
+        toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }
