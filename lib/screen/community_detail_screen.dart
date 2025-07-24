@@ -2315,35 +2315,39 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Row(
                     children: [
                       GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: _processingCommentLikes.contains(comment['commentId'])
                             ? null // 처리 중일 때는 클릭 비활성화
                             : () => _toggleCommentLike(comment['commentId']),
-                        child: Row(
-                          children: [
-                            Icon(
-                              (_commentLikes[comment['commentId']] ?? false)
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              size: 16,
-                              color: (_processingCommentLikes.contains(comment['commentId']))
-                                  ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
-                                  : (_commentLikes[comment['commentId']] ?? false)
-                                      ? Colors.red
-                                      : Colors.grey[500],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${comment['likesCount'] ?? 0}',
-                              style: TextStyle(
-                                fontSize: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                (_commentLikes[comment['commentId']] ?? false)
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: 16,
                                 color: (_processingCommentLikes.contains(comment['commentId']))
                                     ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
                                     : (_commentLikes[comment['commentId']] ?? false)
                                         ? Colors.red
                                         : Colors.grey[500],
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                '${comment['likesCount'] ?? 0}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: (_processingCommentLikes.contains(comment['commentId']))
+                                      ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
+                                      : (_commentLikes[comment['commentId']] ?? false)
+                                          ? Colors.red
+                                          : Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
