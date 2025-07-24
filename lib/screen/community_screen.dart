@@ -547,28 +547,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           elevation: 1.5,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(18),
-                            onTap: () async {
-                              // 게시글 조회수 증가
-                              _incrementViewCount(_posts[index].id,
-                                  _posts[index].reference.parent.parent!.id);
-
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CommunityDetailScreen(
-                                    postId: _posts[index].id,
-                                    boardId: post['boardId'] ?? '',
-                                    boardName: _getBoardName(post['boardId'] ?? ''),
-                                    dateString: _posts[index].reference.parent.parent!.id,
-                                  ),
-                                ),
-                              );
-                              
-                              // 게시글 수정/삭제가 있었으면 목록 새로고침
-                              if (result == true) {
-                                _refreshPosts();
-                              }
-                            },
+                            onTap: () => _onPostTap(post, index),
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(18),
@@ -905,6 +884,134 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
+  // 게시글 진입 조건 체크 및 상세화면 이동 함수
+  Future<void> _onPostTap(Map<String, dynamic> post, int index) async {
+    final boardId = post['boardId'] ?? '';
+    final user = AuthService.currentUser;
+
+    // 1. 로그인 체크
+    if (user == null) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.white,
+          content: const Text(
+            '로그인을 먼저 해주세요.',
+            style: TextStyle(color: Colors.black),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('확인', style: TextStyle(color: Colors.black)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      );
+      // 로그인 화면으로 이동
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+      if (result == true) {
+        await _loadUserProfile();
+      }
+      return;
+    }
+
+    // 2. boardId가 'seats'일 때 등급 체크
+    if (boardId == 'seats') {
+      final grade = userProfile?['displayGrade'] ?? '';
+      final isEconomy = grade.startsWith('이코노미 Lv.');
+      final isBusiness = grade.startsWith('비즈니스 Lv.');
+      final isFirst = grade.startsWith('퍼스트 Lv.');
+      int economyLevel = 0;
+      if (isEconomy) {
+        final match = RegExp(r'이코노미 Lv\.(\d+)').firstMatch(grade);
+        if (match != null) {
+          economyLevel = int.tryParse(match.group(1) ?? '0') ?? 0;
+        }
+      }
+      final allowed = (isEconomy && economyLevel >= 2) || isBusiness || isFirst;
+      if (!allowed) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 80,
+                  child: Lottie.network(
+                    'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/lottie%2Flock.json?alt=media&token=db2b5411-d1ce-4f23-8a66-23a349fcaf91',
+                    repeat: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: const TextSpan(
+                    style: TextStyle(fontSize: 18, color: Colors.black),
+                    children: [
+                      TextSpan(text: '이 게시판은\n'),
+                      TextSpan(
+                        text: '이코노미 레벨 2',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                          fontSize: 20,
+                        ),
+                      ),
+                      TextSpan(text: '부터\n진입 가능합니다.'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF74512D),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('확인', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ],
+            actionsAlignment: MainAxisAlignment.center,
+          ),
+        );
+        return;
+      }
+    }
+
+    // 통과 시 상세화면 이동
+    _incrementViewCount(_posts[index].id, _posts[index].reference.parent.parent!.id);
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CommunityDetailScreen(
+          postId: _posts[index].id,
+          boardId: boardId,
+          boardName: _getBoardName(boardId),
+          dateString: _posts[index].reference.parent.parent!.id,
+        ),
+      ),
+    );
+    if (result == true) {
+      _refreshPosts();
+    }
+  }
+
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
@@ -922,27 +1029,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () async {
-              // 게시글 조회수 증가
-              _incrementViewCount(_posts[index].id, _posts[index].reference.parent.parent!.id);
-
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CommunityDetailScreen(
-                    postId: _posts[index].id,
-                    boardId: post['boardId'] ?? '',
-                    boardName: _getBoardName(post['boardId'] ?? ''),
-                    dateString: _posts[index].reference.parent.parent!.id,
-                  ),
-                ),
-              );
-              
-              // 게시글 수정/삭제가 있었으면 목록 새로고침
-              if (result == true) {
-                _refreshPosts();
-              }
-            },
+            onTap: () => _onPostTap(post, index),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
