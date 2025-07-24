@@ -47,7 +47,7 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
   final HtmlEditorController _htmlController = HtmlEditorController();
   final ImagePicker _picker = ImagePicker();
   List<String> tempImagePaths = []; // 임시 이미지 경로들
-  static const int maxImageCount = 10; // 최대 이미지 개수
+  static const int maxImageCount = 20; // 최대 이미지 개수
   bool _isLoading = false; // 로딩 상태 관리
   
   // 임시 저장 관련 변수
