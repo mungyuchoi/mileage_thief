@@ -14,7 +14,7 @@ class ImageCompressor {
   /// Returns: 압축된 이미지 파일
   static Future<File> compressImage(
     File file, {
-    int maxSize = 200 * 1024, // 200KB
+    int maxSize = 300 * 1024, // 300KB
     int quality = 80,
   }) async {
     try {
