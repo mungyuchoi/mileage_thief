@@ -538,8 +538,8 @@ class _SearchScreenState extends State<SearchScreen> {
                               msg: "최신버전입니다.",
                               gravity: ToastGravity.BOTTOM,
                               timeInSecForIosWeb: 5,
-                              backgroundColor: Colors.black38,
-                              fontSize: 20,
+                              backgroundColor: Colors.grey[800],
+                              fontSize: 16,
                               textColor: Colors.white,
                               toastLength: Toast.LENGTH_SHORT,
                             )
@@ -547,8 +547,8 @@ class _SearchScreenState extends State<SearchScreen> {
                               msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
                               gravity: ToastGravity.BOTTOM,
                               timeInSecForIosWeb: 5,
-                              backgroundColor: Colors.black38,
-                              fontSize: 20,
+                              backgroundColor: Colors.grey[800],
+                              fontSize: 16,
                               textColor: Colors.white,
                               toastLength: Toast.LENGTH_SHORT,
                             )
