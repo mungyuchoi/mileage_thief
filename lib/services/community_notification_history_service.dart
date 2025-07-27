@@ -13,7 +13,7 @@ class CommunityNotificationHistoryService {
         .collection('users')
         .doc(uid)
         .collection('notifications')
-        .orderBy('receivedAt', descending: true)
+        .orderBy('createdAt', descending: true)
         .limit(50) // 최대 50개까지만 조회
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => {
@@ -102,8 +102,8 @@ class CommunityNotificationHistoryService {
       await markAsRead(uid, notification['id']);
     }
 
-    // 2. 딥링크 네비게이션
-    navigateFromNotification(context, notification['data']);
+    // 2. 딥링크 네비게이션 (notification 데이터 직접 전달)
+    navigateFromNotification(context, notification);
   }
 
   /// 알림 데이터에 따른 네비게이션 처리
@@ -112,10 +112,13 @@ class CommunityNotificationHistoryService {
     Map<String, dynamic> data,
   ) {
     try {
-      final deepLinkType = data['deepLinkType'] as String?;
+      final type = data['type'] as String?;
 
-      switch (deepLinkType) {
-        case 'post_detail':
+      switch (type) {
+        case 'post_like':
+        case 'post_comment':
+        case 'comment_reply':
+        case 'comment_like':
           // 게시글 상세 화면으로 이동
           Navigator.push(
             context,
@@ -124,8 +127,8 @@ class CommunityNotificationHistoryService {
                 postId: data['postId'] ?? '',
                 boardId: data['boardId'] ?? '',
                 boardName: data['boardName'] ?? '',
-                dateString: data['dateString'] ?? '',
-                scrollToCommentId: data['scrollToCommentId'], // 댓글로 스크롤
+                dateString: data['date'] ?? '',
+                scrollToCommentId: data['commentId'], // 댓글이 있는 경우 해당 댓글로 스크롤
               ),
             ),
           );
@@ -137,7 +140,7 @@ class CommunityNotificationHistoryService {
             context,
             MaterialPageRoute(
               builder: (context) => UserProfileScreen(
-                userUid: data['authorUid'] ?? '',
+                userUid: data['likedBy'] ?? data['commentedBy'] ?? data['repliedBy'] ?? '',
               ),
             ),
           );
@@ -154,7 +157,7 @@ class CommunityNotificationHistoryService {
           break;
 
         default:
-          print('알 수 없는 딥링크 타입: $deepLinkType');
+          print('알 수 없는 알림 타입: $type');
           break;
       }
     } catch (e) {
@@ -168,9 +171,11 @@ class CommunityNotificationHistoryService {
   /// 알림 타입에 따른 아이콘 반환
   static IconData getNotificationIcon(String type) {
     switch (type) {
-      case 'comment':
+      case 'post_comment':
+      case 'comment_reply':
         return Icons.comment;
-      case 'like':
+      case 'post_like':
+      case 'comment_like':
         return Icons.favorite;
       case 'mention':
         return Icons.reply;
@@ -186,9 +191,11 @@ class CommunityNotificationHistoryService {
   /// 알림 타입에 따른 아이콘 색상 반환
   static Color getNotificationIconColor(String type) {
     switch (type) {
-      case 'comment':
+      case 'post_comment':
+      case 'comment_reply':
         return Colors.blue;
-      case 'like':
+      case 'post_like':
+      case 'comment_like':
         return Colors.red;
       case 'mention':
         return Colors.green;

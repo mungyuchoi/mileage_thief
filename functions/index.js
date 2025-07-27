@@ -138,7 +138,32 @@ exports.onPostLikeCreated = onDocumentCreated({
       return;
     }
 
-    // 5. FCM 메시지 발송
+    // 5. 알림 데이터를 사용자의 notifications 서브컬렉션에 저장
+    const notificationData = {
+      type: "post_like",
+      postId: postId,
+      postTitle: postTitle,
+      boardId: boardId,
+      boardName: boardName,
+      likedBy: uid,
+      likedByName: likerName,
+      date: date,
+      path: `/community/detail/${date}/${postId}`,
+      title: "좋아요 알림",
+      body: `${likerName}님이 게시글에 좋아요를 하였습니다.`,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      isRead: false,
+    };
+
+    await admin.firestore()
+        .collection("users")
+        .doc(authorUid)
+        .collection("notifications")
+        .add(notificationData);
+
+    logger.info(`알림 데이터 저장 완료: authorUid=${authorUid}, type=post_like`);
+
+    // 6. FCM 메시지 발송
     const message = {
       token: fcmToken,
       data: {
@@ -264,7 +289,33 @@ exports.onCommentCreated = onDocumentCreated({
       return;
     }
 
-    // 6. FCM 메시지 발송
+    // 6. 알림 데이터를 사용자의 notifications 서브컬렉션에 저장
+    const notificationData = {
+      type: "post_comment",
+      postId: postId,
+      postTitle: postTitle,
+      boardId: boardId,
+      boardName: boardName,
+      commentId: commentId,
+      commentedBy: commenterUid,
+      commentedByName: commenterName,
+      date: date,
+      path: `/community/detail/${date}/${postId}`,
+      title: "댓글 알림",
+      body: `${commenterName}님이 게시글에 댓글을 달았습니다.`,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      isRead: false,
+    };
+
+    await admin.firestore()
+        .collection("users")
+        .doc(authorUid)
+        .collection("notifications")
+        .add(notificationData);
+
+    logger.info(`알림 데이터 저장 완료: authorUid=${authorUid}, type=post_comment`);
+
+    // 7. FCM 메시지 발송
     const message = {
       token: fcmToken,
       data: {
@@ -418,7 +469,36 @@ exports.onReplyCreated = onDocumentCreated({
       boardName = boardNameMap[boardId] || "자유게시판";
     }
 
-    // 6. FCM 메시지 발송
+    // 6. 알림 데이터를 사용자의 notifications 서브컬렉션에 저장
+    const notificationData = {
+      type: "comment_reply",
+      postId: postId,
+      boardId: boardId,
+      boardName: boardName,
+      commentId: commentId,
+      parentCommentId: parentCommentId,
+      repliedBy: replierUid,
+      repliedByName: replierName,
+      date: date,
+      path: `/community/detail/${date}/${postId}`,
+      title: "대댓글 알림",
+      body: `${replierName}님이 댓글에 댓글을 달았습니다.`,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      isRead: false,
+    };
+
+    await admin.firestore()
+        .collection("users")
+        .doc(parentCommenterUid)
+        .collection("notifications")
+        .add(notificationData);
+
+    logger.info(
+        `알림 데이터 저장 완료: parentCommenterUid=${parentCommenterUid}, ` +
+        `type=comment_reply`,
+    );
+
+    // 7. FCM 메시지 발송
     const message = {
       token: fcmToken,
       data: {
@@ -563,7 +643,36 @@ exports.onCommentLikeCreated = onDocumentCreated({
       boardName = boardNameMap[boardId] || "자유게시판";
     }
 
-    // 6. FCM 메시지 발송
+    // 6. 알림 데이터를 사용자의 notifications 서브컬렉션에 저장
+    const notificationData = {
+      type: "comment_like",
+      postId: postId,
+      boardId: boardId,
+      boardName: boardName,
+      commentId: commentId,
+      likedBy: uid,
+      likedByName: likerName,
+      commenterName: commenterName,
+      date: date,
+      path: `/community/detail/${date}/${postId}`,
+      title: "댓글 좋아요 알림",
+      body: `${likerName}님이 댓글에 좋아요를 하였습니다.`,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      isRead: false,
+    };
+
+    await admin.firestore()
+        .collection("users")
+        .doc(commenterUid)
+        .collection("notifications")
+        .add(notificationData);
+
+    logger.info(
+        `알림 데이터 저장 완료: commenterUid=${commenterUid}, ` +
+        `type=comment_like`,
+    );
+
+    // 7. FCM 메시지 발송
     const message = {
       token: fcmToken,
       data: {
