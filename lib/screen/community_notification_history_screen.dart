@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/community_notification_history_service.dart';
+import '../services/community_notification_test_helper.dart';
 import '../models/community_notification_model.dart';
 
 class CommunityNotificationHistoryScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class CommunityNotificationHistoryScreen extends StatefulWidget {
 class _CommunityNotificationHistoryScreenState extends State<CommunityNotificationHistoryScreen> {
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   bool _isMarkingAllAsRead = false;
+  bool _isGeneratingDummyData = false;
+  bool _isClearingData = false;
 
   @override
   Widget build(BuildContext context) {
@@ -114,20 +117,29 @@ class _CommunityNotificationHistoryScreenState extends State<CommunityNotificati
           final notifications = snapshot.data ?? [];
 
           if (notifications.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyStateWithTestButtons();
           }
 
           return RefreshIndicator(
             onRefresh: _onRefresh,
             color: const Color(0xFF74512D),
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                final notification = notifications[index];
-                return _buildNotificationItem(notification);
-              },
+            child: Column(
+              children: [
+                // 테스트 버튼들 (개발용)
+                _buildTestButtons(),
+                // 알림 목록
+                Expanded(
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) {
+                      final notification = notifications[index];
+                      return _buildNotificationItem(notification);
+                    },
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -135,37 +147,122 @@ class _CommunityNotificationHistoryScreenState extends State<CommunityNotificati
     );
   }
 
-  /// 빈 상태 위젯
-  Widget _buildEmptyState() {
-    return Center(
+  /// 테스트 버튼들 (개발용)
+  Widget _buildTestButtons() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.amber[50],
+        border: Border.all(color: Colors.amber[200]!),
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_none,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 24),
           Text(
-            '커뮤니티 알림이 없습니다',
+            '🧪 테스트용 버튼 (개발 중에만 표시)',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+              fontSize: 12,
+              color: Colors.amber[800],
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            '새로운 댓글이나 좋아요 알림이 오면 여기에 표시됩니다.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-            textAlign: TextAlign.center,
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isGeneratingDummyData ? null : _generateDummyData,
+                  icon: _isGeneratingDummyData 
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_circle_outline, size: 18),
+                  label: const Text('더미 데이터 생성'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isClearingData ? null : _clearTestData,
+                  icon: _isClearingData 
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.clear_all, size: 18),
+                  label: const Text('테스트 데이터 삭제'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  /// 빈 상태 위젯 + 테스트 버튼
+  Widget _buildEmptyStateWithTestButtons() {
+    return Column(
+      children: [
+        // 테스트 버튼들
+        _buildTestButtons(),
+        // 빈 상태
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.notifications_none,
+                  size: 80,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '커뮤니티 알림이 없습니다',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '새로운 댓글이나 좋아요 알림이 오면 여기에 표시됩니다.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[500],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '위의 "더미 데이터 생성" 버튼으로 테스트해보세요!',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.amber[700],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -325,5 +422,71 @@ class _CommunityNotificationHistoryScreenState extends State<CommunityNotificati
     // 스트림이므로 자동으로 새로고침됨
     // 필요하다면 여기서 추가 로직 구현
     await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  /// 더미 데이터 생성
+  Future<void> _generateDummyData() async {
+    setState(() {
+      _isGeneratingDummyData = true;
+    });
+    try {
+      await CommunityNotificationTestHelper.generateDummyNotifications(_currentUser!.uid);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('테스트 알림 6개가 생성되었습니다! (읽지 않음 4개, 읽음 2개)'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('더미 데이터 생성 중 오류가 발생했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingDummyData = false;
+        });
+      }
+    }
+  }
+
+  /// 테스트 데이터 삭제
+  Future<void> _clearTestData() async {
+    setState(() {
+      _isClearingData = true;
+    });
+    try {
+      await CommunityNotificationTestHelper.clearAllTestNotifications(_currentUser!.uid);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('모든 테스트 데이터가 삭제되었습니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('테스트 데이터 삭제 중 오류가 발생했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isClearingData = false;
+        });
+      }
+    }
   }
 } 
