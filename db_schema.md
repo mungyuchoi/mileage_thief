@@ -120,6 +120,104 @@
 - 차단 목록, 차단 해제, 차단 여부 확인 등에 활용
 - **최대 10명까지 차단 가능 (정책)**
 
+#### ▶️ notifications/{notificationId}
+```json
+{
+  "notificationId": "notif_1704794400000_cmt789",
+  "type": "comment",
+  "title": "새 댓글이 달렸습니다",
+  "body": "vory!님이 회원님의 게시글에 댓글을 남겼습니다",
+  "data": {
+    "postId": "abc123",
+    "dateString": "20250109",
+    "boardId": "deal",
+    "boardName": "적립/카드 혜택",
+    "commentId": "cmt789",
+    "authorUid": "user_def",
+    "authorName": "vory!",
+    "authorPhotoURL": "https://...",
+    "deepLinkType": "post_detail",
+    "scrollToCommentId": "cmt789"
+  },
+  "isRead": false,
+  "receivedAt": "2025-01-09T14:30:00Z",
+  "createdAt": "2025-01-09T14:30:00Z"
+}
+```
+- 사용자가 받은 알림 히스토리 저장
+- Cloud Functions에서 FCM 발송과 동시에 생성
+- **일주일 후 자동 삭제 (정책)**
+- **최대 50개까지 보관 (성능 최적화)**
+
+##### 📋 알림 타입별 data 구조
+
+**댓글 알림 (type: "comment")**
+```json
+{
+  "postId": "abc123",
+  "dateString": "20250109", 
+  "boardId": "deal",
+  "boardName": "적립/카드 혜택",
+  "commentId": "cmt789",
+  "authorUid": "user_def",
+  "authorName": "vory!",
+  "authorPhotoURL": "https://...",
+  "deepLinkType": "post_detail",
+  "scrollToCommentId": "cmt789"
+}
+```
+
+**좋아요 알림 (type: "like")**
+```json
+{
+  "postId": "abc123",
+  "dateString": "20250109",
+  "boardId": "deal", 
+  "boardName": "적립/카드 혜택",
+  "authorUid": "user_def",
+  "authorName": "vory!",
+  "authorPhotoURL": "https://...",
+  "deepLinkType": "post_detail"
+}
+```
+
+**답글/멘션 알림 (type: "mention")**
+```json
+{
+  "postId": "abc123",
+  "dateString": "20250109",
+  "boardId": "deal",
+  "boardName": "적립/카드 혜택", 
+  "commentId": "cmt789",
+  "parentCommentId": "cmt456",
+  "authorUid": "user_def",
+  "authorName": "vory!",
+  "authorPhotoURL": "https://...",
+  "deepLinkType": "post_detail",
+  "scrollToCommentId": "cmt789"
+}
+```
+
+**팔로우 알림 (type: "follow")**
+```json
+{
+  "authorUid": "user_def",
+  "authorName": "vory!",
+  "authorPhotoURL": "https://...",
+  "deepLinkType": "user_profile"
+}
+```
+
+**시스템 알림 (type: "system")**
+```json
+{
+  "deepLinkType": "my_page",
+  "systemType": "grade_upgrade",
+  "newGrade": "business",
+  "newLevel": 1
+}
+```
+
 ---
 
 ## 📁 posts/{yyyyMMdd}/posts/{postId}

@@ -7,10 +7,12 @@ import 'dart:async';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/category_service.dart';
+import '../services/community_notification_history_service.dart';
 import 'login_screen.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_screen.dart';
 import 'community_search_screen.dart';
+import 'community_notification_history_screen.dart';
 import 'my_page_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
@@ -447,6 +449,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       },
                       tooltip: isCompactView ? '카드뷰로 보기' : '간단뷰로 보기',
                     ),
+                    // 알림 버튼 + 뱃지
+                    _buildCommunityNotificationButton(),
                     // 검색 버튼
                     IconButton(
                       icon: const Icon(Icons.search, color: Colors.white),
@@ -1022,6 +1026,86 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (diff.inHours < 24) return '${diff.inHours}시간 전';
     if (diff.inDays < 7) return '${diff.inDays}일 전';
     return DateFormat('MM/dd').format(dateTime);
+  }
+
+  /// 커뮤니티 알림 버튼 + 뱃지 (실시간 업데이트)
+  Widget _buildCommunityNotificationButton() {
+    final user = AuthService.currentUser;
+    
+    // 로그인하지 않은 사용자는 알림 버튼만 표시 (뱃지 없음)
+    if (user == null) {
+      return IconButton(
+        icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+        onPressed: () async {
+          // 로그인 확인 후 알림 화면으로 이동
+          final isLoggedIn = await _checkLoginAndNavigate();
+          if (isLoggedIn) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CommunityNotificationHistoryScreen(),
+              ),
+            );
+          }
+        },
+        tooltip: '커뮤니티 알림',
+      );
+    }
+
+    // 로그인한 사용자는 실시간 뱃지와 함께 표시
+    return StreamBuilder<int>(
+      stream: CommunityNotificationHistoryService.getUnreadCount(user.uid),
+      builder: (context, snapshot) {
+        final unreadCount = snapshot.data ?? 0;
+        
+        return Stack(
+          children: [
+            IconButton(
+              icon: Icon(
+                unreadCount > 0 ? Icons.notifications : Icons.notifications_outlined,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CommunityNotificationHistoryScreen(),
+                  ),
+                );
+              },
+              tooltip: '커뮤니티 알림',
+            ),
+            // 읽지 않은 알림 뱃지
+            if (unreadCount > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  child: Center(
+                    child: Text(
+                      unreadCount > 99 ? '99+' : unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   // 간단뷰 아이템 위젯
