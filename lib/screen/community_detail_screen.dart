@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../utils/image_compressor.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../services/peanut_history_service.dart';
 
 // 무지개 그라데이션 텍스트 위젯
 class GradientText extends StatelessWidget {
@@ -665,6 +666,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           final currentPeanut = userData['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 1;
           await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
+          
+          // 땅콩 히스토리 기록
+          await PeanutHistoryService.addHistory(
+            userId: _currentUser!.uid,
+            type: 'post_like',
+            amount: 1,
+            additionalData: {
+              'postId': widget.postId,
+              'dateString': widget.dateString,
+              'boardId': _post?['boardId'] ?? '',
+              'postTitle': _post?['title'] ?? '제목 없음',
+            },
+          );
+          
           Fluttertoast.showToast(
             msg: '땅콩 1개가 추가되었습니다.',
             toastLength: Toast.LENGTH_SHORT,
@@ -1495,6 +1510,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         final currentPeanut = userData['peanutCount'] ?? 0;
         final newPeanut = currentPeanut + 2;
         await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
+        
+        // 땅콩 히스토리 기록
+        await PeanutHistoryService.addHistory(
+          userId: _currentUser!.uid,
+          type: 'comment_create',
+          amount: 2,
+          additionalData: {
+            'postId': widget.postId,
+            'dateString': widget.dateString,
+            'commentId': commentRef.id,
+            'postTitle': _post?['title'] ?? '제목 없음',
+          },
+        );
+        
         Fluttertoast.showToast(
           msg: '땅콩 2개가 추가되었습니다.',
           toastLength: Toast.LENGTH_SHORT,

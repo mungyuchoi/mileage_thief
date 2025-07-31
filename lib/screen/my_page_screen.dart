@@ -16,6 +16,7 @@ import 'sky_effect_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/image_compressor.dart';
+import '../screen/peanut_history_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -1050,23 +1051,54 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('마이페이지', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text(
+          '마이페이지',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: const Color(0xFF74512D),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'blocked') {
-                _showBlockedUsersDialog();
-              }
+          // 땅콩 히스토리 버튼
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PeanutHistoryScreen(),
+                ),
+              );
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'blocked',
-                child: const Text('차단됨', style: TextStyle(color: Colors.black)),
+            child: Container(
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'asset/img/peanuts.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${userProfile?['peanutCount'] ?? 0}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

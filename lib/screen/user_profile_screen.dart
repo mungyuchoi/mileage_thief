@@ -6,6 +6,8 @@ import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
 import 'package:lottie/lottie.dart';
+import '../services/peanut_history_service.dart';
+import '../services/user_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userUid;
@@ -193,6 +195,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
   // 땅콩 주기 실행
   Future<void> _givePeanuts(int amount) async {
     try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+      
       // 현재 사용자의 땅콩 개수 가져오기
       final currentPeanutCount = userProfile!['peanutCount'] ?? 0;
       final newPeanutCount = currentPeanutCount + amount;
@@ -205,6 +210,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         'peanutCount': newPeanutCount,
       });
       
+      // 운영자 현재 사용자 정보 가져오기
+      final adminProfile = await UserService.getUserFromFirestore(currentUser.uid);
+      final adminName = adminProfile?['displayName'] ?? '마일캐치';
+      
+      // 땅콩 히스토리 기록
+      await PeanutHistoryService.addHistory(
+        userId: widget.userUid,
+        type: 'admin_gift',
+        amount: amount,
+        additionalData: {
+          'adminId': currentUser.uid,
+          'adminName': adminName,
+          'reason': '운영자 선물',
+        },
+      );
+      
       // 로컬 상태 업데이트
       setState(() {
         userProfile!['peanutCount'] = newPeanutCount;
@@ -213,16 +234,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       // 성공 메시지
       Fluttertoast.showToast(
         msg: '${userProfile!['displayName'] ?? '사용자'}님에게 땅콩 $amount개를 주었습니다.',
-        backgroundColor: Colors.green,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
+        fontSize: 16.0,
       );
       
     } catch (e) {
       print('땅콩 주기 오류: $e');
       Fluttertoast.showToast(
         msg: '땅콩 주기 중 오류가 발생했습니다.',
-        backgroundColor: Colors.red,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
         textColor: Colors.white,
+        fontSize: 16.0,
       );
     }
   }

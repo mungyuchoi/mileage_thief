@@ -12,6 +12,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/image_compressor.dart';
+import '../services/peanut_history_service.dart';
 
 class CommunityPostCreateScreen extends StatefulWidget {
   final String? initialBoardId;
@@ -878,6 +879,20 @@ class _CommunityPostCreateScreenState extends State<CommunityPostCreateScreen> {
           final currentPeanut = userData?['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 10;
           await UserService.updatePeanutCount(currentUser.uid, newPeanut);
+          
+          // 땅콩 히스토리 기록
+          await PeanutHistoryService.addHistory(
+            userId: currentUser.uid,
+            type: 'post_create',
+            amount: 10,
+            additionalData: {
+              'postId': postId,
+              'dateString': dateString,
+              'boardId': selectedBoardId!,
+              'postTitle': title,
+            },
+          );
+          
           Fluttertoast.showToast(
             msg: "땅콩 10개가 추가되었습니다.",
             toastLength: Toast.LENGTH_SHORT,
