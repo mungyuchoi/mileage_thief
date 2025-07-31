@@ -160,39 +160,39 @@ class _PeanutHistoryScreenState extends State<PeanutHistoryScreen> {
             ),
           ),
 
-          // 필터 옵션
-          Container(
-            height: 50,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _filterOptions.length,
-              itemBuilder: (context, index) {
-                final option = _filterOptions[index];
-                final isSelected = _selectedFilter == option['value'];
-                
-                return Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(option['label']!),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        _onFilterChanged(option['value']!);
-                      }
-                    },
-                    backgroundColor: Colors.white,
-                    selectedColor: const Color(0xFF74512D),
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                    elevation: isSelected ? 2 : 0,
-                  ),
-                );
-              },
-            ),
-          ),
+          // // 필터 옵션
+          // Container(
+          //   height: 50,
+          //   margin: const EdgeInsets.symmetric(horizontal: 16),
+          //   child: ListView.builder(
+          //     scrollDirection: Axis.horizontal,
+          //     itemCount: _filterOptions.length,
+          //     itemBuilder: (context, index) {
+          //       final option = _filterOptions[index];
+          //       final isSelected = _selectedFilter == option['value'];
+          //
+          //       return Container(
+          //         margin: const EdgeInsets.only(right: 8),
+          //         child: FilterChip(
+          //           label: Text(option['label']!),
+          //           selected: isSelected,
+          //           onSelected: (selected) {
+          //             if (selected) {
+          //               _onFilterChanged(option['value']!);
+          //             }
+          //           },
+          //           backgroundColor: Colors.white,
+          //           selectedColor: const Color(0xFF74512D),
+          //           labelStyle: TextStyle(
+          //             color: isSelected ? Colors.white : Colors.black87,
+          //             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          //           ),
+          //           elevation: isSelected ? 2 : 0,
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ),
 
           const SizedBox(height: 16),
 
