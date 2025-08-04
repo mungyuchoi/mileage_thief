@@ -42,7 +42,34 @@ class UserService {
   // 사용자 정보 Firestore에 저장
   static Future<void> saveUserToFirestore(User user, int peanutCount, {String? fcmToken}) async {
     try {
-      final userData = _createUserData(user, peanutCount, fcmToken: fcmToken);
+      // 기존 사용자 데이터 확인
+      final existingDoc = await _firestore.collection(_usersCollection).doc(user.uid).get();
+      
+      Map<String, dynamic> userData;
+      
+      if (existingDoc.exists) {
+        // 기존 사용자: 필수 필드만 업데이트, 기존 값 유지
+        final existingData = existingDoc.data()!;
+        userData = {
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName,
+          'photoURL': user.photoURL,
+          'lastLoginAt': FieldValue.serverTimestamp(),
+          'fcmToken': fcmToken ?? existingData['fcmToken'] ?? '',
+        };
+        
+        // 기존값이 없는 경우에만 로컬 peanutCount 적용
+        if (!existingData.containsKey('peanutCount')) {
+          userData['peanutCount'] = peanutCount;
+        }
+        
+        print('기존 사용자 로그인 - 기존 값 유지: ${user.uid}');
+      } else {
+        // 신규 사용자: 모든 기본값 설정
+        userData = _createUserData(user, peanutCount, fcmToken: fcmToken);
+        print('신규 사용자 등록: ${user.uid}');
+      }
 
       await _firestore
           .collection(_usersCollection)
