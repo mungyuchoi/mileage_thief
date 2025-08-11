@@ -246,6 +246,23 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     });
   }
 
+  Future<void> _decrementCounterBy(int peanuts) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final int current = prefs.getInt('counter') ?? _counter;
+    final int newCount = current - peanuts;
+    setState(() {
+      _counter = newCount < 0 ? 0 : newCount;
+      prefs.setInt('counter', _counter);
+
+      final currentUser = AuthService.currentUser;
+      if (currentUser != null) {
+        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+          print('Firestore 업데이트 오류: $error');
+        });
+      }
+    });
+  }
+
   bool useCounter() {
     if (_counter <= 0) {
       Fluttertoast.showToast(
@@ -751,7 +768,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                 ),
                 const Padding(padding: EdgeInsets.all(7)),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     // 시작일/종료일 유효성 검사 추가
                     final start = DateTime(startYear, startMonth);
                     final end = DateTime(endYear, endMonth);
@@ -767,7 +784,7 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       );
                       return;
                     }
-                    // 땅콩 사용하지 않음 (무료)
+                    // 필요한 땅콩 계산 및 차감 처리 (편도 3개 / 왕복 5개)
                     if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
                       setState(() {
                         _arrivalError = true;
@@ -810,6 +827,22 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       );
                       return;
                     }
+
+                    final int requiredPeanuts = (xAlign == loginAlign) ? 3 : 5;
+                    if (_counter < requiredPeanuts) {
+                      Fluttertoast.showToast(
+                        msg: "땅콩이 ${requiredPeanuts - _counter}개 부족합니다. 광고를 시청하고 땅콩을 얻으세요!",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        timeInSecForIosWeb: 1,
+                        backgroundColor: Colors.grey[800],
+                        textColor: Colors.white,
+                        fontSize: 16.0,
+                      );
+                      return;
+                    }
+                    await _decrementCounterBy(requiredPeanuts);
+
                     if (xAlign == -1.0) {
                       Navigator.push(
                           context,
@@ -879,16 +912,12 @@ class _SearchDanScreen extends State<SearchDanScreen> {
                       ),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: Builder(
-                          builder: (context) {
-                            return const Padding(
-                              padding: EdgeInsets.only(right: 16.0),
-                              child: Text(
-                                '땅콩 0개(무료)',
-                                style: TextStyle(fontSize: 12, color: Colors.white70),
-                              ),
-                            );
-                          },
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 16.0),
+                          child: Text(
+                            '땅콩 ${xAlign == loginAlign ? 3 : 5}개',
+                            style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          ),
                         ),
                       ),
                     ],
