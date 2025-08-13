@@ -527,4 +527,72 @@ class MileageRepository {
     mileages.sort((a, b) => a.departureDate.compareTo(b.departureDate));
     return mileages;
   }
+
+  static Future<List<MileageV2>> getAsianaMileagesV2(SearchModel searchModel) async {
+    print('[getAsianaMileagesV2] 시작');
+    List<MileageV2> mileages = [];
+
+    String departureAirport = searchModel.departureAirport.toString();
+    departureAirport = departureAirport.substring(departureAirport.indexOf('-') + 1);
+    String arrivalAirport = searchModel.arrivalAirport.toString();
+    arrivalAirport = arrivalAirport.substring(arrivalAirport.indexOf('-') + 1);
+
+    String routeDoc = '$departureAirport-$arrivalAirport';
+    print('[getAsianaMileagesV2] routeDoc: $routeDoc');
+
+    final firestore = FirebaseFirestore.instance;
+    Map<String, dynamic>? meta;
+    try {
+      final metaSnap = await firestore.collection('asiana').doc(routeDoc).collection('flightInfo').doc('meta').get();
+      if (metaSnap.exists) {
+        meta = metaSnap.data();
+        print('[getAsianaMileagesV2] meta 정보 있음: $meta');
+      } else {
+        print('[getAsianaMileagesV2] meta 정보 없음');
+      }
+    } catch (e) {
+      print('[getAsianaMileagesV2] meta 조회 에러: $e');
+    }
+
+    String? latestCollectionId;
+    try {
+      final latestSnap = await firestore.collection('asiana').doc(routeDoc).collection('latest').doc('meta').get();
+      if (latestSnap.exists) {
+        latestCollectionId = latestSnap.data()?['id'];
+        print('[getAsianaMileagesV2] latestCollectionId: $latestCollectionId');
+      } else {
+        print('[getAsianaMileagesV2] latest/meta 도큐먼트 없음');
+      }
+    } catch (e) {
+      print('[getAsianaMileagesV2] latest/meta 조회 에러: $e');
+    }
+
+    if (latestCollectionId != null) {
+      int startDate = int.parse('${searchModel.startYear ?? '2025'}${(searchModel.startMonth ?? '1').padLeft(2, '0')}');
+      int endDate = int.parse('${searchModel.endYear ?? '2025'}${(searchModel.endMonth ?? '1').padLeft(2, '0')}');
+      final docs = await firestore.collection('asiana').doc(routeDoc).collection(latestCollectionId).get();
+      print('[getAsianaMileagesV2] $latestCollectionId 내 도큐먼트 개수: ${docs.docs.length}');
+      for (final doc in docs.docs) {
+        final data = doc.data();
+        String depDate = data['departureDate']?.toString() ?? '';
+        if (depDate.length >= 6) {
+          int depMonth = int.parse(depDate.substring(0, 6));
+          if (depMonth >= startDate && depMonth <= endDate) {
+            int economyAmount = int.tryParse(data['economy']?['amount']?.toString() ?? '0') ?? 0;
+            int businessAmount = int.tryParse(data['business']?['amount']?.toString() ?? '0') ?? 0;
+            int firstAmount = int.tryParse(data['first']?['amount']?.toString() ?? '0') ?? 0;
+            bool hasEconomy = economyAmount > 0;
+            bool hasBusiness = businessAmount > 0;
+            bool hasFirst = firstAmount > 0;
+            if (hasEconomy || hasBusiness || hasFirst) {
+              mileages.add(MileageV2.fromJson(data, meta));
+            }
+          }
+        }
+      }
+    }
+    print('[getAsianaMileagesV2] 최종 결과 개수: ${mileages.length}');
+    mileages.sort((a, b) => a.departureDate.compareTo(b.departureDate));
+    return mileages;
+  }
 }

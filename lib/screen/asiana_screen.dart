@@ -1,0 +1,708 @@
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+import 'package:mileage_thief/helper/AdHelper.dart';
+import '../custom/CustomDropdownButton2.dart';
+import '../model/search_history.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import 'package:mileage_thief/screen/detail/search_detail_asiana_round_screen.dart';
+import 'package:mileage_thief/screen/detail/search_detail_asiana_one_way_screen.dart';
+import '../model/search_model.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
+
+const double width = 150.0;
+const double height = 50.0;
+const double loginAlign = -1;
+const double signInAlign = 1;
+const Color selectedColor = Colors.white;
+const Color normalColor = Colors.white;
+
+class AsianaScreen extends StatefulWidget {
+  const AsianaScreen({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _AsianaScreenState();
+}
+
+class _AsianaScreenState extends State<AsianaScreen> {
+  double xAlign = 5.0;
+  Color loginColor = Colors.black;
+  Color signInColor = Colors.black;
+  List<String> airportItems = [];
+  String? dateSelectedValue = "전체";
+  String? departureSelectedValue = "서울|인천-ICN";
+  String? arrivalSelectedValue;
+  bool _arrivalError = false;
+  late BannerAd _banner;
+  InterstitialAd? _interstitialAd;
+  RewardedAd? _rewardedAd;
+  final DatabaseReference _countryReference =
+      FirebaseDatabase.instance.ref("COUNTRY");
+  int startMonth = DateTime.now().month, startYear = DateTime.now().year;
+  int endMonth = DateTime.now().month, endYear = DateTime.now().year + 1;
+  int firstEnableMonth = DateTime.now().month,
+      lastEnableMonth = DateTime.now().month;
+  int _counter = 3;
+  bool isLoading = false;
+  List<SearchHistory> searchHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounter();
+    _loadCountryFirebase();
+    xAlign = loginAlign;
+    loginColor = selectedColor;
+    signInColor = normalColor;
+
+    _banner = BannerAd(
+      listener: BannerAdListener(
+        onAdFailedToLoad: (Ad ad, LoadAdError err) {
+          FirebaseAnalytics.instance
+              .logEvent(name: "banner", parameters: {'error': err.message});
+        },
+        onAdLoaded: (_) {},
+      ),
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+    )..load();
+    _loadRewardedAd();
+  }
+
+  _loadCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = (prefs.getInt('counter') ?? 3);
+    });
+  }
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              setState(() {
+                ad.dispose();
+                _rewardedAd = null;
+              });
+              _loadRewardedAd();
+            },
+          );
+
+          setState(() {
+            _rewardedAd = ad;
+          });
+        },
+        onAdFailedToLoad: (err) {
+          print('Failed to load a rewarded ad: ${err.message}');
+          FirebaseAnalytics.instance
+              .logEvent(name: "rewards", parameters: {'error': err.message});
+        },
+      ),
+    );
+  }
+
+  void _loadCountryFirebase() {
+    print("loadCountryFirebase!");
+    _countryReference.once().then((event) {
+      final snapshot = event.snapshot;
+      Map<dynamic, dynamic>? values = snapshot.value as Map<dynamic, dynamic>?;
+      if (values != null) {
+        airportItems.clear();
+        values.forEach((key, value) {
+          airportItems.add(key);
+        });
+        airportItems.remove("서울|인천-ICN");
+        airportItems.insert(0, "서울|인천-ICN");
+        setState(() {});
+      }
+    });
+  }
+
+  Future<void> showFrontAd() async {
+    isLoading = true;
+    setState(() {});
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              ad.dispose();
+              _incrementCounter(2);
+              isLoading = false;
+              setState(() {});
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              ad.dispose();
+              isLoading = false;
+              setState(() {});
+            },
+          );
+          ad.show();
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          isLoading = false;
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  void showRewardsAd() {
+    print("showRewardsAd _rewardedAd:$_rewardedAd");
+    _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+      _incrementCounter(10);
+    });
+  }
+
+  _incrementCounter(int peanuts) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = (prefs.getInt('counter') ?? 0) + peanuts;
+      prefs.setInt('counter', _counter);
+
+      final currentUser = AuthService.currentUser;
+      if (currentUser != null) {
+        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+          print('Firestore 업데이트 오류: $error');
+        });
+      }
+
+      Fluttertoast.showToast(
+        msg: "땅콩 $peanuts개를 얻었습니다.",
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.black38,
+        fontSize: 20,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_SHORT,
+      );
+    });
+  }
+
+  _decrementCounter() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter--;
+      prefs.setInt('counter', _counter);
+    });
+  }
+
+  bool useCounter() {
+    if (_counter <= 0) {
+      Fluttertoast.showToast(
+        msg: "땅콩(광고) 버튼을 선택하여 땅콩을 얻으세요!",
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black38,
+        fontSize: 13,
+        textColor: Colors.white,
+        toastLength: Toast.LENGTH_SHORT,
+      );
+      return false;
+    }
+    setState(() {
+      _decrementCounter();
+    });
+    return true;
+  }
+
+  @override
+  void dispose() {
+    _banner.dispose();
+    _rewardedAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: width,
+          height: height,
+          margin: const EdgeInsets.only(top: 30),
+          decoration: const BoxDecoration(
+            color: Color(0x80D60815),
+            borderRadius: BorderRadius.all(
+              Radius.circular(50.0),
+            ),
+          ),
+          child: Stack(
+            children: [
+              AnimatedAlign(
+                alignment: Alignment(xAlign, 0),
+                duration: Duration(milliseconds: 300),
+                child: Container(
+                  width: width * 0.5,
+                  height: height,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD60815),
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(50.0),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    xAlign = loginAlign;
+                    loginColor = selectedColor;
+                    signInColor = normalColor;
+                  });
+                },
+                child: Align(
+                  alignment: Alignment(-1, 0),
+                  child: Container(
+                    width: width * 0.5,
+                    color: Colors.transparent,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '편도',
+                      style: TextStyle(
+                        color: loginColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    xAlign = signInAlign;
+                    signInColor = selectedColor;
+                    loginColor = normalColor;
+                  });
+                },
+                child: Align(
+                  alignment: Alignment(1, 0),
+                  child: Container(
+                    width: width * 0.5,
+                    color: Colors.transparent,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '왕복',
+                      style: TextStyle(
+                        color: signInColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+            padding: const EdgeInsets.all(15),
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: ListView(
+              padding: const EdgeInsets.all(4),
+              children: <Widget>[
+                const Divider(
+                  color: Colors.black,
+                  thickness: 2,
+                ),
+                const Padding(padding: EdgeInsets.all(4)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomDropdownButton2(
+                        hint: '어디서 가나요?',
+                        dropdownWidth: 180,
+                        dropdownItems: airportItems,
+                        hintAlignment: Alignment.center,
+                        value: departureSelectedValue,
+                        scrollbarAlwaysShow: true,
+                        scrollbarThickness: 10,
+                        onChanged: (value) {
+                          setState(() {
+                            departureSelectedValue = value;
+                          });
+                        },
+                      ),
+                    ),
+                    const Padding(padding: EdgeInsets.all(4)),
+                    IconButton(
+                      icon: const Icon(Icons.loop_sharp, color: Colors.black54),
+                      onPressed: () {
+                        setState(() {
+                          var tempValue = departureSelectedValue;
+                          departureSelectedValue = arrivalSelectedValue;
+                          arrivalSelectedValue = tempValue;
+                        });
+                      },
+                    ),
+                    const Padding(padding: EdgeInsets.all(4)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomDropdownButton2(
+                            hint: '어디로 가나요?',
+                            dropdownWidth: 180,
+                            hintAlignment: Alignment.center,
+                            dropdownItems: airportItems,
+                            value: arrivalSelectedValue,
+                            scrollbarAlwaysShow: true,
+                            scrollbarThickness: 10,
+                            onChanged: (value) {
+                              setState(() {
+                                arrivalSelectedValue = value;
+                                _arrivalError = false;
+                              });
+                            },
+                          ),
+                          if (_arrivalError)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 8.0, top: 4.0),
+                              child: Text(
+                                '도착지를 선택하세요.',
+                                style: TextStyle(color: Colors.red, fontSize: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(padding: EdgeInsets.all(4)),
+                const Divider(
+                  color: Colors.black,
+                  thickness: 2,
+                ),
+                if (searchHistory.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Column(
+                      children: searchHistory.map((h) => Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[200],
+                            foregroundColor: Colors.black54,
+                            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              departureSelectedValue = h.departure;
+                              arrivalSelectedValue = h.arrival;
+                              startYear = h.startYear;
+                              startMonth = h.startMonth;
+                              endYear = h.endYear;
+                              endMonth = h.endMonth;
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('${h.departure} - ${h.arrival}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+                                      Text('${h.startYear}.${h.startMonth} ~ ${h.endYear}.${h.endMonth}', style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16, color: Colors.black54),
+                                splashRadius: 10,
+                                onPressed: () {
+                                  setState(() {
+                                    searchHistory.remove(h);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                  const Padding(padding: EdgeInsets.all(4)),
+                  const Divider(
+                    color: Colors.black,
+                    thickness: 2,
+                  ),
+                ],
+                const Padding(padding: EdgeInsets.all(4)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(width: 10),
+                    ElevatedButton(
+                        onPressed: () async {
+                          final selected = await showMonthPicker(
+                            context: context,
+                            initialDate: DateTime(startYear, startMonth),
+                            firstDate: DateTime(DateTime.now().year, 1),
+                            lastDate: DateTime(DateTime.now().year + 1, 12),
+                            monthPickerDialogSettings: MonthPickerDialogSettings(
+                              dialogSettings: PickerDialogSettings(
+                                dialogBackgroundColor: Colors.white,
+                                locale: Locale('ko'),
+                              ),
+                              headerSettings: PickerHeaderSettings(
+                                headerBackgroundColor: Color(0xFFD60815),
+                              ),
+                              dateButtonsSettings: PickerDateButtonsSettings(
+                                unselectedMonthsTextColor: Colors.black,
+                                selectedMonthTextColor: Colors.black,
+                                currentMonthTextColor: Colors.black,
+                              ),
+                              actionBarSettings: PickerActionBarSettings(
+                                confirmWidget: Text(
+                                  '확인',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                cancelWidget: Text(
+                                  '취소',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                          if (selected != null) {
+                            setState(() {
+                              startYear = selected.year;
+                              startMonth = selected.month;
+                            });
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.white, backgroundColor: Color(0x80D60815),
+                            minimumSize: const Size(110, 40)),
+                        child: Text(
+                          "시작일 $startYear년 $startMonth월",
+                          style: const TextStyle(fontSize: 13),
+                        )),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                        onPressed: () async {
+                          final selected = await showMonthPicker(
+                            context: context,
+                            initialDate: DateTime(endYear, endMonth),
+                            firstDate: DateTime(DateTime.now().year, 1),
+                            lastDate: DateTime(DateTime.now().year + 1, 12),
+                            monthPickerDialogSettings: MonthPickerDialogSettings(
+                              dialogSettings: PickerDialogSettings(
+                                dialogBackgroundColor: Colors.white,
+                                locale: Locale('ko'),
+                              ),
+                              headerSettings: PickerHeaderSettings(
+                                headerBackgroundColor: Color(0xFFD60815),
+                              ),
+                              dateButtonsSettings: PickerDateButtonsSettings(
+                                unselectedMonthsTextColor: Colors.black,
+                                selectedMonthTextColor: Colors.black,
+                                currentMonthTextColor: Colors.black,
+                              ),
+                              actionBarSettings: PickerActionBarSettings(
+                                confirmWidget: Text(
+                                  '확인',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                cancelWidget: Text(
+                                  '취소',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                          if (selected != null) {
+                            setState(() {
+                              endYear = selected.year;
+                              endMonth = selected.month;
+                            });
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.white, backgroundColor: Color(0x80D60815),
+                            minimumSize: const Size(110, 40)),
+                        child: Text(
+                          "종료일 $endYear년 $endMonth월",
+                          style: const TextStyle(fontSize: 13),
+                        )),
+                  ],
+                ),
+                const Padding(padding: EdgeInsets.all(4)),
+                const Divider(
+                  color: Colors.black,
+                  thickness: 2,
+                ),
+                Text(
+                  '땅콩: $_counter개',
+                  style: const TextStyle(fontSize: 18, color: Colors.black87),
+                  textAlign: TextAlign.center,
+                ),
+                const Padding(padding: EdgeInsets.all(3)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FloatingActionButton.extended(
+                      onPressed: () async {
+                        if (isLoading) {
+                          Fluttertoast.showToast(
+                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.black54,
+                            textColor: Colors.white,
+                          );
+                          return;
+                        }
+                        await showFrontAd();
+                      },
+                      label: const Text("+ 2",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanut.png',
+                        scale: 19,
+                      ),
+                    ),
+                    FloatingActionButton.extended(
+                      onPressed: () {
+                        showRewardsAd();
+                      },
+                      label: const Text("+ 10",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: Colors.white,
+                      elevation: 3,
+                      icon: Image.asset(
+                        'asset/img/peanuts.png',
+                        scale: 19,
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(padding: EdgeInsets.all(3)),
+                const Text("땅콩을 모아서 커뮤니티의 다양한 혜택을 누려보세요!", textAlign: TextAlign.center),
+                const Padding(padding: EdgeInsets.all(3)),
+                ElevatedButton(
+                  onPressed: () {
+                    if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
+                      setState(() {
+                        _arrivalError = true;
+                      });
+                      Fluttertoast.showToast(
+                        msg: "도착지를 선택해주세요.",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    if (departureSelectedValue == null || departureSelectedValue!.isEmpty) {
+                      Fluttertoast.showToast(
+                        msg: "출발지를 선택해주세요.",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    if (xAlign == -1.0) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                            SearchDetailAsianaOneWayScreen(
+                              SearchModel(
+                                isRoundTrip: xAlign == -1.0 ? true : false,
+                                departureAirport: departureSelectedValue,
+                                arrivalAirport: arrivalSelectedValue,
+                                seatClass: '',
+                                searchDate: dateSelectedValue,
+                                startMonth: startMonth.toString().padLeft(2, '0'),
+                                startYear: startYear.toString(),
+                                endMonth: endMonth.toString().padLeft(2, '0'),
+                                endYear: endYear.toString(),
+                              ),
+                            ),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                            SearchDetailAsianaRoundScreen(
+                              SearchModel(
+                                isRoundTrip: xAlign == -1.0 ? true : false,
+                                departureAirport: departureSelectedValue,
+                                arrivalAirport: arrivalSelectedValue,
+                                seatClass: '',
+                                searchDate: dateSelectedValue,
+                                startMonth: startMonth.toString().padLeft(2, '0'),
+                                startYear: startYear.toString(),
+                                endMonth: endMonth.toString().padLeft(2, '0'),
+                                endYear: endYear.toString(),
+                              ),
+                            ),
+                        ),
+                      );
+                    }
+                    final newHistory = SearchHistory(
+                      departure: departureSelectedValue ?? '',
+                      arrival: arrivalSelectedValue ?? '',
+                      startYear: startYear,
+                      startMonth: startMonth,
+                      endYear: endYear,
+                      endMonth: endMonth,
+                    );
+                    setState(() {
+                      searchHistory.remove(newHistory);
+                      searchHistory.insert(0, newHistory);
+                      if (searchHistory.length > 3) {
+                        searchHistory = searchHistory.sublist(0, 3);
+                      }
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                      foregroundColor: Colors.white, backgroundColor: const Color(0xFFD60815),
+                      minimumSize: const Size.fromHeight(56.0)),
+                  child: const Text(
+                    "검색하기",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                )
+              ],
+            )),
+      ],
+    );
+  }
+} 
