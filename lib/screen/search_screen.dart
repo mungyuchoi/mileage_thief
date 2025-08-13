@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
@@ -103,7 +104,7 @@ const double signInAlign = 1;
 const Color selectedColor = Colors.white;
 const Color normalColor = Colors.white;
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends State<SearchScreen> with WidgetsBindingObserver {
   GlobalKey<_AirportScreenState> airportScreenKey = GlobalKey();
   int _currentIndex = 0;
   final DatabaseReference _versionReference =
@@ -122,11 +123,69 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
     _loadNotificationSettings();
     _checkForceUpdateAndNotice();
+    _checkAuthState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      print('앱이 포그라운드로 돌아옴 - 로그인 상태 확인');
+      _checkAuthState();
+    }
+  }
+
+  Future<void> _checkAuthState() async {
+    try {
+      // Firebase Auth 상태 확인
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        print('앱 시작 시 로그인된 사용자 발견: ${user.email}');
+        // 사용자 토큰 새로고침
+        await user.getIdToken(true);
+        print('사용자 토큰 새로고침 완료');
+        
+        // SharedPreferences에 로그인 상태 저장
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('last_login_email', user.email ?? '');
+        await prefs.setBool('is_logged_in', true);
+      } else {
+        print('앱 시작 시 로그인된 사용자 없음');
+        
+        // SharedPreferences에서 로그인 상태 확인
+        final prefs = await SharedPreferences.getInstance();
+        final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+        final lastLoginEmail = prefs.getString('last_login_email');
+        
+        if (isLoggedIn && lastLoginEmail != null) {
+          print('SharedPreferences에서 로그인 상태 발견: $lastLoginEmail');
+          // Firebase Auth 상태 복원 시도
+          try {
+            await FirebaseAuth.instance.authStateChanges().first;
+            print('Firebase Auth 상태 복원 시도 완료');
+          } catch (e) {
+            print('Firebase Auth 상태 복원 실패: $e');
+            // 로그인 상태 초기화
+            await prefs.setBool('is_logged_in', false);
+            await prefs.remove('last_login_email');
+          }
+        }
+      }
+    } catch (e) {
+      print('Firebase Auth 상태 확인 오류: $e');
+    }
   }
 
   Future<void> _checkForceUpdateAndNotice() async {

@@ -195,6 +195,14 @@ Future<void> main() async {
     print("Firebase already initialized: $e");
   }
 
+  // Firebase Auth 상태 복원 대기
+  try {
+    await FirebaseAuth.instance.authStateChanges().first;
+    print("Firebase Auth 상태 복원 완료");
+  } catch (e) {
+    print("Firebase Auth 상태 복원 오류: $e");
+  }
+
   // 알림 서비스 초기화
   await NotificationService().initialize();
   NotificationService().setupTokenRefresh();

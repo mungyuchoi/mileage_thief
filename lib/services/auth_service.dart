@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:math';
 
@@ -93,6 +94,13 @@ class AuthService {
     try {
       await _googleSignIn.signOut();
       await _auth.signOut();
+      
+      // SharedPreferences에서 로그인 상태 정리
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_logged_in', false);
+      await prefs.remove('last_login_email');
+      
+      print('로그아웃 완료 - SharedPreferences 정리됨');
     } catch (e) {
       print('로그아웃 오류: $e');
       rethrow;
