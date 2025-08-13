@@ -73,6 +73,52 @@ class _AsianaScreenState extends State<AsianaScreen> {
       request: const AdRequest(),
     )..load();
     _loadRewardedAd();
+    _loadFullScreenAd();
+  }
+
+  _loadFullScreenAd() {
+    print('전면광고 로드 시도');
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          print('전면광고 로드 성공! ad: ' + ad.toString());
+          setState(() {
+            _interstitialAd = ad;
+          });
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('전면광고 로드 실패: $error');
+          setState(() {
+            _interstitialAd = null;
+          });
+        },
+      ),
+    );
+    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (InterstitialAd ad) {
+        _loadFullScreenAd();
+        print('%ad onAdShowedFullScreenContent.');
+      },
+      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        _incrementCounter(10);
+        setState(() {
+          ad.dispose();
+        });
+        _loadFullScreenAd();
+      },
+      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
+    );
+    _interstitialAd?.show();
   }
 
   _loadCounter() async {
@@ -129,34 +175,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
   }
 
   Future<void> showFrontAd() async {
-    isLoading = true;
-    setState(() {});
-    InterstitialAd.load(
-      adUnitId: AdHelper.frontBannerAdUnitId,
-      request: AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (InterstitialAd ad) {
-              ad.dispose();
-              _incrementCounter(2);
-              isLoading = false;
-              setState(() {});
-            },
-            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-              ad.dispose();
-              isLoading = false;
-              setState(() {});
-            },
-          );
-          ad.show();
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          isLoading = false;
-          setState(() {});
-        },
-      ),
-    );
+    // Deprecated: 사용 안 함 (대한항공과 동일한 프리로드 로직으로 대체)
+    return;
   }
 
   void showRewardsAd() {
@@ -229,6 +249,44 @@ class _AsianaScreenState extends State<AsianaScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.only(top: 20, right: 16, left: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Fluttertoast.showToast(
+                    msg: "취소표 알림은 아직 지원되지 않습니다.",
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.black54,
+                    textColor: Colors.white,
+                  );
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.black38,
+                      size: 28,
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      '취소표 알림',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black38,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         Container(
           width: width,
           height: height,
@@ -573,39 +631,76 @@ class _AsianaScreenState extends State<AsianaScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     FloatingActionButton.extended(
-                      onPressed: () async {
-                        if (isLoading) {
-                          Fluttertoast.showToast(
-                            msg: "아직 준비되지 않았습니다. 조금 있다가 다시 시도해보세요",
-                            gravity: ToastGravity.BOTTOM,
-                            backgroundColor: Colors.black54,
-                            textColor: Colors.white,
-                          );
-                          return;
-                        }
-                        await showFrontAd();
-                      },
-                      label: const Text("+ 2",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
+                      onPressed: _interstitialAd == null || isLoading
+                          ? null
+                          : () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(false),
+                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (result == true) {
+                                setState(() { isLoading = true; });
+                                try {
+                                  _interstitialAd?.show();
+                                } finally {
+                                  setState(() {
+                                    isLoading = false;
+                                    _interstitialAd = null;
+                                  });
+                                  _loadFullScreenAd();
+                                }
+                              }
+                            },
+                      label: const Text("+ 10", style: TextStyle(color: Colors.black87)),
+                      backgroundColor: _interstitialAd == null ? Colors.grey[300] : Colors.white,
                       elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanut.png',
-                        scale: 19,
-                      ),
+                      icon: Image.asset('asset/img/peanut.png', scale: 19),
                     ),
                     FloatingActionButton.extended(
-                      onPressed: () {
-                        showRewardsAd();
-                      },
-                      label: const Text("+ 10",
-                          style: TextStyle(color: Colors.black87)),
-                      backgroundColor: Colors.white,
+                      onPressed: _rewardedAd == null
+                          ? null
+                          : () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(false),
+                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (result == true) {
+                                showRewardsAd();
+                                _incrementCounter(30);
+                              }
+                            },
+                      label: const Text("+ 30", style: TextStyle(color: Colors.black87)),
+                      backgroundColor: _rewardedAd == null ? Colors.grey[300] : Colors.white,
                       elevation: 3,
-                      icon: Image.asset(
-                        'asset/img/peanuts.png',
-                        scale: 19,
-                      ),
+                      icon: Image.asset('asset/img/peanuts.png', scale: 19),
                     ),
                   ],
                 ),
