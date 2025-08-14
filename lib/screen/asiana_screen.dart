@@ -84,6 +84,29 @@ class _AsianaScreenState extends State<AsianaScreen> {
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
           print('전면광고 로드 성공! ad: ' + ad.toString());
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdShowedFullScreenContent: (InterstitialAd ad) {
+              print('전면광고 표시됨');
+            },
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              print('전면광고 닫힘 - 보상 지급(+10) 및 다음 광고 프리로드');
+              _incrementCounter(10);
+              ad.dispose();
+              setState(() {
+                _interstitialAd = null;
+              });
+              _loadFullScreenAd();
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              print('전면광고 표시 실패: $error');
+              ad.dispose();
+              setState(() {
+                _interstitialAd = null;
+              });
+              _loadFullScreenAd();
+            },
+            onAdImpression: (InterstitialAd ad) => print('전면광고 impression 발생'),
+          );
           setState(() {
             _interstitialAd = ad;
           });
@@ -96,36 +119,29 @@ class _AsianaScreenState extends State<AsianaScreen> {
         },
       ),
     );
-    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) {
-        _loadFullScreenAd();
-        print('%ad onAdShowedFullScreenContent.');
-      },
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        _incrementCounter(10);
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
-    );
-    _interstitialAd?.show();
   }
 
   _loadCounter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _counter = (prefs.getInt('counter') ?? 3);
-    });
+    final currentUser = AuthService.currentUser;
+    if (currentUser != null) {
+      try {
+        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
+        setState(() {
+          _counter = userData?['peanutCount'] ?? 0;
+        });
+      } catch (error) {
+        print('Firestore에서 peanutCount 로드 오류: $error');
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        setState(() {
+          _counter = (prefs.getInt('counter') ?? 3);
+        });
+      }
+    } else {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _counter = (prefs.getInt('counter') ?? 3);
+      });
+    }
   }
 
   void _loadRewardedAd() {
@@ -182,7 +198,7 @@ class _AsianaScreenState extends State<AsianaScreen> {
   void showRewardsAd() {
     print("showRewardsAd _rewardedAd:$_rewardedAd");
     _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-      _incrementCounter(10);
+      _incrementCounter(30);
     });
   }
 
@@ -216,6 +232,29 @@ class _AsianaScreenState extends State<AsianaScreen> {
     setState(() {
       _counter--;
       prefs.setInt('counter', _counter);
+      final currentUser = AuthService.currentUser;
+      if (currentUser != null) {
+        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+          print('Firestore 업데이트 오류: $error');
+        });
+      }
+    });
+  }
+
+  Future<void> _decrementCounterBy(int peanuts) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final int current = prefs.getInt('counter') ?? _counter;
+    final int newCount = current - peanuts;
+    setState(() {
+      _counter = newCount < 0 ? 0 : newCount;
+      prefs.setInt('counter', _counter);
+
+      final currentUser = AuthService.currentUser;
+      if (currentUser != null) {
+        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+          print('Firestore 업데이트 오류: $error');
+        });
+      }
     });
   }
 
@@ -247,7 +286,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return SingleChildScrollView(
+      child: Column(
       children: [
         Container(
           width: double.infinity,
@@ -367,9 +407,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
         Container(
             padding: const EdgeInsets.all(15),
             width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: ListView(
-              padding: const EdgeInsets.all(4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Divider(
                   color: Colors.black,
@@ -508,7 +547,6 @@ class _AsianaScreenState extends State<AsianaScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(width: 10),
                     ElevatedButton(
                         onPressed: () async {
                           final selected = await showMonthPicker(
@@ -659,9 +697,7 @@ class _AsianaScreenState extends State<AsianaScreen> {
                                 } finally {
                                   setState(() {
                                     isLoading = false;
-                                    _interstitialAd = null;
                                   });
-                                  _loadFullScreenAd();
                                 }
                               }
                             },
@@ -694,7 +730,6 @@ class _AsianaScreenState extends State<AsianaScreen> {
                               );
                               if (result == true) {
                                 showRewardsAd();
-                                _incrementCounter(30);
                               }
                             },
                       label: const Text("+ 30", style: TextStyle(color: Colors.black87)),
@@ -708,7 +743,7 @@ class _AsianaScreenState extends State<AsianaScreen> {
                 const Text("땅콩을 모아서 커뮤니티의 다양한 혜택을 누려보세요!", textAlign: TextAlign.center),
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
                       setState(() {
                         _arrivalError = true;
@@ -730,6 +765,17 @@ class _AsianaScreenState extends State<AsianaScreen> {
                       );
                       return;
                     }
+                    final int requiredPeanuts = (xAlign == loginAlign) ? 3 : 5;
+                    if (_counter < requiredPeanuts) {
+                      Fluttertoast.showToast(
+                        msg: "땅콩이 ${requiredPeanuts - _counter}개 부족합니다. 광고를 시청하고 땅콩을 얻으세요!",
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    await _decrementCounterBy(requiredPeanuts);
                     if (xAlign == -1.0) {
                       Navigator.push(
                         context,
@@ -790,14 +836,32 @@ class _AsianaScreenState extends State<AsianaScreen> {
                   style: TextButton.styleFrom(
                       foregroundColor: Colors.white, backgroundColor: const Color(0xFFD60815),
                       minimumSize: const Size.fromHeight(56.0)),
-                  child: const Text(
-                    "검색하기",
-                    style: TextStyle(fontSize: 18),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          "검색하기",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 16.0),
+                          child: Text(
+                            '땅콩 ${xAlign == loginAlign ? 3 : 5}개',
+                            style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               ],
             )),
       ],
-    );
+    ));
   }
 } 

@@ -88,6 +88,30 @@ class _SearchDanScreen extends State<SearchDanScreen> {
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
           print('전면광고 로드 성공! ad: ' + ad.toString());
+          // 콜백은 광고 객체가 생성된 후에 연결해야 합니다.
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdShowedFullScreenContent: (InterstitialAd ad) {
+              print('전면광고 표시됨');
+            },
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              print('전면광고 닫힘 - 보상 지급(+10) 및 다음 광고 프리로드');
+              _incrementCounter(10);
+              ad.dispose();
+              setState(() {
+                _interstitialAd = null;
+              });
+              _loadFullScreenAd();
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              print('전면광고 표시 실패: $error');
+              ad.dispose();
+              setState(() {
+                _interstitialAd = null;
+              });
+              _loadFullScreenAd();
+            },
+            onAdImpression: (InterstitialAd ad) => print('전면광고 impression 발생'),
+          );
           setState(() {
             _interstitialAd = ad;
           });
@@ -100,29 +124,6 @@ class _SearchDanScreen extends State<SearchDanScreen> {
         },
       ),
     );
-    _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) {
-        _loadFullScreenAd();
-        print('%ad onAdShowedFullScreenContent.');
-      },
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        _incrementCounter(10);
-        setState(() {
-          ad.dispose();
-        });
-        _loadFullScreenAd();
-      },
-      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
-    );
-    _interstitialAd?.show();
   }
 
   _loadCounter() async {
