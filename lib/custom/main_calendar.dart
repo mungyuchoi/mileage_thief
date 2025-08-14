@@ -86,6 +86,8 @@ class _MainCalendarState extends State<MainCalendar> {
     return TableCalendar(
       // 언어를 한글로 설정 (포스팅 아래 내용 확인 -> intl 라이브러리 )
       locale: 'ko_KR',
+      // 수직 제스처는 부모 스크롤에 넘기고, 달 전환은 가로 스와이프만 허용
+      availableGestures: AvailableGestures.horizontalSwipe,
       // 포커싱 날짜 (오늘 날짜를 기준으로 함)
       focusedDay: _focusedDay,
       // 최소 년도
