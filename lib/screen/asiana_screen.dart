@@ -659,10 +659,11 @@ class _AsianaScreenState extends State<AsianaScreen> {
                   color: Colors.black,
                   thickness: 2,
                 ),
-                Text(
-                  '땅콩: $_counter개',
-                  style: const TextStyle(fontSize: 18, color: Colors.black87),
-                  textAlign: TextAlign.center,
+                Center(
+                  child: Text(
+                    '땅콩: $_counter개',
+                    style: const TextStyle(fontSize: 18, color: Colors.black87),
+                  ),
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
                 Row(
