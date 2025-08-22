@@ -24,6 +24,8 @@ import 'package:flutter/services.dart';
 import '../utils/image_compressor.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/peanut_history_service.dart';
+import '../utils/ad_removal_utils.dart';
+import '../widgets/ad_removal_widget.dart';
 
 // 무지개 그라데이션 텍스트 위젯
 class GradientText extends StatelessWidget {
@@ -103,6 +105,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Map<String, dynamic>? _myUserProfile;
 
+  // 광고 없애기 상태 관리
+  bool _isAdRemovalActive = false;
+
   // 광고 위젯 생성 함수
   Widget _buildBannerAd(String adUnitId) {
     return Container(
@@ -142,6 +147,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _checkIfReportedPost(); // 게시글 신고여부 확인
     _loadProfileBannerAd();
     _loadContentBannerAd();
+    _checkAdRemovalStatus(); // 광고 없애기 상태 확인
   }
 
   void _loadProfileBannerAd() {
@@ -1960,7 +1966,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
                           // 광고 영역 2: 게시글과 댓글 사이
                           _buildContentBannerAd(),
-                              const SizedBox(height: 16),
+                          
+                          // 광고 없애기 버튼 (광고가 비활성화되지 않은 경우에만 표시)
+                          if (!_isAdRemovalActive)
+                            AdRemovalButton(
+                              onAdRemovalActivated: _onAdRemovalActivated,
+                            ),
+                          
+                          const SizedBox(height: 16),
                           // 댓글 섹션
                           Container(
                             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -3244,7 +3257,27 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
+  // 광고 없애기 상태 확인
+  Future<void> _checkAdRemovalStatus() async {
+    final isActive = await AdRemovalUtils.isAdRemovalActive();
+    setState(() {
+      _isAdRemovalActive = isActive;
+    });
+  }
+
+  // 광고 없애기 활성화 콜백
+  void _onAdRemovalActivated() {
+    setState(() {
+      _isAdRemovalActive = true;
+    });
+  }
+
   Widget _buildProfileBannerAd() {
+    // 광고 없애기가 활성화된 경우 빈 공간 반환
+    if (_isAdRemovalActive) {
+      return const SizedBox.shrink();
+    }
+    
     if (_isProfileBannerAdLoaded && _profileBannerAd != null) {
       return Container(
         width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정
@@ -3258,6 +3291,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   Widget _buildContentBannerAd() {
+    // 광고 없애기가 활성화된 경우 빈 공간 반환
+    if (_isAdRemovalActive) {
+      return const SizedBox.shrink();
+    }
+    
     if (_isContentBannerAdLoaded && _contentBannerAd != null) {
       return Container(
         width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정

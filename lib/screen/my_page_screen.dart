@@ -17,6 +17,10 @@ import 'package:lottie/lottie.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/image_compressor.dart';
 import '../screen/peanut_history_screen.dart';
+import '../utils/ad_removal_utils.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_service.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({Key? key}) : super(key: key);
@@ -68,6 +72,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
   BannerAd? _myPageBannerAd;
   bool _isMyPageBannerAdLoaded = false;
+  
+  // 광고 관리 관련 변수
+  bool _isAdRemovalActive = false;
+  String? _adRemovalExpiryTime;
+  InterstitialAd? _interstitialAd;
+  RewardedAd? _rewardedAd;
 
   // 광고 위젯 생성 함수
   Widget _buildBannerAd(String adUnitId) {
@@ -104,6 +114,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
     _bookmarksScrollController.addListener(_onBookmarksScroll);
     _loadMyPageBannerAd();
+    _checkAdRemovalStatus();
+    _loadInterstitialAd();
+    _loadRewardedAd();
   }
 
   @override
@@ -115,6 +128,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _likedPostsScrollController.dispose();
     _bookmarksScrollController.dispose();
     _myPageBannerAd?.dispose();
+    _interstitialAd?.dispose();
+    _rewardedAd?.dispose();
     super.dispose();
   }
 
@@ -1103,6 +1118,408 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
+  // 광고 없애기 상태 확인
+  Future<void> _checkAdRemovalStatus() async {
+    final isActive = await AdRemovalUtils.isAdRemovalActive();
+    final expiryTime = await AdRemovalUtils.getAdRemovalExpiryTime();
+    setState(() {
+      _isAdRemovalActive = isActive;
+      _adRemovalExpiryTime = expiryTime?.toIso8601String();
+    });
+  }
+
+  // 전면광고 로드
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerDanAdUnitId, // 대한항공 전면광고 ID 사용
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              _givePeanuts(10);
+              ad.dispose();
+              setState(() {
+                _interstitialAd = null;
+              });
+              _loadInterstitialAd(); // 다음 광고 프리로드
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              ad.dispose();
+              setState(() {
+                _interstitialAd = null;
+              });
+              _loadInterstitialAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  // 보상형광고 로드
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedDanAdUnitId, // 대한항공 보상형광고 ID 사용
+      request: AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (RewardedAd ad) {
+              ad.dispose();
+              setState(() {
+                _rewardedAd = null;
+              });
+              _loadRewardedAd(); // 다음 광고 프리로드
+            },
+            onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+              ad.dispose();
+              setState(() {
+                _rewardedAd = null;
+              });
+              _loadRewardedAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
+  // 땅콩 지급
+  Future<void> _givePeanuts(int amount) async {
+    final currentUser = AuthService.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      final userData = await UserService.getUserFromFirestore(currentUser.uid);
+      final currentPeanuts = userData?['peanutCount'] ?? 0;
+      final newPeanuts = currentPeanuts + amount;
+
+      await UserService.updatePeanutCount(currentUser.uid, newPeanuts);
+      
+      // SharedPreferences도 업데이트 (기존 로직과 일관성 유지)
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('counter', newPeanuts);
+
+      setState(() {
+        if (userProfile != null) {
+          userProfile!['peanutCount'] = newPeanuts;
+        }
+      });
+
+      Fluttertoast.showToast(
+        msg: "땅콩 $amount개를 얻었습니다!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "오류가 발생했습니다. 다시 시도해주세요.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
+  }
+
+  // 광고 관리 다이얼로그 표시
+  void _showAdManagementDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const SizedBox(width: 8),
+              const Text('광고 관리'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 광고 없애기 옵션
+              Card(
+                color: Colors.white70,
+                child: ListTile(
+                  leading: Icon(Icons.visibility_off, color: Colors.brown.shade600),
+                  title: const Text('광고 없애기'),
+                  subtitle: const Text('땅콩 30개 → 24시간 광고 제거'),
+                  trailing: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _applyAdRemoval();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.brown.shade600,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('적용'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 전면광고 +10 옵션
+              Card(
+                color: Colors.white70,
+                child: ListTile(
+                  leading: Icon(Icons.fullscreen, color: Colors.green.shade600),
+                  title: const Text('전면광고 보기'),
+                  subtitle: const Text('광고 시청 → 땅콩 +10개'),
+                  trailing: ElevatedButton(
+                    onPressed: _interstitialAd != null ? () {
+                      Navigator.of(context).pop();
+                      _interstitialAd?.show();
+                    } : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade600,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('+10'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 보상형광고 +30 옵션
+              Card(
+                color: Colors.white70,
+                child: ListTile(
+                  leading: Icon(Icons.card_giftcard, color: Colors.orange.shade600),
+                  title: const Text('보상형광고 보기'),
+                  subtitle: const Text('광고 시청 → 땅콩 +30개'),
+                  trailing: ElevatedButton(
+                    onPressed: _rewardedAd != null ? () {
+                      Navigator.of(context).pop();
+                      _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+                        _givePeanuts(30);
+                      });
+                    } : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade600,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('+30'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                '닫기',
+                style: TextStyle(
+                  color: Colors.brown.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 광고 없애기 적용
+  Future<void> _applyAdRemoval() async {
+    final currentUser = AuthService.currentUser;
+    if (currentUser == null) {
+      Fluttertoast.showToast(
+        msg: "로그인이 필요합니다!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    try {
+      final userData = await UserService.getUserFromFirestore(currentUser.uid);
+      final currentPeanuts = userData?['peanutCount'] ?? 0;
+
+      if (currentPeanuts < 30) {
+        Fluttertoast.showToast(
+          msg: "땅콩이 부족합니다!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+        return;
+      }
+
+      // 땅콩 차감
+      await UserService.updatePeanutCount(currentUser.uid, currentPeanuts - 30);
+      
+      // 광고 없애기 활성화
+      await AdRemovalUtils.activateAdRemoval();
+
+      // UI 업데이트
+      await _checkAdRemovalStatus();
+      setState(() {
+        if (userProfile != null) {
+          userProfile!['peanutCount'] = currentPeanuts - 30;
+        }
+      });
+
+      Fluttertoast.showToast(
+        msg: "광고없애기가 적용되었습니다!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "오류가 발생했습니다. 다시 시도해주세요.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
+  }
+
+  // 광고 관리 섹션 빌드
+  Widget _buildAdManagementSection() {
+    if (_isAdRemovalActive) {
+      // 광고 없애기 활성 상태
+      DateTime? expiryTime;
+      String timeText = '';
+      
+      if (_adRemovalExpiryTime != null) {
+        try {
+          expiryTime = DateTime.parse(_adRemovalExpiryTime!);
+          timeText = '${expiryTime.year}년 ${expiryTime.month}월 ${expiryTime.day}일 ${expiryTime.hour.toString().padLeft(2, '0')}:${expiryTime.minute.toString().padLeft(2, '0')}까지';
+        } catch (e) {
+          timeText = '만료 시간 확인 중...';
+        }
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green.shade600, size: 24),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '🚫 광고 없애기 활성 중',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              timeText,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            if (expiryTime != null) ...[
+              const SizedBox(height: 4),
+              FutureBuilder<String?>(
+                future: AdRemovalUtils.getRemainingTimeString(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    return Text(
+                      '(${snapshot.data})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+          ],
+        ),
+      );
+    } else {
+      // 광고 없애기 비활성 상태 - 프로모션 카드
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Card(
+          elevation: 2,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _showAdManagementDialog,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '광고 관리',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.grey.shade400,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• 땅콩 30개로 24시간 광고 없애기\n• 광고 시청으로 땅콩 획득 (+10, +30)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1174,6 +1591,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                       const SizedBox(height: 8),
                       // 스카이 이펙트 영역
                       _buildSkyEffectSection(),
+                      const SizedBox(height: 8),
+                      // 광고 관리 영역
+                      _buildAdManagementSection(),
                       const SizedBox(height: 8),
                       // 광고 영역: 스카이 이펙트와 탭바 사이
                       _buildMyPageBannerAd(),
