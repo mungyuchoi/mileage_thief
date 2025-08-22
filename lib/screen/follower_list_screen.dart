@@ -53,7 +53,10 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
           .get();
       followingUids = followingSnap.docs.map((doc) => doc.id).toSet();
 
-      // 3. 각 팔로워의 프로필 정보
+      // 3. 실제 팔로워 수와 users 문서의 followerCount 동기화
+      await _syncFollowerCount(targetUid, followerUids.length);
+
+      // 4. 각 팔로워의 프로필 정보
       List<Map<String, dynamic>> followerList = [];
       for (final uid in followerUids) {
         final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
@@ -73,6 +76,36 @@ class _FollowerListScreenState extends State<FollowerListScreen> {
       });
     } catch (e) {
       setState(() { isLoading = false; });
+    }
+  }
+
+  /// 실제 팔로워 수와 users 문서의 followerCount를 동기화
+  Future<void> _syncFollowerCount(String targetUid, int actualCount) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid)
+          .get();
+      
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        final currentCount = userData['followerCount'] ?? 0;
+        
+        // 카운트가 다르면 실제 값으로 업데이트
+        if (currentCount != actualCount) {
+          print('팔로워 카운트 동기화: $currentCount -> $actualCount (uid: $targetUid)');
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(targetUid)
+              .update({
+            'followerCount': actualCount,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    } catch (e) {
+      print('팔로워 카운트 동기화 오류: $e');
+      // 동기화 실패해도 메인 기능에는 영향 없음
     }
   }
 
