@@ -53,6 +53,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   bool _hasMoreLikedPosts = true;
   bool _isLikedPostsLoading = false;
   final ScrollController _likedPostsScrollController = ScrollController();
+
+  // 북마크 페이징
+  List<DocumentSnapshot> _bookmarkedPosts = [];
+  DocumentSnapshot? _lastBookmarkDoc;
+  bool _hasMoreBookmarks = true;
+  bool _isBookmarksLoading = false;
+  final ScrollController _bookmarksScrollController = ScrollController();
   
   bool _isUpdatingProfileImage = false;
   bool _isUpdatingDisplayName = false;
@@ -95,6 +102,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _postsScrollController.addListener(_onPostsScroll);
     _commentsScrollController.addListener(_onCommentsScroll);
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
+    _bookmarksScrollController.addListener(_onBookmarksScroll);
     _loadMyPageBannerAd();
   }
 
@@ -105,6 +113,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _postsScrollController.dispose();
     _commentsScrollController.dispose();
     _likedPostsScrollController.dispose();
+    _bookmarksScrollController.dispose();
     _myPageBannerAd?.dispose();
     super.dispose();
   }
@@ -125,7 +134,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   void _initializeTabController() {
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   void _onPostsScroll() {
@@ -146,6 +155,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     if (_likedPostsScrollController.position.pixels >= _likedPostsScrollController.position.maxScrollExtent - 200) {
       if (!_isLikedPostsLoading && _hasMoreLikedPosts) {
         _loadLikedPosts(loadMore: true);
+      }
+    }
+  }
+
+  void _onBookmarksScroll() {
+    if (_bookmarksScrollController.position.pixels >= _bookmarksScrollController.position.maxScrollExtent - 200) {
+      if (!_isBookmarksLoading && _hasMoreBookmarks) {
+        _loadBookmarks(loadMore: true);
       }
     }
   }
@@ -171,6 +188,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       _loadUserPosts(),
       _loadUserComments(),
       _loadLikedPosts(),
+      _loadBookmarks(),
     ]);
   }
 
@@ -287,6 +305,45 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       print('좋아요한 게시글 로드 오류: $e');
       setState(() {
         _isLikedPostsLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadBookmarks({bool loadMore = false}) async {
+    final user = AuthService.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isBookmarksLoading = true;
+    });
+
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('bookmarks')
+          .orderBy('bookmarkedAt', descending: true)
+          .limit(_pageSize);
+      if (loadMore && _lastBookmarkDoc != null) {
+        query = query.startAfterDocument(_lastBookmarkDoc!);
+      }
+      final querySnapshot = await query.get();
+      if (loadMore) {
+        _bookmarkedPosts.addAll(querySnapshot.docs);
+      } else {
+        _bookmarkedPosts = querySnapshot.docs;
+      }
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastBookmarkDoc = querySnapshot.docs.last;
+      }
+      _hasMoreBookmarks = querySnapshot.docs.length == _pageSize;
+      setState(() {
+        _isBookmarksLoading = false;
+      });
+    } catch (e) {
+      print('북마크한 게시글 로드 오류: $e');
+      setState(() {
+        _isBookmarksLoading = false;
       });
     }
   }
@@ -1191,6 +1248,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                 ],
                               ),
                             ),
+                            Tab(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text('북마크'),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${_bookmarkedPosts.length}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1205,6 +1282,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   _buildPostsList(),
                   _buildCommentsList(),
                   _buildLikedPostsList(),
+                  _buildBookmarksList(),
                 ],
               ),
             ),
@@ -2168,6 +2246,112 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       'notice': '운영 공지사항',
     };
     return boardNameMap[boardId] ?? '알 수 없음';
+  }
+
+  Widget _buildBookmarksList() {
+    if (_isBookmarksLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF74512D)),
+      );
+    }
+
+    if (_bookmarkedPosts.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bookmark_outline, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('북마크한 게시글이 없습니다', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _bookmarksScrollController,
+      padding: const EdgeInsets.all(12),
+      itemCount: _bookmarkedPosts.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _bookmarkedPosts.length) {
+          return const SizedBox(height: 32);
+        }
+        final bookmark = _bookmarkedPosts[index].data() as Map<String, dynamic>;
+        final bookmarkedAt = (bookmark['bookmarkedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final title = bookmark['title'] ?? '제목 없음';
+        
+        return GestureDetector(
+          onTap: () async {
+            // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
+            final postPath = bookmark['postPath'] as String?;
+            if (postPath != null) {
+              final pathParts = postPath.split('/');
+              if (pathParts.length >= 4) {
+                final dateString = pathParts[1];
+                final postId = pathParts[3];
+                // 게시글의 boardId와 boardName 조회
+                final boardInfo = await _getPostBoardInfo(dateString, postId);
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => CommunityDetailScreen(
+                    postId: postId,
+                    boardId: boardInfo['boardId']!,
+                    boardName: boardInfo['boardName']!,
+                    dateString: dateString,
+                  ),
+                ));
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 제목
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  // 북마크한 날짜
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        DateFormat('yyyy.MM.dd').format(bookmarkedAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildMyPageBannerAd() {

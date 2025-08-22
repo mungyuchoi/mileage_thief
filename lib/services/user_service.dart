@@ -376,6 +376,84 @@ class UserService {
     };
   }
 
+  // 북마크 관련 메서드들
+  // 게시글 북마크 추가
+  static Future<void> addBookmark(String uid, String postId, String dateString, String title) async {
+    try {
+      final bookmarkRef = _firestore
+          .collection(_usersCollection)
+          .doc(uid)
+          .collection('bookmarks')
+          .doc(postId);
+
+      await bookmarkRef.set({
+        'postPath': 'posts/$dateString/posts/$postId',
+        'title': title,
+        'bookmarkedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('북마크 추가 완료: $uid -> $postId');
+    } catch (e) {
+      print('북마크 추가 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 게시글 북마크 제거
+  static Future<void> removeBookmark(String uid, String postId) async {
+    try {
+      await _firestore
+          .collection(_usersCollection)
+          .doc(uid)
+          .collection('bookmarks')
+          .doc(postId)
+          .delete();
+
+      print('북마크 제거 완료: $uid -> $postId');
+    } catch (e) {
+      print('북마크 제거 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 게시글 북마크 여부 확인
+  static Future<bool> isBookmarked(String uid, String postId) async {
+    try {
+      final doc = await _firestore
+          .collection(_usersCollection)
+          .doc(uid)
+          .collection('bookmarks')
+          .doc(postId)
+          .get();
+
+      return doc.exists;
+    } catch (e) {
+      print('북마크 여부 확인 오류: $e');
+      return false;
+    }
+  }
+
+  // 사용자의 북마크 목록 조회 (페이징 지원)
+  static Future<QuerySnapshot> getUserBookmarks(String uid, {DocumentSnapshot? startAfter, int limit = 50}) async {
+    try {
+      Query query = _firestore
+          .collection(_usersCollection)
+          .doc(uid)
+          .collection('bookmarks')
+          .orderBy('bookmarkedAt', descending: true)
+          .limit(limit);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      return await query.get();
+    } catch (e) {
+      print('북마크 목록 조회 오류: $e');
+      rethrow;
+    }
+  }
+
   /// 사용자 데이터 정리 마이그레이션 (title, postCount 삭제, commentCount/postsCount 추가)
   static Future<void> migrateUserDataCleanup() async {
     print('사용자 데이터 정리 마이그레이션 시작...');

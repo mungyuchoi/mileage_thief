@@ -71,6 +71,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isLoading = true;
   bool _isLoadingComments = true; // 댓글 로딩 상태 추가
   bool _isLiked = false;
+  bool _isBookmarked = false;
   bool _isFollowing = false;
   Map<String, bool> _commentLikes = {}; // 댓글 좋아요 상태 저장
   Set<String> _processingCommentLikes = {}; // 좋아요 처리 중인 댓글 ID들
@@ -465,8 +466,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .doc(_currentUser!.uid)
           .get();
 
+      // 북마크 상태 확인
+      final isBookmarked = await UserService.isBookmarked(_currentUser!.uid, widget.postId);
+
       setState(() {
         _isLiked = likeDoc.exists;
+        _isBookmarked = isBookmarked;
       });
     } catch (e) {
       print('사용자 상태 확인 오류: $e');
@@ -695,6 +700,47 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       await batch.commit();
     } catch (e) {
       print('좋아요 처리 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('오류가 발생했습니다.')),
+      );
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
+
+    try {
+      if (_isBookmarked) {
+        // 북마크 제거
+        await UserService.removeBookmark(_currentUser!.uid, widget.postId);
+        setState(() {
+          _isBookmarked = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('북마크에서 제거되었습니다.')),
+        );
+      } else {
+        // 북마크 추가
+        await UserService.addBookmark(
+          _currentUser!.uid, 
+          widget.postId, 
+          widget.dateString, 
+          _post?['title'] ?? '제목 없음'
+        );
+        setState(() {
+          _isBookmarked = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('북마크에 추가되었습니다.')),
+        );
+      }
+    } catch (e) {
+      print('북마크 처리 오류: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('오류가 발생했습니다.')),
       );
@@ -1627,6 +1673,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               color: _isLiked ? Colors.red : Colors.grey[600],
             ),
             onPressed: _toggleLike,
+          ),
+          IconButton(
+            icon: Icon(
+              _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              color: _isBookmarked ? Colors.orange : Colors.grey[600],
+            ),
+            onPressed: _toggleBookmark,
           ),
           IconButton(
             icon: Icon(Icons.share_outlined, color: Colors.grey[600]),

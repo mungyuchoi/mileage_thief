@@ -78,6 +78,15 @@
 }
 ```
 
+#### ▶️ bookmarks/{postId}
+```json
+{
+  "postPath": "posts/20250608/posts/xyz456",
+  "title": "상테크 카드 추천!",
+  "bookmarkedAt": "2025-06-08T22:30:00Z"
+}
+```
+
 #### ▶️ my_comments/{commentId} _(선택적)_
 ```json
 {
