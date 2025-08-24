@@ -668,16 +668,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     final isLoggedIn = await _checkLoginAndNavigate();
                     if (!isLoggedIn) return;
                     
-                    final result = await Navigator.push(
+                    final result = await Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => selectedBoardId != 'all'
-                            ? CommunityPostCreateScreen(
-                                initialBoardId: selectedBoardId,
-                                initialBoardName: selectedBoardName,
-                              )
-                            : const CommunityPostCreateScreen(),
-                      ),
+                      '/community/create_v3',
+                      arguments: {
+                        'initialBoardId': selectedBoardId != 'all' ? selectedBoardId : null,
+                        'initialBoardName': selectedBoardId != 'all' ? selectedBoardName : null,
+                      },
                     );
                     if (result == true || result == false) {
                       _refreshPosts();

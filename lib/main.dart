@@ -10,6 +10,7 @@ import 'services/notification_service.dart';
 import 'services/branch_service.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_detail_screen.dart';
+import 'screen/community_post_create_screen_v3.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
@@ -235,6 +236,18 @@ Future<void> main() async {
           boardId: args['boardId'] ?? 'free',
           boardName: args['boardName'] ?? '자유게시판',
           scrollToCommentId: args['scrollToCommentId'],
+        );
+      },
+      '/community/create_v3': (context) {
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        return CommunityPostCreateScreenV3(
+          initialBoardId: args?['initialBoardId'],
+          initialBoardName: args?['initialBoardName'],
+          isEditMode: args?['isEditMode'] ?? false,
+          postId: args?['postId'],
+          dateString: args?['dateString'],
+          editTitle: args?['editTitle'],
+          editContentHtml: args?['editContentHtml'],
         );
       },
     },

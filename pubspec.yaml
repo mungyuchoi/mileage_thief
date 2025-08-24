@@ -50,6 +50,8 @@ dependencies:
   firebase_remote_config: ^5.4.7
   device_info_plus: ^11.5.0
   photo_view: ^0.14.0
+  webview_flutter: ^4.4.2
+  file_picker: ^10.2.0
 
 dev_dependencies:
   flutter_test:
