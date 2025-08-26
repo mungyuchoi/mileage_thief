@@ -20,14 +20,15 @@ class CommunityEditorConstants {
         }
         .editor {
             min-height: calc(100vh - 120px); /* 전체 화면에서 툴바 영역 제외 */
-            padding: 16px 16px 80px 16px; /* 하단에 더 큰 패딩으로 툴바 영역 확보 */
+            padding: 0 0 120px 0; /* 하단에 툴바 높이만큼 패딩, 양쪽 여백 제거 */
             border: none;
             outline: none;
             width: 100%;
             background: transparent;
             font-family: inherit;
-            font-size: inherit;
+            font-size: 16px; /* 기본 폰트 크기 명시 */
             line-height: inherit;
+            color: #000000; /* 기본 검은색 명시 */
             box-sizing: border-box;
             overflow-y: auto; /* 스크롤 활성화 */
         }
@@ -173,6 +174,7 @@ class CommunityEditorConstants {
             execCommand: function(command, value) {
                 try {
                     document.execCommand(command, false, value);
+                    
                     // 명령 실행 후 포맷 상태 확인
                     setTimeout(function() {
                         checkFormatState();

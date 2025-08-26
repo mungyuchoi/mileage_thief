@@ -31,6 +31,11 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
     'insertUnorderedList': false,
   };
   
+  // 선택된 색상과 폰트 크기 상태 (기본값 설정)
+  Color? _selectedColor = Colors.black; // 기본 검은색
+  int? _selectedFontSize = 16; // 기본 16px
+  String? _selectedAlignment;
+  
   // 색상 팔레트
   final List<Color> _colorPalette = [
     Colors.black,
@@ -172,16 +177,40 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
                   child: Row(
                     children: _colorPalette.map((color) => 
                       GestureDetector(
-                        onTap: () => widget.controller.applyTextColor(color),
+                        onTap: () {
+                          setState(() {
+                            _selectedColor = color;
+                          });
+                          widget.controller.applyTextColor(color);
+                        },
                         child: Container(
-                          width: 24,
-                          height: 24,
+                          width: 28,
+                          height: 28,
                           margin: const EdgeInsets.only(right: 4),
                           decoration: BoxDecoration(
                             color: color,
-                            border: Border.all(color: Colors.grey[300]!),
-                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: _selectedColor == color 
+                                ? const Color(0xFF74512D) 
+                                : Colors.grey[300]!,
+                              width: _selectedColor == color ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: _selectedColor == color ? [
+                              BoxShadow(
+                                color: const Color(0xFF74512D).withOpacity(0.3),
+                                spreadRadius: 1,
+                                blurRadius: 2,
+                              )
+                            ] : null,
                           ),
+                          child: _selectedColor == color 
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 16,
+                              )
+                            : null,
                         ),
                       ),
                     ).toList(),
@@ -207,19 +236,38 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
                     itemCount: _fontSizes.length,
                     itemBuilder: (context, index) {
                       final fontSize = _fontSizes[index];
+                      final isSelected = _selectedFontSize == fontSize;
                       return GestureDetector(
-                        onTap: () => widget.controller.applyFontSize(fontSize),
+                        onTap: () {
+                          setState(() {
+                            _selectedFontSize = fontSize;
+                          });
+                          widget.controller.applyFontSize(fontSize);
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           margin: const EdgeInsets.only(right: 4),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
+                            border: Border.all(
+                              color: isSelected 
+                                ? const Color(0xFF74512D) 
+                                : Colors.grey[300]!,
+                              width: isSelected ? 2 : 1,
+                            ),
                             borderRadius: BorderRadius.circular(4),
-                            color: Colors.white,
+                            color: isSelected 
+                              ? const Color(0xFF74512D).withOpacity(0.1) 
+                              : Colors.white,
                           ),
                           child: Text(
                             '$fontSize',
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected 
+                                ? const Color(0xFF74512D) 
+                                : Colors.black,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
                           ),
                         ),
                       );
@@ -240,30 +288,10 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
               Expanded(
                 child: Row(
                   children: [
-                    IconButton(
-                      onPressed: () => widget.controller.applyTextAlignment('left'),
-                      icon: const Icon(Icons.format_align_left, size: 20),
-                      tooltip: '왼쪽 정렬',
-                      color: Colors.grey[700],
-                    ),
-                    IconButton(
-                      onPressed: () => widget.controller.applyTextAlignment('center'),
-                      icon: const Icon(Icons.format_align_center, size: 20),
-                      tooltip: '가운데 정렬',
-                      color: Colors.grey[700],
-                    ),
-                    IconButton(
-                      onPressed: () => widget.controller.applyTextAlignment('right'),
-                      icon: const Icon(Icons.format_align_right, size: 20),
-                      tooltip: '오른쪽 정렬',
-                      color: Colors.grey[700],
-                    ),
-                    IconButton(
-                      onPressed: () => widget.controller.applyTextAlignment('justify'),
-                      icon: const Icon(Icons.format_align_justify, size: 20),
-                      tooltip: '양쪽 정렬',
-                      color: Colors.grey[700],
-                    ),
+                    _buildAlignmentButton(Icons.format_align_left, '왼쪽 정렬', 'left'),
+                    _buildAlignmentButton(Icons.format_align_center, '가운데 정렬', 'center'),
+                    _buildAlignmentButton(Icons.format_align_right, '오른쪽 정렬', 'right'),
+                    _buildAlignmentButton(Icons.format_align_justify, '양쪽 정렬', 'justify'),
                   ],
                 ),
               ),
@@ -294,6 +322,31 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
         tooltip: tooltip,
         color: isActive ? const Color(0xFF74512D) : Colors.grey[700],
         splashRadius: 20, // 터치 효과 반경 조정
+      ),
+    );
+  }
+  
+  /// 정렬 버튼을 빌드합니다.
+  Widget _buildAlignmentButton(IconData icon, String tooltip, String alignment) {
+    final isSelected = _selectedAlignment == alignment;
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF74512D).withOpacity(0.15) : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        onPressed: () {
+          setState(() {
+            _selectedAlignment = alignment;
+          });
+          widget.controller.applyTextAlignment(alignment);
+        },
+        icon: Icon(icon, size: 20),
+        tooltip: tooltip,
+        color: isSelected ? const Color(0xFF74512D) : Colors.grey[700],
+        splashRadius: 20,
       ),
     );
   }

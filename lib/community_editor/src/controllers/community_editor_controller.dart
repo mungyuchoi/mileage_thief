@@ -268,7 +268,17 @@ class CommunityEditorController extends ChangeNotifier {
   
   /// 폰트 크기를 적용합니다.
   Future<void> applyFontSize(int fontSize) async {
-    await _executeCommand('execCommand', ['fontSize', fontSize.toString()]);
+    // fontSize 명령은 1-7 값을 사용하므로 픽셀 값으로 변환
+    String fontSizeValue;
+    if (fontSize <= 10) fontSizeValue = '1';
+    else if (fontSize <= 12) fontSizeValue = '2'; 
+    else if (fontSize <= 14) fontSizeValue = '3';
+    else if (fontSize <= 16) fontSizeValue = '4';
+    else if (fontSize <= 18) fontSizeValue = '5';
+    else if (fontSize <= 24) fontSizeValue = '6';
+    else fontSizeValue = '7';
+    
+    await _executeCommand('execCommand', ['fontSize', fontSizeValue]);
     HapticFeedback.selectionClick();
   }
   
