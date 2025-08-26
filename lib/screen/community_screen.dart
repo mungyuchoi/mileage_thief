@@ -667,7 +667,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     // 로그인 확인
                     final isLoggedIn = await _checkLoginAndNavigate();
                     if (!isLoggedIn) return;
-                    
+
+                    // final result = await Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => selectedBoardId != 'all'
+                    //         ? CommunityPostCreateScreen(
+                    //       initialBoardId: selectedBoardId,
+                    //       initialBoardName: selectedBoardName,
+                    //     )
+                    //         : const CommunityPostCreateScreen(),
+                    //   ),
+                    // );
                     final result = await Navigator.pushNamed(
                       context,
                       '/community/create_v3',

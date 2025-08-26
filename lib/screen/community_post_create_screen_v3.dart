@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/peanut_history_service.dart';
+import '../community_editor/community_editor.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
@@ -38,86 +38,57 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
 }
 
 class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV3> {
-  String? selectedBoardId;
-  String? selectedBoardName;
   bool _isLoading = false;
   
-  // 컨트롤러들
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController();
-  final FocusNode _titleFocusNode = FocusNode();
-  final FocusNode _contentFocusNode = FocusNode();
-  
-  // 상태 관리
-  bool _showToolbar = false;
-  bool _hasUnsavedChanges = false;
-  List<XFile> _selectedImages = [];
-  
-  // 이미지 피커
-  final ImagePicker _picker = ImagePicker();
+  // 커뮤니티 에디터 컨트롤러
+  late CommunityEditorController _editorController;
   
   @override
   void initState() {
     super.initState();
     
+    // 커뮤니티 에디터 컨트롤러 초기화
+    _editorController = CommunityEditorController();
+    
     // 초기 데이터 설정
-    if (widget.isEditMode) {
-      selectedBoardId = widget.initialBoardId;
-      selectedBoardName = widget.initialBoardName;
-      
-      if (widget.editTitle?.isNotEmpty == true) {
-        _titleController.text = widget.editTitle!;
+    _editorController.initializeWithData(
+      boardId: widget.initialBoardId,
+      boardName: widget.initialBoardName,
+      isEditMode: widget.isEditMode,
+      postId: widget.postId,
+      dateString: widget.dateString,
+      editTitle: widget.editTitle,
+      editContentHtml: widget.editContentHtml,
+    );
+    
+    // 상태 변경 리스너 설정
+    _editorController.onStateChanged = (state) {
+      if (mounted) {
+        setState(() {
+          // 상태 변경 반영
+        });
       }
-      
-      if (widget.editContentHtml?.isNotEmpty == true) {
-        _contentController.text = widget.editContentHtml!;
+    };
+    
+    // 컨트롤러 변경 리스너도 추가
+    _editorController.addListener(() {
+      if (mounted) {
+        setState(() {
+          // 컨트롤러 상태 변경 반영
+        });
       }
-    } else {
-      selectedBoardId = widget.initialBoardId;
-      selectedBoardName = widget.initialBoardName;
-    }
-    
-    // 포커스 리스너 설정
-    _contentFocusNode.addListener(() {
-      setState(() {
-        _showToolbar = _contentFocusNode.hasFocus;
-      });
     });
-    
-    // 텍스트 변경 리스너 설정
-    _titleController.addListener(() {
-      _updateUnsavedChanges();
-    });
-    
-    _contentController.addListener(() {
-      _updateUnsavedChanges();
-    });
-  }
-  
-  void _updateUnsavedChanges() {
-    final hasChanges = _titleController.text.isNotEmpty || 
-                      _contentController.text.isNotEmpty ||
-                      _selectedImages.isNotEmpty;
-    
-    if (hasChanges != _hasUnsavedChanges) {
-      setState(() {
-        _hasUnsavedChanges = hasChanges;
-      });
-    }
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    _titleFocusNode.dispose();
-    _contentFocusNode.dispose();
+    _editorController.dispose();
     super.dispose();
   }
 
   // 뒤로가기 처리
   Future<bool> _onWillPop() async {
-    if (!_hasUnsavedChanges) {
+    if (!_editorController.hasUnsavedChanges) {
       return true; // 변경사항이 없으면 바로 나가기
     }
     
@@ -199,31 +170,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     );
   }
 
-  // 이미지 선택
-  Future<void> _pickImages() async {
-    try {
-      final List<XFile> images = await _picker.pickMultiImage();
-      
-      if (images.isNotEmpty) {
-        setState(() {
-          _selectedImages.addAll(images);
-          if (_selectedImages.length > 20) {
-            _selectedImages = _selectedImages.take(20).toList();
-          }
-        });
-        _updateUnsavedChanges();
-      }
-    } catch (e) {
-      print('이미지 선택 오류: $e');
-    }
-  }
-  
-  // 이미지 제거
-  void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
-    _updateUnsavedChanges();
+  // 임시저장 함수 (툴바에서 사용)
+  Future<void> _handleSaveDraft() async {
+    await _saveDraft();
   }
 
   void _showLoadingDialog() {
@@ -272,7 +221,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     if (_isLoading) return;
     
     // 유효성 검사
-    if (_titleController.text.trim().isEmpty) {
+    if (_editorController.postData.title.trim().isEmpty) {
       Fluttertoast.showToast(
         msg: "제목을 입력해주세요",
         toastLength: Toast.LENGTH_SHORT,
@@ -283,7 +232,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       return;
     }
     
-    if (_contentController.text.trim().isEmpty) {
+    if (_editorController.postData.contentHtml.trim().isEmpty) {
       Fluttertoast.showToast(
         msg: "내용을 입력해주세요",
         toastLength: Toast.LENGTH_SHORT,
@@ -294,7 +243,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       return;
     }
     
-    if (selectedBoardId == null || selectedBoardName == null) {
+    if (_editorController.postData.boardId == null || _editorController.postData.boardName == null) {
       Fluttertoast.showToast(
         msg: "게시판을 선택해주세요",
         toastLength: Toast.LENGTH_SHORT,
@@ -364,18 +313,24 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       Map<String, dynamic> postData;
       
       if (widget.isEditMode) {
+        // 수정 모드에서는 HTML 처리
+        final processedHtml = await _editorController.getProcessedHtml();
+        
         postData = {
-          'boardId': selectedBoardId,
-          'title': _titleController.text.trim(),
-          'contentHtml': _contentController.text.trim(),
+          'boardId': _editorController.postData.boardId,
+          'title': _editorController.postData.title.trim(),
+          'contentHtml': processedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
       } else {
+        // 새 게시글 모드에서는 HTML 처리
+        final processedHtml = await _editorController.getProcessedHtml();
+        
         postData = {
           'postId': postId,
-          'boardId': selectedBoardId,
-          'title': _titleController.text.trim(),
-          'contentHtml': _contentController.text.trim(),
+          'boardId': _editorController.postData.boardId,
+          'title': _editorController.postData.title.trim(),
+          'contentHtml': processedHtml.trim(),
           'author': {
             'uid': currentUser.uid,
             'displayName': userProfile['displayName'] ?? '익명',
@@ -412,7 +367,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             .collection('my_posts')
             .doc(postId)
             .update({
-              'title': _titleController.text.trim(),
+              'title': _editorController.postData.title.trim(),
               'updatedAt': FieldValue.serverTimestamp(),
             });
       } else {
@@ -432,8 +387,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             .doc(postId);
         batch.set(myPostRef, {
           'postPath': 'posts/$dateString/posts/$postId',
-          'title': _titleController.text.trim(),
-          'boardId': selectedBoardId,
+          'title': _editorController.postData.title.trim(),
+          'boardId': _editorController.postData.boardId,
           'createdAt': FieldValue.serverTimestamp(),
         });
         
@@ -478,8 +433,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             additionalData: {
               'postId': postId,
               'dateString': dateString,
-              'boardId': selectedBoardId!,
-              'postTitle': _titleController.text.trim(),
+              'boardId': _editorController.postData.boardId!,
+              'postTitle': _editorController.postData.title.trim(),
             },
           );
           
@@ -522,6 +477,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true, // 키보드가 올라올 때 화면 크기 조정
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -554,11 +510,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                       final result = await Navigator.pushNamed(
                           context, '/community_board_select');
                       if (result is Map<String, dynamic>) {
-                        setState(() {
-                          selectedBoardId = result['boardId'];
-                          selectedBoardName = result['boardName'];
-                        });
-                        _updateUnsavedChanges();
+                        _editorController.updateBoard(
+                          result['boardId'],
+                          result['boardName'],
+                        );
                       }
                     },
                     child: Container(
@@ -568,9 +523,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            selectedBoardName ?? '카테고리 선택',
+                            _editorController.postData.boardName ?? '카테고리 선택',
                             style: TextStyle(
-                              color: selectedBoardName == null ? Colors.grey : Colors.black,
+                              color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -578,7 +533,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                           const SizedBox(width: 4),
                           Icon(
                             Icons.keyboard_arrow_down,
-                            color: selectedBoardName == null ? Colors.grey : Colors.black,
+                            color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
                             size: 20,
                           ),
                         ],
@@ -604,242 +559,49 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             ],
           ),
         ),
-        body: Column(
+        body: Stack(
           children: [
-            // 구분선
-            Container(
-              height: 1,
-              color: Colors.grey[300],
+            Column(
+              children: [
+                // 구분선
+                Container(
+                  height: 1,
+                  color: Colors.grey[300],
+                ),
+                
+                // 에디터 영역
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: CommunityContentEditor(
+                      controller: _editorController,
+                    ),
+                  ),
+                ),
+              ],
             ),
             
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 제목 입력
-                    TextField(
-                      controller: _titleController,
-                      focusNode: _titleFocusNode,
-                      decoration: const InputDecoration(
-                        hintText: '제목',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 18,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textInputAction: TextInputAction.next,
-                      onSubmitted: (_) {
-                        _contentFocusNode.requestFocus();
-                      },
-                    ),
-                    
-                    // 구분선
-                    Container(
-                      height: 1,
-                      color: Colors.grey[200],
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    
-                    // 내용 입력
-                    Container(
-                      constraints: const BoxConstraints(
-                        minHeight: 200,
-                      ),
-                      child: TextField(
-                        controller: _contentController,
-                        focusNode: _contentFocusNode,
-                        decoration: const InputDecoration(
-                          hintText: '오늘 어떤 여행을 떠나셨나요?\n경험을 공유해주세요!',
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                        maxLines: null,
-                        textInputAction: TextInputAction.newline,
-                        keyboardType: TextInputType.multiline,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // 선택된 이미지들 표시
-                    if (_selectedImages.isNotEmpty)
-                      Container(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _selectedImages.length,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              width: 100,
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(
-                                      File(_selectedImages[index].path),
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          width: 100,
-                                          height: 100,
-                                          color: Colors.grey[200],
-                                          child: const Icon(
-                                            Icons.image,
-                                            color: Colors.grey,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  
-                                  // 순서 번호
-                                  Positioned(
-                                    top: 4,
-                                    left: 4,
-                                    child: Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.green,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '${index + 1}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  
-                                  // 삭제 버튼
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
-                                      onTap: () => _removeImage(index),
-                                      child: Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    
-                    const SizedBox(height: 100), // 키보드 툴바 공간 확보
-                  ],
-                ),
-              ),
+            // 키보드 위 툴바 (내용 입력 포커스시에만 표시)
+            AnimatedBuilder(
+              animation: _editorController,
+              builder: (context, child) {
+                if (!_editorController.showToolbar) {
+                  return const SizedBox.shrink();
+                }
+                
+                return Positioned(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 0,
+                  right: 0,
+                  child: CommunityToolbar(
+                    controller: _editorController,
+                    onSaveDraft: _handleSaveDraft,
+                  ),
+                );
+              },
             ),
           ],
         ),
-        
-        // 키보드 위 툴바 (내용 입력 포커스시에만 표시)
-        bottomNavigationBar: _showToolbar
-            ? Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  border: Border(
-                    top: BorderSide(color: Colors.grey[300]!),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    // 사진 첨부 버튼
-                    IconButton(
-                      onPressed: _pickImages,
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      tooltip: '사진 첨부',
-                    ),
-                    
-                    // 볼드 버튼
-                    IconButton(
-                      onPressed: () {
-                        // TODO: 볼드 기능 구현
-                      },
-                      icon: const Icon(Icons.format_bold),
-                      tooltip: '굵게',
-                    ),
-                    
-                    // 이탤릭 버튼
-                    IconButton(
-                      onPressed: () {
-                        // TODO: 이탤릭 기능 구현
-                      },
-                      icon: const Icon(Icons.format_italic),
-                      tooltip: '기울임',
-                    ),
-                    
-                    // 리스트 버튼
-                    IconButton(
-                      onPressed: () {
-                        // TODO: 리스트 기능 구현
-                      },
-                      icon: const Icon(Icons.format_list_bulleted),
-                      tooltip: '목록',
-                    ),
-                    
-                    const Spacer(),
-                    
-                    // 저장 버튼
-                    TextButton(
-                      onPressed: () {
-                        _saveDraft();
-                      },
-                      child: const Text(
-                        '저장',
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : null,
       ),
     );
   }
