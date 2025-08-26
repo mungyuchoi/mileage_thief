@@ -23,6 +23,14 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
   // 확장된 툴바 상태
   bool _showExtendedToolbar = false;
   
+  // 포맷 상태 (토글용)
+  Map<String, bool> _formatState = {
+    'bold': false,
+    'italic': false,
+    'underline': false,
+    'insertUnorderedList': false,
+  };
+  
   // 색상 팔레트
   final List<Color> _colorPalette = [
     Colors.black,
@@ -53,7 +61,13 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
 
   void _onControllerChanged() {
     if (mounted) {
-      setState(() {});
+      setState(() {
+        // 컨트롤러에서 포맷 상태 업데이트
+        final formatState = widget.controller.state.formatState;
+        if (formatState != null) {
+          _formatState = Map<String, bool>.from(formatState);
+        }
+      });
     }
   }
 
@@ -86,35 +100,35 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
               ),
               
               // 볼드 버튼
-              IconButton(
-                onPressed: () => widget.controller.applyTextFormat('bold'),
-                icon: const Icon(Icons.format_bold),
+              _buildToggleButton(
+                icon: Icons.format_bold,
                 tooltip: '굵게',
-                color: Colors.grey[700],
+                isActive: _formatState['bold'] ?? false,
+                onPressed: () => widget.controller.applyTextFormat('bold'),
               ),
               
               // 이탤릭 버튼
-              IconButton(
-                onPressed: () => widget.controller.applyTextFormat('italic'),
-                icon: const Icon(Icons.format_italic),
+              _buildToggleButton(
+                icon: Icons.format_italic,
                 tooltip: '기울임',
-                color: Colors.grey[700],
+                isActive: _formatState['italic'] ?? false,
+                onPressed: () => widget.controller.applyTextFormat('italic'),
               ),
               
               // 언더라인 버튼 (이탤릭 우측)
-              IconButton(
-                onPressed: () => widget.controller.applyTextFormat('underline'),
-                icon: const Icon(Icons.format_underlined),
+              _buildToggleButton(
+                icon: Icons.format_underlined,
                 tooltip: '밑줄',
-                color: Colors.grey[700],
+                isActive: _formatState['underline'] ?? false,
+                onPressed: () => widget.controller.applyTextFormat('underline'),
               ),
               
               // 리스트 버튼
-              IconButton(
-                onPressed: () => widget.controller.insertList(ordered: false),
-                icon: const Icon(Icons.format_list_bulleted),
+              _buildToggleButton(
+                icon: Icons.format_list_bulleted,
                 tooltip: '목록',
-                color: Colors.grey[700],
+                isActive: _formatState['insertUnorderedList'] ?? false,
+                onPressed: () => widget.controller.insertList(ordered: false),
               ),
               
               // 더보기 버튼
@@ -256,6 +270,30 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
             ],
           ),
         ],
+      ),
+    );
+  }
+  
+  /// 토글 버튼을 빌드합니다.
+  Widget _buildToggleButton({
+    required IconData icon,
+    required String tooltip,
+    required bool isActive,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFF74512D).withOpacity(0.15) : Colors.transparent,
+        shape: BoxShape.circle, // 동그라미 모양
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        tooltip: tooltip,
+        color: isActive ? const Color(0xFF74512D) : Colors.grey[700],
+        splashRadius: 20, // 터치 효과 반경 조정
       ),
     );
   }

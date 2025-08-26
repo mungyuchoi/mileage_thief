@@ -15,10 +15,12 @@ class CommunityEditorConstants {
             background-color: #ffffff;
             font-size: 16px;
             line-height: 1.6;
+            height: 100vh;
+            overflow: hidden; /* body 스크롤 방지, 에디터만 스크롤 */
         }
         .editor {
-            min-height: 200px;
-            padding: 0;
+            min-height: calc(100vh - 120px); /* 전체 화면에서 툴바 영역 제외 */
+            padding: 16px 16px 80px 16px; /* 하단에 더 큰 패딩으로 툴바 영역 확보 */
             border: none;
             outline: none;
             width: 100%;
@@ -26,11 +28,35 @@ class CommunityEditorConstants {
             font-family: inherit;
             font-size: inherit;
             line-height: inherit;
+            box-sizing: border-box;
+            overflow-y: auto; /* 스크롤 활성화 */
         }
         .editor:empty:before {
             content: attr(placeholder);
             color: #9e9e9e;
             pointer-events: none;
+        }
+        
+        /* 리스트 스타일 */
+        ul {
+            list-style-type: disc; /* 가운데 점 */
+            margin: 0.5em 0;
+            padding-left: 20px;
+        }
+        
+        ul li {
+            margin: 0.2em 0;
+            line-height: 1.6;
+        }
+        
+        ol {
+            margin: 0.5em 0;
+            padding-left: 20px;
+        }
+        
+        ol li {
+            margin: 0.2em 0;
+            line-height: 1.6;
         }
     </style>
 </head>
@@ -69,20 +95,68 @@ class CommunityEditorConstants {
                 content: this.innerHTML,
                 text: this.textContent
             });
+            // 텍스트 변경 시 포맷 상태 확인 및 스크롤 조정
+            setTimeout(function() {
+                checkFormatState();
+                if (window.communityEditorAPI && window.communityEditorAPI.scrollIntoView) {
+                    window.communityEditorAPI.scrollIntoView();
+                }
+            }, 50);
         });
         
         editor.addEventListener('focus', function() {
             sendMessage('focus', {});
+            // 포커스 시 포맷 상태 확인
+            setTimeout(function() {
+                checkFormatState();
+            }, 100);
         });
         
         editor.addEventListener('blur', function() {
             sendMessage('blur', {});
         });
         
+        // 선택 변경 시 포맷 상태 확인
+        document.addEventListener('selectionchange', function() {
+            checkFormatState();
+        });
+        
+        // 키보드 입력 후 스크롤 조정
+        editor.addEventListener('keyup', function() {
+            setTimeout(function() {
+                if (window.communityEditorAPI && window.communityEditorAPI.scrollIntoView) {
+                    window.communityEditorAPI.scrollIntoView();
+                }
+            }, 50);
+        });
+        
+        // 포맷 상태 확인 함수
+        function checkFormatState() {
+            try {
+                // 에디터에 포커스가 있을 때만 상태 확인
+                if (document.activeElement === editor) {
+                    var formatState = {
+                        bold: document.queryCommandState('bold'),
+                        italic: document.queryCommandState('italic'),
+                        underline: document.queryCommandState('underline'),
+                        insertUnorderedList: document.queryCommandState('insertUnorderedList')
+                    };
+                    
+                    console.log('Format state checked:', formatState);
+                    sendMessage('formatChanged', { formatState: formatState });
+                }
+            } catch (e) {
+                console.error('Error checking format state:', e);
+            }
+        }
+        
         // API 설정
         window.communityEditorAPI = {
             focus: function() {
                 editor.focus();
+            },
+            blur: function() {
+                editor.blur();
             },
             setHTML: function(html) {
                 editor.innerHTML = html;
@@ -95,6 +169,66 @@ class CommunityEditorConstants {
             },
             setPlaceholder: function(text) {
                 editor.setAttribute('placeholder', text);
+            },
+            execCommand: function(command, value) {
+                try {
+                    document.execCommand(command, false, value);
+                    // 명령 실행 후 포맷 상태 확인
+                    setTimeout(function() {
+                        checkFormatState();
+                    }, 50);
+                } catch (e) {
+                    console.error('Error executing command:', e);
+                }
+            },
+            insertList: function(ordered) {
+                try {
+                    // 순서 없는 리스트(bullet list) 또는 순서 있는 리스트 삽입
+                    var command = ordered ? 'insertOrderedList' : 'insertUnorderedList';
+                    document.execCommand(command, false, null);
+                    
+                    // 리스트 스타일 적용 (가운데 점 스타일)
+                    if (!ordered) {
+                        var selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            var container = selection.getRangeAt(0).commonAncestorContainer;
+                            var listElement = container.nodeType === Node.TEXT_NODE ? 
+                                container.parentNode : container;
+                            
+                            // 리스트 요소 찾기
+                            while (listElement && listElement.tagName !== 'UL' && listElement.tagName !== 'OL') {
+                                listElement = listElement.parentNode;
+                                if (!listElement || listElement === editor) break;
+                            }
+                            
+                            if (listElement && listElement.tagName === 'UL') {
+                                listElement.style.listStyleType = 'disc'; // 가운데 점 스타일
+                                listElement.style.paddingLeft = '20px';
+                                listElement.style.marginLeft = '0px';
+                            }
+                        }
+                    }
+                    
+                    // 포맷 상태 확인
+                    setTimeout(function() {
+                        checkFormatState();
+                    }, 50);
+                } catch (e) {
+                    console.error('Error inserting list:', e);
+                }
+            },
+            scrollIntoView: function() {
+                // 커서 위치가 툴바에 가려지지 않도록 스크롤 조정
+                var selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    var range = selection.getRangeAt(0);
+                    var rect = range.getBoundingClientRect();
+                    var toolbarHeight = 80; // 툴바 높이
+                    
+                    if (rect.bottom > window.innerHeight - toolbarHeight) {
+                        editor.scrollTop += (rect.bottom - (window.innerHeight - toolbarHeight) + 20);
+                    }
+                }
             }
         };
         

@@ -146,6 +146,18 @@ class _CommunityContentEditorState extends State<CommunityContentEditor> {
         fontWeight: FontWeight.w500,
       ),
       textInputAction: TextInputAction.next,
+      onTap: () {
+        // 제목 탭할 때 웹뷰 포커스를 명시적으로 해제
+        _webViewController.runJavaScript('''
+          try {
+            if (window.communityEditorAPI && window.communityEditorAPI.blur) {
+              window.communityEditorAPI.blur();
+            }
+          } catch (e) {
+            console.error('Error blurring editor:', e);
+          }
+        ''');
+      },
       onSubmitted: (_) {
         // 제목 입력 후 WebView 에디터로 포커스 이동
         Future.delayed(const Duration(milliseconds: 100), () {
@@ -158,7 +170,7 @@ class _CommunityContentEditorState extends State<CommunityContentEditor> {
   Widget _buildWebViewEditor() {
     return Stack(
       children: [
-        // WebView 에디터 (테두리 없음)
+        // WebView 에디터 (기본 상태 유지)
         WebViewWidget(controller: _webViewController),
         
         // 로딩 인디케이터

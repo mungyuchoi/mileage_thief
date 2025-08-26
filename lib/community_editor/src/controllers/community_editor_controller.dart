@@ -90,9 +90,12 @@ class CommunityEditorController extends ChangeNotifier {
         _updateState(currentText: text, isDirty: true);
         break;
       case CommunityEditorConstants.messageTypeFocus:
+        // 웹뷰에 포커스가 갈 때 제목 포커스 해제
+        titleFocusNode.unfocus();
         _updateState(
           isContentFocused: true,
           isFocused: true,
+          isTitleFocused: false,
           showToolbar: true,
         );
         break;
@@ -107,7 +110,16 @@ class CommunityEditorController extends ChangeNotifier {
         // 이미지 삽입 완료 알림
         break;
       case CommunityEditorConstants.messageTypeFormatChanged:
-        // 포맷 변경 알림
+        // 포맷 상태 업데이트
+        final formatState = messageData?['formatState'] as Map<String, dynamic>?;
+        if (formatState != null) {
+          final convertedFormatState = <String, bool>{};
+          formatState.forEach((key, value) {
+            convertedFormatState[key] = value == true;
+          });
+          print('Format state updated: $convertedFormatState'); // 디버그 로그
+          _updateState(formatState: convertedFormatState);
+        }
         break;
       default:
         print('Unknown message type: $type');
