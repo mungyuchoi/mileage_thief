@@ -143,7 +143,7 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
                     _showExtendedToolbar = !_showExtendedToolbar;
                   });
                 },
-                icon: Icon(_showExtendedToolbar ? Icons.expand_less : Icons.expand_more),
+                icon: Icon(_showExtendedToolbar ? Icons.expand_more : Icons.expand_less),
                 tooltip: '더보기',
                 color: Colors.grey[700],
               ),
