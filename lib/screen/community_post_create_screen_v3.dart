@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/peanut_history_service.dart';
 import '../community_editor/community_editor.dart';
 
@@ -39,6 +40,11 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
 
 class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV3> {
   bool _isLoading = false;
+  // 임시 저장 키
+  static const String _tempTitleKey = 'temp_post_title_v3';
+  static const String _tempContentKey = 'temp_post_content_v3';
+  static const String _tempBoardIdKey = 'temp_board_id_v3';
+  static const String _tempBoardNameKey = 'temp_board_name_v3';
   
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
@@ -60,6 +66,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       editTitle: widget.editTitle,
       editContentHtml: widget.editContentHtml,
     );
+
+    // 즉시 업로드 사용 안 함: 식별자 사전 부여 제거
     
     // 상태 변경 리스너 설정
     _editorController.onStateChanged = (state) {
@@ -78,6 +86,11 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         });
       }
     });
+
+    // 진입 시 임시 저장 데이터가 있으면 팝업 노출
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkDraftAndPrompt();
+    });
   }
 
   @override
@@ -88,81 +101,104 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
   // 뒤로가기 처리
   Future<bool> _onWillPop() async {
-    if (!_editorController.hasUnsavedChanges) {
-      return true; // 변경사항이 없으면 바로 나가기
+    if (!_editorController.hasUnsavedChanges) return true;
+    final action = await _showExitDraftSheet();
+    switch (action) {
+      case 'save':
+        await _saveDraft();
+        return true;
+      case 'discard':
+        await _clearDraft();
+        return true;
+      case 'cancel':
+      default:
+        return false;
     }
-    
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          '작성중인 글을 취소하시겠습니까?',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        content: const Text(
-          '작성취소 선택시, 작성된 글은 저장되지 않습니다.',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop('cancel'),
-            child: const Text(
-              '취소',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop('temp_save'),
-            child: const Text(
-              '임시저장',
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop('discard'),
-            child: const Text(
-              '작성취소',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    
-    // 다이얼로그 결과 처리
-    if (result == 'cancel') {
-      return false; // 취소 - 나가지 않음
-    } else if (result == 'discard') {
-      // 작성취소 - 바로 나가기
-      return true;
-    } else if (result == 'temp_save') {
-      // 임시저장 - 임시 저장 후 나가기
-      await _saveDraft();
-      return true;
-    }
-    
-    return false;
   }
   
-  // 임시저장
+  // 임시저장 (텍스트/게시판만 저장)
   Future<void> _saveDraft() async {
-    // TODO: 임시저장 로직 구현
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final title = _editorController.titleController.text.trim();
+      // 본문은 저장하지 않음
+      final boardId = _editorController.postData.boardId;
+      final boardName = _editorController.postData.boardName;
+
+      if (title.isNotEmpty) {
+        await prefs.setString(_tempTitleKey, title);
+        if (boardId != null && boardName != null) {
+          await prefs.setString(_tempBoardIdKey, boardId);
+          await prefs.setString(_tempBoardNameKey, boardName);
+        }
+      }
+
+      Fluttertoast.showToast(
+        msg: "임시저장되었습니다",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "임시저장에 실패했습니다",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
+  // 임시저장 함수 (툴바에서 사용)
+  Future<void> _handleSaveDraft() async {
+    await _saveDraft();
+  }
+
+  // 임시저장 데이터 삭제
+  Future<void> _clearDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tempTitleKey);
+    await prefs.remove(_tempContentKey);
+    await prefs.remove(_tempBoardIdKey);
+    await prefs.remove(_tempBoardNameKey);
+  }
+
+  // 진입 시 임시저장 확인 팝업
+  Future<void> _checkDraftAndPrompt() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final title = prefs.getString(_tempTitleKey) ?? '';
+      final content = ''; // 본문 임시저장 사용 안 함
+      final boardId = prefs.getString(_tempBoardIdKey);
+      final boardName = prefs.getString(_tempBoardNameKey);
+      final has = title.isNotEmpty || (boardId != null && boardName != null);
+      if (!has) return;
+      final choice = await _showRestoreDraftSheet();
+      if (choice == 'restore') {
+        await _loadDraftFromPrefs();
+      } else if (choice == 'new') {
+        await _clearDraft();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadDraftFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final title = prefs.getString(_tempTitleKey) ?? '';
+    final boardId = prefs.getString(_tempBoardIdKey);
+    final boardName = prefs.getString(_tempBoardNameKey);
+
+    if (title.isNotEmpty) {
+      _editorController.titleController.text = title;
+    }
+    if (boardId != null && boardName != null) {
+      _editorController.updateBoard(boardId, boardName);
+    }
+
     Fluttertoast.showToast(
-      msg: "임시저장되었습니다",
+      msg: "임시 저장된 내용을 불러왔습니다",
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       backgroundColor: Colors.grey[800],
@@ -170,9 +206,100 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     );
   }
 
-  // 임시저장 함수 (툴바에서 사용)
-  Future<void> _handleSaveDraft() async {
-    await _saveDraft();
+  // 하단 시트: 나갈 때 저장 여부
+  Future<String?> _showExitDraftSheet() async {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '이 게시글을 임시 저장할까요?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'cancel'),
+                      child: const Text('취소', style: TextStyle(color: Colors.black87, fontSize: 16)),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'discard'),
+                      child: const Text('저장 안 함', style: TextStyle(color: Colors.black87, fontSize: 16)),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'save'),
+                      child: const Text('저장', style: TextStyle(color: Color(0xFF74512D), fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 하단 시트: 임시저장 불러오기
+  Future<String?> _showRestoreDraftSheet() async {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '임시 저장한 내용 불러오기',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '임시 저장된 내용을 불러오거나 내용을 새로 작성하세요.',
+                  style: TextStyle(color: Colors.black54, fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'new'),
+                      child: const Text('새로 만들기', style: TextStyle(color: Colors.black87, fontSize: 16)),
+                    ),
+                    Container(width: 1, height: 20, color: Colors.grey[300]),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'restore'),
+                      child: const Text('불러오기', style: TextStyle(color: Color(0xFF74512D), fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showLoadingDialog() {
@@ -303,14 +430,18 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         postId = widget.postId!;
         dateString = widget.dateString!;
       } else {
-        const uuid = Uuid();
-        postId = uuid.v4();
-        final now = DateTime.now();
-        dateString = DateFormat('yyyyMMdd').format(now);
+        // 편집 중 미리 부여한 식별자가 있으면 재사용
+        if (_editorController.postData.postId != null && _editorController.postData.dateString != null) {
+          postId = _editorController.postData.postId!;
+          dateString = _editorController.postData.dateString!;
+        } else {
+          const uuid = Uuid();
+          postId = uuid.v4();
+          final now = DateTime.now();
+          dateString = DateFormat('yyyyMMdd').format(now);
+          _editorController.setIdentifiers(postId: postId, dateString: dateString);
+        }
       }
-
-      // 업로드 파이프라인이 즉시 동작하도록 컨트롤러에 식별자 주입
-      _editorController.setIdentifiers(postId: postId, dateString: dateString);
 
       // 4. Firestore에 저장할 데이터 준비
       Map<String, dynamic> postData;

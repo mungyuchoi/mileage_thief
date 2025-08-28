@@ -111,9 +111,9 @@ class FirebaseImageUploader {
     
     print('HTML 처리 시작, 원본 크기: ${htmlContent.length} 바이트');
     
-    // data:image 형태의 base64 이미지 처리
+    // data:image 형태의 base64 이미지 처리 (MIME + DATA 캡처)
     final RegExp base64ImgRegex = RegExp(
-      r'<img[^>]*src="data:image\/[^;]+;base64,([^"]*)"[^>]*>',
+      r'<img[^>]*src="data:(image\/[^;]+);base64,([^"]*)"[^>]*>',
       caseSensitive: false,
     );
     final matches = base64ImgRegex.allMatches(processedHtml);
@@ -122,13 +122,17 @@ class FirebaseImageUploader {
     
     for (final match in matches) {
       final String fullMatch = match.group(0)!; // 전체 img 태그
-      final String base64Data = match.group(1)!; // base64 데이터
+      final String mimeType = match.group(1)!;  // 예: image/gif, image/png
+      final String base64Data = match.group(2)!; // base64 데이터
       
       try {
         print('base64 이미지 업로드 시작');
         
-        // base64를 임시 파일로 저장
-        final tempFile = await _createTempFileFromBase64(base64Data);
+        // base64를 임시 파일로 저장 (MIME에 맞는 확장자 유지)
+        final tempFile = await _createTempFileFromBase64(
+          base64Data,
+          extension: _extensionFromMime(mimeType),
+        );
         
         // Firebase Storage에 업로드
         final String downloadUrl = await uploadImage(
@@ -160,11 +164,30 @@ class FirebaseImageUploader {
   }
   
   /// base64 데이터를 임시 파일로 생성합니다.
-  static Future<File> _createTempFileFromBase64(String base64Data) async {
+  static Future<File> _createTempFileFromBase64(String base64Data, {required String extension}) async {
     final bytes = base64Decode(base64Data);
     final tempDir = Directory.systemTemp;
-    final tempFile = File('${tempDir.path}/temp_image_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final safeExt = extension.startsWith('.') ? extension : '.$extension';
+    final tempFile = File('${tempDir.path}/temp_image_${DateTime.now().millisecondsSinceEpoch}$safeExt');
     await tempFile.writeAsBytes(bytes);
     return tempFile;
+  }
+
+  /// MIME 타입에서 파일 확장자를 유추합니다
+  static String _extensionFromMime(String mime) {
+    switch (mime.toLowerCase()) {
+      case 'image/gif':
+        return '.gif';
+      case 'image/png':
+        return '.png';
+      case 'image/webp':
+        return '.webp';
+      case 'image/svg+xml':
+        return '.svg';
+      case 'image/jpeg':
+      case 'image/jpg':
+      default:
+        return '.jpg';
+    }
   }
 }

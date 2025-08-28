@@ -204,9 +204,6 @@ class CommunityEditorController extends ChangeNotifier {
         for (final image in images) {
           await _insertImageToEditor(image);
         }
-
-        // 업로드 준비: 즉시 표시된 data URL을 실제 Storage URL로 교체
-        await _uploadAndReplaceImages(images);
         
         HapticFeedback.lightImpact();
       }
@@ -243,51 +240,7 @@ class CommunityEditorController extends ChangeNotifier {
     }
   }
 
-  /// 즉시 표시된 data:image들을 Storage 업로드 URL로 교체
-  Future<void> _uploadAndReplaceImages(List<XFile> images) async {
-    try {
-      if (_postData.postId == null || _postData.dateString == null) {
-        // 아직 식별자 모르면 최종 제출 시 처리되도록 둔다
-        return;
-      }
-
-      for (final x in images) {
-        final ext = x.path.split('.').last.toLowerCase();
-
-        // base64 data URL 생성 (현재 문서에서 oldSrc 검색용)
-        final bytes = await x.readAsBytes();
-        final mime = _getMimeType(x.path);
-        final oldSrc = 'data:$mime;base64,' + base64Encode(bytes);
-
-        File uploadFile = File(x.path);
-        if (ext == 'jpg' || ext == 'jpeg' || ext == 'png') {
-          uploadFile = await app_compress.ImageCompressor.compressToUnderSize(
-            uploadFile,
-            targetBytes: 1024 * 1024,
-          );
-        } else if (ext == 'gif') {
-          // 그대로 업로드
-        } else {
-          // 기타 포맷은 JPEG로 처리 시도
-          uploadFile = await app_compress.ImageCompressor.compressToUnderSize(
-            uploadFile,
-            targetBytes: 1024 * 1024,
-          );
-        }
-
-        final url = await FirebaseImageUploader.uploadImage(
-          imageFile: uploadFile,
-          postId: _postData.postId!,
-          dateString: _postData.dateString!,
-        );
-
-        // 에디터 내 data URL -> 실 URL로 교체
-        await _executeCommand('updateImageSrc', [oldSrc, url]);
-      }
-    } catch (e) {
-      print('uploadAndReplaceImages error: $e');
-    }
-  }
+  // 즉시 업로드는 사용하지 않음 (사용자 요청)
   
   /// 파일 경로에서 MIME 타입을 가져옵니다.
   String _getMimeType(String filePath) {
