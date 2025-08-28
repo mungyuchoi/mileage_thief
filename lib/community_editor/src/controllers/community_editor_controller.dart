@@ -8,6 +8,7 @@ import '../models/community_editor_state.dart';
 import '../models/community_post_data.dart';
 import '../constants/community_editor_constants.dart';
 import '../utils/firebase_image_uploader.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mileage_thief/utils/image_compressor.dart' as app_compress;
 
 /// 커뮤니티 에디터의 컨트롤러입니다.
@@ -187,24 +188,37 @@ class CommunityEditorController extends ChangeNotifier {
   /// 이미지를 선택하고 에디터에 삽입합니다.
   Future<void> pickImages() async {
     try {
-      final List<XFile> images = await _imagePicker.pickMultiImage(
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
-      );
+      final List<XFile> images = await _imagePicker.pickMultiImage();
       
       if (images.isNotEmpty) {
-        // 최대 개수 확인
-        if (images.length > CommunityEditorConstants.maxImageCount) {
-          HapticFeedback.lightImpact();
-          // TODO: 토스트 메시지 표시
-          return;
-        }
-        
-        for (final image in images) {
+        // 사용자 선택 완료 직후 안내 토스트 표시
+        Fluttertoast.showToast(
+          msg: "이미지는 최대 30개까지만 첨부됩니다.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+        );
+        // 현재 선택된 이미지 수와 합산하여 최대 개수 제한
+        final currentCount = _postData.selectedImages.length;
+        final remaining = CommunityEditorConstants.maxImageCount - currentCount;
+        final toInsert = remaining <= 0 ? <XFile>[] : images.take(remaining).toList();
+
+        for (final image in toInsert) {
           await _insertImageToEditor(image);
         }
-        
+
+        if (images.length > toInsert.length) {
+          HapticFeedback.lightImpact();
+          Fluttertoast.showToast(
+            msg: "이미지는 최대 30개까지만 첨부됩니다.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+          );
+        }
+
         HapticFeedback.lightImpact();
       }
     } catch (e) {

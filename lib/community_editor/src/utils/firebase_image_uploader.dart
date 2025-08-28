@@ -23,7 +23,8 @@ class FirebaseImageUploader {
       }
       
       // 파일명 생성
-      final String fileName = '${postId}_${_uuid.v4()}.${imageFile.path.split('.').last}';
+      final String ext = imageFile.path.split('.').last;
+      final String fileName = '${postId}_${_uuid.v4()}.$ext';
       
       // Storage 경로 설정
       final Reference ref = storage
