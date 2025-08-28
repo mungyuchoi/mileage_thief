@@ -8,6 +8,11 @@ class CommunityEditorConstants {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Community Editor</title>
     <style>
+        :root {
+            --vvh: 100dvh;             /* visual viewport height (fallback: 100dvh) */
+            --toolbar-h: 0px;          /* 툴바 높이 (keyboard up일 때만 설정) */
+            --bottom-gap: 0px;         /* 하단 추가 여백 (툴바+안전영역) */
+        }
         body {
             font-family: 'NanumGothic', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
@@ -16,11 +21,11 @@ class CommunityEditorConstants {
             font-size: 16px;
             line-height: 1.6;
             height: 100vh;
-            overflow: hidden; /* body 스크롤 방지, 에디터만 스크롤 */
+            overflow-y: auto;
         }
         .editor {
-            min-height: calc(100vh - 120px); /* 전체 화면에서 툴바 영역 제외 */
-            padding: 0 0 120px 0; /* 하단에 툴바 높이만큼 패딩, 양쪽 여백 제거 */
+            min-height: calc(var(--vvh) - var(--toolbar-h));
+            padding: 0 0 0 0;
             border: none;
             outline: none;
             width: 100%;
@@ -30,7 +35,9 @@ class CommunityEditorConstants {
             line-height: inherit;
             color: #000000; /* 기본 검은색 명시 */
             box-sizing: border-box;
-            overflow-y: auto; /* 스크롤 활성화 */
+            padding-bottom: var(--bottom-gap);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .editor:empty:before {
             content: attr(placeholder);
@@ -233,6 +240,46 @@ class CommunityEditorConstants {
                 }
             }
         };
+        
+        (function () {
+          function applyViewport() {
+            var h = (window.visualViewport && window.visualViewport.height)
+                      ? window.visualViewport.height
+                      : window.innerHeight;
+            document.documentElement.style.setProperty('--vvh', h + 'px');
+          }
+          applyViewport();
+          if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', applyViewport);
+          }
+          window.addEventListener('orientationchange', applyViewport);
+          window.addEventListener('resize', applyViewport);
+        })();
+      
+        // 2) Flutter에서 키보드/툴바 상태를 알려줄 때 호출할 함수
+        //   예: keyboard up -> setToolbar(56)  / keyboard down -> setToolbar(0)
+        function setToolbarHeight(px) {
+          const safeBottom = (window.safeAreaInsets && window.safeAreaInsets.bottom) ? window.safeAreaInsets.bottom : 0;
+          document.documentElement.style.setProperty('--toolbar-h', px + 'px');
+          document.documentElement.style.setProperty('--bottom-gap', (px + safeBottom) + 'px');
+        }
+      
+        // 3) 타이핑 시 커서가 항상 보이도록 (contenteditable/textarea 공통 대응)
+        function scrollCaretIntoView() {
+          const sel = document.getSelection && document.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          // editor 스크롤 컨테이너 기준으로 보이게
+          const editor = document.querySelector('.editor');
+          if (!editor) return;
+          const er = editor.getBoundingClientRect();
+          if (rect.bottom > er.bottom - 8) editor.scrollTop += (rect.bottom - er.bottom + 8);
+          if (rect.top < er.top + 8)      editor.scrollTop -= (er.top - rect.top + 8);
+        }
+      
+        document.addEventListener('selectionchange', scrollCaretIntoView);
+        document.addEventListener('input', scrollCaretIntoView);
         
         console.log('API initialized');
     </script>
