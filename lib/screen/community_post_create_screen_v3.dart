@@ -309,6 +309,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         dateString = DateFormat('yyyyMMdd').format(now);
       }
 
+      // 업로드 파이프라인이 즉시 동작하도록 컨트롤러에 식별자 주입
+      _editorController.setIdentifiers(postId: postId, dateString: dateString);
+
       // 4. Firestore에 저장할 데이터 준비
       Map<String, dynamic> postData;
       

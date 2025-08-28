@@ -324,6 +324,13 @@ class CommunityEditorConstants {
             color: inherit;
         }
         
+        /* contenteditable placeholder 표시 */
+        .editor:empty:before {
+            content: attr(placeholder);
+            color: #9e9e9e;
+            pointer-events: none;
+        }
+
         .placeholder {
             color: #9e9e9e;
         }
@@ -491,6 +498,8 @@ class CommunityEditorConstants {
         // 포커스 시 placeholder 처리
         editor.addEventListener('focus', function() {
             if (this.textContent.trim() === '') {
+                // 비어있으면 진짜 비우기 (브라우저가 넣는 <br> 제거)
+                this.innerHTML = '';
                 this.classList.remove('placeholder');
             }
             sendMessage('focus', {});
@@ -498,6 +507,8 @@ class CommunityEditorConstants {
         
         editor.addEventListener('blur', function() {
             if (this.textContent.trim() === '') {
+                // 비어있으면 진짜 비우기 -> :empty CSS placeholder 표시
+                this.innerHTML = '';
                 this.classList.add('placeholder');
             }
             sendMessage('blur', {});
@@ -505,6 +516,7 @@ class CommunityEditorConstants {
         
         // 초기 placeholder 설정
         if (editor.textContent.trim() === '') {
+            editor.innerHTML = '';
             editor.classList.add('placeholder');
         }
         
@@ -667,6 +679,20 @@ class CommunityEditorConstants {
                     
                     loadingDiv.parentNode.replaceChild(img, loadingDiv);
                     sendMessage('imageReplaced', { id: id, src: src, alt: alt });
+                }
+            },
+            
+            // 이미 삽입된 이미지의 src를 교체 (업로드 완료 후 호출)
+            updateImageSrc: function(oldSrc, newSrc) {
+                try {
+                    const imgs = editor.querySelectorAll('img');
+                    for (let i = 0; i < imgs.length; i++) {
+                        if (imgs[i].src === oldSrc) {
+                            imgs[i].src = newSrc;
+                        }
+                    }
+                } catch (e) {
+                    console.error('updateImageSrc error', e);
                 }
             },
             

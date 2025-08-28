@@ -8,6 +8,7 @@ import '../models/community_editor_state.dart';
 import '../models/community_post_data.dart';
 import '../constants/community_editor_constants.dart';
 import '../utils/firebase_image_uploader.dart';
+import 'package:mileage_thief/utils/image_compressor.dart' as app_compress;
 
 /// 커뮤니티 에디터의 컨트롤러입니다.
 /// WebView 기반 HTML 에디터로 제목, 내용, 이미지, 텍스트 포맷팅 등을 관리합니다.
@@ -203,6 +204,9 @@ class CommunityEditorController extends ChangeNotifier {
         for (final image in images) {
           await _insertImageToEditor(image);
         }
+
+        // 업로드 준비: 즉시 표시된 data URL을 실제 Storage URL로 교체
+        await _uploadAndReplaceImages(images);
         
         HapticFeedback.lightImpact();
       }
@@ -236,6 +240,52 @@ class CommunityEditorController extends ChangeNotifier {
       print('이미지 삽입 오류: $e');
       // 오류 발생시 로딩 이미지 제거
       await _executeCommand('replaceLoadingImage', [imageId, '', '']);
+    }
+  }
+
+  /// 즉시 표시된 data:image들을 Storage 업로드 URL로 교체
+  Future<void> _uploadAndReplaceImages(List<XFile> images) async {
+    try {
+      if (_postData.postId == null || _postData.dateString == null) {
+        // 아직 식별자 모르면 최종 제출 시 처리되도록 둔다
+        return;
+      }
+
+      for (final x in images) {
+        final ext = x.path.split('.').last.toLowerCase();
+
+        // base64 data URL 생성 (현재 문서에서 oldSrc 검색용)
+        final bytes = await x.readAsBytes();
+        final mime = _getMimeType(x.path);
+        final oldSrc = 'data:$mime;base64,' + base64Encode(bytes);
+
+        File uploadFile = File(x.path);
+        if (ext == 'jpg' || ext == 'jpeg' || ext == 'png') {
+          uploadFile = await app_compress.ImageCompressor.compressToUnderSize(
+            uploadFile,
+            targetBytes: 1024 * 1024,
+          );
+        } else if (ext == 'gif') {
+          // 그대로 업로드
+        } else {
+          // 기타 포맷은 JPEG로 처리 시도
+          uploadFile = await app_compress.ImageCompressor.compressToUnderSize(
+            uploadFile,
+            targetBytes: 1024 * 1024,
+          );
+        }
+
+        final url = await FirebaseImageUploader.uploadImage(
+          imageFile: uploadFile,
+          postId: _postData.postId!,
+          dateString: _postData.dateString!,
+        );
+
+        // 에디터 내 data URL -> 실 URL로 교체
+        await _executeCommand('updateImageSrc', [oldSrc, url]);
+      }
+    } catch (e) {
+      print('uploadAndReplaceImages error: $e');
     }
   }
   
@@ -338,6 +388,11 @@ class CommunityEditorController extends ChangeNotifier {
     );
     
     return processedHtml;
+  }
+
+  /// 제출 전에 컨트롤러에 식별자 정보를 주입
+  void setIdentifiers({required String postId, required String dateString}) {
+    _updatePostData(postId: postId, dateString: dateString);
   }
   
   /// 임시 저장된 이미지 파일들을 정리합니다.

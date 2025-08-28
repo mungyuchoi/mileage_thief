@@ -63,8 +63,8 @@ class _CommunityContentEditorState extends State<CommunityContentEditor> {
 
     widget.controller.setWebViewController(_webViewController);
 
-    // 간단 템플릿 로드
-    _webViewController.loadHtmlString(CommunityEditorConstants.simpleHtmlTemplate);
+    // 이미지/리치 텍스트 API를 포함한 템플릿 로드
+    _webViewController.loadHtmlString(CommunityEditorConstants.htmlTemplate);
   }
 
   Future<void> _injectViewportAndScrollFix() async {
