@@ -45,6 +45,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
   static const String _tempContentKey = 'temp_post_content_v3';
   static const String _tempBoardIdKey = 'temp_board_id_v3';
   static const String _tempBoardNameKey = 'temp_board_name_v3';
+  static const String _tempHasContentKey = 'temp_post_has_content_v3';
   
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
@@ -116,12 +117,14 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     }
   }
   
-  // 임시저장 (텍스트/게시판만 저장)
+  // 임시저장 (텍스트/게시판만 저장, 본문은 저장하지 않음. 존재 여부만 기록)
   Future<void> _saveDraft() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final title = _editorController.titleController.text.trim();
-      // 본문은 저장하지 않음
+      // 본문 저장 + 내용 존재 여부 기록
+      final html = await _editorController.getHTML();
+      final hasBody = html.replaceAll(RegExp(r'\s+'), '').isNotEmpty;
       final boardId = _editorController.postData.boardId;
       final boardName = _editorController.postData.boardName;
 
@@ -132,6 +135,13 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           await prefs.setString(_tempBoardNameKey, boardName);
         }
       }
+      if (hasBody) {
+        await prefs.setString(_tempContentKey, html);
+      } else {
+        await prefs.remove(_tempContentKey);
+      }
+      // 본문이 있으면 플래그 기록 (제목이 비어있어도 팝업이 뜨도록)
+      await prefs.setBool(_tempHasContentKey, hasBody);
 
       Fluttertoast.showToast(
         msg: "임시저장되었습니다",
@@ -163,6 +173,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     await prefs.remove(_tempContentKey);
     await prefs.remove(_tempBoardIdKey);
     await prefs.remove(_tempBoardNameKey);
+    await prefs.remove(_tempHasContentKey);
   }
 
   // 진입 시 임시저장 확인 팝업
@@ -170,10 +181,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     try {
       final prefs = await SharedPreferences.getInstance();
       final title = prefs.getString(_tempTitleKey) ?? '';
-      final content = ''; // 본문 임시저장 사용 안 함
+      final hasBody = prefs.getBool(_tempHasContentKey) ?? false;
       final boardId = prefs.getString(_tempBoardIdKey);
       final boardName = prefs.getString(_tempBoardNameKey);
-      final has = title.isNotEmpty || (boardId != null && boardName != null);
+      final has = title.isNotEmpty || hasBody || (boardId != null && boardName != null);
       if (!has) return;
       final choice = await _showRestoreDraftSheet();
       if (choice == 'restore') {
@@ -187,11 +198,15 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
   Future<void> _loadDraftFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final title = prefs.getString(_tempTitleKey) ?? '';
+    final content = prefs.getString(_tempContentKey) ?? '';
     final boardId = prefs.getString(_tempBoardIdKey);
     final boardName = prefs.getString(_tempBoardNameKey);
 
     if (title.isNotEmpty) {
       _editorController.titleController.text = title;
+    }
+    if (content.isNotEmpty) {
+      await _editorController.setHTML(content);
     }
     if (boardId != null && boardName != null) {
       _editorController.updateBoard(boardId, boardName);
