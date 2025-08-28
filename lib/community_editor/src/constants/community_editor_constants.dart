@@ -495,9 +495,23 @@ class CommunityEditorConstants {
         const editor = document.querySelector('.editor');
         let isReady = false;
         
+        // 시각적 빈 상태 판단 (이미지 등은 내용으로 간주)
+        function isVisuallyEmpty() {
+            try {
+                // 이미지 또는 로딩 프레임이 있으면 비어있지 않음
+                if (editor.querySelector('img, .image-loading')) return false;
+                // 텍스트가 있으면 비어있지 않음 (zero-width space 제거)
+                const txt = editor.textContent.replace(/\u200B/g, '').trim();
+                if (txt.length > 0) return false;
+                // HTML이 <br> 같은 빈 라인만 있는 경우는 빈 것으로 간주
+                const html = (editor.innerHTML || '').replace(/\s|&nbsp;/g, '').toLowerCase();
+                return html === '' || html === '<br>' || html === '<p><br></p>';
+            } catch (e) { return false; }
+        }
+
         // 포커스 시 placeholder 처리
         editor.addEventListener('focus', function() {
-            if (this.textContent.trim() === '') {
+            if (isVisuallyEmpty()) {
                 // 비어있으면 진짜 비우기 (브라우저가 넣는 <br> 제거)
                 this.innerHTML = '';
                 this.classList.remove('placeholder');
@@ -506,7 +520,7 @@ class CommunityEditorConstants {
         });
         
         editor.addEventListener('blur', function() {
-            if (this.textContent.trim() === '') {
+            if (isVisuallyEmpty()) {
                 // 비어있으면 진짜 비우기 -> :empty CSS placeholder 표시
                 this.innerHTML = '';
                 this.classList.add('placeholder');
@@ -515,10 +529,22 @@ class CommunityEditorConstants {
         });
         
         // 초기 placeholder 설정
-        if (editor.textContent.trim() === '') {
+        if (isVisuallyEmpty()) {
             editor.innerHTML = '';
             editor.classList.add('placeholder');
         }
+
+        // 모바일에서 터치만으로도 명시적으로 포커스/메시지 발생 보장
+        const ensureFocus = function() {
+            try {
+                editor.focus();
+                if (isVisuallyEmpty()) editor.innerHTML = '';
+                sendMessage('focus', {});
+            } catch (e) {}
+        };
+        editor.addEventListener('pointerdown', ensureFocus);
+        editor.addEventListener('touchstart', ensureFocus, {passive: true});
+        editor.addEventListener('click', ensureFocus);
         
         // Flutter로 메시지 전송
         function sendMessage(type, data) {
