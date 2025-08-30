@@ -758,16 +758,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
       final querySnapshot = await query.get();
 
-      setState(() {
-        _posts = querySnapshot.docs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return data['isHidden'] != true;
-        }).toList();
+      // 원본 쿼리 결과와 필터 적용 결과를 구분해 페이지네이션 기준을 원본으로 잡는다
+      final allDocs = querySnapshot.docs;
+      final filteredDocs = allDocs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['isHidden'] != true;
+      }).toList();
 
-        if (_posts.isNotEmpty) {
-          _lastDocument = _posts.last;
+      setState(() {
+        _posts = filteredDocs;
+        if (allDocs.isNotEmpty) {
+          _lastDocument = allDocs.last; // 마지막 문서는 필터 전 원본 기준
         }
-        _hasMoreData = _posts.length == _postsPerPage;
+        _hasMoreData = allDocs.length == _postsPerPage; // 더보기 여부도 원본 개수 기준
         _isInitialLoading = false; // 로딩 완료
       });
     } catch (e) {
@@ -806,17 +809,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
       query = query.limit(_postsPerPage);
 
       final querySnapshot = await query.get();
-      final newPosts = querySnapshot.docs.where((doc) {
+      final allDocs = querySnapshot.docs;
+      final newPosts = allDocs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return data['isHidden'] != true;
       }).toList();
 
       setState(() {
         _posts.addAll(newPosts);
-        if (newPosts.isNotEmpty) {
-          _lastDocument = newPosts.last;
+        if (allDocs.isNotEmpty) {
+          _lastDocument = allDocs.last; // 마지막 문서는 필터 전 원본 기준
         }
-        _hasMoreData = newPosts.length == _postsPerPage;
+        _hasMoreData = allDocs.length == _postsPerPage; // 더보기 여부도 원본 개수 기준
         _isLoadingMore = false;
       });
     } catch (e) {
