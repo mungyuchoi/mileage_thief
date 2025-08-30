@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
 import 'services/branch_service.dart';
+import 'services/auth_service.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'screen/community_post_create_screen_v3.dart';
@@ -199,6 +200,27 @@ Future<void> main() async {
   // 알림 서비스 초기화
   await NotificationService().initialize();
   NotificationService().setupTokenRefresh();
+
+  // Firebase Auth 토큰 자동 갱신 설정
+  AuthService.setupTokenRefresh();
+
+  // 앱 시작 시 토큰 상태 확인 및 갱신
+  try {
+    final isTokenValid = await AuthService.isTokenValid();
+    if (!isTokenValid) {
+      print('[앱 시작] 토큰이 유효하지 않습니다. 토큰 갱신을 시도합니다.');
+      final refreshSuccess = await AuthService.forceRefreshToken();
+      if (!refreshSuccess) {
+        print('[앱 시작] 토큰 갱신에 실패했습니다. 자동 재인증을 시도합니다.');
+        final reauthSuccess = await AuthService.attemptAutoReauth();
+        if (!reauthSuccess) {
+          print('[앱 시작] 자동 재인증에 실패했습니다. 사용자가 재로그인이 필요할 수 있습니다.');
+        }
+      }
+    }
+  } catch (e) {
+    print('[앱 시작] 토큰 확인 중 오류 발생: $e');
+  }
 
   // Branch.io 초기화
   await BranchService().initialize();
