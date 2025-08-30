@@ -528,6 +528,24 @@ class CommunityEditorConstants {
             sendMessage('blur', {});
         });
         
+        // 포맷 상태 확인 함수 (B/I/U 등 토글 상태 유지)
+        function checkFormatState() {
+            try {
+                if (document.activeElement === editor) {
+                    var formatState = {
+                        bold: document.queryCommandState('bold'),
+                        italic: document.queryCommandState('italic'),
+                        underline: document.queryCommandState('underline'),
+                        insertUnorderedList: document.queryCommandState('insertUnorderedList'),
+                        insertOrderedList: document.queryCommandState('insertOrderedList')
+                    };
+                    sendMessage('formatChanged', { formatState: formatState });
+                }
+            } catch (e) {
+                console.error('Error checking format state:', e);
+            }
+        }
+
         // 초기 placeholder 설정
         if (isVisuallyEmpty()) {
             editor.innerHTML = '';
@@ -568,6 +586,8 @@ class CommunityEditorConstants {
                 content: this.innerHTML,
                 text: this.textContent
             });
+            // 입력 시 포맷 상태도 갱신
+            setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 50);
         });
         
         // 키보드 이벤트
@@ -576,6 +596,16 @@ class CommunityEditorConstants {
             if (e.key === 'Enter') {
                 handleEnterKey(e);
             }
+        });
+
+        // 포커스 시 포맷 상태 갱신
+        editor.addEventListener('focus', function() {
+            setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 100);
+        });
+
+        // 선택 변경 시 포맷 상태 갱신
+        document.addEventListener('selectionchange', function() {
+            try { checkFormatState(); } catch (e) {}
         });
         
         // Enter 키 처리 함수
@@ -619,6 +649,8 @@ class CommunityEditorConstants {
             execCommand: function(command, value) {
                 document.execCommand(command, false, value);
                 sendMessage('formatChanged', { command: command, value: value });
+                // 명령 실행 후 포맷 상태 갱신
+                setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 50);
             },
             
             // HTML 설정
@@ -629,6 +661,8 @@ class CommunityEditorConstants {
                 } else {
                     editor.classList.remove('placeholder');
                 }
+                // 내용 설정 후 포맷 상태 갱신
+                setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 50);
             },
             
             // HTML 가져오기
@@ -727,6 +761,8 @@ class CommunityEditorConstants {
                 const command = ordered ? 'insertOrderedList' : 'insertUnorderedList';
                 document.execCommand(command, false, null);
                 sendMessage('listInserted', { ordered: ordered });
+                // 리스트 토글 후 포맷 상태 갱신
+                setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 50);
             },
             
             // 플레이스홀더 설정
