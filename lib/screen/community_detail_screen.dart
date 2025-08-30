@@ -1274,6 +1274,38 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     );
   }
 
+  // HTML에서 이미지 URL 목록 추출
+  List<String> _extractImageUrlsFromHtml(String htmlContent) {
+    final RegExp imgTagRegex = RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false);
+    final Iterable<RegExpMatch> matches = imgTagRegex.allMatches(htmlContent);
+    final List<String> urls = matches
+        .map((m) => m.group(2))
+        .whereType<String>()
+        .where((url) => _isImageUrl(url))
+        .toList();
+    return urls;
+  }
+
+  // 특정 HTML 컨텍스트 내 이미지들을 스와이프 가능한 뷰어로 열기
+  void _openImageViewerFromHtml(String imageUrl, String htmlContent) {
+    final List<String> imageUrls = _extractImageUrlsFromHtml(htmlContent);
+    if (imageUrls.isEmpty) {
+      _openImageViewer(imageUrl);
+      return;
+    }
+    final int initialIndex = imageUrls.indexOf(imageUrl);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewer(
+          imageUrls: imageUrls,
+          initialIndex: initialIndex >= 0 ? initialIndex : 0,
+          heroTag: null,
+        ),
+      ),
+    );
+  }
+
   // 이미지 URL인지 확인하는 헬퍼 메서드
   bool _isImageUrl(String url) {
     final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
@@ -1951,7 +1983,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 if (url != null) {
                                   // 이미지 URL인지 확인
                                   if (_isImageUrl(url)) {
-                                    _openImageViewer(url);
+                                    _openImageViewerFromHtml(url, _post!['contentHtml'] ?? '');
                                   } else {
                                     _launchUrl(url);
                                   }
@@ -2618,7 +2650,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         if (url != null) {
           // 이미지 URL인지 확인
           if (_isImageUrl(url)) {
-            _openImageViewer(url);
+            _openImageViewerFromHtml(url, processedHtml);
           } else {
             _launchUrl(url);
           }

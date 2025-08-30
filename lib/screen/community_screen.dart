@@ -144,10 +144,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
     'star_border': Icons.star_border,
     'newspaper_outlined': Icons.newspaper_outlined,
     'airline_seat_recline_extra': Icons.airline_seat_recline_extra,
+    'local_fire_department': Icons.local_fire_department,
   };
 
   IconData getBoardIcon(String? iconName) {
-    return IconsMap[iconName] ?? Icons.list;
+    if (iconName == null || iconName.trim().isEmpty) return Icons.list;
+    final normalized = iconName
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r"\s+"), '_')
+        .replaceAll('-', '_');
+    return IconsMap[normalized] ?? Icons.list;
   }
 
   @override
