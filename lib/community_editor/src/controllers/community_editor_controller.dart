@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../models/community_editor_state.dart';
@@ -123,6 +124,12 @@ class CommunityEditorController extends ChangeNotifier {
           _updateState(formatState: convertedFormatState);
         }
         break;
+      case 'openLink':
+        final url = messageData?['url'] as String?;
+        if (url != null && url.isNotEmpty) {
+          _openExternalLink(url);
+        }
+        break;
       default:
         print('Unknown message type: $type');
     }
@@ -157,6 +164,22 @@ class CommunityEditorController extends ChangeNotifier {
     }
     
     notifyListeners();
+  }
+
+  /// 외부 브라우저로 링크 열기 (WebView 내부에서 클릭 시)
+  Future<void> _openExternalLink(String url) async {
+    try {
+      // WebView 내 포커스 해제 및 툴바 숨김
+      _updateState(isContentFocused: false, showToolbar: false);
+      final uri = Uri.parse(url);
+      if (!await canLaunchUrl(uri)) return;
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      print('Failed to open link: $e');
+    }
   }
   
   /// 게시판 정보를 업데이트합니다.

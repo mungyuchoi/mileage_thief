@@ -13,7 +13,6 @@ import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import '../services/category_service.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'community_post_create_screen.dart';
 import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
 import '../widgets/image_viewer.dart';
@@ -997,19 +996,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (_post == null) return;
     
     // 수정 모드로 게시글 작성 화면으로 이동
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => CommunityPostCreateScreen(
-          isEditMode: true,
-          postId: widget.postId,
-          dateString: widget.dateString,
-          initialBoardId: widget.boardId,
-          initialBoardName: widget.boardName,
-          editTitle: _post!['title'] ?? '',
-          editContentHtml: _post!['contentHtml'] ?? '',
-        ),
-      ),
+      '/community/create_v3',
+      arguments: {
+        'isEditMode': true,
+        'postId': widget.postId,
+        'dateString': widget.dateString,
+        'initialBoardId': widget.boardId,
+        'initialBoardName': widget.boardName,
+        'editTitle': _post!['title'] ?? '',
+        'editContentHtml': _post!['contentHtml'] ?? '',
+      },
     ).then((result) {
       // 수정 완료 후 돌아왔을 때 게시글 새로고침
       if (result == true) {

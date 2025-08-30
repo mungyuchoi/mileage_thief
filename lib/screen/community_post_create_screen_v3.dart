@@ -10,6 +10,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/peanut_history_service.dart';
 import '../community_editor/community_editor.dart';
+import 'package:any_link_preview/any_link_preview.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
@@ -49,6 +50,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
   
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
+  String? _firstUrlInContent;
   
   @override
   void initState() {
@@ -75,6 +77,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       if (mounted) {
         setState(() {
           // 상태 변경 반영
+          _extractFirstUrl(state.currentText ?? '');
         });
       }
     };
@@ -84,6 +87,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       if (mounted) {
         setState(() {
           // 컨트롤러 상태 변경 반영
+          _extractFirstUrl(_editorController.state.currentText ?? '');
         });
       }
     });
@@ -92,6 +96,21 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDraftAndPrompt();
     });
+  }
+
+  // 본문 텍스트에서 첫 번째 URL 추출
+  void _extractFirstUrl(String text) {
+    final regex = RegExp(r'(https?:\/\/|www\.)[\w\-]+(\.[\w\-]+)+(\/[\w\-._~:\/?#[\]@!$&'()*+,;=%]*)?', caseSensitive: false);
+    final match = regex.firstMatch(text);
+    if (match != null) {
+      String url = match.group(0) ?? '';
+      if (url.startsWith('www.')) url = 'https://$url';
+      if (_firstUrlInContent != url) {
+        _firstUrlInContent = url;
+      }
+    } else {
+      _firstUrlInContent = null;
+    }
   }
 
   @override
@@ -727,6 +746,35 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                     ),
                   ),
                 ),
+                if (_firstUrlInContent != null) ...[
+                  Container(height: 1, color: Colors.grey[200]),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: AnyLinkPreview(
+                      link: _firstUrlInContent!,
+                      displayDirection: UIDirection.uiDirectionHorizontal,
+                      showMultimedia: true,
+                      cache: const Duration(days: 7),
+                      removeElevation: true,
+                      backgroundColor: Colors.white,
+                      errorBody: '미리보기를 불러오지 못했습니다',
+                      errorTitle: '링크 미리보기',
+                      placeholderWidget: Container(
+                        height: 120,
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      bodyMaxLines: 2,
+                      bodyTextOverflow: TextOverflow.ellipsis,
+                      titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      bodyStyle: const TextStyle(fontSize: 12, color: Colors.black54),
+                      urlLaunchMode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ],
               ],
             ),
             

@@ -113,8 +113,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _commentsScrollController.addListener(_onCommentsScroll);
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
     _bookmarksScrollController.addListener(_onBookmarksScroll);
-    _loadMyPageBannerAd();
-    _checkAdRemovalStatus();
+    _initAdState();
     _loadInterstitialAd();
     _loadRewardedAd();
   }
@@ -138,6 +137,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     if (state == AppLifecycleState.resumed) {
       // 앱이 다시 활성화될 때 프로필 새로 로드
       _loadUserProfile();
+      _checkAdRemovalStatus();
     }
   }
 
@@ -1126,6 +1126,24 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       _isAdRemovalActive = isActive;
       _adRemovalExpiryTime = expiryTime?.toIso8601String();
     });
+
+    // 활성화 상태면 배너 광고를 즉시 제거
+    if (isActive) {
+      if (_myPageBannerAd != null) {
+        _myPageBannerAd!.dispose();
+        _myPageBannerAd = null;
+        if (mounted) {
+          setState(() {
+            _isMyPageBannerAdLoaded = false;
+          });
+        }
+      }
+    } else {
+      // 비활성 상태이고 아직 로드되지 않았다면 로드
+      if (_myPageBannerAd == null && !_isMyPageBannerAdLoaded) {
+        _loadMyPageBannerAd();
+      }
+    }
   }
 
   // 전면광고 로드
@@ -1369,6 +1387,15 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           userProfile!['peanutCount'] = currentPeanuts - 30;
         }
       });
+
+      // 이미 로드된 배너 광고가 있으면 즉시 제거
+      if (_myPageBannerAd != null) {
+        _myPageBannerAd!.dispose();
+        _myPageBannerAd = null;
+        setState(() {
+          _isMyPageBannerAdLoaded = false;
+        });
+      }
 
       Fluttertoast.showToast(
         msg: "광고없애기가 적용되었습니다!",
@@ -2775,6 +2802,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   Widget _buildMyPageBannerAd() {
+    if (_isAdRemovalActive) {
+      return const SizedBox.shrink();
+    }
     if (_isMyPageBannerAdLoaded && _myPageBannerAd != null) {
       return Container(
         width: _myPageBannerAd!.size.width.toDouble(),
@@ -2783,6 +2813,22 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       );
     } else {
       return const SizedBox(height: 50);
+    }
+  }
+
+  // 광고 초기화: 상태 확인 후 필요 시 배너 로드/제거
+  void _initAdState() async {
+    await _checkAdRemovalStatus();
+    if (!_isAdRemovalActive) {
+      _loadMyPageBannerAd();
+    } else {
+      _myPageBannerAd?.dispose();
+      _myPageBannerAd = null;
+      if (mounted) {
+        setState(() {
+          _isMyPageBannerAdLoaded = false;
+        });
+      }
     }
   }
 }

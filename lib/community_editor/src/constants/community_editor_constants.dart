@@ -426,12 +426,14 @@ class CommunityEditorConstants {
         
         /* 링크 스타일 */
         a {
-            color: #74512D;
-            text-decoration: none;
+            color: #1E90FF; /* 파란색 */
+            text-decoration: underline; /* 항상 언더라인 */
+            cursor: pointer;
         }
         
         a:hover {
             text-decoration: underline;
+            filter: brightness(0.9);
         }
         
         /* 코드 스타일 */
@@ -562,12 +564,103 @@ class CommunityEditorConstants {
             }
         }
         
-        // 텍스트 변경 이벤트
+        // URL 정규식 (단순)
+        const urlRegex = /(https?:\/\/|www\.)[\w\-]+(\.[\w\-]+)+(\/[\w\-._~:\/?#[\]@!$&'()*+,;=%]*)?/gi;
+
+        function normalizeUrl(u){
+          try {
+            if (!u) return '';
+            if (u.startsWith('www.')) return 'https://' + u;
+            return u;
+          } catch(e){ return u; }
+        }
+
+        function placeCaretMarker(){
+          try {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+            const marker = document.createElement('span');
+            marker.id = '__caret_marker__';
+            marker.style.display = 'inline-block';
+            marker.style.width = '0';
+            marker.style.height = '0';
+            range.insertNode(marker);
+          } catch(e) {}
+        }
+
+        function restoreCaret(){
+          try {
+            const marker = document.getElementById('__caret_marker__');
+            if (!marker) return;
+            const range = document.createRange();
+            range.setStartBefore(marker);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            marker.parentNode && marker.parentNode.removeChild(marker);
+          } catch(e) {}
+        }
+
+        function linkifyTextNode(node){
+          if (!node || node.nodeType !== Node.TEXT_NODE) return;
+          const text = node.nodeValue;
+          if (!text || !urlRegex.test(text)) return;
+          urlRegex.lastIndex = 0;
+          const parent = node.parentNode;
+          const frag = document.createDocumentFragment();
+          let lastIndex = 0; let m;
+          while ((m = urlRegex.exec(text)) !== null){
+            const urlText = m[0];
+            const before = text.substring(lastIndex, m.index);
+            if (before) frag.appendChild(document.createTextNode(before));
+            const a = document.createElement('a');
+            a.href = normalizeUrl(urlText);
+            a.textContent = urlText;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            frag.appendChild(a);
+            lastIndex = m.index + urlText.length;
+          }
+          const after = text.substring(lastIndex);
+          if (after) frag.appendChild(document.createTextNode(after));
+          parent.replaceChild(frag, node);
+        }
+
+        function walkAndLinkify(node){
+          if (!node) return;
+          if (node.nodeType === Node.TEXT_NODE){
+            linkifyTextNode(node);
+            return;
+          }
+          if (node.nodeType === Node.ELEMENT_NODE){
+            const el = node;
+            if (el.tagName === 'A' || el.isContentEditable === false) return;
+            let child = el.firstChild;
+            while (child){
+              const next = child.nextSibling;
+              walkAndLinkify(child);
+              child = next;
+            }
+          }
+        }
+
+        function autoLinkify(){
+          placeCaretMarker();
+          try { walkAndLinkify(editor); } catch(e) {}
+          restoreCaret();
+        }
+
+        // 텍스트 변경 이벤트 + 자동 링크화
         editor.addEventListener('input', function() {
+            // 메시지 전송
             sendMessage('textChanged', {
                 content: this.innerHTML,
                 text: this.textContent
             });
+            // 자동 링크 적용
+            setTimeout(autoLinkify, 0);
         });
         
         // 키보드 이벤트
@@ -629,6 +722,8 @@ class CommunityEditorConstants {
                 } else {
                     editor.classList.remove('placeholder');
                 }
+                // 기존 콘텐츠에도 링크 자동 적용
+                setTimeout(autoLinkify, 0);
             },
             
             // HTML 가져오기
@@ -745,6 +840,16 @@ class CommunityEditorConstants {
                 sendMessage('ready', {});
                 console.log('Ready message sent');
             }, 100);
+        });
+        
+        // 링크 클릭 가로채기: Flutter로 전달하여 외부 브라우저로 열기
+        editor.addEventListener('click', function(e){
+          const t = e.target;
+          if (t && t.tagName === 'A'){
+            e.preventDefault();
+            const href = t.getAttribute('href');
+            sendMessage('openLink', { url: href });
+          }
         });
         
         // 추가적인 안전장치
