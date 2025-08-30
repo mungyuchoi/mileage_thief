@@ -29,11 +29,12 @@ class MyPageScreen extends StatefulWidget {
   State<MyPageScreen> createState() => _MyPageScreenState();
 }
 
-class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _MyPageScreenState extends State<MyPageScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
   TabController? _tabController;
-  
+
   // 페이징 관련 변수 추가
   final int _pageSize = 50;
 
@@ -64,15 +65,15 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   bool _hasMoreBookmarks = true;
   bool _isBookmarksLoading = false;
   final ScrollController _bookmarksScrollController = ScrollController();
-  
+
   bool _isUpdatingProfileImage = false;
   bool _isUpdatingDisplayName = false;
-  
+
   final ImagePicker _imagePicker = ImagePicker();
 
   BannerAd? _myPageBannerAd;
   bool _isMyPageBannerAdLoaded = false;
-  
+
   // 광고 관리 관련 변수
   bool _isAdRemovalActive = false;
   String? _adRemovalExpiryTime;
@@ -153,21 +154,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   void _onPostsScroll() {
-    if (_postsScrollController.position.pixels >= _postsScrollController.position.maxScrollExtent - 200) {
+    if (_postsScrollController.position.pixels >=
+        _postsScrollController.position.maxScrollExtent - 200) {
       if (!_isPostsLoading && _hasMorePosts) {
         _loadUserPosts(loadMore: true);
       }
     }
   }
+
   void _onCommentsScroll() {
-    if (_commentsScrollController.position.pixels >= _commentsScrollController.position.maxScrollExtent - 200) {
+    if (_commentsScrollController.position.pixels >=
+        _commentsScrollController.position.maxScrollExtent - 200) {
       if (!_isCommentsLoading && _hasMoreComments) {
         _loadUserComments(loadMore: true);
       }
     }
   }
+
   void _onLikedPostsScroll() {
-    if (_likedPostsScrollController.position.pixels >= _likedPostsScrollController.position.maxScrollExtent - 200) {
+    if (_likedPostsScrollController.position.pixels >=
+        _likedPostsScrollController.position.maxScrollExtent - 200) {
       if (!_isLikedPostsLoading && _hasMoreLikedPosts) {
         _loadLikedPosts(loadMore: true);
       }
@@ -175,7 +181,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   void _onBookmarksScroll() {
-    if (_bookmarksScrollController.position.pixels >= _bookmarksScrollController.position.maxScrollExtent - 200) {
+    if (_bookmarksScrollController.position.pixels >=
+        _bookmarksScrollController.position.maxScrollExtent - 200) {
       if (!_isBookmarksLoading && _hasMoreBookmarks) {
         _loadBookmarks(loadMore: true);
       }
@@ -388,7 +395,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       if (userData != null) {
         final changeCount = userData['photoURLChangeCount'] ?? 0;
         final peanutCount = userData['peanutCount'] ?? 0;
-        
+
         // 변경 횟수가 1 이상이고 땅콩이 충분하거나, 구매 다이얼로그를 거친 경우
         if ((changeCount >= 1 && peanutCount >= 50) || needsPurchaseDialog) {
           final shouldProceed = await showDialog<bool>(
@@ -409,11 +416,15 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   children: [
                     // 초기 1회 무료인지 확인
                     Text(
-                      changeCount == 0 ? '1회 무료로 변경할 수 있습니다.' : '땅콩 50개가 소모될 예정입니다.',
+                      changeCount == 0
+                          ? '1회 무료로 변경할 수 있습니다.'
+                          : '땅콩 50개가 소모될 예정입니다.',
                       style: TextStyle(
                         color: changeCount == 0 ? Colors.green : Colors.black,
                         fontSize: 16,
-                        fontWeight: changeCount == 0 ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: changeCount == 0
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                     if (changeCount > 0) ...[
@@ -457,7 +468,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                     onPressed: () => Navigator.pop(context, true),
                     child: const Text(
                       '변경',
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -485,32 +497,30 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
       // 2. 이미지 압축
       final originalFile = File(image.path);
-      
+
       // 이미지 정보 출력 (디버깅용)
       await ImageCompressor.printImageInfo(originalFile);
-      
+
       // 이미지 압축
       final compressedFile = await ImageCompressor.compressImage(originalFile);
-      
+
       // 압축된 이미지 정보 출력 (디버깅용)
       await ImageCompressor.printImageInfo(compressedFile);
 
       // 3. Firebase Storage에 업로드
       final File imageFile = compressedFile;
       final String fileName = '${user.uid}.png';
-      
+
       // iOS에서는 올바른 bucket 사용
       FirebaseStorage storage;
       if (Platform.isIOS) {
-        storage = FirebaseStorage.instanceFor(bucket: 'mileagethief.firebasestorage.app');
+        storage = FirebaseStorage.instanceFor(
+            bucket: 'mileagethief.firebasestorage.app');
       } else {
         storage = FirebaseStorage.instance;
       }
-      
-      final Reference storageRef = storage
-          .ref()
-          .child('users')
-          .child(fileName);
+
+      final Reference storageRef = storage.ref().child('users').child(fileName);
 
       // 기존 파일이 있다면 덮어쓰기 (같은 경로이므로 자동으로 대체됨)
       final UploadTask uploadTask = storageRef.putFile(imageFile);
@@ -539,13 +549,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       print('프로필 이미지 업데이트 오류: $e');
       setState(() {
         _isUpdatingProfileImage = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('프로필 이미지 업데이트 중 오류가 발생했습니다: ${e.toString()}'),
@@ -555,7 +564,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
   }
 
-  Future<void> _updateExistingPostsAndComments(String uid, String newPhotoURL) async {
+  Future<void> _updateExistingPostsAndComments(
+      String uid, String newPhotoURL) async {
     try {
       // 1. 사용자의 모든 게시글 업데이트
       final myPostsSnapshot = await FirebaseFirestore.instance
@@ -567,13 +577,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       for (final myPostDoc in myPostsSnapshot.docs) {
         final myPostData = myPostDoc.data();
         final postPath = myPostData['postPath'] as String?;
-        
+
         if (postPath != null) {
           final pathParts = postPath.split('/');
           if (pathParts.length >= 4) {
             final dateString = pathParts[1];
             final postId = pathParts[3];
-            
+
             try {
               // 실제 게시글 문서 업데이트
               await FirebaseFirestore.instance
@@ -602,14 +612,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       for (final myCommentDoc in myCommentsSnapshot.docs) {
         final myCommentData = myCommentDoc.data();
         final commentPath = myCommentData['commentPath'] as String?;
-        
+
         if (commentPath != null) {
           final pathParts = commentPath.split('/');
           if (pathParts.length >= 6) {
             final dateString = pathParts[1];
             final postId = pathParts[3];
             final commentId = pathParts[5];
-            
+
             try {
               // 실제 댓글 문서 업데이트
               await FirebaseFirestore.instance
@@ -629,9 +639,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           }
         }
       }
-
     } catch (e) {
-      // 에러가 발생해도 프로필 이미지 업데이트 자체는 성공했으므로 
+      // 에러가 발생해도 프로필 이미지 업데이트 자체는 성공했으므로
       // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 조용히 처리
     }
   }
@@ -726,18 +735,25 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                     future: UserService.getUserFromFirestore(user.uid),
                     builder: (context, snapshot) {
                       final userData = snapshot.data;
-                      final displayNameChangeCount = userData?['displayNameChangeCount'] ?? 0;
+                      final displayNameChangeCount =
+                          userData?['displayNameChangeCount'] ?? 0;
                       final peanutCount = userData?['peanutCount'] ?? 0;
-                      
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            displayNameChangeCount == 0 ? '1회 무료로 변경할 수 있습니다.' : '땅콩 30개가 소모될 예정입니다.',
+                            displayNameChangeCount == 0
+                                ? '1회 무료로 변경할 수 있습니다.'
+                                : '땅콩 30개가 소모될 예정입니다.',
                             style: TextStyle(
-                              color: displayNameChangeCount == 0 ? Colors.green : Colors.black,
+                              color: displayNameChangeCount == 0
+                                  ? Colors.green
+                                  : Colors.black,
                               fontSize: 16,
-                              fontWeight: displayNameChangeCount == 0 ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: displayNameChangeCount == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           if (displayNameChangeCount > 0) ...[
@@ -745,7 +761,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                             Text(
                               '현재 보유 땅콩: ${peanutCount}개',
                               style: TextStyle(
-                                color: peanutCount >= 30 ? Colors.green : Colors.red,
+                                color: peanutCount >= 30
+                                    ? Colors.green
+                                    : Colors.red,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -782,12 +800,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   ),
                 ),
                 TextButton(
-                  onPressed: isValid && controller.text.trim() != currentDisplayName
-                      ? () => Navigator.pop(context, controller.text.trim())
-                      : null,
+                  onPressed:
+                      isValid && controller.text.trim() != currentDisplayName
+                          ? () => Navigator.pop(context, controller.text.trim())
+                          : null,
                   child: const Text(
                     '변경',
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -823,7 +843,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       await user.updateDisplayName(newDisplayName);
 
       // 3. 기존 게시글과 댓글의 displayName 업데이트
-      await _updateExistingPostsAndCommentsDisplayName(user.uid, newDisplayName);
+      await _updateExistingPostsAndCommentsDisplayName(
+          user.uid, newDisplayName);
 
       // 4. 로컬 상태 업데이트
       await _loadUserProfile(); // 전체 프로필 다시 로드하여 변경된 데이터 반영
@@ -838,12 +859,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       setState(() {
         _isUpdatingDisplayName = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('닉네임 업데이트 중 오류가 발생했습니다: ${e.toString()}'),
@@ -853,7 +873,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
   }
 
-  Future<void> _updateExistingPostsAndCommentsDisplayName(String uid, String newDisplayName) async {
+  Future<void> _updateExistingPostsAndCommentsDisplayName(
+      String uid, String newDisplayName) async {
     try {
       // 1. 사용자의 모든 게시글 업데이트
       final myPostsSnapshot = await FirebaseFirestore.instance
@@ -865,13 +886,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       for (final myPostDoc in myPostsSnapshot.docs) {
         final myPostData = myPostDoc.data();
         final postPath = myPostData['postPath'] as String?;
-        
+
         if (postPath != null) {
           final pathParts = postPath.split('/');
           if (pathParts.length >= 4) {
             final dateString = pathParts[1];
             final postId = pathParts[3];
-            
+
             try {
               // 실제 게시글 문서 업데이트
               await FirebaseFirestore.instance
@@ -900,14 +921,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       for (final myCommentDoc in myCommentsSnapshot.docs) {
         final myCommentData = myCommentDoc.data();
         final commentPath = myCommentData['commentPath'] as String?;
-        
+
         if (commentPath != null) {
           final pathParts = commentPath.split('/');
           if (pathParts.length >= 6) {
             final dateString = pathParts[1];
             final postId = pathParts[3];
             final commentId = pathParts[5];
-            
+
             try {
               // 실제 댓글 문서 업데이트
               await FirebaseFirestore.instance
@@ -927,9 +948,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           }
         }
       }
-
     } catch (e) {
-      // 에러가 발생해도 닉네임 업데이트 자체는 성공했으므로 
+      // 에러가 발생해도 닉네임 업데이트 자체는 성공했으므로
       // 사용자에게는 성공 메시지를 보여주고 백그라운드에서 조용히 처리
     }
   }
@@ -939,7 +959,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     final prices = UserService.getChangePrices();
     final price = prices[type] ?? 0;
     final typeName = type == 'photoURL' ? '프로필 이미지' : '닉네임';
-    
+
     final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -964,8 +984,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               Text(
                 '현재 보유 땅콩: ${userProfile?['peanutCount'] ?? 0}개',
                 style: TextStyle(
-                  color: (userProfile?['peanutCount'] ?? 0) >= price 
-                      ? Colors.green 
+                  color: (userProfile?['peanutCount'] ?? 0) >= price
+                      ? Colors.green
                       : Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1007,14 +1027,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ),
             ),
             TextButton(
-              onPressed: (userProfile?['peanutCount'] ?? 0) >= price 
+              onPressed: (userProfile?['peanutCount'] ?? 0) >= price
                   ? () => Navigator.pop(context, true)
                   : null,
               child: Text(
                 '구매',
                 style: TextStyle(
-                  color: (userProfile?['peanutCount'] ?? 0) >= price 
-                      ? Colors.blue 
+                  color: (userProfile?['peanutCount'] ?? 0) >= price
+                      ? Colors.blue
                       : Colors.grey,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1024,7 +1044,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         );
       },
     );
-    
+
     return result ?? false;
   }
 
@@ -1063,9 +1083,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              title: const Text('차단된 멤버', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              title: const Text('차단된 멤버',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold)),
               content: blockedList.isEmpty
-                  ? const Text('차단된 멤버가 없습니다.', style: TextStyle(color: Colors.black))
+                  ? const Text('차단된 멤버가 없습니다.',
+                      style: TextStyle(color: Colors.black))
                   : SizedBox(
                       width: 320,
                       child: ListView.separated(
@@ -1078,11 +1101,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                           final photoURL = doc['photoURL'] ?? '';
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+                              backgroundImage: photoURL.isNotEmpty
+                                  ? NetworkImage(photoURL)
+                                  : null,
                               backgroundColor: Colors.grey[300],
-                              child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.grey) : null,
+                              child: photoURL.isEmpty
+                                  ? const Icon(Icons.person, color: Colors.grey)
+                                  : null,
                             ),
-                            title: Text(displayName, style: const TextStyle(color: Colors.black)),
+                            title: Text(displayName,
+                                style: const TextStyle(color: Colors.black)),
                             trailing: TextButton(
                               style: TextButton.styleFrom(
                                 backgroundColor: Colors.black,
@@ -1108,7 +1136,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('닫기', style: TextStyle(color: Colors.black)),
+                  child:
+                      const Text('닫기', style: TextStyle(color: Colors.black)),
                 ),
               ],
             );
@@ -1163,7 +1192,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               });
               _loadInterstitialAd(); // 다음 광고 프리로드
             },
-            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+            onAdFailedToShowFullScreenContent:
+                (InterstitialAd ad, AdError error) {
               ad.dispose();
               setState(() {
                 _interstitialAd = null;
@@ -1222,7 +1252,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       final newPeanuts = currentPeanuts + amount;
 
       await UserService.updatePeanutCount(currentUser.uid, newPeanuts);
-      
+
       // SharedPreferences도 업데이트 (기존 로직과 일관성 유지)
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setInt('counter', newPeanuts);
@@ -1270,7 +1300,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               Card(
                 color: Colors.white70,
                 child: ListTile(
-                  leading: Icon(Icons.visibility_off, color: Colors.brown.shade600),
+                  leading:
+                      Icon(Icons.visibility_off, color: Colors.brown.shade600),
                   title: const Text('광고 없애기'),
                   subtitle: const Text('땅콩 30개 → 24시간 광고 제거'),
                   trailing: ElevatedButton(
@@ -1295,10 +1326,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   title: const Text('전면광고 보기'),
                   subtitle: const Text('광고 시청 → 땅콩 +10개'),
                   trailing: ElevatedButton(
-                    onPressed: _interstitialAd != null ? () {
-                      Navigator.of(context).pop();
-                      _interstitialAd?.show();
-                    } : null,
+                    onPressed: _interstitialAd != null
+                        ? () {
+                            Navigator.of(context).pop();
+                            _interstitialAd?.show();
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,
@@ -1312,16 +1345,19 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               Card(
                 color: Colors.white70,
                 child: ListTile(
-                  leading: Icon(Icons.card_giftcard, color: Colors.orange.shade600),
+                  leading:
+                      Icon(Icons.card_giftcard, color: Colors.orange.shade600),
                   title: const Text('보상형광고 보기'),
                   subtitle: const Text('광고 시청 → 땅콩 +30개'),
                   trailing: ElevatedButton(
-                    onPressed: _rewardedAd != null ? () {
-                      Navigator.of(context).pop();
-                      _rewardedAd?.show(onUserEarnedReward: (_, reward) {
-                        _givePeanuts(30);
-                      });
-                    } : null,
+                    onPressed: _rewardedAd != null
+                        ? () {
+                            Navigator.of(context).pop();
+                            _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+                              _givePeanuts(30);
+                            });
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange.shade600,
                       foregroundColor: Colors.white,
@@ -1376,7 +1412,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
       // 땅콩 차감
       await UserService.updatePeanutCount(currentUser.uid, currentPeanuts - 30);
-      
+
       // 광고 없애기 활성화
       await AdRemovalUtils.activateAdRemoval();
 
@@ -1417,11 +1453,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       // 광고 없애기 활성 상태
       DateTime? expiryTime;
       String timeText = '';
-      
+
       if (_adRemovalExpiryTime != null) {
         try {
           expiryTime = DateTime.parse(_adRemovalExpiryTime!);
-          timeText = '${expiryTime.year}년 ${expiryTime.month}월 ${expiryTime.day}일 ${expiryTime.hour.toString().padLeft(2, '0')}:${expiryTime.minute.toString().padLeft(2, '0')}까지';
+          timeText =
+              '${expiryTime.year}년 ${expiryTime.month}월 ${expiryTime.day}일 ${expiryTime.hour.toString().padLeft(2, '0')}:${expiryTime.minute.toString().padLeft(2, '0')}까지';
         } catch (e) {
           timeText = '만료 시간 확인 중...';
         }
@@ -1446,7 +1483,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           children: [
             Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.green.shade600, size: 24),
+                Icon(Icons.check_circle,
+                    color: Colors.green.shade600, size: 24),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1642,7 +1680,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                   const Text('게시글'),
                                   const SizedBox(width: 4),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
                                       borderRadius: BorderRadius.circular(10),
@@ -1662,7 +1701,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                   const Text('댓글'),
                                   const SizedBox(width: 4),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
                                       borderRadius: BorderRadius.circular(10),
@@ -1682,7 +1722,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                   const Text('좋아요'),
                                   const SizedBox(width: 4),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
                                       borderRadius: BorderRadius.circular(10),
@@ -1702,7 +1743,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                   const Text('북마크'),
                                   const SizedBox(width: 4),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
                                       borderRadius: BorderRadius.circular(10),
@@ -1908,11 +1950,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ),
               const SizedBox(width: 4),
               Text(
-                                  '${userProfile!['peanutCount'] ?? 0}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600]!,
-                    fontWeight: FontWeight.bold,
+                '${userProfile!['peanutCount'] ?? 0}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600]!,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -1926,7 +1968,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const FollowerListScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const FollowerListScreen()),
                     );
                   },
                   child: Column(
@@ -1961,7 +2004,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const FollowingListScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const FollowingListScreen()),
                     );
                   },
                   child: Column(
@@ -2005,7 +2049,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             builder: (context) => LevelDetailScreen(userProfile: userProfile!),
           ),
         );
-        
+
         // 레벨이 업데이트되었으면 프로필 정보 새로고침
         if (result == true) {
           _loadUserProfile();
@@ -2086,7 +2130,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.grey[50],
                       borderRadius: BorderRadius.circular(8),
@@ -2104,12 +2149,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                               : null,
                           child: userProfile!['photoURL'] == null ||
                                   userProfile!['photoURL'].toString().isEmpty
-                              ? const Icon(Icons.person, size: 16, color: Colors.grey)
+                              ? const Icon(Icons.person,
+                                  size: 16, color: Colors.grey)
                               : null,
                         ),
                         const SizedBox(width: 2),
                         // FutureBuilder로 Lottie 미리보기와 effectName
-                        _buildEffectPreviewLottieAndName(currentEffect, userProfile!['displayName'] ?? '사용자'),
+                        _buildEffectPreviewLottieAndName(currentEffect,
+                            userProfile!['displayName'] ?? '사용자'),
                       ],
                     ),
                   ),
@@ -2126,7 +2173,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                     if (currentEffect != null) ...[
                       const SizedBox(height: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFF74512D).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -2157,7 +2205,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildEffectPreviewLottieAndName(String? effectId, String displayName) {
+  Widget _buildEffectPreviewLottieAndName(
+      String? effectId, String displayName) {
     return FutureBuilder<DocumentSnapshot>(
       future: _fetchEffectDoc(effectId),
       builder: (context, snapshot) {
@@ -2166,7 +2215,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             children: [
               const SizedBox(width: 32, height: 20),
               const SizedBox(width: 8),
-              Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text(displayName,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87)),
             ],
           );
         }
@@ -2175,7 +2228,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             children: [
               const SizedBox(width: 32, height: 20),
               const SizedBox(width: 8),
-              Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text(displayName,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87)),
             ],
           );
         }
@@ -2183,9 +2240,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           print('Lottie effectId $effectId: 문서 없음');
           return Row(
             children: [
-              const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 20),
+              const Icon(Icons.auto_awesome,
+                  color: Color(0xFF74512D), size: 20),
               const SizedBox(width: 8),
-              Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text(displayName,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87)),
             ],
           );
         }
@@ -2209,33 +2271,42 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 ),
               )
             else
-              const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 20),
+              const Icon(Icons.auto_awesome,
+                  color: Color(0xFF74512D), size: 20),
             const SizedBox(width: 2),
-            Text(displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+            Text(displayName,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87)),
           ],
         );
       },
     );
   }
 
-  Widget _buildEffectNameText(String? effectId) { 
+  Widget _buildEffectNameText(String? effectId) {
     return FutureBuilder<DocumentSnapshot>(
       future: _fetchEffectDoc(effectId),
       builder: (context, snapshot) {
         if (effectId == null) {
-          return const Text('미착용', style: TextStyle(fontSize: 14, color: Colors.grey));
+          return const Text('미착용',
+              style: TextStyle(fontSize: 14, color: Colors.grey));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Text('...', style: TextStyle(fontSize: 14, color: Colors.grey));
+          return const Text('...',
+              style: TextStyle(fontSize: 14, color: Colors.grey));
         }
         if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Text('커스텀 이펙트', style: TextStyle(fontSize: 14, color: Colors.grey));
+          return const Text('커스텀 이펙트',
+              style: TextStyle(fontSize: 14, color: Colors.grey));
         }
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final effectName = data['name'] as String?;
         return Text(
           effectName ?? '커스텀 이펙트',
-          style: const TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+              fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500),
         );
       },
     );
@@ -2244,7 +2315,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   Future<DocumentSnapshot> _fetchEffectDoc(String? effectId) async {
     if (effectId == null || effectId.isEmpty) return Future.value(null);
     try {
-      final doc = await FirebaseFirestore.instance.collection('effects').doc(effectId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('effects')
+          .doc(effectId)
+          .get();
       return doc;
     } catch (e) {
       print('Firestore fetch error: $e');
@@ -2270,11 +2344,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           return const SizedBox(height: 32);
         }
         final myPost = _userPosts[index].data() as Map<String, dynamic>;
-        final createdAt = (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final createdAt =
+            (myPost['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final boardId = myPost['boardId'] ?? 'free';
         final boardName = _getBoardName(boardId);
         final title = myPost['title'] ?? '제목 없음';
-        
+
         return GestureDetector(
           onTap: () async {
             final postPath = myPost['postPath'] as String?;
@@ -2283,7 +2358,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               if (pathParts.length >= 4) {
                 final dateString = pathParts[1];
                 final postId = pathParts[3];
-                
+
                 // 게시글 상태 확인
                 try {
                   final postDoc = await FirebaseFirestore.instance
@@ -2292,10 +2367,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                       .collection('posts')
                       .doc(postId)
                       .get();
-                  
+
                   if (postDoc.exists) {
                     final postData = postDoc.data() as Map<String, dynamic>;
-                    
+
                     // 신고 수가 5건 이상이면 자동으로 숨김처리
                     final reportsCount = postData['reportsCount'] ?? 0;
                     if (reportsCount >= 5 && postData['isHidden'] != true) {
@@ -2305,7 +2380,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                       });
                       postData['isHidden'] = true;
                     }
-                    
+
                     // 숨김처리된 게시글인 경우 접근 차단
                     if (postData['isHidden'] == true) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -2320,15 +2395,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 } catch (e) {
                   print('게시글 상태 확인 오류: $e');
                 }
-                
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => CommunityDetailScreen(
-                    postId: postId,
-                    boardId: boardId,
-                    boardName: boardName,
-                    dateString: dateString,
-                  ),
-                ));
+
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommunityDetailScreen(
+                        postId: postId,
+                        boardId: boardId,
+                        boardName: boardName,
+                        dateString: dateString,
+                      ),
+                    ));
               }
             }
           },
@@ -2395,7 +2472,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   // 게시글의 boardId와 boardName을 가져오는 함수
-  Future<Map<String, String>> _getPostBoardInfo(String dateString, String postId) async {
+  Future<Map<String, String>> _getPostBoardInfo(
+      String dateString, String postId) async {
     try {
       final postDoc = await FirebaseFirestore.instance
           .collection('posts')
@@ -2403,7 +2481,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           .collection('posts')
           .doc(postId)
           .get();
-      
+
       if (postDoc.exists) {
         final postData = postDoc.data() as Map<String, dynamic>;
         final boardId = postData['boardId'] ?? 'free';
@@ -2413,7 +2491,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     } catch (e) {
       print('게시글 boardId 조회 오류: $e');
     }
-    
+
     // 기본값 반환
     return {'boardId': 'free', 'boardName': '자유게시판'};
   }
@@ -2425,7 +2503,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     if (matches.isEmpty) {
       return Text(
         content,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+        style: const TextStyle(
+            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       );
@@ -2492,37 +2571,40 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           return const SizedBox(height: 32);
         }
         final myComment = _userComments[index].data() as Map<String, dynamic>;
-        final createdAt = (myComment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final createdAt =
+            (myComment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final content = _removeHtmlTags(myComment['contentHtml'] ?? '댓글 내용 없음');
-        
+
         return GestureDetector(
           onTap: () async {
             // commentPath와 postPath에서 정보 추출해서 게시글 상세로 이동
             final postPath = myComment['postPath'] as String?;
             final commentPath = myComment['commentPath'] as String?;
-            
+
             if (postPath != null && commentPath != null) {
               final postPathParts = postPath.split('/');
               final commentPathParts = commentPath.split('/');
-              
+
               if (postPathParts.length >= 4 && commentPathParts.length >= 6) {
                 final dateString = postPathParts[1];
                 final postId = postPathParts[3];
                 final commentId = commentPathParts[5];
-                
+
                 // 게시글의 boardId와 boardName 조회
                 final boardInfo = await _getPostBoardInfo(dateString, postId);
-                
+
                 // 게시글 상세 화면으로 이동하면서 댓글 위치로 스크롤
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => CommunityDetailScreen(
-                    postId: postId,
-                    boardId: boardInfo['boardId']!,
-                    boardName: boardInfo['boardName']!,
-                    dateString: dateString,
-                    scrollToCommentId: commentId, // 댓글 위치로 스크롤
-                  ),
-                ));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommunityDetailScreen(
+                        postId: postId,
+                        boardId: boardInfo['boardId']!,
+                        boardName: boardInfo['boardName']!,
+                        dateString: dateString,
+                        scrollToCommentId: commentId, // 댓글 위치로 스크롤
+                      ),
+                    ));
               }
             }
           },
@@ -2598,9 +2680,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           return const SizedBox(height: 32);
         }
         final likedPost = _likedPosts[index].data() as Map<String, dynamic>;
-        final likedAt = (likedPost['likedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final likedAt =
+            (likedPost['likedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final title = likedPost['title'] ?? '제목 없음';
-        
+
         return GestureDetector(
           onTap: () async {
             // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
@@ -2612,14 +2695,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 final postId = pathParts[3];
                 // 게시글의 boardId와 boardName 조회
                 final boardInfo = await _getPostBoardInfo(dateString, postId);
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => CommunityDetailScreen(
-                    postId: postId,
-                    boardId: boardInfo['boardId']!,
-                    boardName: boardInfo['boardName']!,
-                    dateString: dateString,
-                  ),
-                ));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommunityDetailScreen(
+                        postId: postId,
+                        boardId: boardInfo['boardId']!,
+                        boardName: boardInfo['boardName']!,
+                        dateString: dateString,
+                      ),
+                    ));
               }
             }
           },
@@ -2724,9 +2809,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           return const SizedBox(height: 32);
         }
         final bookmark = _bookmarkedPosts[index].data() as Map<String, dynamic>;
-        final bookmarkedAt = (bookmark['bookmarkedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final bookmarkedAt =
+            (bookmark['bookmarkedAt'] as Timestamp?)?.toDate() ??
+                DateTime.now();
         final title = bookmark['title'] ?? '제목 없음';
-        
+
         return GestureDetector(
           onTap: () async {
             // postPath에서 dateString과 postId 추출해서 게시글 상세로 이동
@@ -2738,14 +2825,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 final postId = pathParts[3];
                 // 게시글의 boardId와 boardName 조회
                 final boardInfo = await _getPostBoardInfo(dateString, postId);
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => CommunityDetailScreen(
-                    postId: postId,
-                    boardId: boardInfo['boardId']!,
-                    boardName: boardInfo['boardName']!,
-                    dateString: dateString,
-                  ),
-                ));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommunityDetailScreen(
+                        postId: postId,
+                        boardId: boardInfo['boardId']!,
+                        boardName: boardInfo['boardName']!,
+                        dateString: dateString,
+                      ),
+                    ));
               }
             }
           },

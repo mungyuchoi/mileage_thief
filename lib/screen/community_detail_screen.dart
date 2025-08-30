@@ -79,7 +79,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   final TextEditingController _commentController = TextEditingController();
   String _commentSortOrder = '등록순';
-  
+
   // 답글 관련 상태
   String? _replyingToCommentId; // 답글을 달고 있는 댓글 ID
   Map<String, dynamic>? _replyingToComment; // 답글 대상 댓글 정보
@@ -236,7 +236,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       if (docSnapshot.exists) {
         final postData = docSnapshot.data() as Map<String, dynamic>;
-        
+
         // 신고 수가 5건 이상이면 자동으로 숨김처리
         final reportsCount = postData['reportsCount'] ?? 0;
         if (reportsCount >= 5 && postData['isHidden'] != true) {
@@ -246,7 +246,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           });
           postData['isHidden'] = true;
         }
-        
+
         // 숨김처리된 게시글인 경우 접근 차단
         if (postData['isHidden'] == true) {
           setState(() {
@@ -333,9 +333,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       final allComments = commentsSnapshot.docs
           .map((doc) => {
-                'commentId': doc.id,
-                ...doc.data() as Map<String, dynamic>
-              })
+        'commentId': doc.id,
+        ...doc.data() as Map<String, dynamic>
+      })
           .toList();
 
       // 댓글을 계층 구조로 정렬 (부모 댓글 → 답글 순서)
@@ -391,7 +391,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     // 댓글을 부모 댓글과 답글로 분류
     for (final comment in comments) {
       final parentId = comment['parentCommentId'];
-      
+
       if (parentId == null) {
         // 원댓글
         parentComments.add(comment);
@@ -403,12 +403,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         repliesByParent[parentId]!.add(comment);
       }
     }
-    
+
     // 부모 댓글들을 선택된 순서로 정렬
     parentComments.sort((a, b) {
       final aTime = (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
       final bTime = (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-      
+
       if (_commentSortOrder == '최신순') {
         return bTime.compareTo(aTime); // 최신순: 내림차순
       } else {
@@ -426,30 +426,30 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   }
 
   void _addCommentAndReplies(
-    Map<String, dynamic> comment,
-    Map<String, List<Map<String, dynamic>>> repliesByParent,
-    List<Map<String, dynamic>> result,
-  ) {
+      Map<String, dynamic> comment,
+      Map<String, List<Map<String, dynamic>>> repliesByParent,
+      List<Map<String, dynamic>> result,
+      ) {
     // 현재 댓글 추가
     result.add(comment);
-    
+
     final commentId = comment['commentId'];
-    
+
     if (repliesByParent.containsKey(commentId)) {
       final replies = repliesByParent[commentId]!;
-      
+
       // 답글들을 선택된 순서로 정렬
       replies.sort((a, b) {
         final aTime = (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
         final bTime = (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-        
+
         if (_commentSortOrder == '최신순') {
           return bTime.compareTo(aTime); // 최신순: 내림차순
         } else {
           return aTime.compareTo(bTime); // 등록순: 오름차순
         }
       });
-      
+
       // 각 답글을 재귀적으로 처리 (답글의 답글도 포함)
       for (final reply in replies) {
         _addCommentAndReplies(reply, repliesByParent, result);
@@ -596,14 +596,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
-    
+
     // 잠시 후 홈화면으로 이동
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         // 모든 화면을 pop하고 홈화면으로 이동
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
-          (Route<dynamic> route) => false,
+              (Route<dynamic> route) => false,
         );
       }
     });
@@ -676,7 +676,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           final currentPeanut = userData['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 1;
           await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
-          
+
           // 땅콩 히스토리 기록
           await PeanutHistoryService.addHistory(
             userId: _currentUser!.uid,
@@ -689,7 +689,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               'postTitle': _post?['title'] ?? '제목 없음',
             },
           );
-          
+
           Fluttertoast.showToast(
             msg: '땅콩 1개가 추가되었습니다.',
             toastLength: Toast.LENGTH_SHORT,
@@ -732,10 +732,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       } else {
         // 북마크 추가
         await UserService.addBookmark(
-          _currentUser!.uid, 
-          widget.postId, 
-          widget.dateString, 
-          _post?['title'] ?? '제목 없음'
+            _currentUser!.uid,
+            widget.postId,
+            widget.dateString,
+            _post?['title'] ?? '제목 없음'
         );
         setState(() {
           _isBookmarked = true;
@@ -778,7 +778,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (_post != null) {
       final title = _post!['title'] ?? '제목 없음';
       final content = _getPlainTextFromHtml(_post!['contentHtml'] ?? '');
-      
+
       try {
         // Branch.io 딥링크 생성
         await BranchService().showShareSheet(
@@ -942,15 +942,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   const Text('변경할 카테고리를 선택하세요:', style: TextStyle(fontSize: 13)),
                   const SizedBox(height: 8),
                   ...boards.map((board) => RadioListTile<String>(
-                        title: Text(board['name']!),
-                        value: board['id']!,
-                        groupValue: selectedBoardId,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedBoardId = value!;
-                          });
-                        },
-                      )),
+                    title: Text(board['name']!),
+                    value: board['id']!,
+                    groupValue: selectedBoardId,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedBoardId = value!;
+                      });
+                    },
+                  )),
                 ],
               ),
               actions: [
@@ -972,8 +972,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                         .collection('posts')
                         .doc(widget.postId)
                         .update({
-                          'boardId': selectedBoardId,
-                        });
+                      'boardId': selectedBoardId,
+                    });
                     // 화면 갱신
                     await _loadPostDetail();
                     Navigator.pop(context);
@@ -994,7 +994,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   void _editPost() {
     if (_post == null) return;
-    
+
     // 수정 모드로 게시글 작성 화면으로 이동
     Navigator.pushNamed(
       context,
@@ -1053,9 +1053,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('posts')
           .doc(widget.postId)
           .update({
-            'isDeleted': true,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'isDeleted': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       // 관리자용 삭제된 게시글 백업 생성
       if (_post != null) {
@@ -1065,21 +1065,21 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .collection('posts')
             .doc(widget.postId)
             .set({
-              'originalPath': 'posts/${widget.dateString}/posts/${widget.postId}',
-              'postId': widget.postId,
-              'dateString': widget.dateString,
-              'boardId': _post!['boardId'],
-              'title': _post!['title'],
-              'contentHtml': _post!['contentHtml'],
-              'author': _post!['author'],
-              'viewsCount': _post!['viewsCount'] ?? 0,
-              'likesCount': _post!['likesCount'] ?? 0,
-              'commentCount': _post!['commentCount'] ?? 0,
-              'createdAt': _post!['createdAt'],
-              'deletedAt': FieldValue.serverTimestamp(),
-              'deletedBy': _currentUser!.uid,
-              'deletionType': 'user_self_delete', // 사용자 스스로 삭제
-            });
+          'originalPath': 'posts/${widget.dateString}/posts/${widget.postId}',
+          'postId': widget.postId,
+          'dateString': widget.dateString,
+          'boardId': _post!['boardId'],
+          'title': _post!['title'],
+          'contentHtml': _post!['contentHtml'],
+          'author': _post!['author'],
+          'viewsCount': _post!['viewsCount'] ?? 0,
+          'likesCount': _post!['likesCount'] ?? 0,
+          'commentCount': _post!['commentCount'] ?? 0,
+          'createdAt': _post!['createdAt'],
+          'deletedAt': FieldValue.serverTimestamp(),
+          'deletedBy': _currentUser!.uid,
+          'deletionType': 'user_self_delete', // 사용자 스스로 삭제
+        });
       }
 
       // 사용자 게시글 수 감소 및 my_posts에서 제거
@@ -1089,7 +1089,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .collection('users')
             .doc(_currentUser!.uid)
             .update({'postsCount': FieldValue.increment(-1)});
-        
+
         // my_posts에서 해당 게시글 삭제
         await FirebaseFirestore.instance
             .collection('users')
@@ -1191,9 +1191,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('posts')
           .doc(widget.postId)
           .update({
-            'isHidden': true,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'isHidden': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       // 게시글 데이터 새로고침
       await _loadPostDetail();
@@ -1217,9 +1217,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('posts')
           .doc(widget.postId)
           .update({
-            'isHidden': false,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'isHidden': false,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       // 게시글 데이터 새로고침
       await _loadPostDetail();
@@ -1244,7 +1244,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       }
 
       final Uri uri = Uri.parse(formattedUrl);
-      
+
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
@@ -1278,13 +1278,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isImageUrl(String url) {
     final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
     final lowerUrl = url.toLowerCase();
-    
+
     // Firebase Storage 이미지 URL 패턴 확인
-    if (lowerUrl.contains('firebasestorage.googleapis.com') || 
+    if (lowerUrl.contains('firebasestorage.googleapis.com') ||
         lowerUrl.contains('storage.googleapis.com')) {
       return true;
     }
-    
+
     // 일반적인 이미지 확장자 확인
     return imageExtensions.any((ext) => lowerUrl.contains(ext));
   }
@@ -1294,12 +1294,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     // <img src="..." /> 형태의 이미지를 <a href="..."><img src="..." /></a> 형태로 변환
     return htmlContent.replaceAllMapped(
       RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false),
-      (match) {
+          (match) {
         final fullMatch = match.group(0) ?? '';
         final beforeSrc = match.group(1) ?? '';
         final srcUrl = match.group(2) ?? '';
         final afterSrc = match.group(3) ?? '';
-        
+
         // 이미지를 링크로 감싸기
         return '<a href="$srcUrl"><img${beforeSrc}src="$srcUrl"${afterSrc}/></a>';
       },
@@ -1312,10 +1312,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       if (Platform.isIOS) {
         final permission = Permission.photos;
         final status = await permission.status;
-        
+
         if (status.isDenied) {
           final result = await permission.request();
-          
+
           if (result.isDenied) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1342,30 +1342,30 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           return;
         }
       }
-      
+
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         final originalFile = File(image.path);
-        
+
         // 이미지 정보 출력 (디버깅용)
         await ImageCompressor.printImageInfo(originalFile);
-        
+
         // 이미지 압축
         final compressedFile = await ImageCompressor.compressImage(originalFile);
-        
+
         setState(() {
           _selectedImage = compressedFile;
         });
-        
+
         // 압축된 이미지 정보 출력 (디버깅용)
         await ImageCompressor.printImageInfo(compressedFile);
-        
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1399,18 +1399,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       } else {
         storage = FirebaseStorage.instance;
       }
-      
+
       if (!await imageFile.exists()) {
         return null;
       }
-      
+
       final fileName = '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storagePath = 'posts/${widget.dateString}/posts/${widget.postId}/comments/${commentId}/images/$fileName';
-      
+
       final storageRef = storage.ref().child(storagePath);
       final uploadTask = storageRef.putFile(imageFile);
       final snapshot = await uploadTask;
-      
+
       if (snapshot.state == TaskState.success) {
         final downloadUrl = await snapshot.ref.getDownloadURL();
         return downloadUrl;
@@ -1455,7 +1455,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       int depth = 0;
       String? replyToUserId;
       String? replyToUserName;
-      
+
       if (isReply) {
         parentCommentId = _replyingToCommentId;
         depth = 1;
@@ -1464,9 +1464,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           replyToUserName = _replyingToComment!['displayName'] as String?;
         }
       }
-      
+
       final List<String> mentionedUsers = [];
-      
+
       if (isReply && replyToUserId != null && replyToUserName != null) {
         // 답글인 경우 멘션 추가
         contentHtml = '@$replyToUserName $contentHtml';
@@ -1476,7 +1476,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       // 이미지가 있으면 업로드
       if (_selectedImage != null) {
         final imageUrl = await _uploadImage(_selectedImage!, commentRef.id);
-        
+
         if (imageUrl != null) {
           // HTML에 이미지 태그 추가
           contentHtml += '<br><img src="$imageUrl" alt="첨부이미지" style="max-width: 100%; border-radius: 8px;" />';
@@ -1533,13 +1533,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('my_comments')
           .doc(commentRef.id)
           .set({
-            'commentPath': 'posts/${widget.dateString}/posts/${widget.postId}/comments/${commentRef.id}',
-            'postPath': 'posts/${widget.dateString}/posts/${widget.postId}',
-            'contentHtml': commentData['contentHtml'],
-            'contentType': commentData['contentType'],
-            'attachments': commentData['attachments'],
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+        'commentPath': 'posts/${widget.dateString}/posts/${widget.postId}/comments/${commentRef.id}',
+        'postPath': 'posts/${widget.dateString}/posts/${widget.postId}',
+        'contentHtml': commentData['contentHtml'],
+        'contentType': commentData['contentType'],
+        'attachments': commentData['attachments'],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       // 게시글의 댓글 수 증가
       await FirebaseFirestore.instance
@@ -1560,7 +1560,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         final currentPeanut = userData['peanutCount'] ?? 0;
         final newPeanut = currentPeanut + 2;
         await UserService.updatePeanutCount(_currentUser!.uid, newPeanut);
-        
+
         // 땅콩 히스토리 기록
         await PeanutHistoryService.addHistory(
           userId: _currentUser!.uid,
@@ -1573,7 +1573,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             'postTitle': _post?['title'] ?? '제목 없음',
           },
         );
-        
+
         Fluttertoast.showToast(
           msg: '땅콩 2개가 추가되었습니다.',
           toastLength: Toast.LENGTH_SHORT,
@@ -1611,7 +1611,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       setState(() {
         _isAddingComment = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('댓글 등록 중 오류가 발생했습니다: $e'),
@@ -1694,604 +1694,604 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF74512D),
-              ),
-            )
+        child: CircularProgressIndicator(
+          color: Color(0xFF74512D),
+        ),
+      )
           : _post == null
-              ? const Center(
-                  child: Text(
-                    '게시글을 찾을 수 없습니다.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                )
-              : Column(
+          ? const Center(
+        child: Text(
+          '게시글을 찾을 수 없습니다.',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      )
+          : Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refreshData,
+              color: const Color(0xFF74512D),
+              backgroundColor: Colors.white,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: _refreshData,
-                        color: const Color(0xFF74512D),
-                        backgroundColor: Colors.white,
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Column(
-                            children: [
-                            // 게시글 내용 카드
-                            Container(
-                              margin: const EdgeInsets.all(16),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // 1. 카테고리명 (boardId) - 작게
-                                  Text(
-                                    widget.boardName,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF74512D),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-
-                                  // 2. 게시글 제목 (title) - 크고 굵게
-                                  Text(
-                                    _post!['title'] ?? '제목 없음',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black87,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-
-                                  // 3. 시간 | 조회수 - 작은 글자, 적당한 색상
-                                  Row(
-                                    children: [
-                                      Text(
-                                        _formatTime((_post!['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now()),
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      Text(
-                                        ' | 조회 ${_post!['viewsCount'] ?? 0}회',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-
-                                  // 4. 프로필 정보 + 댓글/좋아요 - 한줄로 짧게
-                                  Row(
-                                    children: [
-                                      // 프로필 + skyEffect + 닉네임 (클릭 가능)
-                                      GestureDetector(
-                                        onTap: () {
-                                          final currentUser = FirebaseAuth.instance.currentUser;
-                                          final authorUid = _post!['author']?['uid'];
-                                          if (currentUser != null && authorUid == currentUser.uid) {
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPageScreen()));
-                                          } else if (authorUid != null) {
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: authorUid)));
-                                          }
-                                        },
-                                        child: Row(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 16,
-                                              backgroundColor: Colors.grey,
-                                              backgroundImage: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
-                                                  ? NetworkImage(_post!['author']['photoURL'] ?? _post!['author']['profileImageUrl'])
-                                                  : null,
-                                              child: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isEmpty
-                                                  ? Text(
-                                                      (_post!['author']?['displayName'] ?? '익명')[0],
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 12,
-                                                      ),
-                                                    )
-                                                  : null,
-                                            ),
-                                            SizedBox(width: _post!['author']?['currentSkyEffect'] != null && 
-                                                            (_post!['author']['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
-                                            if (_post!['author']?['currentSkyEffect'] != null && 
-                                                (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
-                                              SizedBox(
-                                                width: 32,
-                                                height: 20,
-                                                child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
-                                              ),
-                                            if (_post!['author']?['currentSkyEffect'] != null && 
-                                                (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
-                                              const SizedBox(width: 4),
-                                            Text(
-                                              _post!['author']?['displayName'] ?? '익명',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            if (_post!['author']?['displayGrade'] != null &&
-                                                (_post!['author']['displayGrade'] as String).isNotEmpty)
-                                              Padding(
-                                                padding: const EdgeInsets.only(left: 6.0),
-                                                child: _post!['author']['displayGrade'] == '★★★'
-                                                    ? GradientText(
-                                                        '★★★',
-                                                        style: const TextStyle(
-                                                          fontSize: 18,
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                        gradient: const LinearGradient(
-                                                          colors: [
-                                                            Colors.red,
-                                                            Colors.orange,
-                                                            Colors.yellow,
-                                                            Colors.green,
-                                                            Colors.blue,
-                                                            Colors.indigo,
-                                                            Colors.purple,
-                                                          ],
-                                                        ),
-                                                      )
-                                                    : Text(
-                                                        _post!['author']['displayGrade'],
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                          color: Colors.grey,
-                                                          fontWeight: FontWeight.normal,
-                                                        ),
-                                                      ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  // 광고 영역 1: 프로필/스카이이펙트/닉네임 아래
-                                  _buildProfileBannerAd(),
-                                  const SizedBox(height: 16),
-
-                                  // 5. 게시글 내용 (contentHtml) 또는 숨김처리 메시지
-                                  if (_post!['isHidden'] == true)
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[100],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.grey[300]!),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Icon(
-                                            Icons.visibility_off,
-                                            size: 48,
-                                            color: Colors.grey[600],
-                                          ),
-                                          const SizedBox(height: 12),
-                                          const Text(
-                                            '관리자에 의해 숨김처리되었습니다.',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.grey,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            '이 게시글은 커뮤니티 운영 정책에 따라 숨김처리되었습니다.',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[600],
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    // boardId가 seats이면 특별한 렌더링, 아니면 기본 Html 렌더링
-                                    widget.boardId == 'seats'
-                                        ? _buildContentWithDetails()
-                                        : Html(
-                                            data: _makeImagesClickable(_post!['contentHtml'] ?? ''),
-                                            style: {
-                                              "body": Style(
-                                                fontSize: FontSize(15),
-                                                color: Colors.black87,
-                                                lineHeight: LineHeight(1.5),
-                                                margin: Margins.zero,
-                                              ),
-                                              "p": Style(
-                                                margin: Margins.zero,
-                                                padding: HtmlPaddings.zero,
-                                                whiteSpace: WhiteSpace.pre,
-                                              ),
-                                              "br": Style(
-                                                margin: Margins.only(bottom: 8),
-                                                display: Display.block,
-                                              ),
-                                              "img": Style(
-                                                margin: Margins.zero,
-                                                display: Display.block,
-                                              ),
-                                              "u": Style(
-                                                margin: Margins.zero,
-                                              ),
-                                              "a": Style(
-                                                color: Colors.blue,
-                                                textDecoration: TextDecoration.underline,
-                                              ),
-                                            },
-                                            onLinkTap: (url, _, __) {
-                                              if (url != null) {
-                                                // 이미지 URL인지 확인
-                                                if (_isImageUrl(url)) {
-                                                  _openImageViewer(url);
-                                                } else {
-                                                  _launchUrl(url);
-                                                }
-                                              }
-                                            },
-                                          ),
-                                ],
-                              ),
-                            ),
-
-                          // 광고 영역 2: 게시글과 댓글 사이
-                          _buildContentBannerAd(),
-                          
-                          // 광고 없애기 버튼 (광고가 비활성화되지 않은 경우에만 표시)
-                          if (!_isAdRemovalActive)
-                            AdRemovalButton(
-                              onAdRemovalActivated: _onAdRemovalActivated,
-                            ),
-                          
-                          const SizedBox(height: 16),
-                          // 댓글 섹션
-                          Container(
-                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: _isLoadingComments
-                                ? // 댓글 로딩 중 UI
-                                Container(
-                                    padding: const EdgeInsets.all(40),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFF74512D),
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  )
-                                : _comments.isEmpty
-                                    ? // 댓글이 없을 때 UI
-                                    Container(
-                                        padding: const EdgeInsets.all(40),
-                                        child: Center(
-                                          child: Column(
-                                            children: [
-                                              Icon(
-                                                Icons.comment,
-                                                size: 48,
-                                                color: Colors.grey[400],
-                                              ),
-                                              const SizedBox(height: 12),
-                                              Text(
-                                                '첫 번째 댓글을 작성해보세요!',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                    : // 댓글이 있을 때 UI
-                                    Column(
-                                        children: [
-                                          // 댓글 헤더
-                                          Padding(
-                                            padding: const EdgeInsets.all(16),
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  '댓글 ${_comments.length}',
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.black87,
-                                                  ),
-                                                ),
-                                                const Spacer(),
-                                                DropdownButton<String>(
-                                                  value: _commentSortOrder,
-                                                  underline: const SizedBox(),
-                                                  dropdownColor: Colors.white,
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                  items: ['등록순', '최신순'].map((String value) {
-                                                    return DropdownMenuItem<String>(
-                                                      value: value,
-                                                      child: Text(value),
-                                                    );
-                                                  }).toList(),
-                                                  onChanged: (String? newValue) {
-                                                    if (newValue != null) {
-                                                      setState(() {
-                                                        _commentSortOrder = newValue;
-                                                      });
-                                                      _loadComments(); // 댓글 다시 로드
-                                                    }
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-
-                                          // 댓글 목록
-                                          ListView.separated(
-                                            shrinkWrap: true,
-                                            physics: const NeverScrollableScrollPhysics(),
-                                            itemCount: _comments.length,
-                                            separatorBuilder: (context, index) => Divider(
-                                              height: 1,
-                                              color: Colors.grey[200],
-                                            ),
-                                            itemBuilder: (context, index) {
-                                              final comment = _comments[index];
-                                              return _buildCommentItem(comment);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                          ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // 댓글 입력창
+                    // 게시글 내용 카드
                     Container(
-                      key: _replySectionKey,
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withOpacity(0.05),
                             blurRadius: 10,
-                            offset: const Offset(0, -2),
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: SafeArea(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            left: 16,
-                            right: 16,
-                            top: 8,
-                            bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. 카테고리명 (boardId) - 작게
+                          Text(
+                            widget.boardName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF74512D),
+                            ),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                          const SizedBox(height: 4),
+
+                          // 2. 게시글 제목 (title) - 크고 굵게
+                          Text(
+                            _post!['title'] ?? '제목 없음',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // 3. 시간 | 조회수 - 작은 글자, 적당한 색상
+                          Row(
                             children: [
-                              // 답글 모드 표시
-                              if (_replyingToCommentId != null && _replyingToComment != null)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.reply,
-                                        size: 16,
-                                        color: Colors.blue[600],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          '${_replyingToComment!['displayName']}님에게 답글 작성 중',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.blue[600],
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        onPressed: _cancelReply,
-                                        icon: Icon(
-                                          Icons.close,
-                                          size: 16,
-                                          color: Colors.blue[600],
-                                        ),
-                                        constraints: const BoxConstraints(),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                    ],
-                                  ),
+                              Text(
+                                _formatTime((_post!['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now()),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
                                 ),
-                              // 선택된 이미지 미리보기
-                              if (_selectedImage != null)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[50],
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[200]!),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.file(
-                                          _selectedImage!,
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      const Expanded(
-                                        child: Text(
-                                          '이미지 선택됨',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        onPressed: _removeSelectedImage,
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.grey[600],
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              ),
+                              Text(
+                                ' | 조회 ${_post!['viewsCount'] ?? 0}회',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
                                 ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
 
-                              // 입력창과 버튼들
-                              Row(
-                                children: [
-                                  // 이미지 첨부 버튼
-                                  IconButton(
-                                    onPressed: (_myUserProfile?['isBanned'] == true) ? null : _pickImage,
-                                    icon: Icon(
-                                      Icons.image_outlined,
-                                      color: (_myUserProfile?['isBanned'] == true) ? Colors.grey[300] : Colors.grey[600],
-                                      size: 24, // 기존 24 → 22
+                          // 4. 프로필 정보 + 댓글/좋아요 - 한줄로 짧게
+                          Row(
+                            children: [
+                              // 프로필 + skyEffect + 닉네임 (클릭 가능)
+                              GestureDetector(
+                                onTap: () {
+                                  final currentUser = FirebaseAuth.instance.currentUser;
+                                  final authorUid = _post!['author']?['uid'];
+                                  if (currentUser != null && authorUid == currentUser.uid) {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPageScreen()));
+                                  } else if (authorUid != null) {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileScreen(userUid: authorUid)));
+                                  }
+                                },
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: Colors.grey,
+                                      backgroundImage: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isNotEmpty
+                                          ? NetworkImage(_post!['author']['photoURL'] ?? _post!['author']['profileImageUrl'])
+                                          : null,
+                                      child: (_post!['author']?['photoURL'] ?? _post!['author']?['profileImageUrl'] ?? '').isEmpty
+                                          ? Text(
+                                        (_post!['author']?['displayName'] ?? '익명')[0],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      )
+                                          : null,
                                     ),
-                                    padding: EdgeInsets.zero, // 여백 최소화
-                                    constraints: BoxConstraints(minWidth: 32, minHeight: 32), // 최소 크기
-                                    tooltip: '이미지 첨부',
-                                  ),
-
-                                  // 텍스트 입력 필드
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _commentController,
-                                      enabled: !(_myUserProfile?['isBanned'] == true || _isAddingComment), // 업로드 중엔 비활성화
-                                      style: const TextStyle(fontSize: 14),
-                                      decoration: InputDecoration(
-                                        hintText: _myUserProfile?['isBanned'] == true
-                                            ? '정지된 계정은 댓글을 작성할 수 없습니다'
-                                            : (_editingCommentId != null ? '댓글 수정' : '댓글을 입력하세요'),
-                                        hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(24),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(24),
-                                          borderSide: BorderSide(color: Colors.grey[300]!),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(24),
-                                          borderSide: const BorderSide(color: Color(0xFF74512D)),
-                                        ),
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 12,
-                                        ),
+                                    SizedBox(width: _post!['author']?['currentSkyEffect'] != null &&
+                                        (_post!['author']['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
+                                    if (_post!['author']?['currentSkyEffect'] != null &&
+                                        (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
+                                      SizedBox(
+                                        width: 32,
+                                        height: 20,
+                                        child: _buildSkyEffectPreview(_post!['author']['currentSkyEffect']),
                                       ),
-                                      maxLines: null, // 여러 줄 입력 가능
-                                      textInputAction: TextInputAction.newline, // 엔터키로 줄바꿈
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-
-                                  if (_editingCommentId != null) ...[
-                                    ElevatedButton(
-                                      onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _updateComment,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF74512D),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    if (_post!['author']?['currentSkyEffect'] != null &&
+                                        (_post!['author']['currentSkyEffect'] as String).isNotEmpty)
+                                      const SizedBox(width: 4),
+                                    Text(
+                                      _post!['author']?['displayName'] ?? '익명',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
                                       ),
-                                      child: const Text('수정 완료', style: TextStyle(color: Colors.white)),
                                     ),
-                                    const SizedBox(width: 8),
-                                    TextButton(
-                                      onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _cancelEditComment,
-                                      child: const Text('취소', style: TextStyle(color: Colors.grey)),
-                                    ),
-                                  ] else ...[
-                                    _isAddingComment
-                                      ? SizedBox(
-                                          width: 32,
-                                          height: 32,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF74512D)),
+                                    if (_post!['author']?['displayGrade'] != null &&
+                                        (_post!['author']['displayGrade'] as String).isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 6.0),
+                                        child: _post!['author']['displayGrade'] == '★★★'
+                                            ? GradientText(
+                                          '★★★',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Colors.red,
+                                              Colors.orange,
+                                              Colors.yellow,
+                                              Colors.green,
+                                              Colors.blue,
+                                              Colors.indigo,
+                                              Colors.purple,
+                                            ],
+                                          ),
                                         )
-                                      : ElevatedButton(
-                                          onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _addComment,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF74512D),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                            : Text(
+                                          _post!['author']['displayGrade'],
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.normal,
                                           ),
-                                          child: const Text('등록', style: TextStyle(color: Colors.white)),
                                         ),
+                                      ),
                                   ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 광고 영역 1: 프로필/스카이이펙트/닉네임 아래
+                          _buildProfileBannerAd(),
+                          const SizedBox(height: 16),
+
+                          // 5. 게시글 내용 (contentHtml) 또는 숨김처리 메시지
+                          if (_post!['isHidden'] == true)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey[300]!),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.visibility_off,
+                                    size: 48,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    '관리자에 의해 숨김처리되었습니다.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '이 게시글은 커뮤니티 운영 정책에 따라 숨김처리되었습니다.',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ],
+                              ),
+                            )
+                          else
+                          // boardId가 seats이면 특별한 렌더링, 아니면 기본 Html 렌더링
+                            widget.boardId == 'seats'
+                                ? _buildContentWithDetails()
+                                : Html(
+                              data: _makeImagesClickable(_post!['contentHtml'] ?? ''),
+                              style: {
+                                "body": Style(
+                                  fontSize: FontSize(15),
+                                  color: Colors.black87,
+                                  lineHeight: LineHeight(1.5),
+                                  margin: Margins.zero,
+                                ),
+                                "p": Style(
+                                  margin: Margins.zero,
+                                  padding: HtmlPaddings.zero,
+                                  whiteSpace: WhiteSpace.pre,
+                                ),
+                                "br": Style(
+                                  margin: Margins.only(bottom: 8),
+                                  display: Display.block,
+                                ),
+                                "img": Style(
+                                  margin: Margins.zero,
+                                  display: Display.block,
+                                ),
+                                "u": Style(
+                                  margin: Margins.zero,
+                                ),
+                                "a": Style(
+                                  color: Colors.blue,
+                                  textDecoration: TextDecoration.underline,
+                                ),
+                              },
+                              onLinkTap: (url, _, __) {
+                                if (url != null) {
+                                  // 이미지 URL인지 확인
+                                  if (_isImageUrl(url)) {
+                                    _openImageViewer(url);
+                                  } else {
+                                    _launchUrl(url);
+                                  }
+                                }
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // 광고 영역 2: 게시글과 댓글 사이
+                    _buildContentBannerAd(),
+
+                    // 광고 없애기 버튼 (광고가 비활성화되지 않은 경우에만 표시)
+                    if (!_isAdRemovalActive)
+                      AdRemovalButton(
+                        onAdRemovalActivated: _onAdRemovalActivated,
+                      ),
+
+                    const SizedBox(height: 16),
+                    // 댓글 섹션
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: _isLoadingComments
+                          ? // 댓글 로딩 중 UI
+                      Container(
+                        padding: const EdgeInsets.all(40),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF74512D),
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                          : _comments.isEmpty
+                          ? // 댓글이 없을 때 UI
+                      Container(
+                        padding: const EdgeInsets.all(40),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.comment,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                '첫 번째 댓글을 작성해보세요!',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                         ),
+                      )
+                          : // 댓글이 있을 때 UI
+                      Column(
+                        children: [
+                          // 댓글 헤더
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '댓글 ${_comments.length}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const Spacer(),
+                                DropdownButton<String>(
+                                  value: _commentSortOrder,
+                                  underline: const SizedBox(),
+                                  dropdownColor: Colors.white,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                  items: ['등록순', '최신순'].map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _commentSortOrder = newValue;
+                                      });
+                                      _loadComments(); // 댓글 다시 로드
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // 댓글 목록
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _comments.length,
+                            separatorBuilder: (context, index) => Divider(
+                              height: 1,
+                              color: Colors.grey[200],
+                            ),
+                            itemBuilder: (context, index) {
+                              final comment = _comments[index];
+                              return _buildCommentItem(comment);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+
+          // 댓글 입력창
+          Container(
+            key: _replySectionKey,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 8,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 답글 모드 표시
+                    if (_replyingToCommentId != null && _replyingToComment != null)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.reply,
+                              size: 16,
+                              color: Colors.blue[600],
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${_replyingToComment!['displayName']}님에게 답글 작성 중',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.blue[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _cancelReply,
+                              icon: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.blue[600],
+                              ),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
+                        ),
+                      ),
+                    // 선택된 이미지 미리보기
+                    if (_selectedImage != null)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                _selectedImage!,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                '이미지 선택됨',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _removeSelectedImage,
+                              icon: Icon(
+                                Icons.close,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // 입력창과 버튼들
+                    Row(
+                      children: [
+                        // 이미지 첨부 버튼
+                        IconButton(
+                          onPressed: (_myUserProfile?['isBanned'] == true) ? null : _pickImage,
+                          icon: Icon(
+                            Icons.image_outlined,
+                            color: (_myUserProfile?['isBanned'] == true) ? Colors.grey[300] : Colors.grey[600],
+                            size: 24, // 기존 24 → 22
+                          ),
+                          padding: EdgeInsets.zero, // 여백 최소화
+                          constraints: BoxConstraints(minWidth: 32, minHeight: 32), // 최소 크기
+                          tooltip: '이미지 첨부',
+                        ),
+
+                        // 텍스트 입력 필드
+                        Expanded(
+                          child: TextField(
+                            controller: _commentController,
+                            enabled: !(_myUserProfile?['isBanned'] == true || _isAddingComment), // 업로드 중엔 비활성화
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: _myUserProfile?['isBanned'] == true
+                                  ? '정지된 계정은 댓글을 작성할 수 없습니다'
+                                  : (_editingCommentId != null ? '댓글 수정' : '댓글을 입력하세요'),
+                              hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: const BorderSide(color: Color(0xFF74512D)),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            maxLines: null, // 여러 줄 입력 가능
+                            textInputAction: TextInputAction.newline, // 엔터키로 줄바꿈
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        if (_editingCommentId != null) ...[
+                          ElevatedButton(
+                            onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _updateComment,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF74512D),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            ),
+                            child: const Text('수정 완료', style: TextStyle(color: Colors.white)),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _cancelEditComment,
+                            child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                          ),
+                        ] else ...[
+                          _isAddingComment
+                              ? SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF74512D)),
+                          )
+                              : ElevatedButton(
+                            onPressed: (_myUserProfile?['isBanned'] == true || _isAddingComment) ? null : _addComment,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF74512D),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            ),
+                            child: const Text('등록', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2300,21 +2300,21 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     final depth = comment['depth'] ?? 0;
     final isHighlighted = _replyingToCommentId == comment['commentId'];
     final commentId = comment['commentId'];
-    
+
     // 딥링크 스크롤용 GlobalKey 생성
     if (!_commentKeys.containsKey(commentId)) {
       _commentKeys[commentId] = GlobalKey();
     }
-    
+
     return Container(
       key: _commentKeys[commentId], // 딥링크 스크롤용 키
       color: isHighlighted ? Colors.blue.withOpacity(0.1) : null,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          16.0 + (depth * 24.0), // depth에 따른 들여쓰기
-          16.0, 
-          16.0, 
-          16.0
+            16.0 + (depth * 24.0), // depth에 따른 들여쓰기
+            16.0,
+            16.0,
+            16.0
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2343,13 +2343,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                             : null,
                         child: (comment['profileImageUrl'] ?? '').isEmpty
                             ? Text(
-                                (comment['displayName'] ?? '익명')[0],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              )
+                          (comment['displayName'] ?? '익명')[0],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        )
                             : null,
                       ),
                       // currentSkyEffect 표시 (댓글에서는 제거)
@@ -2369,8 +2369,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ],
               ),
             ),
-            SizedBox(width: comment['currentSkyEffect'] != null && 
-                            (comment['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
+            SizedBox(width: comment['currentSkyEffect'] != null &&
+                (comment['currentSkyEffect'] as String).isNotEmpty ? 4 : 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2405,7 +2405,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   _buildCommentContent(comment),
-                  
+
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -2426,8 +2426,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 color: (_processingCommentLikes.contains(comment['commentId']))
                                     ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
                                     : (_commentLikes[comment['commentId']] ?? false)
-                                        ? Colors.red
-                                        : Colors.grey[500],
+                                    ? Colors.red
+                                    : Colors.grey[500],
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -2437,8 +2437,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   color: (_processingCommentLikes.contains(comment['commentId']))
                                       ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
                                       : (_commentLikes[comment['commentId']] ?? false)
-                                          ? Colors.red
-                                          : Colors.grey[500],
+                                      ? Colors.red
+                                      : Colors.grey[500],
                                 ),
                               ),
                             ],
@@ -2500,7 +2500,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ),
       );
     }
-    
+
     // 신고 누적으로 일시적으로 감춰진 댓글 (3건 이상)
     if (reportsCount >= 3 && reportsCount < 6) {
       return GestureDetector(
@@ -2537,7 +2537,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ),
       );
     }
-    
+
     // 신고 누적으로 완전히 감춰진 댓글 (6건 이상)
     if (reportsCount >= 6) {
       return Container(
@@ -2574,13 +2574,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
     final contentHtml = comment['contentHtml'] ?? comment['content'] ?? '';
     final hasMention = comment['hasMention'] == true;
-    
+
     // @사용자명 패턴을 파란색으로 스타일링
     final processedHtml = contentHtml.replaceAllMapped(
       RegExp(r'@([a-zA-Z0-9가-힣_]+[!]?)', multiLine: true),
-      (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
+          (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
     );
-    
+
     return Html(
       data: _makeImagesClickable(processedHtml),
       style: {
@@ -2638,7 +2638,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           curve: Curves.easeInOut,
           alignment: 0.3, // 화면 상단 30% 지점에 위치
         );
-        
+
         // 댓글 하이라이트 효과 (선택사항)
         _highlightComment(commentId);
       } else {
@@ -2896,8 +2896,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('posts')
           .doc(widget.postId)
           .update({
-            'commentCount': FieldValue.increment(-1),
-          });
+        'commentCount': FieldValue.increment(-1),
+      });
 
       // my_comments에서도 삭제
       if (_currentUser != null) {
@@ -3093,8 +3093,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .collection('posts')
             .doc(widget.postId)
             .update({
-              'reportsCount': FieldValue.increment(1),
-            });
+          'reportsCount': FieldValue.increment(1),
+        });
         // 신고 성공 시 상태 갱신
         setState(() {
           _alreadyReportedPost = true;
@@ -3120,8 +3120,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             .collection('comments')
             .doc(comment['commentId'])
             .update({
-              'reportsCount': FieldValue.increment(1),
-            });
+          'reportsCount': FieldValue.increment(1),
+        });
       }
 
       // 신고 성공 시 SnackBar가 항상 뜨도록 context 타이밍 보장
@@ -3152,7 +3152,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   // 스카이 이펙트 미리보기 위젯
   Widget _buildSkyEffectPreview(String? effectId) {
     if (effectId == null || effectId.isEmpty) return const SizedBox.shrink();
-    
+
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
       builder: (context, snapshot) {
@@ -3162,10 +3162,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
         }
-        
+
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final lottieUrl = data['lottieUrl'] as String?;
-        
+
         if (lottieUrl != null && lottieUrl.isNotEmpty) {
           return Lottie.network(
             lottieUrl,
@@ -3184,9 +3184,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Widget _buildCommentAuthorRow(Map<String, dynamic> comment) {
     final photoURL = comment['profileImageUrl'] ?? '';
-    final hasSkyEffect = comment['currentSkyEffect'] != null && 
-                        (comment['currentSkyEffect'] as String).isNotEmpty;
-    
+    final hasSkyEffect = comment['currentSkyEffect'] != null &&
+        (comment['currentSkyEffect'] as String).isNotEmpty;
+
     return Row(
       children: [
         CircleAvatar(
@@ -3195,13 +3195,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
           child: photoURL.isEmpty
               ? Text(
-                  (comment['displayName'] ?? '익명')[0],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                )
+            (comment['displayName'] ?? '익명')[0],
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          )
               : null,
         ),
         SizedBox(width: hasSkyEffect ? 4 : 8),
@@ -3275,7 +3275,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (_isAdRemovalActive) {
       return const SizedBox.shrink();
     }
-    
+
     if (_isProfileBannerAdLoaded && _profileBannerAd != null) {
       return Container(
         width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정
@@ -3293,7 +3293,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     if (_isAdRemovalActive) {
       return const SizedBox.shrink();
     }
-    
+
     if (_isContentBannerAdLoaded && _contentBannerAd != null) {
       return Container(
         width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정
@@ -3377,9 +3377,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('comments')
           .doc(comment['commentId'])
           .update({
-            'isHidden': true,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'isHidden': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       // 댓글 목록 새로고침
       await _loadComments();
@@ -3405,9 +3405,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           .collection('comments')
           .doc(comment['commentId'])
           .update({
-            'isHidden': false,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        'isHidden': false,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       // 댓글 목록 새로고침
       await _loadComments();
@@ -3454,11 +3454,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   void _showHiddenCommentContent(Map<String, dynamic> comment) {
     final contentHtml = comment['contentHtml'] ?? comment['content'] ?? '';
     final hasMention = comment['hasMention'] == true;
-    
+
     // @사용자명 패턴을 파란색으로 스타일링
     final processedHtml = contentHtml.replaceAllMapped(
       RegExp(r'@([a-zA-Z0-9가-힣_]+[!]?)', multiLine: true),
-      (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
+          (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
     );
 
     showDialog(
