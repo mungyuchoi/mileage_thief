@@ -10,12 +10,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/peanut_history_service.dart';
 import '../community_editor/community_editor.dart';
-import 'package:any_link_preview/any_link_preview.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
   final String? initialBoardName;
-  
+
   // 편집 모드 관련 파라미터
   final bool isEditMode;
   final String? postId;
@@ -24,8 +23,8 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? editContentHtml;
 
   const CommunityPostCreateScreenV3({
-    Key? key, 
-    this.initialBoardId, 
+    Key? key,
+    this.initialBoardId,
     this.initialBoardName,
     this.isEditMode = false,
     this.postId,
@@ -47,18 +46,17 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
   static const String _tempBoardIdKey = 'temp_board_id_v3';
   static const String _tempBoardNameKey = 'temp_board_name_v3';
   static const String _tempHasContentKey = 'temp_post_has_content_v3';
-  
+
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
-  String? _firstUrlInContent;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // 커뮤니티 에디터 컨트롤러 초기화
     _editorController = CommunityEditorController();
-    
+
     // 초기 데이터 설정
     _editorController.initializeWithData(
       boardId: widget.initialBoardId,
@@ -71,23 +69,21 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     );
 
     // 즉시 업로드 사용 안 함: 식별자 사전 부여 제거
-    
+
     // 상태 변경 리스너 설정
     _editorController.onStateChanged = (state) {
       if (mounted) {
         setState(() {
           // 상태 변경 반영
-          _extractFirstUrl(state.currentText ?? '');
         });
       }
     };
-    
+
     // 컨트롤러 변경 리스너도 추가
     _editorController.addListener(() {
       if (mounted) {
         setState(() {
           // 컨트롤러 상태 변경 반영
-          _extractFirstUrl(_editorController.state.currentText ?? '');
         });
       }
     });
@@ -96,21 +92,6 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDraftAndPrompt();
     });
-  }
-
-  // 본문 텍스트에서 첫 번째 URL 추출
-  void _extractFirstUrl(String text) {
-    final regex = RegExp(r'(https?:\/\/|www\.)[\w\-]+(\.[\w\-]+)+(\/[\w\-._~:\/?#[\]@!$&'()*+,;=%]*)?', caseSensitive: false);
-    final match = regex.firstMatch(text);
-    if (match != null) {
-      String url = match.group(0) ?? '';
-      if (url.startsWith('www.')) url = 'https://$url';
-      if (_firstUrlInContent != url) {
-        _firstUrlInContent = url;
-      }
-    } else {
-      _firstUrlInContent = null;
-    }
   }
 
   @override
@@ -135,7 +116,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         return false;
     }
   }
-  
+
   // 임시저장 (텍스트/게시판만 저장, 본문은 저장하지 않음. 존재 여부만 기록)
   Future<void> _saveDraft() async {
     try {
@@ -380,7 +361,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
   Future<void> _handleSubmit() async {
     if (_isLoading) return;
-    
+
     // 유효성 검사
     if (_editorController.postData.title.trim().isEmpty) {
       Fluttertoast.showToast(
@@ -392,7 +373,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       );
       return;
     }
-    
+
     if (_editorController.postData.contentHtml.trim().isEmpty) {
       Fluttertoast.showToast(
         msg: "내용을 입력해주세요",
@@ -403,7 +384,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       );
       return;
     }
-    
+
     if (_editorController.postData.boardId == null || _editorController.postData.boardName == null) {
       Fluttertoast.showToast(
         msg: "게시판을 선택해주세요",
@@ -414,13 +395,13 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       );
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     _showLoadingDialog();
-    
+
     try {
       // 1. 로그인 확인
       final currentUser = AuthService.currentUser;
@@ -459,7 +440,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       // 3. UUID와 날짜 생성
       String postId;
       String dateString;
-      
+
       if (widget.isEditMode) {
         postId = widget.postId!;
         dateString = widget.dateString!;
@@ -479,11 +460,11 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
       // 4. Firestore에 저장할 데이터 준비
       Map<String, dynamic> postData;
-      
+
       if (widget.isEditMode) {
         // 수정 모드에서는 HTML 처리
         final processedHtml = await _editorController.getProcessedHtml();
-        
+
         postData = {
           'boardId': _editorController.postData.boardId,
           'title': _editorController.postData.title.trim(),
@@ -493,7 +474,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       } else {
         // 새 게시글 모드에서는 HTML 처리
         final processedHtml = await _editorController.getProcessedHtml();
-        
+
         postData = {
           'postId': postId,
           'boardId': _editorController.postData.boardId,
@@ -528,26 +509,26 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             .collection('posts')
             .doc(postId)
             .update(postData);
-            
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
             .collection('my_posts')
             .doc(postId)
             .update({
-              'title': _editorController.postData.title.trim(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+          'title': _editorController.postData.title.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       } else {
         final batch = FirebaseFirestore.instance.batch();
-        
+
         final postRef = FirebaseFirestore.instance
             .collection('posts')
             .doc(dateString)
             .collection('posts')
             .doc(postId);
         batch.set(postRef, postData);
-        
+
         final myPostRef = FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
@@ -559,14 +540,14 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'boardId': _editorController.postData.boardId,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        
+
         final userRef = FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid);
         batch.update(userRef, {
           'postsCount': FieldValue.increment(1),
         });
-        
+
         await batch.commit();
       }
 
@@ -577,7 +558,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
       // 6. 성공 메시지
       Fluttertoast.showToast(
-        msg: widget.isEditMode 
+        msg: widget.isEditMode
             ? "게시글이 성공적으로 수정되었습니다"
             : "게시글이 성공적으로 등록되었습니다",
         toastLength: Toast.LENGTH_SHORT,
@@ -593,7 +574,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           final currentPeanut = userData?['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 10;
           await UserService.updatePeanutCount(currentUser.uid, newPeanut);
-          
+
           await PeanutHistoryService.addHistory(
             userId: currentUser.uid,
             type: 'post_create',
@@ -605,7 +586,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
               'postTitle': _editorController.postData.title.trim(),
             },
           );
-          
+
           Fluttertoast.showToast(
             msg: "땅콩 10개가 추가되었습니다.",
             toastLength: Toast.LENGTH_SHORT,
@@ -623,12 +604,12 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
     } catch (e) {
       print('게시글 등록 오류: $e');
-      
+
       _hideLoadingDialog();
       setState(() {
         _isLoading = false;
       });
-      
+
       Fluttertoast.showToast(
         msg: "게시글 등록 중 오류가 발생했습니다",
         toastLength: Toast.LENGTH_SHORT,
@@ -670,46 +651,46 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   ),
                 ),
               ),
-              
+
               // 가운데 카테고리명
               Expanded(
                 child: GestureDetector(
-                    onTap: () async {
-                      final result = await Navigator.pushNamed(
-                          context, '/community_board_select');
-                      if (result is Map<String, dynamic>) {
-                        _editorController.updateBoard(
-                          result['boardId'],
-                          result['boardName'],
-                        );
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _editorController.postData.boardName ?? '카테고리 선택',
-                            style: TextStyle(
-                              color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down,
+                  onTap: () async {
+                    final result = await Navigator.pushNamed(
+                        context, '/community_board_select');
+                    if (result is Map<String, dynamic>) {
+                      _editorController.updateBoard(
+                        result['boardId'],
+                        result['boardName'],
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _editorController.postData.boardName ?? '카테고리 선택',
+                          style: TextStyle(
                             color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
-                            size: 20,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
+                ),
               ),
-              
+
               // 등록 버튼
               TextButton(
                 onPressed: _isLoading ? null : () async {
@@ -736,7 +717,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   height: 1,
                   color: Colors.grey[300],
                 ),
-                
+
                 // 에디터 영역
                 Expanded(
                   child: Padding(
@@ -746,38 +727,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                     ),
                   ),
                 ),
-                if (_firstUrlInContent != null) ...[
-                  Container(height: 1, color: Colors.grey[200]),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: AnyLinkPreview(
-                      link: _firstUrlInContent!,
-                      displayDirection: UIDirection.uiDirectionHorizontal,
-                      showMultimedia: true,
-                      cache: const Duration(days: 7),
-                      removeElevation: true,
-                      backgroundColor: Colors.white,
-                      errorBody: '미리보기를 불러오지 못했습니다',
-                      errorTitle: '링크 미리보기',
-                      placeholderWidget: Container(
-                        height: 120,
-                        alignment: Alignment.center,
-                        child: const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
-                          strokeWidth: 2,
-                        ),
-                      ),
-                      bodyMaxLines: 2,
-                      bodyTextOverflow: TextOverflow.ellipsis,
-                      titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      bodyStyle: const TextStyle(fontSize: 12, color: Colors.black54),
-                      urlLaunchMode: LaunchMode.externalApplication,
-                    ),
-                  ),
-                ],
               ],
             ),
-            
+
             // 키보드 위 툴바 (내용 입력 포커스시에만 표시)
             AnimatedBuilder(
               animation: _editorController,
@@ -785,7 +737,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                 if (!_editorController.showToolbar) {
                   return const SizedBox.shrink();
                 }
-                
+
                 return Positioned(
                   bottom: MediaQuery.of(context).viewInsets.bottom,
                   left: 0,
