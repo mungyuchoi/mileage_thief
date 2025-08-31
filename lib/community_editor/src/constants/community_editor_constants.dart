@@ -789,7 +789,41 @@ class CommunityEditorConstants {
                 while ((m = urlRegex.exec(preTextTrim)) !== null) {
                     lastMatch = m;
                 }
-                if (!lastMatch) return;
+                // 현재 라인에 없으면 직전 블록 라인을 검사 (Enter로 새 줄 생성 직전 호출되므로 이전 라인에 URL이 위치)
+                if (!lastMatch) {
+                    let prev = block.previousSibling;
+                    while (prev && ((prev.nodeType === Node.TEXT_NODE && prev.textContent.trim()==='') || (prev.nodeType===Node.ELEMENT_NODE && prev.tagName==='BR'))) {
+                        prev = prev.previousSibling;
+                    }
+                    if (prev && prev.nodeType === Node.ELEMENT_NODE) {
+                        const prevTextRaw = prev.textContent || '';
+                        const prevTrim = prevTextRaw.replace(/\u200B/g,'').replace(/\s+$/,'');
+                        urlRegex.lastIndex = 0;
+                        while ((m = urlRegex.exec(prevTrim)) !== null) { lastMatch = m; }
+                        if (!lastMatch) return;
+                        const matchTextPrev = lastMatch[0];
+                        const matchEndPrev = lastMatch.index + matchTextPrev.length;
+                        if (matchEndPrev !== prevTrim.length) return;
+                        const hrefPrev = normalizeUrl(matchTextPrev) || matchTextPrev;
+                        const rangePrev = getRangeForOffsetsWithin(prev, lastMatch.index, matchEndPrev);
+                        if (rangePrev.startContainer && rangePrev.startContainer.parentElement && rangePrev.startContainer.parentElement.tagName==='A') {
+                            const existA = rangePrev.startContainer.parentElement;
+                            if (existA.getAttribute('data-has-preview') !== '1') ensurePreviewAfter(existA);
+                            return;
+                        }
+                        const aPrev = document.createElement('a');
+                        aPrev.href = hrefPrev;
+                        aPrev.textContent = matchTextPrev;
+                        aPrev.rel = 'noopener noreferrer';
+                        aPrev.target = '_blank';
+                        rangePrev.deleteContents();
+                        rangePrev.insertNode(aPrev);
+                        ensurePreviewAfter(aPrev);
+                        return;
+                    } else {
+                        return;
+                    }
+                }
                 const matchText = lastMatch[0];
                 const matchEnd = lastMatch.index + matchText.length;
                 // URL이 블록 내 마지막 토큰이어야 하며, 공백/개행만 뒤따르는 경우 허용
@@ -825,6 +859,8 @@ class CommunityEditorConstants {
         }
 
         // 텍스트 변경 이벤트
+        // Enter는 keydown 시점(분리된 핸들러)에서 처리하고,
+        // 여기서는 스페이스만 처리해 중복을 방지
         editor.addEventListener('input', function(e) {
             // 일반 입력에서는 오토링크를 실행하지 않음 (중복/포커스 점프 방지)
             sendMessage('textChanged', {
@@ -832,13 +868,18 @@ class CommunityEditorConstants {
                 text: editor.textContent
             });
             setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 50);
-            // Android IME 대응: 공백/개행 입력 직후에만 처리
+            // Android IME 대응: 공백 입력 직후에만 처리
             const type = (e && e.inputType) || '';
             const data = (e && e.data) || '';
-            if ((type === 'insertText' && (data === ' ' || data === '\u00A0')) ||
-                type === 'insertParagraph' ||
-                type === 'insertLineBreak') {
+            if ((type === 'insertText' && (data === ' ' || data === '\u00A0'))) {
                 processUrlBeforeCaret();
+            }
+        });
+
+        // Enter는 keydown 시점(줄바꿈 되기 전)에서 처리해야 이전 라인의 URL을 놓치지 않음
+        editor.addEventListener('keydown', function(e){
+            if (e.key === 'Enter') {
+                try { processUrlBeforeCaret(); } catch (err) {}
             }
         });
 
