@@ -103,6 +103,13 @@ class _CommunityToolbarState extends State<CommunityToolbar> {
                 tooltip: '사진 첨부',
                 color: Colors.grey[700],
               ),
+              // 동영상 첨부 버튼 (카메라 버튼 우측)
+              IconButton(
+                onPressed: widget.controller.pickVideo,
+                icon: const Icon(Icons.videocam_outlined),
+                tooltip: '동영상 첨부 (mp4)',
+                color: Colors.grey[700],
+              ),
               
               // 볼드 버튼
               _buildToggleButton(

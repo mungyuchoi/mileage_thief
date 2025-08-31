@@ -13,6 +13,7 @@ import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import '../services/category_service.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:video_player/video_player.dart';
 import 'package:any_link_preview/any_link_preview.dart';
 import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
@@ -2020,6 +2021,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     );
                                   },
                                 ),
+                                // video 태그 렌더링 지원
+                                TagExtension(
+                                  tagsToExtend: {'video'},
+                                  builder: (ctx) {
+                                    final src = ctx.attributes['src'];
+                                    if (src == null || src.isEmpty) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: _HtmlNetworkVideoPlayer(url: src),
+                                    );
+                                  },
+                                ),
                               ],
                             ),
                         ],
@@ -2714,6 +2729,23 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   ),
                   child: Text(normalized, style: const TextStyle(color: Colors.blue)),
                 ),
+              ),
+            );
+          },
+        ),
+        // video 태그 렌더링 지원 (댓글 영역)
+        TagExtension(
+          tagsToExtend: {'video'},
+          builder: (ctx) {
+            final src = ctx.attributes['src'];
+            if (src == null || src.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: _HtmlNetworkVideoPlayer(url: src),
               ),
             );
           },
@@ -3984,10 +4016,125 @@ class _DetailsExpansionWidgetState extends State<DetailsExpansionWidget> {
                 onLinkTap: (url, _, __) {
                   widget.onLinkTap(url);
                 },
+                extensions: [
+                  TagExtension(
+                    tagsToExtend: {'video'},
+                    builder: (ctx) {
+                      final src = ctx.attributes['src'];
+                      if (src == null || src.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _HtmlNetworkVideoPlayer(url: src),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HtmlNetworkVideoPlayer extends StatefulWidget {
+  final String url;
+  const _HtmlNetworkVideoPlayer({required this.url});
+
+  @override
+  State<_HtmlNetworkVideoPlayer> createState() => _HtmlNetworkVideoPlayerState();
+}
+
+class _HtmlNetworkVideoPlayerState extends State<_HtmlNetworkVideoPlayer> {
+  VideoPlayerController? _controller;
+  bool _initialized = false;
+  double? _aspectRatio; // 원본 비디오 비율
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _initialized = true;
+            final size = _controller!.value.size;
+            if (size.width > 0 && size.height > 0) {
+              _aspectRatio = size.width / size.height;
+            }
+          });
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_controller == null) {
+      return const SizedBox.shrink();
+    }
+    if (!_initialized) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final content = Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        VideoPlayer(_controller!),
+        _PlayPauseOverlay(controller: _controller!),
+        VideoProgressIndicator(_controller!, allowScrubbing: true),
+      ],
+    );
+    if (_aspectRatio != null && _aspectRatio! > 0) {
+      return AspectRatio(
+        aspectRatio: _aspectRatio!,
+        child: content,
+      );
+    }
+    return content;
+  }
+}
+
+class _PlayPauseOverlay extends StatelessWidget {
+  final VideoPlayerController controller;
+  const _PlayPauseOverlay({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (controller.value.isPlaying) {
+          controller.pause();
+        } else {
+          controller.play();
+        }
+      },
+      child: Stack(
+        children: <Widget>[
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: controller.value.isPlaying
+                ? const SizedBox.shrink()
+                : Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 56.0,
+                        semanticLabel: 'Play',
+                      ),
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

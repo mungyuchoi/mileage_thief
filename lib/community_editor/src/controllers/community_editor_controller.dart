@@ -8,6 +8,7 @@ import '../models/community_editor_state.dart';
 import '../models/community_post_data.dart';
 import '../constants/community_editor_constants.dart';
 import '../utils/firebase_image_uploader.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as video_thumb;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mileage_thief/utils/image_compressor.dart' as app_compress;
 
@@ -59,6 +60,22 @@ class CommunityEditorController extends ChangeNotifier {
         isFocused: titleFocusNode.hasFocus,
       );
     });
+  }
+
+  /// 비디오 썸네일을 생성합니다 (JPEG 바이트 반환)
+  Future<List<int>?> _generateVideoThumbnail(String videoPath) async {
+    try {
+      final bytes = await video_thumb.VideoThumbnail.thumbnailData(
+        video: videoPath,
+        imageFormat: video_thumb.ImageFormat.JPEG,
+        maxWidth: 512,
+        quality: 70,
+      );
+      return bytes;
+    } catch (e) {
+      print('비디오 썸네일 생성 오류: $e');
+      return null;
+    }
   }
 
   /// WebView 컨트롤러를 설정합니다.
@@ -245,6 +262,71 @@ class CommunityEditorController extends ChangeNotifier {
     }
   }
 
+  /// 동영상을 선택하고 에디터에 삽입합니다. (mp4 전용)
+  Future<void> pickVideo() async {
+    try {
+      final XFile? video = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+      );
+
+      if (video == null) return;
+
+      final ext = video.path.split('.').last.toLowerCase();
+      if (ext != 'mp4') {
+        Fluttertoast.showToast(
+          msg: 'mp4 형식의 동영상만 첨부할 수 있습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+        );
+        return;
+      }
+
+      // 로딩 플레이스홀더 삽입 (이미지 로직과 유사하게)
+      final String videoId = DateTime.now().millisecondsSinceEpoch.toString();
+      await _executeCommand('insertLoadingImage', [videoId]);
+
+      try {
+        // 파일을 data URL로 만들지 않고, 업로드 단계에서 처리하므로 임시 태그를 삽입
+        // 에디터에는 임시로 간단한 플레이스홀더 이미지를 그대로 두고, 제출 시 <video>로 치환될 수 있게 현재는 보류
+        // 선택된 동영상 경로를 metadata에 기록 (업로드 처리 시 사용)
+        final List<dynamic> videos = List<dynamic>.from(_postData.metadata['videos'] ?? []);
+        videos.add({'id': videoId, 'path': video.path});
+        final Map<String, dynamic> newMeta = Map<String, dynamic>.from(_postData.metadata);
+        newMeta['videos'] = videos;
+        _updatePostData(metadata: newMeta);
+
+        // 썸네일 생성하여 즉시 미리보기 제공
+        try {
+          final thumbBytes = await _generateVideoThumbnail(video.path);
+          if (thumbBytes != null && thumbBytes.isNotEmpty) {
+            final base64Thumb = base64Encode(thumbBytes);
+            await _executeCommand('replaceLoadingImage', [videoId, 'data:image/jpeg;base64,' + base64Thumb, 'Video']);
+          } else {
+            await _executeCommand('replaceLoadingImage', [videoId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PSc1MCUnIHZpZXdCb3g9JzAgMCAxMDAgNTAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nNTAlJyBmaWxsPScjZWVlJy8+PHBhdGggZD0nTTQwIDE1IEw4MCAyNSBMNDAgMzV6JyBmaWxsPScjOTk5Jy8+PHRleHQgeD0nNTApJyB5PSc0MCUnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZvbnQtc2l6ZT0nMTAnIGZpbGw9JyM2NjYnPm1wNCB2aWRlbyBsb2FkaW5nPC90ZXh0Pjwvc3ZnPg==', 'Video']);
+          }
+        } catch (e) {
+          await _executeCommand('replaceLoadingImage', [videoId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PSc1MCUnIHZpZXdCb3g9JzAgMCAxMDAgNTAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nNTAlJyBmaWxsPScjZWVlJy8+PHBhdGggZD0nTTQwIDE1IEw4MCAyNSBMNDAgMzV6JyBmaWxsPScjOTk5Jy8+PHRleHQgeD0nNTApJyB5PSc0MCUnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZvbnQtc2l6ZT0nMTAnIGZpbGw9JyM2NjYnPm1wNCB2aWRlbyBsb2FkaW5nPC90ZXh0Pjwvc3ZnPg==', 'Video']);
+        }
+
+        Fluttertoast.showToast(
+          msg: '동영상이 추가되었습니다 (업로드는 등록 시 처리)',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+        );
+      } catch (e) {
+        await _executeCommand('replaceLoadingImage', [videoId, '', '']);
+        print('동영상 삽입 오류: $e');
+      }
+
+    } catch (e) {
+      print('동영상 선택 오류: $e');
+    }
+  }
+
   /// 이미지를 에디터에 삽입합니다.
   Future<void> _insertImageToEditor(XFile imageFile) async {
     final imageId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -366,12 +448,45 @@ class CommunityEditorController extends ChangeNotifier {
       return currentHtml;
     }
 
-    // Firebase Storage 업로드 및 URL 교체
-    final processedHtml = await FirebaseImageUploader.processImagesInHtml(
-      htmlContent: currentHtml,
+    // 1) 비디오를 먼저 처리하여 플레이스홀더를 <video>로 교체
+    String processedHtml = currentHtml;
+    if (_postData.metadata.containsKey('videos')) {
+      try {
+        processedHtml = await FirebaseImageUploader.processVideosInHtml(
+          htmlContent: processedHtml,
+          videos: List<Map<String, dynamic>>.from(_postData.metadata['videos'] as List),
+          postId: _postData.postId!,
+          dateString: _postData.dateString!,
+        );
+        // 중복 업로드 방지: 성공 후 메타데이터에서 비디오 목록 제거
+        final newMeta = Map<String, dynamic>.from(_postData.metadata);
+        newMeta.remove('videos');
+        _updatePostData(metadata: newMeta);
+      } catch (e) {
+        print('비디오 처리 오류: $e');
+      }
+    }
+
+    // 2) 남아있는 base64 이미지만 업로드/치환
+    processedHtml = await FirebaseImageUploader.processImagesInHtml(
+      htmlContent: processedHtml,
       postId: _postData.postId!,
       dateString: _postData.dateString!,
     );
+
+    // 동영상 업로드 및 <video> 태그 치환 처리
+    if (_postData.metadata.containsKey('videos')) {
+      try {
+        processedHtml = await FirebaseImageUploader.processVideosInHtml(
+          htmlContent: processedHtml,
+          videos: List<Map<String, dynamic>>.from(_postData.metadata['videos'] as List),
+          postId: _postData.postId!,
+          dateString: _postData.dateString!,
+        );
+      } catch (e) {
+        print('비디오 처리 오류: $e');
+      }
+    }
 
     return processedHtml;
   }

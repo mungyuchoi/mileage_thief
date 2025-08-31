@@ -1036,6 +1036,12 @@ class CommunityEditorConstants {
                     img.alt = alt || 'Image';
                     img.style.maxWidth = '100%';
                     img.style.height = 'auto';
+                    // 동영상 플레이스홀더인 경우 식별자 부여
+                    try {
+                        if ((alt || '').toLowerCase() === 'video') {
+                            img.setAttribute('data-video-id', id);
+                        }
+                    } catch (e) {}
                     
                     loadingDiv.parentNode.replaceChild(img, loadingDiv);
                     sendMessage('imageReplaced', { id: id, src: src, alt: alt });

@@ -50,6 +50,44 @@ class FirebaseImageUploader {
       throw Exception('이미지 업로드에 실패했습니다: $e');
     }
   }
+
+  /// 동영상을 Firebase Storage에 업로드하고 다운로드 URL을 반환합니다. (mp4 전용)
+  static Future<String> uploadVideo({
+    required File videoFile,
+    required String postId,
+    required String dateString,
+  }) async {
+    try {
+      FirebaseStorage storage;
+      if (Platform.isIOS) {
+        storage = FirebaseStorage.instanceFor(bucket: 'mileagethief.firebasestorage.app');
+      } else {
+        storage = FirebaseStorage.instance;
+      }
+
+      final String fileName = '${postId}_${_uuid.v4()}.mp4';
+      final Reference ref = storage
+          .ref()
+          .child('posts')
+          .child(dateString)
+          .child('posts')
+          .child(postId)
+          .child('videos')
+          .child(fileName);
+
+      final UploadTask uploadTask = ref.putFile(
+        videoFile,
+        SettableMetadata(contentType: 'video/mp4', cacheControl: 'public, max-age=31536000'),
+      );
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      print('비디오 업로드 성공: $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      print('비디오 업로드 오류: $e');
+      throw Exception('비디오 업로드에 실패했습니다: $e');
+    }
+  }
   
   /// 업로드 진행 상황을 모니터링하면서 이미지를 업로드합니다.
   static Future<String> uploadImageWithProgress({
@@ -126,6 +164,11 @@ class FirebaseImageUploader {
       final String mimeType = match.group(1)!;  // 예: image/gif, image/png
       final String base64Data = match.group(2)!; // base64 데이터
       
+      // 비디오 플레이스홀더(에디터에서 alt='Video'로 삽입, data-video-id 속성 보유)는 이미지 업로드에서 제외
+      if (fullMatch.contains('data-video-id')) {
+        continue;
+      }
+
       try {
         print('base64 이미지 업로드 시작');
         
@@ -161,6 +204,50 @@ class FirebaseImageUploader {
     }
     
     print('HTML 처리 완료, 최종 크기: ${processedHtml.length} 바이트');
+    return processedHtml;
+  }
+
+  /// 에디터 메타데이터의 비디오 파일을 업로드하고, 본문 내 임시 플레이스홀더를 <video> 태그로 치환합니다.
+  /// 기존 HTML을 크게 건드리지 않기 위해, 로딩 플레이스홀더(div#loading-<id>)가 있었다면 적절한 위치에 <video> 태그를 삽입합니다.
+  static Future<String> processVideosInHtml({
+    required String htmlContent,
+    required List<Map<String, dynamic>> videos,
+    required String postId,
+    required String dateString,
+  }) async {
+    String processedHtml = htmlContent;
+
+    for (final v in videos) {
+      try {
+        final String id = v['id']?.toString() ?? '';
+        final String path = v['path']?.toString() ?? '';
+        if (id.isEmpty || path.isEmpty) continue;
+
+        final file = File(path);
+        if (!await file.exists()) continue;
+
+        final String videoUrl = await uploadVideo(
+          videoFile: file,
+          postId: postId,
+          dateString: dateString,
+        );
+
+        // data-video-id 속성으로 정확히 해당 플레이스홀더를 <video>로 교체
+        final placeholderRegex = RegExp(
+          '<img[^>]*data-video-id=["\']${RegExp.escape(id)}["\'][^>]*>',
+          caseSensitive: false,
+        );
+
+        processedHtml = processedHtml.replaceFirst(
+          placeholderRegex,
+          '<video src="$videoUrl" controls style="max-width: 100%; height: auto;" preload="metadata"></video><br>',
+        );
+      } catch (e) {
+        print('비디오 처리 실패: $e');
+        // 개별 실패는 무시하고 다음 비디오 처리 계속
+      }
+    }
+
     return processedHtml;
   }
   
