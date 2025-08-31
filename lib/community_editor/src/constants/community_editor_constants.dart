@@ -288,7 +288,7 @@ class CommunityEditorConstants {
   ''';
 
   // HTML 템플릿 (커뮤니티용)
-  static const String htmlTemplate = '''
+  static const String htmlTemplate = r'''
 <!DOCTYPE html>
 <html>
 <head>
@@ -424,10 +424,11 @@ class CommunityEditorConstants {
         .text-color { color: inherit; }
         .bg-color { background-color: inherit; }
         
-        /* 링크 스타일 */
+        /* 링크 스타일 (에디터 내 파란색 + 밑줄) */
         a {
-            color: #74512D;
-            text-decoration: none;
+            color: #1E88E5;
+            text-decoration: underline;
+            cursor: pointer;
         }
         
         a:hover {
@@ -450,6 +451,31 @@ class CommunityEditorConstants {
             overflow-x: auto;
             margin: 12px 0;
         }
+
+        /* 링크 프리뷰 플레이스홀더 (에디터에서만 보여지는 상자) */
+        link-preview {
+            display: block;
+            margin: 8px 0;
+        }
+        .lp-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #616161;
+            font-size: 14px;
+        }
+        .lp-spinner {
+            width: 16px; height: 16px;
+            border: 2px solid #cfd8dc;
+            border-top-color: #90caf9;
+            border-radius: 50%;
+            animation: lp-spin 1s linear infinite;
+        }
+        @keyframes lp-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
         
         /* 구분선 */
         hr {
@@ -580,14 +606,247 @@ class CommunityEditorConstants {
             }
         }
         
-        // 텍스트 변경 이벤트
-        editor.addEventListener('input', function() {
-            sendMessage('textChanged', {
-                content: this.innerHTML,
-                text: this.textContent
+        // URL 정규식 (간단형)
+        const urlRegex = /\b((https?:\/\/)?(www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=%]*)?)\b/g;
+
+        function normalizeUrl(raw) {
+            try {
+                if (!raw) return null;
+                let url = raw.trim();
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                return url;
+            } catch (e) { return null; }
+        }
+
+        function isInsideAnchor(node) {
+            let el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+            while (el && el !== editor) {
+                if (el.tagName === 'A') return true;
+                el = el.parentElement;
+            }
+            return false;
+        }
+
+        function createLinkPreviewElement(url) {
+            // 커스텀 태그로 마커 삽입 -> Flutter Html에서 AnyLinkPreview로 렌더
+            const tag = document.createElement('link-preview');
+            tag.setAttribute('link', url);
+            // 에디터 자체에서 보이는 로딩 박스(저장 시엔 무시되고 상세화면에서 진짜 프리뷰 렌더)
+            const box = document.createElement('div');
+            box.className = 'lp-box';
+            const spinner = document.createElement('div');
+            spinner.className = 'lp-spinner';
+            const text = document.createElement('div');
+            text.textContent = '링크 미리보기 생성 중… ' + url;
+            box.appendChild(spinner);
+            box.appendChild(text);
+            tag.appendChild(box);
+            return tag;
+        }
+
+        function ensurePreviewAfter(anchorEl) {
+            try {
+                const url = anchorEl.getAttribute('href');
+                if (!url) return;
+                // 이미 다음 형제로 link-preview가 있으면 중복 생성 방지
+                let next = anchorEl.nextSibling;
+                while (next && ((next.nodeType === Node.TEXT_NODE && next.textContent.trim() === '') ||
+                               (next.nodeType === Node.ELEMENT_NODE && next.tagName === 'BR'))) {
+                    next = next.nextSibling;
+                }
+                if (anchorEl.getAttribute('data-has-preview') === '1') return;
+                if (next && next.nodeType === Node.ELEMENT_NODE && next.tagName === 'LINK-PREVIEW') {
+                    anchorEl.setAttribute('data-has-preview', '1');
+                    return;
+                }
+                // 방어: 이미 앵커 다음에 존재하면 재삽입하지 않음
+                let sibling = anchorEl.nextSibling;
+                while (sibling && ((sibling.nodeType === Node.TEXT_NODE && sibling.textContent.trim() === '') || (sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === 'BR'))) {
+                    sibling = sibling.nextSibling;
+                }
+                if (!(sibling && sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === 'LINK-PREVIEW')) {
+                    const preview = createLinkPreviewElement(url);
+                    if (anchorEl.parentNode) {
+                        anchorEl.parentNode.insertBefore(preview, anchorEl.nextSibling);
+                    }
+                }
+                anchorEl.setAttribute('data-has-preview', '1');
+                // 내용 변경 반영
+                setTimeout(function(){ try{ sendMessage('textChanged', { content: editor.innerHTML, text: editor.textContent }); }catch(e){} }, 0);
+            } catch (e) {}
+        }
+
+        function autolinkNode(node) {
+            if (node.nodeType !== Node.TEXT_NODE) return;
+            if (!node.textContent || !urlRegex.test(node.textContent)) return;
+            if (isInsideAnchor(node)) return;
+
+            const text = node.textContent;
+            const frag = document.createDocumentFragment();
+            let lastIndex = 0;
+            text.replace(urlRegex, (match, _g1, _g2, _g3, _g4, index) => {
+                // 앞부분 일반 텍스트
+                if (index > lastIndex) {
+                    frag.appendChild(document.createTextNode(text.slice(lastIndex, index)));
+                }
+                const href = normalizeUrl(match);
+                const a = document.createElement('a');
+                a.href = href || match;
+                a.textContent = match;
+                a.rel = 'noopener noreferrer';
+                a.target = '_blank';
+                frag.appendChild(a);
+                // 미리보기 마커
+                ensurePreviewAfter(a);
+                lastIndex = index + match.length;
+                return match;
             });
-            // 입력 시 포맷 상태도 갱신
+            // 남은 텍스트
+            if (lastIndex < text.length) {
+                frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+            }
+            // 교체
+            node.parentNode.replaceChild(frag, node);
+        }
+
+        function walkAndAutolink(root) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            const nodes = [];
+            let n;
+            while ((n = walker.nextNode())) nodes.push(n);
+            nodes.forEach(autolinkNode);
+        }
+
+        function autolinkContent() {
+            try { walkAndAutolink(editor); } catch (e) {}
+        }
+
+        function getBlockElementFrom(node) {
+            let el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+            while (el && el !== editor && !/^(P|DIV|LI|H1|H2|H3|H4|H5|H6)$/i.test(el.tagName)) {
+                el = el.parentElement;
+            }
+            return el || editor;
+        }
+
+        function getRangeForOffsetsWithin(root, start, end) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            let node, pos = 0;
+            const range = document.createRange();
+            let startSet = false;
+            while ((node = walker.nextNode())) {
+                const len = node.textContent.length;
+                if (!startSet && pos + len >= start) {
+                    range.setStart(node, Math.max(0, start - pos));
+                    startSet = true;
+                }
+                if (pos + len >= end) {
+                    range.setEnd(node, Math.max(0, end - pos));
+                    break;
+                }
+                pos += len;
+            }
+            return range;
+        }
+
+        function processUrlBeforeCaret() {
+            try {
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) return;
+                const caretRange = sel.getRangeAt(0);
+                const block = getBlockElementFrom(caretRange.startContainer);
+
+                // 0) 직전 의미 있는 노드가 이미 앵커면 재생성 금지, 프리뷰만 보장
+                function getPrevSignificant(node) {
+                    let n = (node.nodeType === Node.TEXT_NODE ? node : node.childNodes[node.childNodes.length-1]) || node.previousSibling;
+                    if (node.nodeType !== Node.TEXT_NODE) n = node.previousSibling;
+                    while (n && ((n.nodeType === Node.TEXT_NODE && n.textContent.trim() === '') ||
+                                 (n.nodeType === Node.ELEMENT_NODE && n.tagName === 'BR'))) {
+                        n = n.previousSibling;
+                    }
+                    return n;
+                }
+                const prev = getPrevSignificant(caretRange.startContainer);
+                if (prev && prev.nodeType === Node.ELEMENT_NODE && prev.tagName === 'A') {
+                    if (prev.getAttribute('data-has-preview') !== '1') {
+                        ensurePreviewAfter(prev);
+                    }
+                    return; // 앵커가 이미 있으므로 다시 생성하지 않음
+                }
+
+                const preRange = document.createRange();
+                preRange.setStart(block, 0);
+                preRange.setEnd(caretRange.startContainer, caretRange.startOffset);
+                const preTextRaw = preRange.toString();
+                // zero-width 제거 및 끝 공백 제거하여 URL 끝 판정 정확화
+                const preText = preTextRaw.replace(/\u200B/g, '');
+                const preTextTrim = preText.replace(/\s+$/, '');
+
+                let lastMatch = null; let m;
+                urlRegex.lastIndex = 0;
+                while ((m = urlRegex.exec(preTextTrim)) !== null) {
+                    lastMatch = m;
+                }
+                if (!lastMatch) return;
+                const matchText = lastMatch[0];
+                const matchEnd = lastMatch.index + matchText.length;
+                // URL이 블록 내 마지막 토큰이어야 하며, 공백/개행만 뒤따르는 경우 허용
+                if (matchEnd !== preTextTrim.length) return;
+
+                const href = normalizeUrl(matchText) || matchText;
+                const range = getRangeForOffsetsWithin(block, lastMatch.index, matchEnd);
+                // 이미 해당 범위가 앵커 내부인 경우, 프리뷰만 보장하고 종료
+                if (range.startContainer && range.startContainer.parentElement && range.startContainer.parentElement.tagName === 'A') {
+                    const existA = range.startContainer.parentElement;
+                    if (existA.getAttribute('data-has-preview') !== '1') ensurePreviewAfter(existA);
+                    return;
+                }
+                const a = document.createElement('a');
+                a.href = href;
+                a.textContent = matchText;
+                a.rel = 'noopener noreferrer';
+                a.target = '_blank';
+                range.deleteContents();
+                range.insertNode(a);
+
+                // 커서를 앵커 뒤로 이동
+                const after = document.createRange();
+                after.setStartAfter(a);
+                after.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(after);
+
+                ensurePreviewAfter(a);
+                // Flutter에 감지 이벤트 전달 (작성 화면 썸네일 사전 로드 트리거 용도)
+                sendMessage('linkDetected', { link: href });
+            } catch (e) {}
+        }
+
+        // 텍스트 변경 이벤트
+        editor.addEventListener('input', function(e) {
+            // 일반 입력에서는 오토링크를 실행하지 않음 (중복/포커스 점프 방지)
+            sendMessage('textChanged', {
+                content: editor.innerHTML,
+                text: editor.textContent
+            });
             setTimeout(function() { try { checkFormatState(); } catch (e) {} }, 50);
+            // Android IME 대응: 공백/개행 입력 직후에만 처리
+            const type = (e && e.inputType) || '';
+            const data = (e && e.data) || '';
+            if ((type === 'insertText' && (data === ' ' || data === '\u00A0')) ||
+                type === 'insertParagraph' ||
+                type === 'insertLineBreak') {
+                processUrlBeforeCaret();
+            }
+        });
+
+        // keyup 기반 처리는 중복 생성 원인이 되어 제거 (IME는 inputType으로 처리)
+
+        // 블러 시에도 남은 URL을 정리
+        editor.addEventListener('blur', function() {
+            try { processUrlBeforeCaret(); } catch (e) {}
         });
         
         // 키보드 이벤트
@@ -768,6 +1027,38 @@ class CommunityEditorConstants {
             // 플레이스홀더 설정
             setPlaceholder: function(text) {
                 editor.setAttribute('placeholder', text);
+            },
+            // 저장 직전 강제 동기화: 전체 오토링크 수행 후 현재 HTML 통지
+            forceSync: function() {
+                try {
+                    autolinkContent();
+                    sendMessage('textChanged', { content: editor.innerHTML, text: editor.textContent });
+                } catch (e) { console.error('forceSync error', e); }
+            },
+            // 링크 프리뷰 업데이트 (Flutter에서 메타데이터를 받아 카드로 교체)
+            updateLinkPreview: function(link, meta) {
+                try {
+                    if (typeof meta === 'string') {
+                        try { meta = JSON.parse(meta); } catch (e) { meta = {}; }
+                    }
+                    var title = meta && meta.title ? meta.title : link;
+                    var desc = meta && meta.desc ? meta.desc : '';
+                    var image = meta && meta.image ? meta.image : '';
+                    var site = meta && meta.siteName ? meta.siteName : '';
+                    var nodes = editor.querySelectorAll('link-preview[link="' + link + '"]');
+                    var imgHtml = image ? ('<img src="' + image + '" style="width:56px;height:56px;border-radius:6px;object-fit:cover;flex:none;"/>') : '<div class="lp-spinner" style="flex:none"></div>';
+                    var siteHtml = site ? ('<div style="color:#9e9e9e;font-size:11px;margin-top:2px;">' + site + '</div>') : '';
+                    var card = '<div class="lp-box">' +
+                               imgHtml +
+                               '<div style="min-width:0">' +
+                               '<div style="font-weight:600;color:#212121;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + title + '</div>' +
+                               (desc ? '<div style="color:#616161;font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + desc + '</div>' : '') +
+                               '<div style="color:#1E88E5;font-size:12px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + link + '</div>' +
+                               siteHtml +
+                               '</div></div>';
+                    for (var i=0;i<nodes.length;i++) { nodes[i].innerHTML = card; nodes[i].setAttribute('data-ready','1'); }
+                    setTimeout(function(){ try{ sendMessage('textChanged', { content: editor.innerHTML, text: editor.textContent }); }catch(e){} }, 0);
+                } catch (e) { console.error('updateLinkPreview error', e); }
             }
         };
         
@@ -839,6 +1130,7 @@ class CommunityEditorConstants {
   static const String messageTypeFormatChanged = 'formatChanged';
   static const String messageTypeListInserted = 'listInserted';
   static const String messageTypeError = 'error';
+  static const String messageTypeLinkDetected = 'linkDetected';
 
   // CSS 클래스
   static const String editorClassName = 'editor';

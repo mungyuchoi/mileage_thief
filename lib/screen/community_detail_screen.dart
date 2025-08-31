@@ -13,6 +13,7 @@ import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import '../services/category_service.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:any_link_preview/any_link_preview.dart';
 import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
 import '../widgets/image_viewer.dart';
@@ -1989,6 +1990,37 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   }
                                 }
                               },
+                              extensions: [
+                                TagExtension(
+                                  tagsToExtend: {'link-preview'},
+                                  builder: (ctx) {
+                                    final link = ctx.attributes['link'];
+                                    if (link == null || link.isEmpty) return const SizedBox.shrink();
+                                    final normalized = link.startsWith('http') ? link : 'https://$link';
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: AnyLinkPreview(
+                                        link: normalized,
+                                        displayDirection: UIDirection.uiDirectionHorizontal,
+                                        showMultimedia: true,
+                                        bodyMaxLines: 3,
+                                        bodyTextOverflow: TextOverflow.ellipsis,
+                                        boxShadow: const [],
+                                        backgroundColor: Colors.grey[100]!,
+                                        errorWidget: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.grey[300]!),
+                                          ),
+                                          child: Text(normalized, style: const TextStyle(color: Colors.blue)),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                         ],
                       ),
@@ -2656,6 +2688,37 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           }
         }
       },
+      extensions: [
+        TagExtension(
+          tagsToExtend: {'link-preview'},
+          builder: (ctx) {
+            final link = ctx.attributes['link'];
+            if (link == null || link.isEmpty) return const SizedBox.shrink();
+            final normalized = link.startsWith('http') ? link : 'https://$link';
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: AnyLinkPreview(
+                link: normalized,
+                displayDirection: UIDirection.uiDirectionHorizontal,
+                showMultimedia: true,
+                bodyMaxLines: 3,
+                bodyTextOverflow: TextOverflow.ellipsis,
+                boxShadow: const [],
+                backgroundColor: Colors.grey[100]!,
+                errorWidget: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Text(normalized, style: const TextStyle(color: Colors.blue)),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -3542,6 +3605,37 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 _launchUrl(url);
               }
             },
+            extensions: [
+              TagExtension(
+                tagsToExtend: {'link-preview'},
+                builder: (ctx) {
+                  final link = ctx.attributes['link'];
+                  if (link == null || link.isEmpty) return const SizedBox.shrink();
+                  final normalized = link.startsWith('http') ? link : 'https://$link';
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: AnyLinkPreview(
+                      link: normalized,
+                      displayDirection: UIDirection.uiDirectionHorizontal,
+                      showMultimedia: true,
+                      bodyMaxLines: 3,
+                      bodyTextOverflow: TextOverflow.ellipsis,
+                      boxShadow: const [],
+                      backgroundColor: Colors.grey[100]!,
+                      errorWidget: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Text(normalized, style: const TextStyle(color: Colors.blue)),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
         actions: [

@@ -30,6 +30,7 @@ class CommunityEditorController extends ChangeNotifier {
 
   // 콜백 함수
   Function(CommunityEditorState)? onStateChanged;
+  void Function(String link)? onLinkDetected; // 작성 화면 썸네일 사전 로드용 콜백
 
   // 현재 HTML 내용
   String _currentHtml = '';
@@ -63,6 +64,16 @@ class CommunityEditorController extends ChangeNotifier {
   /// WebView 컨트롤러를 설정합니다.
   void setWebViewController(WebViewController controller) {
     _webViewController = controller;
+  }
+
+  /// 임의의 JS 실행 (작성 화면 프리뷰 업데이트에 사용)
+  Future<void> executeJS(String script) async {
+    if (_webViewController == null) return;
+    try {
+      await _webViewController!.runJavaScript(script);
+    } catch (e) {
+      debugPrint('executeJS error: $e');
+    }
   }
 
   /// JavaScript 메시지를 처리합니다.
@@ -122,6 +133,14 @@ class CommunityEditorController extends ChangeNotifier {
           print('Format state updated: $convertedFormatState'); // 디버그 로그
           _updateState(formatState: convertedFormatState);
         }
+        break;
+      case CommunityEditorConstants.messageTypeLinkDetected:
+        try {
+          final link = messageData?['link'] as String?;
+          if (link != null && link.isNotEmpty) {
+            onLinkDetected?.call(link);
+          }
+        } catch (_) {}
         break;
       default:
         print('Unknown message type: $type');

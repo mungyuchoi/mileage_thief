@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/peanut_history_service.dart';
 import '../community_editor/community_editor.dart';
+// any_link_preview는 상세 화면에서 사용. 작성 화면은 직접 메타데이터 파싱 사용
+import 'dart:io';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
@@ -79,6 +82,21 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       }
     };
 
+    // 링크 감지 시 메타데이터 조회 후 에디터에 카드 업데이트
+    _editorController.onLinkDetected = (link) async {
+      try {
+        final normalized = link.startsWith('http') ? link : 'https://$link';
+        final meta = await _fetchLinkPreviewMeta(normalized);
+        // WebView에 미리보기 카드 주입
+        final jsonMeta = jsonEncode(meta);
+        await _editorController.executeJS(
+          'try{ window.communityEditorAPI && window.communityEditorAPI.updateLinkPreview(${jsonEncode(normalized)}, ${jsonMeta}); }catch(e){}',
+        );
+      } catch (_) {
+        // 실패해도 조용히 무시 (에디터 플레이스홀더 유지)
+      }
+    };
+
     // 컨트롤러 변경 리스너도 추가
     _editorController.addListener(() {
       if (mounted) {
@@ -92,6 +110,45 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDraftAndPrompt();
     });
+  }
+
+  // 간단한 메타데이터 수집기 (HTML 파싱 기반)
+  Future<Map<String, String>> _fetchLinkPreviewMeta(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 6);
+      final request = await client.getUrl(uri);
+      request.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0 (Mobile; LinkPreview)');
+      final response = await request.close();
+      if (response.statusCode != 200) return {};
+      final contents = await response.transform(const Utf8Decoder()).join();
+      String pickMeta(String pattern) {
+        final reg = RegExp(pattern, caseSensitive: false);
+        final m = reg.firstMatch(contents);
+        return m != null ? (m.group(1) ?? '').trim() : '';
+      }
+      final title = pickMeta(r'<meta[^>]*property=["\"]og:title["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+          .isNotEmpty ? pickMeta(r'<meta[^>]*property=["\"]og:title["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+          : pickMeta(r'<title[^>]*>([^<]+)</title>');
+      final desc = pickMeta(r'<meta[^>]*property=["\"]og:description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+          .isNotEmpty ? pickMeta(r'<meta[^>]*property=["\"]og:description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+          : pickMeta(r'<meta[^>]*name=["\"]description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
+      String image = pickMeta(r'<meta[^>]*property=["\"]og:image["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
+      final site = pickMeta(r'<meta[^>]*property=["\"]og:site_name["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
+      // 상대 경로 이미지 보정
+      if (image.isNotEmpty && !image.startsWith('http')) {
+        try { image = Uri.parse(url).resolve(image).toString(); } catch (_) {}
+      }
+      return {
+        'title': title,
+        'desc': desc,
+        'image': image,
+        'siteName': site,
+      };
+    } catch (_) {
+      return {};
+    }
   }
 
   @override
@@ -403,6 +460,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     _showLoadingDialog();
 
     try {
+      // 저장 직전, 에디터 내 오토링크/프리뷰 반영을 강제 동기화
+      await _editorController.executeJS('try{ window.communityEditorAPI && window.communityEditorAPI.forceSync && window.communityEditorAPI.forceSync(); }catch(e){}');
       // 1. 로그인 확인
       final currentUser = AuthService.currentUser;
       if (currentUser == null) {
