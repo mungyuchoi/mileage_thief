@@ -3,14 +3,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
-import 'dart:io';
 import '../models/community_editor_state.dart';
 import '../models/community_post_data.dart';
 import '../constants/community_editor_constants.dart';
 import '../utils/firebase_image_uploader.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as video_thumb;
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:mileage_thief/utils/image_compressor.dart' as app_compress;
 
 /// 커뮤니티 에디터의 컨트롤러입니다.
 /// WebView 기반 HTML 에디터로 제목, 내용, 이미지, 텍스트 포맷팅 등을 관리합니다.

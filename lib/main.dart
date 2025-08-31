@@ -14,6 +14,7 @@ import 'screen/community_post_create_screen_v3.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
+import 'dart:async';
 
 // 전역 NavigatorKey (NotificationService에서 사용)
 final GlobalKey<NavigatorState> navigatorKey = NotificationService.navigatorKey;
@@ -196,60 +197,96 @@ Future<void> main() async {
     print("Firebase already initialized: $e");
   }
 
-  // 알림 서비스 초기화
-  await NotificationService().initialize();
-  NotificationService().setupTokenRefresh();
-
-  // Branch.io 초기화
-  await BranchService().initialize();
-
-  MobileAds.instance.initialize();
-
   // 백그라운드 메시지 핸들러는 항상 등록 (핸들러 내에서 설정값 확인)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  await initializeDateFormatting();
-  runApp(MaterialApp(
-    navigatorKey: navigatorKey,
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      primarySwatch: Colors.blue,
-      fontFamily: 'NanumGothic',
-    ),
-    localizationsDelegates: [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
-    supportedLocales: const [
-      Locale('en'),
-      Locale('ko'),
-    ],
-    routes: {
-      '/': (context) => SearchScreen(),
-      '/community_board_select': (context) => const CommunityBoardSelectScreen(),
-      '/community/detail': (context) {
-        final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-        return CommunityDetailScreen(
-          postId: args['postId'],
-          dateString: args['dateString'],
-          boardId: args['boardId'] ?? 'free',
-          boardName: args['boardName'] ?? '자유게시판',
-          scrollToCommentId: args['scrollToCommentId'],
-        );
+  // 첫 프레임을 먼저 그리도록 runApp을 우선 호출
+  runApp(const MyApp());
+
+  // 나머지 경량 초기화는 병렬/비차단으로 수행
+  unawaited(_postFirstFrameInitializations());
+}
+
+Future<void> _postFirstFrameInitializations() async {
+  try {
+    await initializeDateFormatting();
+  } catch (_) {}
+  try {
+    await MobileAds.instance.initialize();
+  } catch (_) {}
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 프레임 이후에 무거운 초기화 실행 (앱 진입 지연 방지)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await NotificationService().initialize();
+        NotificationService().setupTokenRefresh();
+      } catch (e) {
+        debugPrint('NotificationService init error: $e');
+      }
+      try {
+        await BranchService().initialize();
+      } catch (e) {
+        debugPrint('BranchService init error: $e');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: 'NanumGothic',
+      ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ko'),
+      ],
+      routes: {
+        '/': (context) => SearchScreen(),
+        '/community_board_select': (context) => const CommunityBoardSelectScreen(),
+        '/community/detail': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return CommunityDetailScreen(
+            postId: args['postId'],
+            dateString: args['dateString'],
+            boardId: args['boardId'] ?? 'free',
+            boardName: args['boardName'] ?? '자유게시판',
+            scrollToCommentId: args['scrollToCommentId'],
+          );
+        },
+        '/community/create_v3': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return CommunityPostCreateScreenV3(
+            initialBoardId: args?['initialBoardId'],
+            initialBoardName: args?['initialBoardName'],
+            isEditMode: args?['isEditMode'] ?? false,
+            postId: args?['postId'],
+            dateString: args?['dateString'],
+            editTitle: args?['editTitle'],
+            editContentHtml: args?['editContentHtml'],
+          );
+        },
       },
-      '/community/create_v3': (context) {
-        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        return CommunityPostCreateScreenV3(
-          initialBoardId: args?['initialBoardId'],
-          initialBoardName: args?['initialBoardName'],
-          isEditMode: args?['isEditMode'] ?? false,
-          postId: args?['postId'],
-          dateString: args?['dateString'],
-          editTitle: args?['editTitle'],
-          editContentHtml: args?['editContentHtml'],
-        );
-      },
-    },
-  ));
+    );
+  }
 }
