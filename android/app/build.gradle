@@ -83,6 +83,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    // Optionally provide Google Maps API key via manifest placeholders
+    // def mapsApiKey = System.getenv("MAPS_API_KEY") ?: project.findProperty('MAPS_API_KEY') ?: ""
+    // defaultConfig.manifestPlaceholders += [ MAPS_API_KEY: mapsApiKey ]
 }
 
 flutter {

@@ -28,6 +28,10 @@
 	<string>ca-app-pub-8549606613390169~3500255527</string>
 	<key>GADIsAdManagerApp</key>
 	<true/>
+    
+    <!-- Google Maps API Key -->
+    <key>GMSApiKey</key>
+    <string>AIzaSyAEX91uv2eyFQKfOG8LyN7e9hEEd0sZVko</string>
 	<key>GIDClientID</key>
 	<string>962527268971-6de9mcd4hgtahu7f39o1a2le5gl9d7oi.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -115,6 +119,10 @@
 	<!-- Privacy - Camera Usage Description -->
 	<key>NSCameraUsageDescription</key>
 	<string>사진 촬영을 위해 카메라 접근 권한이 필요합니다.</string>
+
+    <!-- Privacy - Location Usage Descriptions for Map current location -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>현재 위치를 지도에 표시하기 위해 위치 접근 권한이 필요합니다.</string>
 
 	<key>NSPhotoLibraryAddUsageDescription</key>
     <string>사진을 저장하기 위해 사진첩 접근 권한이 필요합니다.</string>

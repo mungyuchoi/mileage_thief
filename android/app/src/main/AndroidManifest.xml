@@ -7,10 +7,14 @@
         </intent>
     </queries>
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:label="마일캐치">
+        <!-- Google Maps API Key -->
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyAEX91uv2eyFQKfOG8LyN7e9hEEd0sZVko" />
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8549606613390169~6982552576" />
@@ -58,6 +62,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        
         
         <!-- Branch.io 설정 (application 레벨에 위치해야 함) -->
         <meta-data android:name="io.branch.sdk.BranchKey" android:value="key_live_gFtkAHtvCb21GOaphUeWfnjlCsgquMU8" />

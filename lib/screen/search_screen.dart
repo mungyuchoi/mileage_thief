@@ -18,6 +18,7 @@ import 'package:share_plus/share_plus.dart';
 import '../services/auth_service.dart';
 import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
+import 'giftcard_map_screen.dart';
 import '../services/notice_preference_service.dart';
 import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 
@@ -232,10 +233,12 @@ class _SearchScreenState extends State<SearchScreen> {
           _currentIndex == 0
               ? '${_communityNoticeTitle.isNotEmpty ? ' $_communityNoticeTitle' : ''}'
               : _currentIndex == 1
-                  ? '대한항공 마일리지 찾기'
+                  ? '상품권'
                   : _currentIndex == 2
-                      ? '아시아나 마일리지 찾기'
-                      : '설정',
+                      ? '대한항공 마일리지 찾기'
+                      : _currentIndex == 3
+                          ? '아시아나 마일리지 찾기'
+                          : '설정',
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: SizedBox(
@@ -303,6 +306,17 @@ class _SearchScreenState extends State<SearchScreen> {
             icon: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
+                Icon(Icons.card_giftcard),
+                SizedBox(height: 2),
+                Text('상품권', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
                 Icon(Icons.airlines),
                 SizedBox(height: 2),
                 Text('대한항공', style: TextStyle(fontSize: 12)),
@@ -343,10 +357,12 @@ class _SearchScreenState extends State<SearchScreen> {
       case 0:
         return const CommunityScreen();
       case 1:
-        return buildDanWidget();
+        return const GiftcardMapScreen();
       case 2:
-        return buildAsianaWidget();
+        return buildDanWidget();
       case 3:
+        return buildAsianaWidget();
+      case 4:
         return buildSettingsWidget();
       default:
         return const CommunityScreen();
