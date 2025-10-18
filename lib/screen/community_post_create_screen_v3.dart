@@ -532,10 +532,22 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         };
       } else {
         // 새 게시글 모드에서는 HTML 처리
+        // postNumber 할당: meta/postNumber 문서의 number 필드를 트랜잭션으로 +1
+        final int allocatedPostNumber = await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final DocumentReference metaRef = FirebaseFirestore.instance.collection('meta').doc('postNumber');
+          final DocumentSnapshot snap = await transaction.get(metaRef);
+          final int current = (snap.exists ? ((snap.data() as Map<String, dynamic>?)?['number'] ?? 0) : 0) as int;
+          final int next = current + 1;
+          transaction.set(metaRef, { 'number': next }, SetOptions(merge: true));
+          return next;
+        });
+        final String postNumberStr = allocatedPostNumber.toString();
+
         final processedHtml = await _editorController.getProcessedHtml();
 
         postData = {
           'postId': postId,
+          'postNumber': postNumberStr,
           'boardId': _editorController.postData.boardId,
           'title': _editorController.postData.title.trim(),
           'contentHtml': processedHtml.trim(),

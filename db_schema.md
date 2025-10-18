@@ -238,6 +238,7 @@
 | 필드명         | 타입     | 설명 |
 |----------------|----------|------|
 | postId         | string   | 문서 ID |
+| postNumber     | string   | 게시글 고유 번호(SSR/정적 URL에 사용). 숫자 문자열 |
 | boardId        | string   | 게시판 ID (e.g., deal, free) |
 | title          | string   | 제목 |
 | contentHtml    | string   | HTML 형식의 본문 |
