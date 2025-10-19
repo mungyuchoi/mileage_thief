@@ -328,6 +328,59 @@
 }
 ```
 
+📝 게시글 연계(서브컬렉션 버전)
+
+경로: posts/{yyyyMMdd}/posts/{postId}/giftcard/{entryId}
+| 필드          | 타입         | 설명                             |
+| ----------- | ---------- | ------------------------------ |
+| `branchId`  | string     | 거래한 지점 ID                      |
+| `trade`     | string     | 게시글의 의도: `buy`(구매), `sell`(판매) |
+| `items`     | array<map> | 상품권별 상세 항목 목록 (아래 참조)          |
+| `createdAt` | timestamp  | 생성 시각                          |
+| `updatedAt` | timestamp  | 수정 시각                          |
+
+items[] 요소 스키마 
+| 필드           | 타입     | 설명                                                                                                           |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------------------ |
+| `giftcardId` | string | 어떤 상품권인지 (`giftcards/{id}`)                                                                                  |
+| `side`       | string | **해당 항목의 시세 방향**: `buy` | `sell`  <br>• `buy` = **지점이 파는 가격**(고객이 살 때) <br>• `sell` = **지점이 사는 가격**(고객이 팔 때) |
+| `rate`       | number | 퍼센트(예: 3.30). 퍼센트가 아닌 경우 0 또는 생략                                                                             |
+| `price`      | number | 원 단위 가격(예: 96700). 가격이 아닌 경우 0 또는 생략                                                                         |
+| `unitKRW`    | number | 권종 기준액(기본 100000)                                                                                            |
+| `latitude`   | number | 위도(선택: 지점과 다를 때만 사용)                                                                                         |
+| `longitude`  | number | 경도(선택)                                                                                                       |
+| `quantity`   | number | 수량(선택)                                                                                                       |
+| `memo`       | string | 항목 메모(선택)                                                                                                    |
+
+// posts/20251019/posts/abc123/giftcard/entry001
+{
+  "branchId": "myeongdong_choego",
+  "trade": "sell",
+  "items": [
+    {
+      "giftcardId": "shinsegae",
+      "side": "sell",
+      "rate": 3.80,
+      "price": 0,
+      "unitKRW": 100000,
+      "quantity": 5
+    },
+    {
+      "giftcardId": "hyundai",
+      "side": "sell",
+      "rate": 3.60,
+      "price": 0,
+      "unitKRW": 100000,
+      "quantity": 3
+    }
+  ],
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+
+지도 마커: branchId로 branches/{branchId}에서 좌표를 읽고, items[0..n] 중 주요 1~2개를 라벨에 요약(예: “신세계 3.8%, 현대 3.6%”).
+정보 화면: 선택한 giftcardId와 side 기준으로 최근 24시간 내 문서의 items[]를 펼쳐서 가격/퍼센트 집계 가능.
+
 ---
 
 ## 📁 boards/{boardId}
@@ -358,6 +411,57 @@
 | `admin/system_logs/{logId}`                  | 관리자 작업 로그 |
 
 ---
+
+---
+📁 giftcards/{giftcardId}
+| 필드                | 타입           | 설명                                                                                          |
+| ------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| giftcardId          | string        | 문서 ID: `lotte`, `shinsegae`, `hyundai`, `galleria`, `tourism`, `costco`, `eland`, `samsung` |
+| name                | string        | 표시명 (예: “롯데상품권”)                                                                            |
+| logoUrl             | string        | 로고 URL                                                                                      |
+| sortOrder           | number        | 정렬 우선순위                                                                                     |
+---
+
+---
+📁 branches/{branchId}
+| 필드             | 타입     | 설명                                            |
+| -------------- | ------ | --------------------------------------------- |
+| `branchId`     | string | 문서 ID                                         |
+| `name`         | string | 지점명                                           |
+| `phone`        | string | 연락처                                           |
+| `openingHours` | map    | 예: `{ "monSat": "10:00-19:00", "sun": "휴무" }` |
+| `notice`       | string | 안내사항                                          |
+| `latitude`     | number | 위도                                            |
+| `longitude`    | number | 경도                                            |
+| `address`      | string | 주소                                            |
+
+
+📂 branches/{branchId}/rates_daily/{dateId}
+
+날짜별(일 단위) 시세 스냅샷 – “정보 탭”과 차트용 기본 데이터
+
+dateId: YYYYMMDD (예: 20251019)
+
+문서 구조(상품권별 map): key = giftcardId
+{
+  "date": "20251019",
+  "baseUnit": 100000,
+  "cards": {
+    "lotte":   { "buyPrice": 96620, "buyRate": 3.38, "sellPrice": 96700, "sellRate": 3.30},
+    "shinsegae":{ "buyPrice": 96750, "buyRate": 3.25, "sellPrice": 96800, "sellRate": 3.20},
+    "hyundai": { "buyPrice": 96800, "buyRate": 3.20, "sellPrice": 96950, "sellRate": 3.05},
+    "galleria":{ "buyPrice": 96500, "buyRate": 4.20, "sellPrice": 96500, "sellRate": 3.50},
+    "tourism": { "buyPrice": 96800, "buyRate": 3.20, "sellPrice": 97200, "sellRate": 2.80},
+    "eland":   { "buyPrice": 93500, "buyRate": 6.50, "sellPrice": 97000, "sellRate": 3.00},
+    "costco":  null,
+    "samsung": { "buyPrice": 96700, "buyRate": 3.00, "sellPrice": 97000, "sellRate": 3.00 }
+  }
+}
+이유: 한 문서에 해당 날짜의 모든 상품권을 담으면 읽기 1회로 화면 구성 가능(+차트용 라인업도 용이).
+
+
+---
+
 
 ---
 
