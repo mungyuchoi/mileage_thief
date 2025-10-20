@@ -256,24 +256,39 @@ class _SearchScreenState extends State<SearchScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.share, color: Colors.black54),
-            onPressed: () {
-              String appLink = '';
-              if (Platform.isAndroid) {
-                appLink =
-                    'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
-              } else {
-                appLink = 'https://apps.apple.com/app/myapp/6446247689';
-              }
-              String description = "마일리지 항공 앱을 공유해보세요! $appLink";
-              SharePlus.instance.share(ShareParams(text: description));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat, color: Colors.black54),
-            onPressed: _launchOpenChat,
-          ),
+          if (_currentIndex == 1)
+            IconButton(
+              icon: const Icon(Icons.add, color: Colors.black54),
+              onPressed: () {
+                Fluttertoast.showToast(
+                  msg: '준비중입니다.',
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 2,
+                  backgroundColor: Colors.black54,
+                  textColor: Colors.white,
+                );
+              },
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.share, color: Colors.black54),
+              onPressed: () {
+                String appLink = '';
+                if (Platform.isAndroid) {
+                  appLink =
+                      'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
+                } else {
+                  appLink = 'https://apps.apple.com/app/myapp/6446247689';
+                }
+                String description = "마일리지 항공 앱을 공유해보세요! $appLink";
+                SharePlus.instance.share(ShareParams(text: description));
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.chat, color: Colors.black54),
+              onPressed: _launchOpenChat,
+            ),
+          ],
         ],
       ),
       body: buildPage(_currentIndex),
