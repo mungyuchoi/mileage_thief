@@ -436,6 +436,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           myLocationButtonEnabled: true,
           compassEnabled: true,
           trafficEnabled: false,
+          // 하단 내비/플로팅 버튼과 겹치지 않도록 UI(로고/줌버튼) 패딩
+          padding: const EdgeInsets.only(bottom: 60, right: 12, left: 12),
           markers: _markers,
           onMapCreated: (controller) {
             if (!_mapController.isCompleted) {

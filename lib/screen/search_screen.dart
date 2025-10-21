@@ -21,6 +21,8 @@ import '../services/remote_config_service.dart';
 import 'giftcard_map_screen.dart';
 import '../services/notice_preference_service.dart';
 import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
+import 'giftcard_info_screen.dart';
+import '../widgets/gift_action_pill.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -97,6 +99,7 @@ class _SearchScreenState extends State<SearchScreen> {
   int _currentIndex = 0;
   final DatabaseReference _versionReference =
   FirebaseDatabase.instance.ref("VERSION");
+  bool _giftFabOpen = false;
   
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
@@ -224,6 +227,195 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_currentIndex == 1) {
+      // 상품권 탭 전용: 상단 TabBar(지도/정보) + FAB
+      return WillPopScope(
+        onWillPop: _onWillPop,
+        child: DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+            appBar: AppBar(
+              title: const Text('상품권', style: TextStyle(color: Colors.black, fontSize: 16)),
+              leading: SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Image.asset(
+                    'asset/img/app_icon.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              backgroundColor: Colors.white,
+              elevation: 1,
+              actions: <Widget>[
+                IconButton(
+                  icon: const Icon(Icons.share, color: Colors.black54),
+                  onPressed: () {
+                    String appLink = '';
+                    if (Platform.isAndroid) {
+                      appLink = 'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
+                    } else {
+                      appLink = 'https://apps.apple.com/app/myapp/6446247689';
+                    }
+                    String description = "마일리지 항공 앱을 공유해보세요! $appLink";
+                    SharePlus.instance.share(ShareParams(text: description));
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chat, color: Colors.black54),
+                  onPressed: _launchOpenChat,
+                ),
+              ],
+              bottom: const TabBar(
+                labelColor: Colors.black,
+                unselectedLabelColor: Colors.black54,
+                indicatorColor: Colors.black,
+                tabs: [
+                  Tab(text: '지도'),
+                  Tab(text: '정보'),
+                ],
+              ),
+            ),
+            body: Stack(
+              children: [
+                const TabBarView(
+                  physics: NeverScrollableScrollPhysics(),
+                  children: [
+                    GiftcardMapScreen(),
+                    GiftcardInfoScreen(),
+                  ],
+                ),
+                if (_giftFabOpen)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _giftFabOpen = false),
+                      child: Container(color: Colors.black.withOpacity(0.05)),
+                    ),
+                  ),
+                if (_giftFabOpen)
+                  Positioned(
+                    right: 16,
+                    bottom: 96,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        GiftActionPill(
+                          icon: Icons.store_mall_directory_outlined,
+                          label: '지점 생성',
+                          onTap: () {
+                            setState(() => _giftFabOpen = false);
+                            Fluttertoast.showToast(msg: '준비중입니다.');
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        GiftActionPill(
+                          icon: Icons.call_received_outlined,
+                          label: '구매 정보',
+                          onTap: () {
+                            setState(() => _giftFabOpen = false);
+                            Fluttertoast.showToast(msg: '준비중입니다.');
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        GiftActionPill(
+                          icon: Icons.call_made_outlined,
+                          label: '판매 정보',
+                          onTap: () {
+                            setState(() => _giftFabOpen = false);
+                            Fluttertoast.showToast(msg: '준비중입니다.');
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              backgroundColor: Colors.black,
+              onPressed: () => setState(() => _giftFabOpen = !_giftFabOpen),
+              child: Icon(_giftFabOpen ? Icons.close : Icons.add, color: Colors.white),
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              backgroundColor: Colors.grey[200],
+              currentIndex: _currentIndex,
+              selectedItemColor: Colors.black, // kPrimaryDarkColor 대체
+              unselectedItemColor: Colors.black, // kPrimaryDarkColor 대체
+              type: BottomNavigationBarType.fixed, // 아이콘과 텍스트가 항상 함께 보임
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+              onTap: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              items: [
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.people_outline_sharp),
+                      SizedBox(height: 2),
+                      Text('커뮤니티', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.card_giftcard),
+                      SizedBox(height: 2),
+                      Text('상품권', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.airlines),
+                      SizedBox(height: 2),
+                      Text('대한항공', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.airlines),
+                      SizedBox(height: 2),
+                      Text('아시아나', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.settings),
+                      SizedBox(height: 2),
+                      Text('설정', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 기본 케이스 (상품권 외 탭)
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -256,20 +448,7 @@ class _SearchScreenState extends State<SearchScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         actions: <Widget>[
-          if (_currentIndex == 1)
-            IconButton(
-              icon: const Icon(Icons.add, color: Colors.black54),
-              onPressed: () {
-                Fluttertoast.showToast(
-                  msg: '준비중입니다.',
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 2,
-                  backgroundColor: Colors.black54,
-                  textColor: Colors.white,
-                );
-              },
-            )
-          else ...[
+          if (_currentIndex != 1) ...[
             IconButton(
               icon: const Icon(Icons.share, color: Colors.black54),
               onPressed: () {
@@ -292,6 +471,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ],
       ),
       body: buildPage(_currentIndex),
+      floatingActionButton: null,
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.grey[200],
         currentIndex: _currentIndex,
@@ -382,6 +562,50 @@ class _SearchScreenState extends State<SearchScreen> {
       default:
         return const CommunityScreen();
     }
+  }
+
+  void _showGiftcardActions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.store_mall_directory_outlined),
+                title: const Text('지점 생성'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Fluttertoast.showToast(msg: '준비중입니다.');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.call_received_outlined),
+                title: const Text('구매 정보'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Fluttertoast.showToast(msg: '준비중입니다.');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.call_made_outlined),
+                title: const Text('판매 정보'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Fluttertoast.showToast(msg: '준비중입니다.');
+                },
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget buildAsianaWidget() {
