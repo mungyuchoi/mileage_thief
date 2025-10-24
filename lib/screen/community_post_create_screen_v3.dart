@@ -17,6 +17,8 @@ import 'dart:io';
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
   final String? initialBoardName;
+  // deal 게시판 초기 타입: 'buy' | 'sell'
+  final String? initialDealType;
 
   // 편집 모드 관련 파라미터
   final bool isEditMode;
@@ -29,6 +31,7 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
     Key? key,
     this.initialBoardId,
     this.initialBoardName,
+    this.initialDealType,
     this.isEditMode = false,
     this.postId,
     this.dateString,
@@ -114,7 +117,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     });
     // 초기 진입 시 deal 게시판이면 기본 타입을 설정
     if (_isDealBoard(widget.initialBoardId, widget.initialBoardName)) {
-      _dealType ??= 'buy';
+      _dealType = (widget.initialDealType == 'sell' || widget.initialDealType == 'buy')
+          ? widget.initialDealType
+          : 'buy';
     }
   }
 
@@ -531,6 +536,16 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
       // 4. Firestore에 저장할 데이터 준비
       Map<String, dynamic> postData;
+      // 제목 가공: deal 게시판이라면 타입 라벨 프리픽스 부착 (중복 방지)
+      String finalTitle = _editorController.postData.title.trim();
+      if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName)) {
+        const String buyHeader = '[구매 정보]';
+        const String sellHeader = '[판매 정보]';
+        if (!finalTitle.startsWith(buyHeader) && !finalTitle.startsWith(sellHeader)) {
+          final prefix = (_dealType ?? 'buy') == 'sell' ? '$sellHeader ' : '$buyHeader ';
+          finalTitle = prefix + finalTitle;
+        }
+      }
 
       if (widget.isEditMode) {
         // 수정 모드에서는 HTML 처리
@@ -538,7 +553,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
         postData = {
           'boardId': _editorController.postData.boardId,
-          'title': _editorController.postData.title.trim(),
+          'title': finalTitle,
           'contentHtml': processedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
@@ -564,7 +579,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'postId': postId,
           'postNumber': postNumberStr,
           'boardId': _editorController.postData.boardId,
-          'title': _editorController.postData.title.trim(),
+          'title': finalTitle,
           'contentHtml': processedHtml.trim(),
           'author': {
             'uid': currentUser.uid,
@@ -605,7 +620,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             .collection('my_posts')
             .doc(postId)
             .update({
-          'title': _editorController.postData.title.trim(),
+          'title': finalTitle,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
@@ -625,7 +640,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             .doc(postId);
         batch.set(myPostRef, {
           'postPath': 'posts/$dateString/posts/$postId',
-          'title': _editorController.postData.title.trim(),
+          'title': finalTitle,
           'boardId': _editorController.postData.boardId,
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -672,7 +687,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
               'postId': postId,
               'dateString': dateString,
               'boardId': _editorController.postData.boardId!,
-              'postTitle': _editorController.postData.title.trim(),
+              'postTitle': finalTitle,
             },
           );
 

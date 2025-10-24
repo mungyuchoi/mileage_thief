@@ -23,6 +23,7 @@ import '../services/notice_preference_service.dart';
 import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
+import 'community_post_create_screen_v3.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -317,7 +318,16 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '구매 정보',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
-                            Fluttertoast.showToast(msg: '준비중입니다.');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CommunityPostCreateScreenV3(
+                                  initialBoardId: 'deal',
+                                  initialBoardName: '적립/카드 혜택',
+                                  initialDealType: 'buy',
+                                ),
+                              ),
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -326,7 +336,16 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '판매 정보',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
-                            Fluttertoast.showToast(msg: '준비중입니다.');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CommunityPostCreateScreenV3(
+                                  initialBoardId: 'deal',
+                                  initialBoardName: '적립/카드 혜택',
+                                  initialDealType: 'sell',
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ],
