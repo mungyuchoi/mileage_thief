@@ -944,8 +944,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return;
     }
 
-    // 2. boardId가 'seats'일 때 등급 체크
-    if (boardId == 'seats') {
+    // 2. boardId가 'seats' 또는 'deal'일 때 등급 체크
+    if (boardId == 'seats' || boardId == 'deal') {
       final grade = userProfile?['displayGrade'] ?? '';
       final isEconomy = grade.startsWith('이코노미 Lv.');
       final isBusiness = grade.startsWith('비즈니스 Lv.');
