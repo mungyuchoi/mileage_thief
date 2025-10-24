@@ -52,6 +52,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
+  // deal 게시판 전용 타입 선택: 'buy' | 'sell' (기본값: 'buy')
+  String? _dealType;
 
   @override
   void initState() {
@@ -110,6 +112,16 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDraftAndPrompt();
     });
+    // 초기 진입 시 deal 게시판이면 기본 타입을 설정
+    if (_isDealBoard(widget.initialBoardId, widget.initialBoardName)) {
+      _dealType ??= 'buy';
+    }
+  }
+
+  bool _isDealBoard(String? boardId, String? boardName) {
+    if ((boardId ?? '').toLowerCase() == 'deal') return true;
+    final name = (boardName ?? '');
+    return name.contains('적립') || name.contains('카드');
   }
 
   // 간단한 메타데이터 수집기 (HTML 파싱 기반)
@@ -530,6 +542,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'contentHtml': processedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
+        if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName)) {
+          postData['dealType'] = (_dealType ?? 'buy');
+        }
       } else {
         // 새 게시글 모드에서는 HTML 처리
         // postNumber 할당: meta/postNumber 문서의 number 필드를 트랜잭션으로 +1
@@ -570,6 +585,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
+        if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName)) {
+          postData['dealType'] = (_dealType ?? 'buy');
+        }
       }
 
       // 5. Firestore에 저장
@@ -734,6 +752,13 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                         result['boardId'],
                         result['boardName'],
                       );
+                      setState(() {
+                        if (_isDealBoard(result['boardId'] as String?, result['boardName'] as String?)) {
+                          _dealType ??= 'buy';
+                        } else {
+                          _dealType = null;
+                        }
+                      });
                     }
                   },
                   child: Container(
@@ -788,6 +813,59 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   height: 1,
                   color: Colors.grey[300],
                 ),
+
+                // deal 게시판 전용: 타입 선택 토글 (구매 정보 / 판매 정보)
+                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: ToggleButtons(
+                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        selectedBorderColor: const Color(0xFF74512D),
+                        fillColor: const Color(0x1A74512D),
+                        constraints: const BoxConstraints(minHeight: 28, minWidth: 72),
+                        isSelected: [
+                          (_dealType ?? 'buy') == 'buy',
+                          (_dealType ?? 'buy') == 'sell',
+                        ],
+                        onPressed: (index) {
+                          setState(() {
+                            _dealType = index == 0 ? 'buy' : 'sell';
+                          });
+                        },
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            child: Text('구매 정보', style: TextStyle(color: Colors.black)),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            child: Text('판매 정보', style: TextStyle(color: Colors.black)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // deal 게시판 전용: 안내 문구
+                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        (_dealType ?? 'buy') == 'buy'
+                            ? '상품권 구매 링크 혹은 정보를 공유하는 타입입니다.'
+                            : '특정 상품권 매장에서 얼마에 팔았는지 혹은 판매 정보입니다.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ),
 
                 // 에디터 영역
                 Expanded(
