@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -25,6 +28,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   bool _isLoading = false;
   late final String _todayId;
   late final double _markerHueBrown; // #73532E
+  final Map<String, BitmapDescriptor> _logoIconCache = <String, BitmapDescriptor>{};
+  final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
 
   @override
   void initState() {
@@ -138,23 +143,44 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         final String dateLabel = _formatDateId((ratesData?['date'] as String?) ?? _todayId);
         final String? updatedText = _extractUpdatedText(ratesData);
 
-        final marker = Marker(
-          markerId: MarkerId(doc.id),
-          position: LatLng(lat, lng),
-          infoWindow: InfoWindow(title: '$branchName (상품권 매입)', snippet: snippet),
-          // 갈색(#73532E)과 가장 가까운 hue를 적용
-          icon: BitmapDescriptor.defaultMarkerWithHue(_markerHueBrown),
-          onTap: () {
-            _showBranchBottomSheet(
-              branchId: doc.id,
-              branchData: data,
-              cards: cards,
-              dateLabel: dateLabel,
-              updatedText: updatedText,
-            );
-          },
+        final LatLng position = LatLng(lat, lng);
+        Marker _buildMarker(BitmapDescriptor icon, {bool customAnchor = false}) {
+          return Marker(
+            markerId: MarkerId(doc.id),
+            position: position,
+            infoWindow: InfoWindow(title: '$branchName (상품권 매입)', snippet: snippet),
+            icon: icon,
+            anchor: customAnchor ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
+            onTap: () {
+              _showBranchBottomSheet(
+                branchId: doc.id,
+                branchData: data,
+                cards: cards,
+                dateLabel: dateLabel,
+                updatedText: updatedText,
+              );
+            },
+          );
+        }
+
+        final Marker marker = _buildMarker(
+          BitmapDescriptor.defaultMarkerWithHue(_markerHueBrown),
         );
         newMarkers.add(marker);
+
+        // 로고가 있다면 비동기로 원형 마커 로딩 후 교체
+        final String? logoUrl = data['logoUrl'] as String?;
+        if (logoUrl != null && logoUrl.isNotEmpty) {
+          _getCircleMarkerFromUrl(logoUrl).then((BitmapDescriptor icon) {
+            if (!mounted) return;
+            setState(() {
+              _markers.removeWhere((m) => m.markerId.value == doc.id);
+              _markers.add(_buildMarker(icon, customAnchor: true));
+            });
+          }).catchError((_) {
+            // 무시: 로고 로딩 실패 시 기본 마커 유지
+          });
+        }
       }
 
       setState(() {
@@ -171,6 +197,63 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         });
       }
     }
+  }
+
+  Future<BitmapDescriptor> _getCircleMarkerFromUrl(String url, {int diameter = 120}) async {
+    final String key = '$url@$diameter';
+    final BitmapDescriptor? cached = _logoIconCache[key];
+    if (cached != null) return cached;
+    final Future<BitmapDescriptor>? ongoing = _logoIconLoading[key];
+    if (ongoing != null) return await ongoing;
+
+    final Completer<BitmapDescriptor> completer = Completer<BitmapDescriptor>();
+    _logoIconLoading[key] = completer.future;
+
+    try {
+      final Uri uri = Uri.parse(url);
+      final ByteData byteData = await NetworkAssetBundle(uri).load(uri.toString());
+      final Uint8List bytes = byteData.buffer.asUint8List();
+
+      final ui.Codec codec = await ui.instantiateImageCodec(bytes, targetWidth: diameter, targetHeight: diameter);
+      final ui.FrameInfo frameInfo = await codec.getNextFrame();
+      final ui.Image rawImage = frameInfo.image;
+
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final Canvas canvas = Canvas(recorder);
+      final double size = diameter.toDouble();
+      final Rect drawRect = Rect.fromLTWH(0, 0, size, size);
+
+      final Path clipPath = Path()
+        ..addOval(Rect.fromCircle(center: Offset(size / 2, size / 2), radius: size / 2));
+      canvas.clipPath(clipPath);
+      final Paint paint = Paint()
+        ..isAntiAlias = true
+        ..filterQuality = FilterQuality.high;
+      canvas.drawImageRect(
+        rawImage,
+        Rect.fromLTWH(0, 0, rawImage.width.toDouble(), rawImage.height.toDouble()),
+        drawRect,
+        paint,
+      );
+      // 테두리
+      final Paint border = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = const Color(0xFF73532E)
+        ..strokeWidth = 6;
+      canvas.drawCircle(Offset(size / 2, size / 2), size / 2 - 3, border);
+
+      final ui.Image outImage = await recorder.endRecording().toImage(diameter, diameter);
+      final ByteData? pngBytes = await outImage.toByteData(format: ui.ImageByteFormat.png);
+      final BitmapDescriptor descriptor = BitmapDescriptor.fromBytes(pngBytes!.buffer.asUint8List());
+      _logoIconCache[key] = descriptor;
+      completer.complete(descriptor);
+    } catch (e) {
+      completer.completeError(e);
+    } finally {
+      _logoIconLoading.remove(key);
+    }
+
+    return completer.future;
   }
 
   String _formatCurrency(int value) {
