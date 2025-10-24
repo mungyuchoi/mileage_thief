@@ -13,6 +13,7 @@ import '../services/peanut_history_service.dart';
 import '../community_editor/community_editor.dart';
 // any_link_preview는 상세 화면에서 사용. 작성 화면은 직접 메타데이터 파싱 사용
 import 'dart:io';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
@@ -57,6 +58,18 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
   late CommunityEditorController _editorController;
   // deal 게시판 전용 타입 선택: 'buy' | 'sell' (기본값: 'buy')
   String? _dealType;
+  // 판매 정보 입력용 상태 (선택 사항)
+  String? _selectedBranchId;
+  String? _selectedBranchName;
+  double? _selectedLat;
+  double? _selectedLng;
+  List<Map<String, dynamic>> _branches = [];
+  bool _branchesLoading = false;
+  // 판매 항목 입력 리스트
+  List<Map<String, dynamic>> _tradeItems = [];
+  // 상품권 목록 로딩 상태
+  List<Map<String, dynamic>> _giftcards = [];
+  bool _giftcardsLoading = false;
 
   @override
   void initState() {
@@ -120,6 +133,22 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       _dealType = (widget.initialDealType == 'sell' || widget.initialDealType == 'buy')
           ? widget.initialDealType
           : 'buy';
+      if (_dealType == 'sell') {
+        _ensureBranchesLoaded();
+        _ensureGiftcardsLoaded();
+        if (_tradeItems.isEmpty) {
+          _tradeItems = [
+            {
+              'giftcardId': '',
+              'giftcardName': '',
+              'side': 'sell',
+              'rate': '',
+              'price': '',
+              'unitKRW': 100000,
+            }
+          ];
+        }
+      }
     }
   }
 
@@ -127,6 +156,291 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     if ((boardId ?? '').toLowerCase() == 'deal') return true;
     final name = (boardName ?? '');
     return name.contains('적립') || name.contains('카드');
+  }
+
+  Future<void> _ensureBranchesLoaded() async {
+    if (_branchesLoading || _branches.isNotEmpty) return;
+    setState(() { _branchesLoading = true; });
+    try {
+      final snap = await FirebaseFirestore.instance.collection('branches').get();
+      final List<Map<String, dynamic>> list = [];
+      for (final d in snap.docs) {
+        final data = d.data();
+        list.add({
+          'id': d.id,
+          'name': (data['name'] as String?) ?? d.id,
+          'latitude': (data['latitude'] is num) ? (data['latitude'] as num).toDouble() : null,
+          'longitude': (data['longitude'] is num) ? (data['longitude'] as num).toDouble() : null,
+        });
+      }
+      list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+      setState(() { _branches = list; });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() { _branchesLoading = false; });
+    }
+  }
+
+  Future<void> _ensureGiftcardsLoaded() async {
+    if (_giftcardsLoading || _giftcards.isNotEmpty) return;
+    setState(() { _giftcardsLoading = true; });
+    try {
+      final snap = await FirebaseFirestore.instance.collection('giftcards').get();
+      final List<Map<String, dynamic>> list = [];
+      for (final d in snap.docs) {
+        final data = d.data();
+        list.add({
+          'id': d.id,
+          'name': (data['name'] as String?) ?? d.id,
+        });
+      }
+      list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+      setState(() { _giftcards = list; });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() { _giftcardsLoading = false; });
+    }
+  }
+
+  Future<void> _openBranchSelectSheet() async {
+    await _ensureBranchesLoaded();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return StatefulBuilder(builder: (context, setModalState) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('지점 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: _branchesLoading
+                        ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                        : ListView.separated(
+                            itemCount: _branches.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (ctx, i) {
+                              final b = _branches[i];
+                              return ListTile(
+                                title: Text(b['name'] as String, style: const TextStyle(color: Colors.black)),
+                                subtitle: Text(b['id'] as String, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedBranchId = b['id'] as String?;
+                                    _selectedBranchName = b['name'] as String?;
+                                    _selectedLat = b['latitude'] as double?;
+                                    _selectedLng = b['longitude'] as double?;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedBranchId = null;
+                        _selectedBranchName = null;
+                        _selectedLat = null;
+                        _selectedLng = null;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('선택 해제', style: TextStyle(color: Colors.black87)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Future<void> _openGiftcardSelectSheetForItem(int index) async {
+    await _ensureGiftcardsLoaded();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('상품권', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _giftcardsLoading
+                      ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                      : ListView.separated(
+                          itemCount: _giftcards.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (ctx, i) {
+                            final g = _giftcards[i];
+                            return ListTile(
+                              title: Text(g['name'] as String, style: const TextStyle(color: Colors.black)),
+                              subtitle: Text(g['id'] as String, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                              onTap: () {
+                                setState(() {
+                                  if (index >= 0 && index < _tradeItems.length) {
+                                    _tradeItems[index]['giftcardId'] = g['id'];
+                                    _tradeItems[index]['giftcardName'] = g['name'];
+                                  }
+                                });
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      if (index >= 0 && index < _tradeItems.length) {
+                        _tradeItems[index]['giftcardId'] = '';
+                        _tradeItems[index]['giftcardName'] = '';
+                      }
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text('선택 해제', style: TextStyle(color: Colors.black87)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openMapPicker() async {
+    LatLng? picked;
+    String pickedAddress = '';
+    final double initLat = (_selectedLat ?? 37.5665);
+    final double initLng = (_selectedLng ?? 126.9780);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(builder: (context, setModalState) {
+          return SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.7,
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  const Text('지도에서 위치 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        pickedAddress.isEmpty ? '지도를 탭하여 위치를 선택하세요' : pickedAddress,
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: GoogleMap(
+                      initialCameraPosition: CameraPosition(target: LatLng(initLat, initLng), zoom: 14),
+                      myLocationEnabled: false,
+                      onTap: (latLng) async {
+                        setModalState(() { picked = latLng; });
+                        final addr = await _reverseGeocode(latLng.latitude, latLng.longitude);
+                        setModalState(() { pickedAddress = addr; });
+                      },
+                      markers: picked == null
+                          ? {}
+                          : { Marker(markerId: const MarkerId('picked'), position: picked!) },
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('취소', style: TextStyle(color: Colors.black87)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (picked != null) {
+                            setState(() {
+                              _selectedLat = picked!.latitude;
+                              _selectedLng = picked!.longitude;
+                            });
+                          }
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('선택', style: TextStyle(color: Color(0xFF74512D), fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Future<String> _reverseGeocode(double lat, double lng) async {
+    try {
+      final uri = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=ko');
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 6);
+      final req = await client.getUrl(uri);
+      req.headers.set(HttpHeaders.userAgentHeader, 'MileageThief/1.0 (reverse-geocode)');
+      final resp = await req.close();
+      if (resp.statusCode != 200) return '';
+      final body = await resp.transform(const Utf8Decoder()).join();
+      final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
+      return (json['display_name'] as String?) ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  void _addTradeItem() {
+    setState(() {
+      _tradeItems.add({
+        'giftcardId': '',
+        'side': 'sell',
+        'rate': '',
+        'price': '',
+        'unitKRW': 100000,
+      });
+    });
+  }
+
+  void _removeTradeItem(int index) {
+    setState(() {
+      if (index >= 0 && index < _tradeItems.length) {
+        _tradeItems.removeAt(index);
+      }
+    });
   }
 
   // 간단한 메타데이터 수집기 (HTML 파싱 기반)
@@ -448,6 +762,25 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       return;
     }
 
+    // 판매 정보일 때 필수 입력 검증: 항목 1개 이상, giftcardId와 rate/price 중 최소 하나 이상 입력
+    if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell') {
+      if (_tradeItems.isEmpty) {
+        Fluttertoast.showToast(msg: "상품권 항목을 1개 이상 입력해주세요");
+        return;
+      }
+      bool invalid = false;
+      for (final it in _tradeItems) {
+        final gid = (it['giftcardId'] ?? '').toString().trim();
+        final rate = (it['rate'] ?? '').toString().trim();
+        final price = (it['price'] ?? '').toString().trim();
+        if (gid.isEmpty || (rate.isEmpty && price.isEmpty)) { invalid = true; break; }
+      }
+      if (invalid) {
+        Fluttertoast.showToast(msg: "각 항목에 상품권, 퍼센트/가격 중 최소 하나를 입력해주세요");
+        return;
+      }
+    }
+
     if (_editorController.postData.contentHtml.trim().isEmpty) {
       Fluttertoast.showToast(
         msg: "내용을 입력해주세요",
@@ -704,6 +1037,41 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       }
 
       // 7. 화면 닫기
+      // 판매 정보라면 서브컬렉션 giftcard 문서 작성 (선택된 값 기반)
+      try {
+        if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell') {
+          final entryId = FirebaseFirestore.instance.collection('tmp').doc().id;
+          final items = _tradeItems.map((it) {
+            return {
+              'giftcardId': (it['giftcardId'] ?? '').toString().trim(),
+              'side': (it['side'] ?? 'sell').toString(),
+              'rate': double.tryParse((it['rate'] ?? '').toString()) ?? 0,
+              'price': int.tryParse((it['price'] ?? '').toString()) ?? 0,
+              'unitKRW': (it['unitKRW'] is int) ? it['unitKRW'] : 100000,
+              if (_selectedLat != null) 'latitude': _selectedLat,
+              if (_selectedLng != null) 'longitude': _selectedLng,
+            };
+          }).toList();
+
+          await FirebaseFirestore.instance
+              .collection('posts')
+              .doc(dateString)
+              .collection('posts')
+              .doc(postId)
+              .collection('giftcard')
+              .doc(entryId)
+              .set({
+            if (_selectedBranchId != null) 'branchId': _selectedBranchId,
+            'trade': 'sell',
+            'items': items,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      } catch (e) {
+        print('giftcard 서브컬렉션 저장 오류: $e');
+      }
+
       Navigator.pop(context, widget.isEditMode ? true : false);
 
     } catch (e) {
@@ -836,10 +1204,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                     child: Align(
                       alignment: Alignment.center,
                       child: ToggleButtons(
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        borderRadius: const BorderRadius.all(Radius.circular(24)),
                         selectedBorderColor: const Color(0xFF74512D),
                         fillColor: const Color(0x1A74512D),
-                        constraints: const BoxConstraints(minHeight: 28, minWidth: 72),
+                        constraints: const BoxConstraints(minHeight: 32, minWidth: 84),
                         isSelected: [
                           (_dealType ?? 'buy') == 'buy',
                           (_dealType ?? 'buy') == 'sell',
@@ -847,15 +1215,31 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                         onPressed: (index) {
                           setState(() {
                             _dealType = index == 0 ? 'buy' : 'sell';
+                            if (_dealType == 'sell') {
+                              _ensureBranchesLoaded();
+                              _ensureGiftcardsLoaded();
+                              if (_tradeItems.isEmpty) {
+                                _tradeItems = [
+                                  {
+                                    'giftcardId': '',
+                                    'giftcardName': '',
+                                    'side': 'sell',
+                                    'rate': '',
+                                    'price': '',
+                                    'unitKRW': 100000,
+                                  }
+                                ];
+                              }
+                            }
                           });
                         },
                         children: const [
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             child: Text('구매 정보', style: TextStyle(color: Colors.black)),
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             child: Text('판매 정보', style: TextStyle(color: Colors.black)),
                           ),
                         ],
@@ -879,6 +1263,177 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                           color: Colors.grey[600],
                         ),
                       ),
+                    ),
+                  ),
+
+                // 판매 정보일 때만: 매장 라벨
+                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell')
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('매장', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
+                    ),
+                  ),
+
+                // deal = 판매 정보일 때만: 지점 선택 + 좌표 선택 진입
+                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _openBranchSelectSheet,
+                            icon: const Icon(Icons.store_mall_directory_outlined, size: 18, color: Colors.black87),
+                            label: Text(
+                              _selectedBranchName == null ? '지점 선택(선택 사항)' : _selectedBranchName!,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                              side: const BorderSide(color: Colors.black26),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // 판매 정보일 때만: 상품권 항목 입력 (필수 최소 1개)
+                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('상품권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+                        const SizedBox(height: 8),
+                        ...List.generate(_tradeItems.length, (i) {
+                          final item = _tradeItems[i];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                // giftcard 선택 버튼 (목록에서 선택)
+                                Expanded(
+                                  flex: 32,
+                                  child: OutlinedButton(
+                                    onPressed: () => _openGiftcardSelectSheetForItem(i),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                      side: const BorderSide(color: Colors.black26),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        (item['giftcardName'] as String?)?.isNotEmpty == true
+                                            ? '${item['giftcardName']} (${item['giftcardId']})'
+                                            : '상품권 선택',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(color: Colors.black87, fontSize: 13),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // rate
+                                Expanded(
+                                  flex: 22,
+                                  child: TextField(
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    controller: TextEditingController(text: item['rate']?.toString() ?? '')
+                                      ..selection = TextSelection.collapsed(offset: (item['rate']?.toString() ?? '').length),
+                                    onChanged: (v) => item['rate'] = v,
+                                    cursorColor: const Color(0xFF74512D),
+                                    style: const TextStyle(fontSize: 13),
+                                    decoration: const InputDecoration(
+                                      hintText: '퍼센트',
+                                      hintStyle: TextStyle(fontSize: 12, color: Colors.black45),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
+                                      ),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: Colors.black26),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // price
+                                Expanded(
+                                  flex: 28,
+                                  child: TextField(
+                                    keyboardType: TextInputType.number,
+                                    controller: TextEditingController(text: item['price']?.toString() ?? '')
+                                      ..selection = TextSelection.collapsed(offset: (item['price']?.toString() ?? '').length),
+                                    onChanged: (v) => item['price'] = v,
+                                    cursorColor: const Color(0xFF74512D),
+                                    style: const TextStyle(fontSize: 13),
+                                    decoration: const InputDecoration(
+                                      hintText: '가격(원)',
+                                      hintStyle: TextStyle(fontSize: 12, color: Colors.black45),
+                                      focusedBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
+                                      ),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: Colors.black26),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // unit (라운드/화이트 스타일 드롭다운)
+                                DropdownButtonHideUnderline(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(color: Colors.black26),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    child: DropdownButton<int>(
+                                      value: (item['unitKRW'] as int?) ?? 100000,
+                                      dropdownColor: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87),
+                                      style: const TextStyle(color: Colors.black87),
+                                      isDense: true,
+                                      items: const [
+                                        DropdownMenuItem(value: 50000, child: Text('5만', style: TextStyle(color: Colors.black))),
+                                        DropdownMenuItem(value: 100000, child: Text('10만', style: TextStyle(color: Colors.black))),
+                                        DropdownMenuItem(value: 500000, child: Text('50만', style: TextStyle(color: Colors.black))),
+                                      ],
+                                      onChanged: (v) => setState(() { item['unitKRW'] = v ?? 100000; }),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                IconButton(
+                                  onPressed: () => _removeTradeItem(i),
+                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.black54, size: 20),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: _addTradeItem,
+                            icon: const Icon(Icons.add, size: 18, color: Colors.black87),
+                            label: const Text('항목 추가', style: TextStyle(color: Colors.black87)),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.black26),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
