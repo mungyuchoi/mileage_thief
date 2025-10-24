@@ -308,7 +308,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '지점 생성',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
-                            Fluttertoast.showToast(msg: '준비중입니다.');
+                            _showCreateBranchDialog();
                           },
                         ),
                         const SizedBox(height: 12),
@@ -335,7 +335,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
             floatingActionButton: FloatingActionButton(
-              backgroundColor: Colors.black,
+              backgroundColor: const Color(0xFF74512D),
               onPressed: () => setState(() => _giftFabOpen = !_giftFabOpen),
               child: Icon(_giftFabOpen ? Icons.close : Icons.add, color: Colors.white),
             ),
@@ -581,7 +581,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 title: const Text('지점 생성'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Fluttertoast.showToast(msg: '준비중입니다.');
+                  _showCreateBranchDialog();
                 },
               ),
               ListTile(
@@ -603,6 +603,98 @@ class _SearchScreenState extends State<SearchScreen> {
               const SizedBox(height: 6),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showCreateBranchDialog() async {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController linkController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('새 지점 요청', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.black),
+                cursorColor: Color(0xFF74512D),
+                decoration: const InputDecoration(
+                  labelText: '지점 이름',
+                  hintText: '예: 강남점',
+                  labelStyle: TextStyle(color: Color(0xFF74512D)),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: linkController,
+                keyboardType: TextInputType.url,
+                style: const TextStyle(color: Colors.black),
+                cursorColor: Color(0xFF74512D),
+                decoration: const InputDecoration(
+                  labelText: '네이버 링크',
+                  hintText: '예: https://map.naver.com/...',
+                  labelStyle: TextStyle(color: Color(0xFF74512D)),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black26),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소', style: TextStyle(color: Colors.black)),
+            ),
+            TextButton(
+              onPressed: () {
+                final String name = nameController.text.trim();
+                final String link = linkController.text.trim();
+                if (name.isEmpty) {
+                  Fluttertoast.showToast(msg: '지점 이름을 입력해주세요.');
+                  return;
+                }
+                if (link.isEmpty) {
+                  Fluttertoast.showToast(msg: '네이버 링크를 입력해주세요.');
+                  return;
+                }
+                // Firestore에 요청 저장
+                try {
+                  final String uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+                  FirebaseFirestore.instance.collection('branches_request').add({
+                    'createdByUid': uid,
+                    'title': name,
+                    'naverLink': link,
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+                  Navigator.of(context).pop();
+                  Fluttertoast.showToast(msg: '1~2일 정도 운영진 검토하에 지도 및 상품권 판매정보에 추가됩니다.');
+                } catch (e) {
+                  Navigator.of(context).pop();
+                  Fluttertoast.showToast(msg: '요청 저장 중 오류가 발생했습니다.');
+                }
+              },
+              child: const Text('요청', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
         );
       },
     );
