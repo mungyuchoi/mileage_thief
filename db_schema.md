@@ -472,7 +472,7 @@ updatedAt timestamp 수정 시각(자동)
 | `latitude`     | number | 위도                                            |
 | `longitude`    | number | 경도                                            |
 | `address`      | string | 주소                                            |
-
+| `createdByUid  | string | User의 Id                                      |
 
 📂 branches/{branchId}/rates_daily/{dateId}
 

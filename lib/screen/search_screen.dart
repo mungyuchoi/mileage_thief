@@ -23,6 +23,7 @@ import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
+import 'branch/branch_step1.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -308,6 +309,10 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '지점 생성',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const BranchStep1Page()),
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
