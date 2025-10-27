@@ -5,12 +5,12 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
-import 'package:mileage_thief/screen/dan_screen.dart';
+// import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/login_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -20,10 +20,9 @@ import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
 import 'giftcard_map_screen.dart';
 import '../services/notice_preference_service.dart';
-import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
+// import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
-import 'community_post_create_screen_v3.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -309,43 +308,30 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '지점 생성',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
-                            _showCreateBranchDialog();
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        GiftActionPill(
+                          icon: Icons.credit_card_outlined,
+                          label: '카드 생성',
+                          onTap: () {
+                            setState(() => _giftFabOpen = false);
                           },
                         ),
                         const SizedBox(height: 12),
                         GiftActionPill(
                           icon: Icons.call_received_outlined,
-                          label: '구매 정보',
+                          label: '상품권 구매',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CommunityPostCreateScreenV3(
-                                  initialBoardId: 'deal',
-                                  initialBoardName: '적립/카드 혜택',
-                                  initialDealType: 'buy',
-                                ),
-                              ),
-                            );
                           },
                         ),
                         const SizedBox(height: 12),
                         GiftActionPill(
                           icon: Icons.call_made_outlined,
-                          label: '판매 정보',
+                          label: '상품권 판매',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CommunityPostCreateScreenV3(
-                                  initialBoardId: 'deal',
-                                  initialBoardName: '적립/카드 혜택',
-                                  initialDealType: 'sell',
-                                ),
-                              ),
-                            );
                           },
                         ),
                       ],
@@ -398,28 +384,6 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.airlines),
-                      SizedBox(height: 2),
-                      Text('대한항공', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.airlines),
-                      SizedBox(height: 2),
-                      Text('아시아나', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
                       Icon(Icons.settings),
                       SizedBox(height: 2),
                       Text('설정', style: TextStyle(fontSize: 12)),
@@ -445,11 +409,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ? '${_communityNoticeTitle.isNotEmpty ? ' $_communityNoticeTitle' : ''}'
               : _currentIndex == 1
                   ? '상품권'
-                  : _currentIndex == 2
-                      ? '대한항공 마일리지 찾기'
-                      : _currentIndex == 3
-                          ? '아시아나 마일리지 찾기'
-                          : '설정',
+                  : '설정',
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: SizedBox(
@@ -531,28 +491,6 @@ class _SearchScreenState extends State<SearchScreen> {
             icon: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.airlines),
-                SizedBox(height: 2),
-                Text('대한항공', style: TextStyle(fontSize: 12)),
-              ],
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.airlines),
-                SizedBox(height: 2),
-                Text('아시아나', style: TextStyle(fontSize: 12)),
-              ],
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
                 Icon(Icons.settings),
                 SizedBox(height: 2),
                 Text('설정', style: TextStyle(fontSize: 12)),
@@ -573,10 +511,6 @@ class _SearchScreenState extends State<SearchScreen> {
       case 1:
         return const GiftcardMapScreen();
       case 2:
-        return buildDanWidget();
-      case 3:
-        return buildAsianaWidget();
-      case 4:
         return buildSettingsWidget();
       default:
         return const CommunityScreen();
@@ -600,23 +534,27 @@ class _SearchScreenState extends State<SearchScreen> {
                 title: const Text('지점 생성'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  _showCreateBranchDialog();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.call_received_outlined),
-                title: const Text('구매 정보'),
+                leading: const Icon(Icons.credit_card_outlined),
+                title: const Text('카드 생성'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Fluttertoast.showToast(msg: '준비중입니다.');
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.call_made_outlined),
-                title: const Text('판매 정보'),
+                title: const Text('상품권 구매'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Fluttertoast.showToast(msg: '준비중입니다.');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.call_made_outlined),
+                title: const Text('상품권 판매'),
+                onTap: () {
+                  Navigator.pop(ctx);
                 },
               ),
               const SizedBox(height: 6),
@@ -719,22 +657,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget buildAsianaWidget() {
-    return const SingleChildScrollView(
-      child: asiana.AsianaScreen(),
-    );
-  }
-
-  Widget buildDanWidget() {
-    return FutureBuilder<InitializationStatus>(
-      future: _initGoogleMobileAds(),
-      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-        return const SingleChildScrollView(
-          child: SearchDanScreen(),
-        );
-      },
-    );
-  }
+  // 대한항공/아시아나 관련 위젯은 제거되었습니다
 
 
   bool _postLikeNotification = true;
@@ -896,9 +819,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Future<InitializationStatus> _initGoogleMobileAds() {
-    return MobileAds.instance.initialize();
-  }
+  // Google Mobile Ads 초기화는 현재 사용하지 않습니다
 
   Future<void> getVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
