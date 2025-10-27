@@ -56,8 +56,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
-  // deal 게시판 전용 타입 선택: 'buy' | 'sell' (기본값: 'buy')
-  String? _dealType;
+  // deal 게시판 토글 제거에 따라 타입 상태는 사용하지 않습니다
   // 판매 정보 입력용 상태 (선택 사항)
   String? _selectedBranchId;
   String? _selectedBranchName;
@@ -129,27 +128,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       _checkDraftAndPrompt();
     });
     // 초기 진입 시 deal 게시판이면 기본 타입을 설정
-    if (_isDealBoard(widget.initialBoardId, widget.initialBoardName)) {
-      _dealType = (widget.initialDealType == 'sell' || widget.initialDealType == 'buy')
-          ? widget.initialDealType
-          : 'buy';
-      if (_dealType == 'sell') {
-        _ensureBranchesLoaded();
-        _ensureGiftcardsLoaded();
-        if (_tradeItems.isEmpty) {
-          _tradeItems = [
-            {
-              'giftcardId': '',
-              'giftcardName': '',
-              'side': 'sell',
-              'rate': '',
-              'price': '',
-              'unitKRW': 100000,
-            }
-          ];
-        }
-      }
-    }
+    // deal 보드 초기 타입 상태 설정 제거
   }
 
   bool _isDealBoard(String? boardId, String? boardName) {
@@ -763,23 +742,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     }
 
     // 판매 정보일 때 필수 입력 검증: 항목 1개 이상, giftcardId와 rate/price 중 최소 하나 이상 입력
-    if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell') {
-      if (_tradeItems.isEmpty) {
-        Fluttertoast.showToast(msg: "상품권 항목을 1개 이상 입력해주세요");
-        return;
-      }
-      bool invalid = false;
-      for (final it in _tradeItems) {
-        final gid = (it['giftcardId'] ?? '').toString().trim();
-        final rate = (it['rate'] ?? '').toString().trim();
-        final price = (it['price'] ?? '').toString().trim();
-        if (gid.isEmpty || (rate.isEmpty && price.isEmpty)) { invalid = true; break; }
-      }
-      if (invalid) {
-        Fluttertoast.showToast(msg: "각 항목에 상품권, 퍼센트/가격 중 최소 하나를 입력해주세요");
-        return;
-      }
-    }
+    // deal 게시판 판매 항목 관련 유효성 검사는 제거되었습니다
 
     if (_editorController.postData.contentHtml.trim().isEmpty) {
       Fluttertoast.showToast(
@@ -869,16 +832,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
       // 4. Firestore에 저장할 데이터 준비
       Map<String, dynamic> postData;
-      // 제목 가공: deal 게시판이라면 타입 라벨 프리픽스 부착 (중복 방지)
+      // 제목 가공에서 deal 프리픽스는 제거됨
       String finalTitle = _editorController.postData.title.trim();
-      if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName)) {
-        const String buyHeader = '[구매 정보]';
-        const String sellHeader = '[판매 정보]';
-        if (!finalTitle.startsWith(buyHeader) && !finalTitle.startsWith(sellHeader)) {
-          final prefix = (_dealType ?? 'buy') == 'sell' ? '$sellHeader ' : '$buyHeader ';
-          finalTitle = prefix + finalTitle;
-        }
-      }
 
       if (widget.isEditMode) {
         // 수정 모드에서는 HTML 처리
@@ -890,9 +845,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'contentHtml': processedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
-        if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName)) {
-          postData['dealType'] = (_dealType ?? 'buy');
-        }
+        // dealType 저장 제거
       } else {
         // 새 게시글 모드에서는 HTML 처리
         // postNumber 할당: meta/postNumber 문서의 number 필드를 트랜잭션으로 +1
@@ -933,9 +886,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
-        if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName)) {
-          postData['dealType'] = (_dealType ?? 'buy');
-        }
+        // dealType 저장 제거
       }
 
       // 5. Firestore에 저장
@@ -1037,41 +988,6 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       }
 
       // 7. 화면 닫기
-      // 판매 정보라면 서브컬렉션 giftcard 문서 작성 (선택된 값 기반)
-      try {
-        if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell') {
-          final entryId = FirebaseFirestore.instance.collection('tmp').doc().id;
-          final items = _tradeItems.map((it) {
-            return {
-              'giftcardId': (it['giftcardId'] ?? '').toString().trim(),
-              'side': (it['side'] ?? 'sell').toString(),
-              'rate': double.tryParse((it['rate'] ?? '').toString()) ?? 0,
-              'price': int.tryParse((it['price'] ?? '').toString()) ?? 0,
-              'unitKRW': (it['unitKRW'] is int) ? it['unitKRW'] : 100000,
-              if (_selectedLat != null) 'latitude': _selectedLat,
-              if (_selectedLng != null) 'longitude': _selectedLng,
-            };
-          }).toList();
-
-          await FirebaseFirestore.instance
-              .collection('posts')
-              .doc(dateString)
-              .collection('posts')
-              .doc(postId)
-              .collection('giftcard')
-              .doc(entryId)
-              .set({
-            if (_selectedBranchId != null) 'branchId': _selectedBranchId,
-            'trade': 'sell',
-            'items': items,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      } catch (e) {
-        print('giftcard 서브컬렉션 저장 오류: $e');
-      }
-
       Navigator.pop(context, widget.isEditMode ? true : false);
 
     } catch (e) {
@@ -1135,13 +1051,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                         result['boardId'],
                         result['boardName'],
                       );
-                      setState(() {
-                        if (_isDealBoard(result['boardId'] as String?, result['boardName'] as String?)) {
-                          _dealType ??= 'buy';
-                        } else {
-                          _dealType = null;
-                        }
-                      });
+                      setState(() {});
                     }
                   },
                   child: Container(
@@ -1197,245 +1107,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   color: Colors.grey[300],
                 ),
 
-                // deal 게시판 전용: 타입 선택 토글 (구매 정보 / 판매 정보)
-                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName))
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: ToggleButtons(
-                        borderRadius: const BorderRadius.all(Radius.circular(24)),
-                        selectedBorderColor: const Color(0xFF74512D),
-                        fillColor: const Color(0x1A74512D),
-                        constraints: const BoxConstraints(minHeight: 32, minWidth: 84),
-                        isSelected: [
-                          (_dealType ?? 'buy') == 'buy',
-                          (_dealType ?? 'buy') == 'sell',
-                        ],
-                        onPressed: (index) {
-                          setState(() {
-                            _dealType = index == 0 ? 'buy' : 'sell';
-                            if (_dealType == 'sell') {
-                              _ensureBranchesLoaded();
-                              _ensureGiftcardsLoaded();
-                              if (_tradeItems.isEmpty) {
-                                _tradeItems = [
-                                  {
-                                    'giftcardId': '',
-                                    'giftcardName': '',
-                                    'side': 'sell',
-                                    'rate': '',
-                                    'price': '',
-                                    'unitKRW': 100000,
-                                  }
-                                ];
-                              }
-                            }
-                          });
-                        },
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            child: Text('구매 정보', style: TextStyle(color: Colors.black)),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            child: Text('판매 정보', style: TextStyle(color: Colors.black)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                // deal 토글 UI 제거됨
 
-                // deal 게시판 전용: 안내 문구
-                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName))
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        (_dealType ?? 'buy') == 'buy'
-                            ? '상품권 구매 링크 혹은 정보를 공유하는 타입입니다.'
-                            : '특정 상품권 매장에서 얼마에 팔았는지 혹은 판매 정보입니다.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // 판매 정보일 때만: 매장 라벨
-                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell')
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, 6),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('매장', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
-                    ),
-                  ),
-
-                // deal = 판매 정보일 때만: 지점 선택 + 좌표 선택 진입
-                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell')
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openBranchSelectSheet,
-                            icon: const Icon(Icons.store_mall_directory_outlined, size: 18, color: Colors.black87),
-                            label: Text(
-                              _selectedBranchName == null ? '지점 선택(선택 사항)' : _selectedBranchName!,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.black87),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                              side: const BorderSide(color: Colors.black26),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // 판매 정보일 때만: 상품권 항목 입력 (필수 최소 1개)
-                if (_isDealBoard(_editorController.postData.boardId, _editorController.postData.boardName) && (_dealType ?? 'buy') == 'sell')
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('상품권', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
-                        const SizedBox(height: 8),
-                        ...List.generate(_tradeItems.length, (i) {
-                          final item = _tradeItems[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                // giftcard 선택 버튼 (목록에서 선택)
-                                Expanded(
-                                  flex: 32,
-                                  child: OutlinedButton(
-                                    onPressed: () => _openGiftcardSelectSheetForItem(i),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                                      side: const BorderSide(color: Colors.black26),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    ),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        (item['giftcardName'] as String?)?.isNotEmpty == true
-                                            ? '${item['giftcardName']} (${item['giftcardId']})'
-                                            : '상품권 선택',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(color: Colors.black87, fontSize: 13),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // rate
-                                Expanded(
-                                  flex: 22,
-                                  child: TextField(
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    controller: TextEditingController(text: item['rate']?.toString() ?? '')
-                                      ..selection = TextSelection.collapsed(offset: (item['rate']?.toString() ?? '').length),
-                                    onChanged: (v) => item['rate'] = v,
-                                    cursorColor: const Color(0xFF74512D),
-                                    style: const TextStyle(fontSize: 13),
-                                    decoration: const InputDecoration(
-                                      hintText: '퍼센트',
-                                      hintStyle: TextStyle(fontSize: 12, color: Colors.black45),
-                                      focusedBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
-                                      ),
-                                      enabledBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Colors.black26),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // price
-                                Expanded(
-                                  flex: 28,
-                                  child: TextField(
-                                    keyboardType: TextInputType.number,
-                                    controller: TextEditingController(text: item['price']?.toString() ?? '')
-                                      ..selection = TextSelection.collapsed(offset: (item['price']?.toString() ?? '').length),
-                                    onChanged: (v) => item['price'] = v,
-                                    cursorColor: const Color(0xFF74512D),
-                                    style: const TextStyle(fontSize: 13),
-                                    decoration: const InputDecoration(
-                                      hintText: '가격(원)',
-                                      hintStyle: TextStyle(fontSize: 12, color: Colors.black45),
-                                      focusedBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
-                                      ),
-                                      enabledBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Colors.black26),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // unit (라운드/화이트 스타일 드롭다운)
-                                DropdownButtonHideUnderline(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(color: Colors.black26),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    child: DropdownButton<int>(
-                                      value: (item['unitKRW'] as int?) ?? 100000,
-                                      dropdownColor: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87),
-                                      style: const TextStyle(color: Colors.black87),
-                                      isDense: true,
-                                      items: const [
-                                        DropdownMenuItem(value: 50000, child: Text('5만', style: TextStyle(color: Colors.black))),
-                                        DropdownMenuItem(value: 100000, child: Text('10만', style: TextStyle(color: Colors.black))),
-                                        DropdownMenuItem(value: 500000, child: Text('50만', style: TextStyle(color: Colors.black))),
-                                      ],
-                                      onChanged: (v) => setState(() { item['unitKRW'] = v ?? 100000; }),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                IconButton(
-                                  onPressed: () => _removeTradeItem(i),
-                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.black54, size: 20),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                            onPressed: _addTradeItem,
-                            icon: const Icon(Icons.add, size: 18, color: Colors.black87),
-                            label: const Text('항목 추가', style: TextStyle(color: Colors.black87)),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.black26),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                // 중간 안내/매장/지점/상품권 입력 섹션 제거됨
 
                 // 에디터 영역
                 Expanded(

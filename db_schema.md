@@ -227,6 +227,99 @@
 }
 ```
 
+📂 users/{uid}/cards/{cardId}
+
+카드사별 적립 규칙 (사용자 정의)
+
+필드명	타입	설명
+name	string	카드/카드사 이름 (필수)
+creditPerMileKRW	number	신용카드: 1마일 적립에 필요한 금액(원)
+checkPerMileKRW	number	체크카드: 1마일 적립에 필요한 금액(원)
+memo	string	메모(옵션)
+updatedAt	timestamp	수정 시각(자동 갱신)
+```json
+{
+  "name": "롯데",
+  "creditPerMileKRW": 1000,
+  "checkPerMileKRW": 1500,
+  "memo": "백화점 전용",
+  "updatedAt": "2025-10-27T12:00:00Z"
+}
+```
+
+
+cardId는 소문자/숫자/언더바 권장 (예: "lotte_basic")
+
+📂 users/{uid}/lots/{lotId}
+
+구매(로트). 1건 전량, 부분판매 없음
+
+필드명	타입	설명
+faceValue	number	권당 액면가(기본 100000)
+buyDate	timestamp	구매일 (필수)
+payType	string	"신용" | "체크" (필수)
+buyUnit	number	권당 매입가(필수)
+discount	number	자동 저장 = 100 * (1 - buyUnit/faceValue)
+qty	number(int)	수량(필수)
+cardId	string	연결 카드 규칙 ID(필수)
+status	string	"open" 또는 "sold" (판매 완료 시 sold)
+createdAt	timestamp	생성 시각(자동)
+updatedAt	timestamp	수정 시각(자동)
+```json
+{
+  "faceValue": 100000,
+  "buyDate": "2025-03-10T00:00:00Z",
+  "payType": "신용",
+  "buyUnit": 97500,
+  "discount": 2.5,
+  "qty": 10,
+  "cardId": "lotte_basic",
+  "status": "open",
+  "createdAt": "2025-03-10T00:01:00Z",
+  "updatedAt": "2025-03-10T00:01:00Z"
+}
+```
+
+UX: 사용자가 buyUnit 또는 discount 중 하나만 입력해도 서로 자동 계산해서 저장.
+
+📂 users/{uid}/sales/{saleId}
+
+판매. 항상 lot 1건과 1:1 매칭
+
+필드명	타입	설명
+lotId	string	연결된 구매 lot ID (필수)
+sellDate	timestamp	판매일 (필수)
+sellUnit	number	권당 판매가(필수)
+discount	number	자동 저장 = 100 * (1 - sellUnit/faceValue)
+sellTotal	number	자동 = sellUnit * qty
+buyTotal	number	중복 저장(권장) = lot.buyUnit * lot.qty
+qty	number(int)	중복 저장(권장) = lot.qty
+mileRuleUsedPerMileKRW	number	필수. 카드 규칙에서 선택(신용/체크에 따라)
+miles	number	자동 = buyTotal / mileRuleUsedPerMileKRW (규칙 없으면 0)
+profit	number	자동 = sellTotal - buyTotal
+costPerMile	number	자동 = miles==0 ? 0 : -profit/miles
+branchId	string	(옵션) 판매 지점 ID
+createdAt	timestamp	생성 시각(자동)
+updatedAt timestamp 수정 시각(자동)
+
+```json
+{
+  "lotId": "lot_20250310_01",
+  "sellDate": "2025-03-16T00:00:00Z",
+  "sellUnit": 96950,
+  "discount": 3.05,
+  "sellTotal": 969500,
+  "buyTotal": 975000,
+  "qty": 10,
+  "mileRuleUsedPerMileKRW": 1000,
+  "miles": 975,
+  "profit": -5500,
+  "costPerMile": 5.64,
+  "createdAt": "2025-03-16T00:02:00Z",
+  "updatedAt": "2025-03-16T00:02:00Z"
+}
+```
+
 ---
 
 ## 📁 posts/{yyyyMMdd}/posts/{postId}
@@ -327,61 +420,6 @@
   "reportedAt": "2025-06-09T11:12:00Z"
 }
 ```
-
-📝 게시글 연계(서브컬렉션 버전)
-
-경로: posts/{yyyyMMdd}/posts/{postId}/giftcard/{entryId}
-| 필드          | 타입         | 설명                             |
-| ----------- | ---------- | ------------------------------ |
-| `branchId`  | string     | 거래한 지점 ID                      |
-| `trade`     | string     | 게시글의 의도: `buy`(구매), `sell`(판매) |
-| `items`     | array<map> | 상품권별 상세 항목 목록 (아래 참조)          |
-| `createdAt` | timestamp  | 생성 시각                          |
-| `updatedAt` | timestamp  | 수정 시각                          |
-
-items[] 요소 스키마 
-| 필드           | 타입     | 설명                                                                                                           |
-| ------------ | ------ | ------------------------------------------------------------------------------------------------------------ |
-| `giftcardId` | string | 어떤 상품권인지 (`giftcards/{id}`)                                                                                  |
-| `side`       | string | **해당 항목의 시세 방향**: `buy` | `sell`  <br>• `buy` = **지점이 파는 가격**(고객이 살 때) <br>• `sell` = **지점이 사는 가격**(고객이 팔 때) |
-| `rate`       | number | 퍼센트(예: 3.30). 퍼센트가 아닌 경우 0 또는 생략                                                                             |
-| `price`      | number | 원 단위 가격(예: 96700). 가격이 아닌 경우 0 또는 생략                                                                         |
-| `unitKRW`    | number | 권종 기준액(기본 100000)                                                                                            |
-| `latitude`   | number | 위도(선택: 지점과 다를 때만 사용)                                                                                         |
-| `longitude`  | number | 경도(선택)                                                                                                       |
-| `quantity`   | number | 수량(선택)                                                                                                       |
-| `memo`       | string | 항목 메모(선택)                                                                                                    |
-
-// posts/20251019/posts/abc123/giftcard/entry001
-{
-  "branchId": "myeongdong_choego",
-  "trade": "sell",
-  "items": [
-    {
-      "giftcardId": "shinsegae",
-      "side": "sell",
-      "rate": 3.80,
-      "price": 0,
-      "unitKRW": 100000,
-      "quantity": 5
-    },
-    {
-      "giftcardId": "hyundai",
-      "side": "sell",
-      "rate": 3.60,
-      "price": 0,
-      "unitKRW": 100000,
-      "quantity": 3
-    }
-  ],
-  "createdAt": "...",
-  "updatedAt": "..."
-}
-
-지도 마커: branchId로 branches/{branchId}에서 좌표를 읽고, items[0..n] 중 주요 1~2개를 라벨에 요약(예: “신세계 3.8%, 현대 3.6%”).
-정보 화면: 선택한 giftcardId와 side 기준으로 최근 24시간 내 문서의 items[]를 펼쳐서 가격/퍼센트 집계 가능.
-
----
 
 ## 📁 boards/{boardId}
 
