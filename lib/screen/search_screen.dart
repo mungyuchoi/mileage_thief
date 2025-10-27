@@ -24,6 +24,8 @@ import '../services/notice_preference_service.dart';
 import 'giftcard_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../branch/card_step.dart';
+import 'gift/gift_buy_screen.dart';
+import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
 
 // NoticePopupDialog
@@ -336,6 +338,10 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '상품권 구매',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const GiftBuyScreen()),
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -344,6 +350,10 @@ class _SearchScreenState extends State<SearchScreen> {
                           label: '상품권 판매',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const GiftSellScreen()),
+                            );
                           },
                         ),
                       ],
