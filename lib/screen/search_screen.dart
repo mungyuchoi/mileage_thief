@@ -274,11 +274,16 @@ class _SearchScreenState extends State<SearchScreen> {
                   onPressed: _launchOpenChat,
                 ),
               ],
-              bottom: const TabBar(
+              bottom: TabBar(
                 labelColor: Colors.black,
                 unselectedLabelColor: Colors.black54,
                 indicatorColor: Colors.black,
-                tabs: [
+                onTap: (idx) {
+                  if (idx != 0 && _giftFabOpen) {
+                    setState(() { _giftFabOpen = false; });
+                  }
+                },
+                tabs: const [
                   Tab(text: '지도'),
                   Tab(text: '정보'),
                 ],
@@ -334,7 +339,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                         const SizedBox(height: 12),
                         GiftActionPill(
-                          icon: Icons.call_received_outlined,
+                          icon: Icons.shopping_cart_outlined,
                           label: '상품권 구매',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
@@ -346,7 +351,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                         const SizedBox(height: 12),
                         GiftActionPill(
-                          icon: Icons.call_made_outlined,
+                          icon: Icons.attach_money_outlined,
                           label: '상품권 판매',
                           onTap: () {
                             setState(() => _giftFabOpen = false);
@@ -361,10 +366,25 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
               ],
             ),
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: const Color(0xFF74512D),
-              onPressed: () => setState(() => _giftFabOpen = !_giftFabOpen),
-              child: Icon(_giftFabOpen ? Icons.close : Icons.add, color: Colors.white),
+            floatingActionButton: Builder(
+              builder: (context) {
+                final controller = DefaultTabController.of(context);
+                if (controller == null) return const SizedBox.shrink();
+                return AnimatedBuilder(
+                  animation: controller,
+                  builder: (context, _) {
+                    final showFab = controller.index == 0;
+                    return Visibility(
+                      visible: showFab,
+                      child: FloatingActionButton(
+                        backgroundColor: const Color(0xFF74512D),
+                        onPressed: () => setState(() => _giftFabOpen = !_giftFabOpen),
+                        child: Icon(_giftFabOpen ? Icons.close : Icons.add, color: Colors.white),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
             bottomNavigationBar: BottomNavigationBar(
               backgroundColor: Colors.grey[200],

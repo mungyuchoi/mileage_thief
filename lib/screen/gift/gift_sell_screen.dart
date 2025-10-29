@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class GiftSellScreen extends StatefulWidget {
-  const GiftSellScreen({super.key});
+  final String? editSaleId;
+  const GiftSellScreen({super.key, this.editSaleId});
 
   @override
   State<GiftSellScreen> createState() => _GiftSellScreenState();
@@ -21,6 +22,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   bool _saving = false;
   String? _error;
   List<Map<String, dynamic>> _openLots = [];
+  Map<String, dynamic>? _existingSale;
 
   @override
   void initState() {
@@ -28,6 +30,39 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     _loadOpenLots();
     _sellUnitController.addListener(_onSellUnitChanged);
     _discountController.addListener(_onDiscountChanged);
+    if (widget.editSaleId != null) {
+      _loadExistingSale();
+    }
+  }
+
+  Future<void> _loadExistingSale() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || widget.editSaleId == null) return;
+    final saleDoc = await FirebaseFirestore.instance
+        .collection('users').doc(uid).collection('sales').doc(widget.editSaleId).get();
+    if (!saleDoc.exists) return;
+    final sale = saleDoc.data() as Map<String, dynamic>;
+    final lotId = sale['lotId'] as String?;
+    Map<String, dynamic>? lot;
+    if (lotId != null) {
+      final lotDoc = await FirebaseFirestore.instance
+          .collection('users').doc(uid).collection('lots').doc(lotId).get();
+      if (lotDoc.exists) {
+        lot = {'lotId': lotDoc.id, ...lotDoc.data()!};
+      }
+    }
+    setState(() {
+      _existingSale = {'id': saleDoc.id, ...sale};
+      if (lot != null) {
+        _openLots = [lot];
+        _selectedLotId = lot['lotId'] as String?;
+        _selectedLot = lot;
+      }
+      _sellUnitController.text = ((sale['sellUnit'] as num?)?.toInt() ?? 0).toString();
+      _discountController.text = ((sale['discount'] as num?)?.toDouble() ?? 0).toString();
+      final ts = sale['sellDate'];
+      if (ts is Timestamp) _sellDate = ts.toDate();
+    });
   }
 
   Future<void> _loadOpenLots() async {
@@ -163,10 +198,9 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       final profit = sellTotal - buyTotal;
       final costPerMile = miles == 0 ? 0 : (-profit / miles);
 
-      final saleId = 'sale_${DateTime.now().millisecondsSinceEpoch}';
-      await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('sales').doc(saleId)
-          .set({
+      final salesRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('sales');
+      final saleId = widget.editSaleId ?? 'sale_${DateTime.now().millisecondsSinceEpoch}';
+      final payload = {
         'lotId': _selectedLotId,
         'sellDate': Timestamp.fromDate(_sellDate),
         'sellUnit': sellUnit,
@@ -178,16 +212,21 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         'miles': miles,
         'profit': profit,
         'costPerMile': double.parse(costPerMile.toStringAsFixed(2)),
-        'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+      if (widget.editSaleId == null) {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+      }
+      await salesRef.doc(saleId).set(payload, SetOptions(merge: true));
 
-      // lot 상태 sold로 업데이트
-      await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('lots').doc(_selectedLotId)
-          .update({'status': 'sold', 'updatedAt': FieldValue.serverTimestamp()});
+      if (widget.editSaleId == null) {
+        // 신규 저장일 때만 lot 상태 sold 업데이트
+        await FirebaseFirestore.instance
+            .collection('users').doc(uid).collection('lots').doc(_selectedLotId)
+            .update({'status': 'sold', 'updatedAt': FieldValue.serverTimestamp()});
+      }
 
-      Fluttertoast.showToast(msg: '판매가 저장되었습니다.');
+      Fluttertoast.showToast(msg: widget.editSaleId == null ? '판매가 저장되었습니다.' : '판매가 수정되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       Fluttertoast.showToast(msg: '저장 실패: $e');
@@ -204,7 +243,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        title: const Text('상품권 판매', style: TextStyle(color: Colors.black, fontSize: 16)),
+        title: Text(widget.editSaleId == null ? '상품권 판매' : '상품권 판매 수정', style: const TextStyle(color: Colors.black, fontSize: 16)),
       ),
       body: SafeArea(
         child: Column(
@@ -240,7 +279,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                             );
                           })
                           .toList(),
-                      onChanged: (v) => _onLotChanged(v),
+                      onChanged: widget.editSaleId != null ? null : (v) => _onLotChanged(v),
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
@@ -333,7 +372,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              child: Text(widget.editSaleId == null ? '저장' : '수정', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
             ),
           ),
         ),

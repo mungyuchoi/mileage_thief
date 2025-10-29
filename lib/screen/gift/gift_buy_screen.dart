@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class GiftBuyScreen extends StatefulWidget {
-  const GiftBuyScreen({super.key});
+  final String? editLotId;
+  const GiftBuyScreen({super.key, this.editLotId});
 
   @override
   State<GiftBuyScreen> createState() => _GiftBuyScreenState();
@@ -15,6 +16,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   final TextEditingController _buyUnitController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _qtyController = TextEditingController(text: '1');
+  int get _totalBuy => (int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) *
+      (int.tryParse(_buyUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0);
 
   String? _selectedGiftcardId;
   String? _selectedCardId;
@@ -25,6 +28,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   String? _error;
   List<Map<String, dynamic>> _cards = [];
   List<Map<String, dynamic>> _giftcards = [];
+  Map<String, dynamic>? _existingLot;
 
   @override
   void initState() {
@@ -32,6 +36,33 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     _loadCardsAndGiftcards();
     _buyUnitController.addListener(_onBuyUnitChanged);
     _discountController.addListener(_onDiscountChanged);
+    _qtyController.addListener(() => setState(() {}));
+    if (widget.editLotId != null) {
+      _loadExistingLot();
+    }
+  }
+
+  Future<void> _loadExistingLot() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || widget.editLotId == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users').doc(uid).collection('lots').doc(widget.editLotId).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    setState(() {
+      _existingLot = {'id': doc.id, ...data};
+      _selectedGiftcardId = data['giftcardId'] as String?;
+      _selectedCardId = data['cardId'] as String?;
+      _payType = (data['payType'] as String?) ?? '신용';
+      final ts = data['buyDate'];
+      if (ts is Timestamp) {
+        _buyDate = ts.toDate();
+      }
+      _faceValueController.text = ((data['faceValue'] as num?)?.toInt() ?? 100000).toString();
+      _qtyController.text = ((data['qty'] as num?)?.toInt() ?? 1).toString();
+      _buyUnitController.text = ((data['buyUnit'] as num?)?.toInt() ?? 0).toString();
+      _discountController.text = ((data['discount'] as num?)?.toDouble() ?? 0).toString();
+    });
   }
 
   Future<void> _loadCardsAndGiftcards() async {
@@ -126,10 +157,9 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     if (_saving) return;
     setState(() { _saving = true; });
     try {
-      final lotId = 'lot_${DateTime.now().millisecondsSinceEpoch}';
-      await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('lots').doc(lotId)
-          .set({
+      final lotsRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('lots');
+      final targetId = widget.editLotId ?? 'lot_${DateTime.now().millisecondsSinceEpoch}';
+      final data = {
         'faceValue': faceValue,
         'buyDate': Timestamp.fromDate(_buyDate),
         'payType': _payType,
@@ -137,12 +167,15 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         'discount': double.parse(discount.toStringAsFixed(2)),
         'qty': qty,
         'cardId': _selectedCardId,
-        'status': 'open',
+        'status': _existingLot?['status'] ?? 'open',
         'giftcardId': _selectedGiftcardId,
-        'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
-      Fluttertoast.showToast(msg: '구매가 저장되었습니다.');
+      };
+      if (widget.editLotId == null) {
+        data['createdAt'] = FieldValue.serverTimestamp();
+      }
+      await lotsRef.doc(targetId).set(data, SetOptions(merge: true));
+      Fluttertoast.showToast(msg: widget.editLotId == null ? '구매가 저장되었습니다.' : '구매가 수정되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       Fluttertoast.showToast(msg: '저장 실패: $e');
@@ -169,7 +202,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        title: const Text('상품권 구매', style: TextStyle(color: Colors.black, fontSize: 16)),
+        title: Text(widget.editLotId == null ? '상품권 구매' : '상품권 구매 수정', style: const TextStyle(color: Colors.black, fontSize: 16)),
       ),
       body: SafeArea(
         child: Column(
@@ -345,6 +378,11 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                         floatingLabelStyle: TextStyle(color: Color(0xFF74512D)),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text('합계: ${_totalBuy.toString()}원', style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                    ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),
                       Text(_error!, style: const TextStyle(color: Colors.red)),
@@ -360,7 +398,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: SizedBox(
+              child: SizedBox(
             height: 52,
             child: ElevatedButton(
               onPressed: _saving ? null : _save,
@@ -369,7 +407,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text(widget.editLotId == null ? '저장' : '수정', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
             ),
           ),
         ),
