@@ -2,6 +2,7 @@ import UIKit
 import Flutter
 import GoogleSignIn
 import BranchSDK
+import GoogleMaps
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -10,6 +11,13 @@ import BranchSDK
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+    
+    // Google Maps SDK 초기화 (Info.plist의 GMSApiKey 사용)
+    if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String, !apiKey.isEmpty {
+      GMSServices.provideAPIKey(apiKey)
+    } else {
+      print("GMSApiKey not found in Info.plist or is empty.")
+    }
     
     // Google Sign-In 설정 (Branch 초기화 전에 먼저)
     if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),

@@ -122,6 +122,10 @@
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>현재 위치를 지도에 표시하기 위해 위치 접근 권한이 필요합니다.</string>
 
+	<!-- Privacy - Location Always and When In Use Description -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>현재 위치를 지도에 표시하기 위해 위치 접근 권한이 필요합니다.</string>
+
 	<key>NSPhotoLibraryAddUsageDescription</key>
     <string>사진을 저장하기 위해 사진첩 접근 권한이 필요합니다.</string>
 
