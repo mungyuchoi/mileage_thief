@@ -276,6 +276,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert, color: Colors.black54),
+                  color: Colors.white,
                   onSelected: (value) async {
                     switch (value) {
                       case 'manage_cards':

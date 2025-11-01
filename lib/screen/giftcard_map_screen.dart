@@ -26,7 +26,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   bool _locationEnabled = false;
   final Set<Marker> _markers = <Marker>{};
   bool _isLoading = false;
-  late final String _todayId;
+  late final String _monthKey;
   late final double _markerHueBrown; // #73532E
   final Map<String, BitmapDescriptor> _logoIconCache = <String, BitmapDescriptor>{};
   final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
@@ -34,10 +34,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   @override
   void initState() {
     super.initState();
-    _todayId = DateFormat('yyyyMMdd').format(DateTime.now());
+    _monthKey = DateFormat('yyyyMM').format(DateTime.now());
     _markerHueBrown = HSVColor.fromColor(const Color(0xFF73532E)).hue;
     _initLocation();
-    _loadTodayMarkers();
+    _loadMonthlyMarkers();
     // 기본 마커 사용으로 커스텀 로드는 제거
   }
 
@@ -77,7 +77,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
   // 커스텀 마커 로직 제거됨
 
-  Future<void> _loadTodayMarkers() async {
+  Future<void> _loadMonthlyMarkers() async {
     if (_isLoading) return;
     setState(() {
       _isLoading = true;
@@ -97,67 +97,35 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         final ratesRef = FirebaseFirestore.instance
             .collection('branches')
             .doc(doc.id)
-            .collection('rates_daily')
-            .doc(_todayId);
+            .collection('rates_monthly')
+            .doc(_monthKey);
         final ratesDoc = await ratesRef.get();
         if (!ratesDoc.exists) {
-          continue; // 오늘 데이터 없으면 마커 표시 안함
+          continue; // 이번 달 데이터 없으면 마커 표시 안함
         }
 
-        final ratesData = ratesDoc.data() as Map<String, dynamic>?;
-        final Map<String, dynamic>? cards = ratesData?['cards'] != null
-            ? Map<String, dynamic>.from(ratesData!['cards'] as Map)
-            : null;
-        if (cards == null || cards.isEmpty) {
-          continue;
-        }
-
-        // 대표 표시용: buyRate가 가장 높은 상품권 선택
-        String? topCardName;
-        double? topBuyRate;
-        int? topBuyPrice;
-        final List<MapEntry<String, dynamic>> entries = cards.entries.toList();
-        for (final e in entries) {
-          final dynamic v = e.value;
-          if (v is Map) {
-            final dynamic buyRateDyn = v['buyRate'];
-            final dynamic buyPriceDyn = v['buyPrice'];
-            if (buyRateDyn is num && buyPriceDyn is num) {
-              final double r = buyRateDyn.toDouble();
-              final int p = buyPriceDyn.toInt();
-              if (topBuyRate == null || r > topBuyRate) {
-                topBuyRate = r;
-                topBuyPrice = p;
-                topCardName = e.key;
-              }
-            }
-          }
-        }
-
-        if (topCardName == null || topBuyRate == null || topBuyPrice == null) {
-          continue;
-        }
+        final Map<String, dynamic> ratesData = Map<String, dynamic>.from(ratesDoc.data() as Map);
+        final Map<String, dynamic>? firstUser = (ratesData['firstUser'] is Map) ? Map<String, dynamic>.from(ratesData['firstUser'] as Map) : null;
+        final List<dynamic> users = (ratesData['users'] is List) ? List<dynamic>.from(ratesData['users'] as List) : <dynamic>[];
 
         final String branchName = (data['name'] as String?) ?? doc.id;
-        final String snippet = '${_toDisplayCardName(topCardName)} ${topBuyRate.toStringAsFixed(2)}%  ${_formatCurrency(topBuyPrice)}';
-        final String dateLabel = _formatDateId((ratesData?['date'] as String?) ?? _todayId);
-        final String? updatedText = _extractUpdatedText(ratesData);
+        final String snippet = (firstUser != null)
+            ? '${firstUser['displayName'] ?? '판매왕'} ${_formatCurrency(((firstUser['sellTotal'] as num?)?.toInt() ?? 0))}'
+            : '이달 판매 데이터 없음';
 
         final LatLng position = LatLng(lat, lng);
         Marker _buildMarker(BitmapDescriptor icon, {bool customAnchor = false}) {
           return Marker(
             markerId: MarkerId(doc.id),
             position: position,
-            infoWindow: InfoWindow(title: '$branchName (상품권 매입)', snippet: snippet),
+            infoWindow: InfoWindow(title: '$branchName (이달 판매왕)', snippet: snippet),
             icon: icon,
             anchor: customAnchor ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
             onTap: () {
               _showBranchBottomSheet(
                 branchId: doc.id,
                 branchData: data,
-                cards: cards,
-                dateLabel: dateLabel,
-                updatedText: updatedText,
+                monthData: ratesData,
               );
             },
           );
@@ -168,10 +136,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         );
         newMarkers.add(marker);
 
-        // 로고가 있다면 비동기로 원형 마커 로딩 후 교체
-        final String? logoUrl = data['logoUrl'] as String?;
-        if (logoUrl != null && logoUrl.isNotEmpty) {
-          _getCircleMarkerFromUrl(logoUrl).then((BitmapDescriptor icon) {
+        // firstUser의 photoUrl로 커스텀 마커 로딩 후 교체 (없으면 지점 로고 사용)
+        final String? markerPhoto = (firstUser?['photoUrl'] as String?) ?? data['logoUrl'] as String?;
+        if (markerPhoto != null && markerPhoto.isNotEmpty) {
+          _getCircleMarkerFromUrl(markerPhoto).then((BitmapDescriptor icon) {
             if (!mounted) return;
             setState(() {
               _markers.removeWhere((m) => m.markerId.value == doc.id);
@@ -321,9 +289,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   void _showBranchBottomSheet({
     required String branchId,
     required Map<String, dynamic> branchData,
-    required Map<String, dynamic> cards,
-    required String dateLabel,
-    String? updatedText,
+    required Map<String, dynamic> monthData,
   }) {
     final String name = (branchData['name'] as String?) ?? branchId;
     final String? phone = branchData['phone'] as String?;
@@ -333,13 +299,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     final String? notice = branchData['notice'] as String?;
     final String? address = branchData['address'] as String?;
 
-    // 카드 정보를 buyRate 내림차순 정렬
-    final List<MapEntry<String, dynamic>> sortedCards = cards.entries.where((e) => e.value is Map).toList()
-      ..sort((a, b) {
-        final double ar = ((a.value as Map)['buyRate'] is num) ? ((a.value as Map)['buyRate'] as num).toDouble() : -9999;
-        final double br = ((b.value as Map)['buyRate'] is num) ? ((b.value as Map)['buyRate'] as num).toDouble() : -9999;
-        return br.compareTo(ar);
-      });
+    final Map<String, dynamic>? firstUser = (monthData['firstUser'] is Map) ? Map<String, dynamic>.from(monthData['firstUser'] as Map) : null;
+    final Map<String, dynamic>? secondUser = (monthData['secondUser'] is Map) ? Map<String, dynamic>.from(monthData['secondUser'] as Map) : null;
+    final Map<String, dynamic>? thirdUser = (monthData['thirdUser'] is Map) ? Map<String, dynamic>.from(monthData['thirdUser'] as Map) : null;
+    final List<dynamic> users = (monthData['users'] is List) ? List<dynamic>.from(monthData['users'] as List) : <dynamic>[];
+    final String monthLabel = DateFormat('yyyy.MM').format(DateTime.now());
 
     showModalBottomSheet(
       context: context,
@@ -405,10 +369,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          updatedText != null ? '$dateLabel (업데이트 $updatedText)' : '$dateLabel (업데이트 날짜)',
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
+                        Text('$monthLabel 기준', style: const TextStyle(fontSize: 12, color: Colors.black54)),
                       ],
                     ),
                   ],
@@ -450,31 +411,41 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: const [
-                    Text('오늘 매입가', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('이달의 판매왕', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _TopThreeRow(first: firstUser, second: secondUser, third: thirdUser),
+                const SizedBox(height: 16),
+                Row(
+                  children: const [
+                    Text('랭킹', style: TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Flexible(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 320),
+                    constraints: const BoxConstraints(maxHeight: 360),
                     child: ListView.separated(
                       shrinkWrap: true,
-                      itemCount: sortedCards.length,
+                      itemCount: users.length,
                       separatorBuilder: (_, __) => const Divider(height: 12),
                       itemBuilder: (context, index) {
-                        final entry = sortedCards[index];
-                        final String cardName = _toDisplayCardName(entry.key);
-                        final Map v = entry.value as Map;
-                        final double? buyRate = (v['buyRate'] is num) ? (v['buyRate'] as num).toDouble() : null;
-                        final int? buyPrice = (v['buyPrice'] is num) ? (v['buyPrice'] as num).toInt() : null;
-                        if (buyRate == null || buyPrice == null) {
-                          return const SizedBox.shrink();
-                        }
+                        final Map u = Map<String, dynamic>.from(users[index] as Map);
+                        final String nameLabel = (u['displayName'] as String?) ?? '익명';
+                        final String? p = u['photoUrl'] as String?;
+                        final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
                         return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(cardName),
-                            Text('${buyRate.toStringAsFixed(2)}%  ${_formatCurrency(buyPrice)}'),
+                            Container(
+                              width: 28,
+                              alignment: Alignment.center,
+                              child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                            ),
+                            CircleAvatar(radius: 14, backgroundImage: (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(nameLabel, style: const TextStyle(color: Colors.black87))),
+                            Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
                           ],
                         );
                       },
@@ -528,6 +499,50 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             }
           },
         ),
+      ],
+    );
+  }
+}
+
+class _TopThreeRow extends StatelessWidget {
+  final Map<String, dynamic>? first;
+  final Map<String, dynamic>? second;
+  final Map<String, dynamic>? third;
+  const _TopThreeRow({this.first, this.second, this.third});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget cell(Map<String, dynamic>? u, String medal, Color color) {
+      final String name = (u?['displayName'] as String?) ?? '-';
+      final String? p = u?['photoUrl'] as String?;
+      final int total = (u?['sellTotal'] as num?)?.toInt() ?? 0;
+      return Expanded(
+        child: Column(
+          children: [
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                CircleAvatar(radius: 24, backgroundImage: (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+                  child: Text(medal, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(name, overflow: TextOverflow.ellipsis),
+            Text(NumberFormat('#,###').format(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        cell(second, '2위', const Color(0xFFB0BEC5)),
+        cell(first, '1위', const Color(0xFFFFD700)),
+        cell(third, '3위', const Color(0xFFCD7F32)),
       ],
     );
   }
