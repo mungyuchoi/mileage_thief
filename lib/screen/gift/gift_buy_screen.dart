@@ -82,8 +82,28 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
             .map((d) => {'giftcardId': d.id, ...d.data()})
             .toList()
           ..sort((a, b) => ((a['sortOrder'] ?? 999) as int).compareTo((b['sortOrder'] ?? 999) as int));
-        if (_cards.isNotEmpty) _selectedCardId = _cards.first['cardId'] as String?;
-        if (_giftcards.isNotEmpty) _selectedGiftcardId = _giftcards.first['giftcardId'] as String?;
+
+        // 편집 모드에서 기존 값이 있으면 그대로 유지하고,
+        // 없다면 목록의 첫 항목으로 기본 선택 설정
+        if (_cards.isNotEmpty) {
+          final bool hasExisting = _selectedCardId != null &&
+              _cards.any((c) => c['cardId'] == _selectedCardId);
+          if (!hasExisting) {
+            _selectedCardId = _cards.first['cardId'] as String?;
+          }
+        } else {
+          _selectedCardId = null;
+        }
+
+        if (_giftcards.isNotEmpty) {
+          final bool hasExisting = _selectedGiftcardId != null &&
+              _giftcards.any((g) => g['giftcardId'] == _selectedGiftcardId);
+          if (!hasExisting) {
+            _selectedGiftcardId = _giftcards.first['giftcardId'] as String?;
+          }
+        } else {
+          _selectedGiftcardId = null;
+        }
       });
     } catch (_) {}
   }

@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class CardStepPage extends StatefulWidget {
-  const CardStepPage({super.key});
+  final String? editCardId;
+  const CardStepPage({super.key, this.editCardId});
 
   @override
   State<CardStepPage> createState() => _CardStepPageState();
@@ -19,6 +20,31 @@ class _CardStepPageState extends State<CardStepPage> {
 
   String? _error;
   bool _saving = false;
+  bool get _isEdit => widget.editCardId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEdit) {
+      _loadExisting();
+    }
+  }
+
+  Future<void> _loadExisting() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final id = widget.editCardId!;
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').doc(id).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    setState(() {
+      _cardIdController.text = id;
+      _nameController.text = (data['name'] as String?) ?? '';
+      _creditPerMileController.text = ((data['creditPerMileKRW'] as num?)?.toInt() ?? 0).toString();
+      _checkPerMileController.text = ((data['checkPerMileKRW'] as num?)?.toInt() ?? 0).toString();
+      _memoController.text = (data['memo'] as String?) ?? '';
+    });
+  }
 
   @override
   void dispose() {
@@ -48,12 +74,12 @@ class _CardStepPageState extends State<CardStepPage> {
       return;
     }
 
-    final cardId = _cardIdController.text.trim();
+    final cardId = (_isEdit ? widget.editCardId! : _cardIdController.text.trim());
     final name = _nameController.text.trim();
     final credit = _parseInt(_creditPerMileController.text.trim());
     final check = _parseInt(_checkPerMileController.text.trim());
 
-    if (cardId.isEmpty || !RegExp(r'^[a-z0-9_]+$').hasMatch(cardId)) {
+    if (cardId.isEmpty || !_isEdit && !RegExp(r'^[a-z0-9_]+$').hasMatch(cardId)) {
       setState(() { _error = 'cardId는 소문자/숫자/_ 만 사용하세요.'; });
       return;
     }
@@ -104,6 +130,7 @@ class _CardStepPageState extends State<CardStepPage> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        title: Text(_isEdit ? '카드 수정' : '카드 생성', style: const TextStyle(color: Colors.black, fontSize: 16)),
       ),
       body: SafeArea(
         child: Column(
@@ -146,6 +173,7 @@ class _CardStepPageState extends State<CardStepPage> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _cardIdController,
+                      readOnly: _isEdit,
                       decoration: InputDecoration(
                         hintText: '예: lotte_basic',
                         filled: true, fillColor: Colors.white,

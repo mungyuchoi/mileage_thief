@@ -23,6 +23,7 @@ import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
+import '../branch/card_manage.dart';
 import '../branch/card_step.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
@@ -272,6 +273,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 IconButton(
                   icon: const Icon(Icons.chat, color: Colors.black54),
                   onPressed: _launchOpenChat,
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.black54),
+                  onSelected: (value) async {
+                    switch (value) {
+                      case 'manage_cards':
+                        await Navigator.push(context, MaterialPageRoute(builder: (_) => const CardManagePage()));
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'manage_cards',
+                      child: Text('카드 관리'),
+                    ),
+                  ],
                 ),
               ],
               bottom: TabBar(
