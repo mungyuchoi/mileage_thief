@@ -112,6 +112,19 @@ class _CardStepPageState extends State<CardStepPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+      // 사용자 문서에 hasGift 필드가 없으면 true로 세팅 (있으면 패스)
+      try {
+        final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+        final snap = await userRef.get();
+        final Map<String, dynamic>? userData = snap.data() as Map<String, dynamic>?;
+        final bool hasField = userData != null && userData.containsKey('hasGift');
+        if (!hasField) {
+          await userRef.set({
+            'hasGift': true,
+          }, SetOptions(merge: true));
+        }
+      } catch (_) {}
+
       Fluttertoast.showToast(msg: '카드가 저장되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
