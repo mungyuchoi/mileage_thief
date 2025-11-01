@@ -391,13 +391,38 @@ class _SearchScreenState extends State<SearchScreen> {
                   animation: controller,
                   builder: (context, _) {
                     final showFab = controller.index == 0;
-                    return Visibility(
-                      visible: showFab,
-                      child: FloatingActionButton(
+                    if (!showFab) return const SizedBox.shrink();
+
+                    final user = FirebaseAuth.instance.currentUser;
+                    // 로그인 안된 경우: 로그인 유도 FAB 노출
+                    if (user == null) {
+                      return FloatingActionButton(
                         backgroundColor: const Color(0xFF74512D),
-                        onPressed: () => setState(() => _giftFabOpen = !_giftFabOpen),
-                        child: Icon(_giftFabOpen ? Icons.close : Icons.add, color: Colors.white),
-                      ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          );
+                        },
+                        child: const Icon(Icons.login, color: Colors.white),
+                      );
+                    }
+
+                    // 로그인 된 경우: 차단 상태를 구독하여 차단이면 FAB 숨김
+                    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user.uid)
+                          .snapshots(),
+                      builder: (context, snap) {
+                        final banned = (snap.data?.data()?['isBanned'] as bool?) ?? false;
+                        if (banned) return const SizedBox.shrink();
+                        return FloatingActionButton(
+                          backgroundColor: const Color(0xFF74512D),
+                          onPressed: () => setState(() => _giftFabOpen = !_giftFabOpen),
+                          child: Icon(_giftFabOpen ? Icons.close : Icons.add, color: Colors.white),
+                        );
+                      },
                     );
                   },
                 );
