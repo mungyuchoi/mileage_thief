@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'gift/gift_buy_screen.dart';
@@ -78,6 +80,58 @@ class _InfoPill extends StatelessWidget {
           ],
           Text(text, style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+}
+
+class _GiftBanner extends StatefulWidget {
+  final String adUnitId;
+  const _GiftBanner({required this.adUnitId});
+  @override
+  State<_GiftBanner> createState() => _GiftBannerState();
+}
+
+class _GiftBannerState extends State<_GiftBanner> {
+  BannerAd? _ad;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ad = BannerAd(
+      adUnitId: widget.adUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) => setState(() => _loaded = true),
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          setState(() => _loaded = false);
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _ad?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded || _ad == null) {
+      return const SizedBox.shrink();
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: Center(
+        child: SizedBox(
+          width: _ad!.size.width.toDouble(),
+          height: _ad!.size.height.toDouble(),
+          child: AdWidget(ad: _ad!),
+        ),
       ),
     );
   }
@@ -235,6 +289,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
               const SizedBox(width: 8),
               Expanded(child: _KpiValue(label: '보유 잔여(미판매)', value: _fmtWon(_remainingBuyTotal()), icon: Icons.account_balance_wallet_outlined)),
             ],
+          ),
+
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _GiftBanner(adUnitId: AdHelper.giftDashboardBannerAdUnitId),
           ),
 
           const SizedBox(height: 20),
@@ -658,6 +718,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
           ),
         ),
         const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _GiftBanner(adUnitId: AdHelper.giftCalendarBannerAdUnitId),
+        ),
+        const SizedBox(height: 8),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -755,81 +820,92 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
         return getTime(b).compareTo(getTime(a));
       });
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, i) {
-        final m = items[i];
-        final isSale = m['type'] == 'sale';
-        final ts = isSale ? m['sellDate'] : m['buyDate'];
-        final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
-        final brand = (m['giftcardId'] as String?) ?? '';
-        final qty = (m['qty'] ?? 0) as int;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, i) {
+              final m = items[i];
+              final isSale = m['type'] == 'sale';
+              final ts = isSale ? m['sellDate'] : m['buyDate'];
+              final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
+              final brand = (m['giftcardId'] as String?) ?? '';
+              final qty = (m['qty'] ?? 0) as int;
 
-        return GestureDetector(
-          onLongPress: () async {
-            if (isSale) {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
-              );
-            } else {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
-              );
-            }
-            if (mounted) _load();
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black12),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _InfoPill(text: isSale ? '판매' : '구매', icon: isSale ? Icons.attach_money_outlined : Icons.shopping_cart_outlined, filled: true),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '$brand $qty장',
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (isSale) ...[
-                      _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
-                      _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
-                      _InfoPill(icon: Icons.today_outlined, text: date),
-                    ] else ...[
-                      _InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                      _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
-                      _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
-                      _InfoPill(icon: Icons.today_outlined, text: date),
+              return GestureDetector(
+                onLongPress: () async {
+                  if (isSale) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
+                    );
+                  } else {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
+                    );
+                  }
+                  if (mounted) _load();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black12),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
                     ],
-                  ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _InfoPill(text: isSale ? '판매' : '구매', icon: isSale ? Icons.attach_money_outlined : Icons.shopping_cart_outlined, filled: true),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '$brand $qty장',
+                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (isSale) ...[
+                            _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                            _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                            _InfoPill(icon: Icons.today_outlined, text: date),
+                          ] else ...[
+                            _InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                            _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
+                            _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
+                            _InfoPill(icon: Icons.today_outlined, text: date),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 

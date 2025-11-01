@@ -208,4 +208,67 @@ class AdHelper {
       }
     }
   }
+
+  // 상품권 대시보드 배너 광고
+  static String get giftDashboardBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/1607996684';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/3952471881';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/2934735716';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/6300978111';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
+
+  // 상품권 캘린더 배너 광고
+  static String get giftCalendarBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/8532497685';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/4471346635';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/2934735716';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/6300978111';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
+
+  // 상품권 일간 배너 광고
+  static String get giftDailyBannerAdUnitId {
+    if (kReleaseMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-8549606613390169/6724591997';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-8549606613390169/2987585010';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/2934735716';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/6300978111';
+      } else {
+        throw new UnsupportedError('Unsupported platform');
+      }
+    }
+  }
 }
