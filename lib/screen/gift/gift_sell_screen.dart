@@ -255,6 +255,23 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
             .update({'status': 'sold', 'updatedAt': FieldValue.serverTimestamp()});
       }
 
+      // 지점 선택 시 월간 랭킹 반영
+      if (_selectedBranchId != null && _selectedBranchId!.isNotEmpty) {
+        final monthKey = '${_sellDate.year}${_sellDate.month.toString().padLeft(2, '0')}';
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userData = userDoc.data() as Map<String, dynamic>?;
+        final displayName = (userData?['displayName'] as String?) ?? (userData?['email'] as String?) ?? '익명';
+        final photoUrl = (userData?['photoURL'] as String?) ?? '';
+        await _updateBranchMonthlyRanking(
+          branchId: _selectedBranchId!,
+          monthKey: monthKey,
+          uid: uid,
+          displayName: displayName,
+          photoUrl: photoUrl,
+          addSellTotal: sellTotal,
+        );
+      }
+
       Fluttertoast.showToast(msg: widget.editSaleId == null ? '판매가 저장되었습니다.' : '판매가 수정되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -262,6 +279,86 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     } finally {
       if (mounted) setState(() { _saving = false; });
     }
+  }
+
+  Future<void> _updateBranchMonthlyRanking({
+    required String branchId,
+    required String monthKey,
+    required String uid,
+    required String displayName,
+    required String photoUrl,
+    required int addSellTotal,
+  }) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('branches')
+        .doc(branchId)
+        .collection('rates_monthly')
+        .doc(monthKey);
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      List<dynamic> users = [];
+      if (snap.exists) {
+        final data = snap.data() as Map<String, dynamic>;
+        final raw = data['users'];
+        if (raw is List) users = List<dynamic>.from(raw);
+      }
+
+      int index = -1;
+      for (int i = 0; i < users.length; i++) {
+        final e = users[i];
+        if (e is Map && (e['uid'] as String?) == uid) { index = i; break; }
+      }
+
+      if (index >= 0) {
+        final cur = Map<String, dynamic>.from(users[index] as Map);
+        final curTotal = (cur['sellTotal'] as num?)?.toInt() ?? 0;
+        cur['sellTotal'] = curTotal + addSellTotal;
+        cur['displayName'] = displayName;
+        cur['photoUrl'] = photoUrl;
+        users[index] = cur;
+      } else {
+        users.add({
+          'uid': uid,
+          'displayName': displayName,
+          'photoUrl': photoUrl,
+          'sellTotal': addSellTotal,
+        });
+      }
+
+      // 정렬 및 Top3 산출
+      users.sort((a, b) {
+        final av = (a is Map && a['sellTotal'] is num) ? (a['sellTotal'] as num).toInt() : 0;
+        final bv = (b is Map && b['sellTotal'] is num) ? (b['sellTotal'] as num).toInt() : 0;
+        return bv.compareTo(av);
+      });
+
+      Map<String, dynamic>? toTop(int i) {
+        if (i >= users.length) return null;
+        final m = users[i] as Map;
+        return {
+          'uid': m['uid'],
+          'displayName': m['displayName'],
+          'photoUrl': m['photoUrl'],
+          'sellTotal': m['sellTotal'],
+        } as Map<String, dynamic>;
+      }
+
+      final update = <String, dynamic>{
+        'users': users,
+        'firstUser': toTop(0),
+        'secondUser': toTop(1),
+        'thirdUser': toTop(2),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (snap.exists) {
+        tx.update(docRef, update);
+      } else {
+        update['createdAt'] = FieldValue.serverTimestamp();
+        tx.set(docRef, update);
+      }
+    });
   }
 
   @override
