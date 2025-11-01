@@ -23,11 +23,16 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   String? _error;
   List<Map<String, dynamic>> _openLots = [];
   Map<String, dynamic>? _existingSale;
+  // 지점 선택
+  List<Map<String, dynamic>> _branches = [];
+  bool _branchesLoading = false;
+  String? _selectedBranchId;
 
   @override
   void initState() {
     super.initState();
     _loadOpenLots();
+    _loadBranches();
     _sellUnitController.addListener(_onSellUnitChanged);
     _discountController.addListener(_onDiscountChanged);
     if (widget.editSaleId != null) {
@@ -58,6 +63,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         _selectedLotId = lot['lotId'] as String?;
         _selectedLot = lot;
       }
+      _selectedBranchId = sale['branchId'] as String?;
       _sellUnitController.text = ((sale['sellUnit'] as num?)?.toInt() ?? 0).toString();
       _discountController.text = ((sale['discount'] as num?)?.toDouble() ?? 0).toString();
       final ts = sale['sellDate'];
@@ -81,6 +87,26 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         }
       });
     } catch (_) {}
+  }
+
+  Future<void> _loadBranches() async {
+    if (_branchesLoading || _branches.isNotEmpty) return;
+    setState(() { _branchesLoading = true; });
+    try {
+      final snap = await FirebaseFirestore.instance.collection('branches').get();
+      final list = snap.docs.map((d) {
+        final data = d.data();
+        return {
+          'id': d.id,
+          'name': (data['name'] as String?) ?? d.id,
+        };
+      }).toList()
+        ..sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+      setState(() { _branches = list; });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() { _branchesLoading = false; });
+    }
   }
 
   void _onLotChanged(String? lotId) {
@@ -214,6 +240,9 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         'costPerMile': double.parse(costPerMile.toStringAsFixed(2)),
         'updatedAt': FieldValue.serverTimestamp(),
       };
+      if (_selectedBranchId != null && _selectedBranchId!.isNotEmpty) {
+        payload['branchId'] = _selectedBranchId;
+      }
       if (widget.editSaleId == null) {
         payload['createdAt'] = FieldValue.serverTimestamp();
       }
@@ -348,6 +377,30 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                       const SizedBox(height: 4),
                       Text('예상 손익: ${_sellTotal() - _buyTotal()}원'),
                     ],
+                    const SizedBox(height: 16),
+                    const Text('지점 (선택)', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String?>(
+                      value: _selectedBranchId,
+                      dropdownColor: Colors.white,
+                      style: const TextStyle(color: Colors.black),
+                      iconEnabledColor: Colors.black54,
+                      items: [
+                        const DropdownMenuItem<String?>(value: null, child: Text('선택 안 함', style: TextStyle(color: Colors.black))),
+                        ..._branches.map((b) => DropdownMenuItem<String?>(
+                              value: b['id'] as String,
+                              child: Text(b['name'] as String, style: const TextStyle(color: Colors.black)),
+                            )),
+                      ],
+                      onChanged: (v) => setState(() => _selectedBranchId = v),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 1.5)),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),
                       Text(_error!, style: const TextStyle(color: Colors.red)),
