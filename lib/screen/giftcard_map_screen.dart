@@ -105,8 +105,38 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         }
 
         final Map<String, dynamic> ratesData = Map<String, dynamic>.from(ratesDoc.data() as Map);
-        final Map<String, dynamic>? firstUser = (ratesData['firstUser'] is Map) ? Map<String, dynamic>.from(ratesData['firstUser'] as Map) : null;
-        final List<dynamic> users = (ratesData['users'] is List) ? List<dynamic>.from(ratesData['users'] as List) : <dynamic>[];
+        final List<dynamic> saleUsers = (ratesData['users'] is List) ? List<dynamic>.from(ratesData['users'] as List) : <dynamic>[];
+
+        // uid별 합산으로 랭킹 계산
+        final Map<String, Map<String, dynamic>> agg = {};
+        for (final u in saleUsers) {
+          if (u is! Map) continue;
+          final String uid = (u['uid'] as String?) ?? '';
+          if (uid.isEmpty) continue;
+          final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
+          final String dn = (u['displayName'] as String?) ?? '';
+          final String pu = (u['photoUrl'] as String?) ?? '';
+          final Map<String, dynamic> cur = agg[uid] ?? {'uid': uid, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
+          cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
+          cur['displayName'] = dn;
+          cur['photoUrl'] = pu;
+          agg[uid] = cur;
+        }
+        final List<Map<String, dynamic>> ranked = agg.values.toList()
+          ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
+        final Map<String, dynamic>? firstUser = ranked.isNotEmpty ? ranked[0] : null;
+        final Map<String, dynamic>? secondUser = ranked.length > 1 ? ranked[1] : null;
+        final Map<String, dynamic>? thirdUser = ranked.length > 2 ? ranked[2] : null;
+
+        // 저장된 top3와 다르면 업데이트(베스트 effort)
+        try {
+          final Map<String, dynamic>? f0 = (ratesData['firstUser'] is Map) ? Map<String, dynamic>.from(ratesData['firstUser'] as Map) : null;
+          if (f0?['uid'] != firstUser?['uid'] ||
+              (ratesData['secondUser'] as Map?)?['uid'] != secondUser?['uid'] ||
+              (ratesData['thirdUser'] as Map?)?['uid'] != thirdUser?['uid']) {
+            await ratesRef.set({'firstUser': firstUser, 'secondUser': secondUser, 'thirdUser': thirdUser, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+          }
+        } catch (_) {}
 
         final String branchName = (data['name'] as String?) ?? doc.id;
         final String snippet = (firstUser != null)
@@ -125,7 +155,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
               _showBranchBottomSheet(
                 branchId: doc.id,
                 branchData: data,
-                monthData: ratesData,
+                rankedUsers: ranked,
+                firstUser: firstUser,
+                secondUser: secondUser,
+                thirdUser: thirdUser,
               );
             },
           );
@@ -289,7 +322,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   void _showBranchBottomSheet({
     required String branchId,
     required Map<String, dynamic> branchData,
-    required Map<String, dynamic> monthData,
+    required List<Map<String, dynamic>> rankedUsers,
+    Map<String, dynamic>? firstUser,
+    Map<String, dynamic>? secondUser,
+    Map<String, dynamic>? thirdUser,
   }) {
     final String name = (branchData['name'] as String?) ?? branchId;
     final String? phone = branchData['phone'] as String?;
@@ -299,10 +335,6 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     final String? notice = branchData['notice'] as String?;
     final String? address = branchData['address'] as String?;
 
-    final Map<String, dynamic>? firstUser = (monthData['firstUser'] is Map) ? Map<String, dynamic>.from(monthData['firstUser'] as Map) : null;
-    final Map<String, dynamic>? secondUser = (monthData['secondUser'] is Map) ? Map<String, dynamic>.from(monthData['secondUser'] as Map) : null;
-    final Map<String, dynamic>? thirdUser = (monthData['thirdUser'] is Map) ? Map<String, dynamic>.from(monthData['thirdUser'] as Map) : null;
-    final List<dynamic> users = (monthData['users'] is List) ? List<dynamic>.from(monthData['users'] as List) : <dynamic>[];
     final String monthLabel = DateFormat('yyyy.MM').format(DateTime.now());
 
     showModalBottomSheet(
@@ -428,10 +460,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                     constraints: const BoxConstraints(maxHeight: 360),
                     child: ListView.separated(
                       shrinkWrap: true,
-                      itemCount: users.length,
+                      itemCount: rankedUsers.length,
                       separatorBuilder: (_, __) => const Divider(height: 12),
                       itemBuilder: (context, index) {
-                        final Map u = Map<String, dynamic>.from(users[index] as Map);
+                        final Map u = Map<String, dynamic>.from(rankedUsers[index] as Map);
                         final String nameLabel = (u['displayName'] as String?) ?? '익명';
                         final String? p = u['photoUrl'] as String?;
                         final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;

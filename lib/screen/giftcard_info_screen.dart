@@ -60,15 +60,16 @@ class _InfoPill extends StatelessWidget {
   final String text;
   final IconData? icon;
   final bool filled;
-  const _InfoPill({required this.text, this.icon, this.filled = false});
+  final Color? fillColor;
+  const _InfoPill({required this.text, this.icon, this.filled = false, this.fillColor});
   @override
   Widget build(BuildContext context) {
-    final Color fill = filled ? const Color(0xFF74512D) : const Color(0x1174512D);
-    final Color textColor = filled ? Colors.white : Colors.black87;
+    final Color effectiveFill = fillColor ?? (filled ? const Color(0xFF74512D) : const Color(0x1174512D));
+    final Color textColor = (fillColor != null || filled) ? Colors.white : Colors.black87;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: fill,
+        color: effectiveFill,
         borderRadius: BorderRadius.circular(26),
       ),
       child: Row(
@@ -808,104 +809,143 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
   }
 
   Widget _buildDaily() {
-    final List<Map<String, dynamic>> items = [
-      ..._lots.map((e) => {...e, 'type': 'lot'}),
-      ..._sales.map((e) => {...e, 'type': 'sale'}),
-    ]..sort((a, b) {
-        DateTime getTime(Map<String, dynamic> x) {
-          final ts = x['type'] == 'sale' ? x['sellDate'] : x['buyDate'];
-          if (ts is Timestamp) return ts.toDate();
-          return DateTime.fromMillisecondsSinceEpoch(0);
-        }
-        return getTime(b).compareTo(getTime(a));
-      });
+    final List<Map<String, dynamic>> lots = List<Map<String, dynamic>>.from(_lots.map((e) => {...e}));
+    final List<Map<String, dynamic>> sales = List<Map<String, dynamic>>.from(_sales.map((e) => {...e}));
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, i) {
-              final m = items[i];
-              final isSale = m['type'] == 'sale';
-              final ts = isSale ? m['sellDate'] : m['buyDate'];
-              final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
-              final brand = (m['giftcardId'] as String?) ?? '';
-              final qty = (m['qty'] ?? 0) as int;
+    DateTime tsOf(Map<String, dynamic> x, {required bool sale}) {
+      final ts = sale ? x['sellDate'] : x['buyDate'];
+      if (ts is Timestamp) return ts.toDate();
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    lots.sort((a, b) => tsOf(b, sale: false).compareTo(tsOf(a, sale: false)));
+    sales.sort((a, b) => tsOf(b, sale: true).compareTo(tsOf(a, sale: true)));
 
-              return GestureDetector(
-                onLongPress: () async {
-                  if (isSale) {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
-                    );
-                  } else {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
-                    );
-                  }
-                  if (mounted) _load();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _InfoPill(text: isSale ? '판매' : '구매', icon: isSale ? Icons.attach_money_outlined : Icons.shopping_cart_outlined, filled: true),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '$brand $qty장',
-                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (isSale) ...[
-                            _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
-                            _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
-                            _InfoPill(icon: Icons.today_outlined, text: date),
-                          ] else ...[
-                            _InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                            _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
-                            _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
-                            _InfoPill(icon: Icons.today_outlined, text: date),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+    Widget lotTile(Map m) {
+      final String date = (m['buyDate'] is Timestamp) ? _yMd.format((m['buyDate'] as Timestamp).toDate()) : '';
+      final String brand = (m['giftcardId'] as String?) ?? '';
+      final int qty = (m['qty'] ?? 0) as int;
+      final bool sold = (m['status'] as String?) == 'sold';
+      final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
+      return GestureDetector(
+        onLongPress: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
+          );
+          if (mounted) _load();
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black12),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                _InfoPill(text: '구매', icon: Icons.shopping_cart_outlined, filled: true, fillColor: buyColor),
+                const SizedBox(width: 8),
+                Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+              ]),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                  _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
+                  _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
+                  _InfoPill(icon: Icons.today_outlined, text: date),
+                ],
+              ),
+            ],
           ),
         ),
-      ],
+      );
+    }
+
+    Widget saleTile(Map m) {
+      final String date = (m['sellDate'] is Timestamp) ? _yMd.format((m['sellDate'] as Timestamp).toDate()) : '';
+      final String brand = (m['giftcardId'] as String?) ?? '';
+      final int qty = (m['qty'] ?? 0) as int;
+      return GestureDetector(
+        onLongPress: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
+          );
+          if (mounted) _load();
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black12),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const _InfoPill(text: '판매', icon: Icons.attach_money_outlined, filled: true),
+                const SizedBox(width: 8),
+                Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+              ]),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                  _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                  _InfoPill(icon: Icons.today_outlined, text: date),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          const TabBar(
+            labelColor: Colors.black,
+            unselectedLabelColor: Colors.black54,
+            tabs: [Tab(text: '구매'), Tab(text: '판매')],
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: TabBarView(
+              children: [
+                ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: lots.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) => lotTile({...lots[i], 'id': lots[i]['id']}),
+                ),
+                ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: sales.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) => saleTile({...sales[i], 'id': sales[i]['id']}),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

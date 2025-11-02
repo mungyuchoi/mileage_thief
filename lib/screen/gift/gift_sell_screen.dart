@@ -268,7 +268,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           uid: uid,
           displayName: displayName,
           photoUrl: photoUrl,
-          addSellTotal: sellTotal,
+          saleId: saleId,
+          saleTotal: sellTotal,
         );
       }
 
@@ -287,7 +288,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     required String uid,
     required String displayName,
     required String photoUrl,
-    required int addSellTotal,
+    required String saleId,
+    required int saleTotal,
   }) async {
     final docRef = FirebaseFirestore.instance
         .collection('branches')
@@ -304,45 +306,44 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         if (raw is List) users = List<dynamic>.from(raw);
       }
 
+      // sale 단위 행 삽입/수정 (중복 방지: uid + saleId)
       int index = -1;
       for (int i = 0; i < users.length; i++) {
         final e = users[i];
-        if (e is Map && (e['uid'] as String?) == uid) { index = i; break; }
+        if (e is Map && (e['uid'] as String?) == uid && (e['saleId'] as String?) == saleId) { index = i; break; }
       }
-
+      final entry = {
+        'uid': uid,
+        'displayName': displayName,
+        'photoUrl': photoUrl,
+        'saleId': saleId,
+        'sellTotal': saleTotal,
+      };
       if (index >= 0) {
-        final cur = Map<String, dynamic>.from(users[index] as Map);
-        final curTotal = (cur['sellTotal'] as num?)?.toInt() ?? 0;
-        cur['sellTotal'] = curTotal + addSellTotal;
-        cur['displayName'] = displayName;
-        cur['photoUrl'] = photoUrl;
-        users[index] = cur;
+        users[index] = entry;
       } else {
-        users.add({
-          'uid': uid,
-          'displayName': displayName,
-          'photoUrl': photoUrl,
-          'sellTotal': addSellTotal,
-        });
+        users.add(entry);
       }
 
-      // 정렬 및 Top3 산출
-      users.sort((a, b) {
-        final av = (a is Map && a['sellTotal'] is num) ? (a['sellTotal'] as num).toInt() : 0;
-        final bv = (b is Map && b['sellTotal'] is num) ? (b['sellTotal'] as num).toInt() : 0;
-        return bv.compareTo(av);
-      });
-
-      Map<String, dynamic>? toTop(int i) {
-        if (i >= users.length) return null;
-        final m = users[i] as Map;
-        return {
-          'uid': m['uid'],
-          'displayName': m['displayName'],
-          'photoUrl': m['photoUrl'],
-          'sellTotal': m['sellTotal'],
-        } as Map<String, dynamic>;
+      // uid별 합산하여 Top3 산출
+      final Map<String, Map<String, dynamic>> agg = {};
+      for (final u in users) {
+        if (u is! Map) continue;
+        final String uid0 = (u['uid'] as String?) ?? '';
+        if (uid0.isEmpty) continue;
+        final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
+        final String dn = (u['displayName'] as String?) ?? '';
+        final String pu = (u['photoUrl'] as String?) ?? '';
+        final Map<String, dynamic> cur = agg[uid0] ?? {'uid': uid0, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
+        cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
+        cur['displayName'] = dn; // 최신 정보로 업데이트
+        cur['photoUrl'] = pu;
+        agg[uid0] = cur;
       }
+      final List<Map<String, dynamic>> ranked = agg.values.toList()
+        ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
+
+      Map<String, dynamic>? toTop(int i) => (i < ranked.length) ? ranked[i] : null;
 
       final update = <String, dynamic>{
         'users': users,
