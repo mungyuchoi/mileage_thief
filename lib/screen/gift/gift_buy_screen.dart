@@ -23,6 +23,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   String? _selectedCardId;
   String _payType = '신용';
   DateTime _buyDate = DateTime.now();
+  final List<int> _faceValueOptions = [10000, 50000, 100000, 500000];
+  int? _selectedFaceValue = 100000;
 
   bool _saving = false;
   String? _error;
@@ -49,6 +51,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         .collection('users').doc(uid).collection('lots').doc(widget.editLotId).get();
     if (!doc.exists) return;
     final data = doc.data() as Map<String, dynamic>;
+    final faceValue = (data['faceValue'] as num?)?.toInt() ?? 100000;
     setState(() {
       _existingLot = {'id': doc.id, ...data};
       _selectedGiftcardId = data['giftcardId'] as String?;
@@ -58,7 +61,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       if (ts is Timestamp) {
         _buyDate = ts.toDate();
       }
-      _faceValueController.text = ((data['faceValue'] as num?)?.toInt() ?? 100000).toString();
+      _selectedFaceValue = _faceValueOptions.contains(faceValue) ? faceValue : 100000;
+      _faceValueController.text = _selectedFaceValue.toString();
       _qtyController.text = ((data['qty'] as num?)?.toInt() ?? 1).toString();
       _buyUnitController.text = ((data['buyUnit'] as num?)?.toInt() ?? 0).toString();
       _discountController.text = ((data['discount'] as num?)?.toDouble() ?? 0).toString();
@@ -204,6 +208,64 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || widget.editLotId == null) {
+      Fluttertoast.showToast(msg: '삭제할 수 없습니다.');
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          '삭제 확인',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          '이 구매 내역을 삭제하시겠습니까?',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              '취소',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              '삭제',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    if (_saving) return;
+    setState(() { _saving = true; });
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .doc(widget.editLotId)
+          .delete();
+      Fluttertoast.showToast(msg: '구매 내역이 삭제되었습니다.');
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      Fluttertoast.showToast(msg: '삭제 실패: $e');
+    } finally {
+      if (mounted) setState(() { _saving = false; });
+    }
+  }
+
   @override
   void dispose() {
     _faceValueController.dispose();
@@ -333,18 +395,41 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
-                            controller: _faceValueController,
-                            readOnly: true,
-                            showCursor: false,
-                            enableInteractiveSelection: false,
+                          child: DropdownButtonFormField<int>(
+                            value: _selectedFaceValue,
+                            dropdownColor: Colors.white,
                             style: const TextStyle(color: Colors.black),
-                            cursorColor: Color(0xFF74512D),
+                            iconEnabledColor: Colors.black54,
+                            items: _faceValueOptions
+                                .map((value) {
+                                  final formatted = value.toString().replaceAllMapped(
+                                    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                                    (Match m) => '${m[1]},',
+                                  );
+                                  return DropdownMenuItem<int>(
+                                    value: value,
+                                    child: Text(
+                                      '$formatted원',
+                                      style: const TextStyle(color: Colors.black),
+                                    ),
+                                  );
+                                })
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedFaceValue = value;
+                                  _faceValueController.text = value.toString();
+                                });
+                              }
+                            },
                             decoration: const InputDecoration(
                               labelText: '액면가(원)',
-                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
                               enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
                               focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 2)),
+                              border: OutlineInputBorder(),
                               labelStyle: TextStyle(color: Colors.black54),
                               floatingLabelStyle: TextStyle(color: Color(0xFF74512D)),
                             ),
@@ -418,18 +503,65 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF74512D),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-                  child: Text(widget.editLotId == null ? '저장' : '수정', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            ),
-          ),
+          child: widget.editLotId != null
+              ? ((_existingLot?['status'] as String?) == 'sold')
+                  ? SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _saving ? null : _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF74512D),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: const Text('수정', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      ),
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: _saving ? null : _save,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF74512D),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              child: const Text('수정', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: _saving ? null : _delete,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF74512D),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              child: const Text('삭제', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+              : SizedBox(
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF74512D),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('저장', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ),
+                ),
         ),
       ),
     );
