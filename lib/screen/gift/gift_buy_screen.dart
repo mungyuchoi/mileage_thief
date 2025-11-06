@@ -16,6 +16,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   final TextEditingController _buyUnitController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _qtyController = TextEditingController(text: '1');
+  final TextEditingController _memoController = TextEditingController();
   int get _totalBuy => (int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) *
       (int.tryParse(_buyUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0);
 
@@ -66,6 +67,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       _qtyController.text = ((data['qty'] as num?)?.toInt() ?? 1).toString();
       _buyUnitController.text = ((data['buyUnit'] as num?)?.toInt() ?? 0).toString();
       _discountController.text = ((data['discount'] as num?)?.toDouble() ?? 0).toString();
+      _memoController.text = (data['memo'] as String?) ?? '';
     });
   }
 
@@ -193,6 +195,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         'cardId': _selectedCardId,
         'status': _existingLot?['status'] ?? 'open',
         'giftcardId': _selectedGiftcardId,
+        'memo': _memoController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
       if (widget.editLotId == null) {
@@ -272,6 +275,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     _buyUnitController.dispose();
     _discountController.dispose();
     _qtyController.dispose();
+    _memoController.dispose();
     super.dispose();
   }
 
@@ -487,6 +491,24 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text('합계: ${_totalBuy.toString()}원', style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('메모', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _memoController,
+                      maxLines: 3,
+                      style: const TextStyle(color: Colors.black),
+                      cursorColor: const Color(0xFF74512D),
+                      decoration: const InputDecoration(
+                        hintText: '메모를 입력하세요',
+                        border: OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 2)),
+                        labelStyle: TextStyle(color: Colors.black54),
+                        floatingLabelStyle: TextStyle(color: Color(0xFF74512D)),
+                        hintStyle: TextStyle(color: Colors.black38),
+                      ),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),

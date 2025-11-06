@@ -735,6 +735,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
               final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
               final brand = (m['giftcardId'] as String?) ?? '';
               final qty = (m['qty'] ?? 0) as int;
+              final String? memo = isSale ? null : (m['memo'] as String?);
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -793,6 +794,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
                               _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
                               _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
                               _InfoPill(icon: Icons.today_outlined, text: date),
+                              if (memo != null && memo.trim().isNotEmpty)
+                                _InfoPill(icon: Icons.note_outlined, text: memo),
                             ],
                           ],
                         ),
@@ -826,6 +829,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
       final int qty = (m['qty'] ?? 0) as int;
       final bool sold = (m['status'] as String?) == 'sold';
       final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
+      final String? memo = m['memo'] as String?;
       return GestureDetector(
         onLongPress: () async {
           await Navigator.push(
@@ -859,6 +863,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
                   _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
                   _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
                   _InfoPill(icon: Icons.today_outlined, text: date),
+                  if (memo != null && memo.trim().isNotEmpty)
+                    _InfoPill(icon: Icons.note_outlined, text: memo),
                 ],
               ),
             ],
