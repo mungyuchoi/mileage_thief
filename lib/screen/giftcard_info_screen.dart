@@ -144,8 +144,9 @@ class GiftcardInfoScreen extends StatefulWidget {
   State<GiftcardInfoScreen> createState() => _GiftcardInfoScreenState();
 }
 
-class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTickerProviderStateMixin {
+class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProviderStateMixin {
   late final TabController _tabController;
+  late final TabController _buySellTabController;
 
   // 데이터
   bool _loading = true;
@@ -164,13 +165,29 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
   final TextEditingController _targetCostPerMileController = TextEditingController();
   
   // 필터 관련
-  Set<String> _selectedGiftcardIds = {}; // 선택된 상품권 ID 목록 (빈 Set이면 전체)
+  Set<String> _selectedGiftcardIdsForBuy = {}; // 구매 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
+  Set<String> _selectedGiftcardIdsForSell = {}; // 판매 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _buySellTabController = TabController(length: 2, vsync: this);
+    _buySellTabController.addListener(() {
+      if (!_buySellTabController.indexIsChanging) {
+        setState(() {}); // 탭 변경 완료 시 필터 버튼 업데이트
+      }
+    });
     _load();
+  }
+  
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _buySellTabController.dispose();
+    _marketPriceController.dispose();
+    _targetCostPerMileController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -826,9 +843,29 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
     );
   }
 
-  Future<void> _showFilterDialog() async {
-    // 구매한 상품권 종류 목록 가져오기
-    final Set<String> giftcardIds = _lots.map((e) => (e['giftcardId'] as String?) ?? '').where((id) => id.isNotEmpty).toSet();
+  Future<void> _showFilterDialog({required bool isBuy}) async {
+    // 구매/판매에 따라 상품권 종류 목록 가져오기
+    Set<String> giftcardIds;
+    if (isBuy) {
+      // 구매한 상품권 종류
+      giftcardIds = _lots.map((e) => (e['giftcardId'] as String?) ?? '').where((id) => id.isNotEmpty).toSet();
+    } else {
+      // 판매한 상품권 종류 (lotId를 통해 찾기)
+      giftcardIds = {};
+      for (final sale in _sales) {
+        final lotId = sale['lotId'] as String?;
+        if (lotId != null) {
+          final lot = _lots.firstWhere(
+            (lot) => lot['id'] == lotId,
+            orElse: () => <String, dynamic>{},
+          );
+          final giftcardId = lot['giftcardId'] as String?;
+          if (giftcardId != null && giftcardId.isNotEmpty) {
+            giftcardIds.add(giftcardId);
+          }
+        }
+      }
+    }
     final List<String> giftcardList = giftcardIds.toList()..sort();
     
     // 상품권 이름 가져오기
@@ -841,9 +878,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
     } catch (_) {}
     
     // 현재 선택된 상품권 ID (빈 Set이면 전체)
-    Set<String> tempSelected = _selectedGiftcardIds.isEmpty 
+    final currentSelected = isBuy ? _selectedGiftcardIdsForBuy : _selectedGiftcardIdsForSell;
+    Set<String> tempSelected = currentSelected.isEmpty 
         ? Set<String>.from(giftcardList) 
-        : Set<String>.from(_selectedGiftcardIds);
+        : Set<String>.from(currentSelected);
     
     final result = await showDialog<Set<String>>(
       context: context,
@@ -927,7 +965,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
     
     if (result != null) {
       setState(() {
-        _selectedGiftcardIds = result;
+        if (isBuy) {
+          _selectedGiftcardIdsForBuy = result;
+        } else {
+          _selectedGiftcardIdsForSell = result;
+        }
       });
     }
   }
@@ -942,11 +984,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
       return DateTime.fromMillisecondsSinceEpoch(0);
     }
     
-    // 필터링 적용
-    if (_selectedGiftcardIds.isNotEmpty) {
+    // 구매 리스트 필터링 적용
+    if (_selectedGiftcardIdsForBuy.isNotEmpty) {
       lots.removeWhere((lot) {
         final giftcardId = (lot['giftcardId'] as String?) ?? '';
-        return !_selectedGiftcardIds.contains(giftcardId);
+        return !_selectedGiftcardIdsForBuy.contains(giftcardId);
+      });
+    }
+    
+    // 판매 리스트 필터링 적용
+    if (_selectedGiftcardIdsForSell.isNotEmpty) {
+      sales.removeWhere((sale) {
+        final lotId = sale['lotId'] as String?;
+        if (lotId == null) return true;
+        final lot = _lots.firstWhere(
+          (lot) => lot['id'] == lotId,
+          orElse: () => <String, dynamic>{},
+        );
+        final giftcardId = lot['giftcardId'] as String?;
+        if (giftcardId == null) return true;
+        return !_selectedGiftcardIdsForSell.contains(giftcardId);
       });
     }
     
@@ -1073,66 +1130,68 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
       );
     }
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(
-            labelColor: Colors.black,
-            unselectedLabelColor: Colors.black54,
-            indicatorColor: Color(0xFF74512D),
-            tabs: [Tab(text: '구매'), Tab(text: '판매')],
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: _showFilterDialog,
-                  icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
-                  label: Text(
-                    _selectedGiftcardIds.isEmpty ? '전체 ▼' : '${_selectedGiftcardIds.length}개 선택 ▼',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+    final isBuy = _buySellTabController.index == 0;
+    final selectedIds = isBuy ? _selectedGiftcardIdsForBuy : _selectedGiftcardIdsForSell;
+    
+    return Column(
+      children: [
+        TabBar(
+          controller: _buySellTabController,
+          labelColor: Colors.black,
+          unselectedLabelColor: Colors.black54,
+          indicatorColor: const Color(0xFF74512D),
+          tabs: const [Tab(text: '구매'), Tab(text: '판매')],
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () => _showFilterDialog(isBuy: isBuy),
+                icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
+                label: Text(
+                  selectedIds.isEmpty ? '전체 ▼' : '${selectedIds.length}개 선택 ▼',
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(color: Colors.black26),
                   ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.black26),
-                    ),
-                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: TabBarView(
-              children: [
-                ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  itemCount: lots.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) => lotTile({...lots[i], 'id': lots[i]['id']}),
-                ),
-                ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  itemCount: sales.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) => saleTile({...sales[i], 'id': sales[i]['id']}),
-                ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: TabBarView(
+            controller: _buySellTabController,
+            children: [
+              ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                itemCount: lots.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, i) => lotTile({...lots[i], 'id': lots[i]['id']}),
+              ),
+              ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                itemCount: sales.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, i) => saleTile({...sales[i], 'id': sales[i]['id']}),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
