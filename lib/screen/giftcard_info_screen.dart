@@ -151,6 +151,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
   bool _loading = true;
   List<Map<String, dynamic>> _lots = [];
   List<Map<String, dynamic>> _sales = [];
+  Map<String, String> _giftcardNames = {}; // giftcardId -> name
+  Map<String, String> _branchNames = {}; // branchId -> name
   final DateFormat _yMd = DateFormat('yyyy-MM-dd');
   final NumberFormat _won = NumberFormat('#,###');
 
@@ -160,6 +162,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
   Map<String, Map<String, dynamic>> _cards = {}; // cardId -> {credit, check, name}
   final TextEditingController _marketPriceController = TextEditingController();
   final TextEditingController _targetCostPerMileController = TextEditingController();
+  
+  // 필터 관련
+  Set<String> _selectedGiftcardIds = {}; // 선택된 상품권 ID 목록 (빈 Set이면 전체)
 
   @override
   void initState() {
@@ -178,6 +183,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
       final lotsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('lots').get();
       final salesSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('sales').get();
       final cardsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').get();
+      final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
+      final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
       setState(() {
         _lots = lotsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
         _sales = salesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
@@ -188,6 +195,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
               'credit': ((d.data()['creditPerMileKRW'] as num?)?.toInt()) ?? 0,
               'check': ((d.data()['checkPerMileKRW'] as num?)?.toInt()) ?? 0,
             }
+        };
+        _giftcardNames = {
+          for (final d in giftsSnap.docs)
+            d.id: (d.data()['name'] as String?) ?? d.id
+        };
+        _branchNames = {
+          for (final d in branchesSnap.docs)
+            d.id: (d.data()['name'] as String?) ?? d.id
         };
         _loading = false;
       });
@@ -811,6 +826,112 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
     );
   }
 
+  Future<void> _showFilterDialog() async {
+    // 구매한 상품권 종류 목록 가져오기
+    final Set<String> giftcardIds = _lots.map((e) => (e['giftcardId'] as String?) ?? '').where((id) => id.isNotEmpty).toSet();
+    final List<String> giftcardList = giftcardIds.toList()..sort();
+    
+    // 상품권 이름 가져오기
+    final Map<String, String> giftcardNames = {};
+    try {
+      final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
+      for (final doc in giftsSnap.docs) {
+        giftcardNames[doc.id] = (doc.data()['name'] as String?) ?? doc.id;
+      }
+    } catch (_) {}
+    
+    // 현재 선택된 상품권 ID (빈 Set이면 전체)
+    Set<String> tempSelected = _selectedGiftcardIds.isEmpty 
+        ? Set<String>.from(giftcardList) 
+        : Set<String>.from(_selectedGiftcardIds);
+    
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text(
+            '상품권 필터',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final giftcardId in giftcardList)
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (tempSelected.contains(giftcardId)) {
+                            tempSelected.remove(giftcardId);
+                          } else {
+                            tempSelected.add(giftcardId);
+                          }
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: tempSelected.contains(giftcardId),
+                              onChanged: (checked) {
+                                setState(() {
+                                  if (checked == true) {
+                                    tempSelected.add(giftcardId);
+                                  } else {
+                                    tempSelected.remove(giftcardId);
+                                  }
+                                });
+                              },
+                              activeColor: const Color(0xFF74512D),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                giftcardNames[giftcardId] ?? giftcardId,
+                                style: const TextStyle(color: Colors.black),
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, tempSelected),
+              child: const Text(
+                '적용',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    if (result != null) {
+      setState(() {
+        _selectedGiftcardIds = result;
+      });
+    }
+  }
+
   Widget _buildDaily() {
     final List<Map<String, dynamic>> lots = List<Map<String, dynamic>>.from(_lots.map((e) => {...e}));
     final List<Map<String, dynamic>> sales = List<Map<String, dynamic>>.from(_sales.map((e) => {...e}));
@@ -820,6 +941,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
       if (ts is Timestamp) return ts.toDate();
       return DateTime.fromMillisecondsSinceEpoch(0);
     }
+    
+    // 필터링 적용
+    if (_selectedGiftcardIds.isNotEmpty) {
+      lots.removeWhere((lot) {
+        final giftcardId = (lot['giftcardId'] as String?) ?? '';
+        return !_selectedGiftcardIds.contains(giftcardId);
+      });
+    }
+    
     lots.sort((a, b) => tsOf(b, sale: false).compareTo(tsOf(a, sale: false)));
     sales.sort((a, b) => tsOf(b, sale: true).compareTo(tsOf(a, sale: true)));
 
@@ -877,6 +1007,28 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
       final String date = (m['sellDate'] is Timestamp) ? _yMd.format((m['sellDate'] as Timestamp).toDate()) : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
       final int qty = (m['qty'] ?? 0) as int;
+      
+      // lotId를 통해 해당 lot의 giftcardId 찾기
+      String? lotGiftcardName;
+      final lotId = m['lotId'] as String?;
+      if (lotId != null) {
+        final lot = _lots.firstWhere(
+          (lot) => lot['id'] == lotId,
+          orElse: () => <String, dynamic>{},
+        );
+        final lotGiftcardId = lot['giftcardId'] as String?;
+        if (lotGiftcardId != null) {
+          lotGiftcardName = _giftcardNames[lotGiftcardId] ?? lotGiftcardId;
+        }
+      }
+      
+      // branchId를 통해 지점 이름 찾기
+      String? branchName;
+      final branchId = m['branchId'] as String?;
+      if (branchId != null && _branchNames.containsKey(branchId)) {
+        branchName = _branchNames[branchId];
+      }
+      
       return GestureDetector(
         onLongPress: () async {
           await Navigator.push(
@@ -909,6 +1061,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
                   _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
                   _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
                   _InfoPill(icon: Icons.today_outlined, text: date),
+                  if (lotGiftcardName != null && lotGiftcardName.isNotEmpty)
+                    _InfoPill(icon: Icons.card_giftcard_outlined, text: lotGiftcardName),
+                  if (branchName != null && branchName.isNotEmpty)
+                    _InfoPill(icon: Icons.store_outlined, text: branchName),
                 ],
               ),
             ],
@@ -931,6 +1087,30 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: _showFilterDialog,
+                  icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
+                  label: Text(
+                    _selectedGiftcardIds.isEmpty ? '전체 ▼' : '${_selectedGiftcardIds.length}개 선택 ▼',
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.black26),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Expanded(
