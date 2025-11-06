@@ -280,7 +280,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
             children: [
               Expanded(child: _KpiValue(label: '총 손익', value: _fmtWon(sumProfit), icon: Icons.trending_up_outlined)),
               const SizedBox(width: 8),
-              Expanded(child: _KpiValue(label: '누적 마일', value: sumMiles.toString())),
+              Expanded(child: _KpiValue(label: '누적 마일', value: sumMiles.toString(), icon: Icons.stars_outlined)),
             ],
           ),
           const SizedBox(height: 8),
@@ -924,6 +924,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with SingleTick
           const TabBar(
             labelColor: Colors.black,
             unselectedLabelColor: Colors.black54,
+            indicatorColor: Color(0xFF74512D),
             tabs: [Tab(text: '구매'), Tab(text: '판매')],
           ),
           const SizedBox(height: 8),
