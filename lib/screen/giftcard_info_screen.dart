@@ -751,17 +751,20 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           ),
         ),
         const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _GiftBanner(adUnitId: AdHelper.giftCalendarBannerAdUnitId),
-        ),
-        const SizedBox(height: 8),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-            itemCount: selectedItems.length,
+            itemCount: selectedItems.length + 1, // 광고를 위한 +1
             itemBuilder: (context, index) {
-              final m = selectedItems[index];
+              // 첫 번째 아이템은 광고
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: _GiftBanner(adUnitId: AdHelper.giftCalendarBannerAdUnitId),
+                );
+              }
+              // 나머지는 선택된 날짜의 아이템들
+              final m = selectedItems[index - 1];
               final isSale = m['type'] == 'sale';
               final ts = isSale ? m['sellDate'] : m['buyDate'];
               final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
