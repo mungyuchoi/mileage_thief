@@ -302,8 +302,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   }
                 },
                 tabs: const [
-                  Tab(text: '지도'),
                   Tab(text: '정보'),
+                  Tab(text: '지도'),
                 ],
               ),
             ),
@@ -312,8 +312,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 const TabBarView(
                   physics: NeverScrollableScrollPhysics(),
                   children: [
-                    GiftcardMapScreen(),
                     GiftcardInfoScreen(),
+                    GiftcardMapScreen(),
                   ],
                 ),
                 if (_giftFabOpen)
