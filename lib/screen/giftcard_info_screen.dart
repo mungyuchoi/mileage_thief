@@ -139,7 +139,8 @@ class _GiftBannerState extends State<_GiftBanner> {
 }
 
 class GiftcardInfoScreen extends StatefulWidget {
-  const GiftcardInfoScreen({super.key});
+  final ValueChanged<bool>? onScrollChanged;
+  const GiftcardInfoScreen({super.key, this.onScrollChanged});
   @override
   State<GiftcardInfoScreen> createState() => _GiftcardInfoScreenState();
 }
@@ -294,9 +295,20 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final brandMap = _pieByAmount ? _pieByBrandAmount() : _pieByBrandCount();
     final brandEntries = brandMap.entries.toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          // 스크롤 중
+          widget.onScrollChanged?.call(true);
+        } else if (notification is ScrollEndNotification) {
+          // 스크롤 멈춤
+          widget.onScrollChanged?.call(false);
+        }
+        return false;
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // KPI
@@ -414,6 +426,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           _buildInventorySection(),
         ],
       ),
+    ),
     );
   }
 
@@ -752,10 +765,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-            itemCount: selectedItems.length + 1, // 광고를 위한 +1
-            itemBuilder: (context, index) {
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                // 스크롤 중
+                widget.onScrollChanged?.call(true);
+              } else if (notification is ScrollEndNotification) {
+                // 스크롤 멈춤
+                widget.onScrollChanged?.call(false);
+              }
+              return false;
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+              itemCount: selectedItems.length + 1, // 광고를 위한 +1
+              itemBuilder: (context, index) {
               // 첫 번째 아이템은 광고
               if (index == 0) {
                 return Padding(
@@ -842,6 +866,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             },
           ),
         ),
+      ),
       ],
     );
   }
@@ -1174,15 +1199,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           child: TabBarView(
             controller: _buySellTabController,
             children: [
-              ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: lots.length + 1, // 광고를 위한 +1
-                separatorBuilder: (_, index) {
-                  // 광고 다음에만 separator 추가
-                  if (index == 0) return const SizedBox(height: 8);
-                  return const SizedBox(height: 10);
+              NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollUpdateNotification) {
+                    // 스크롤 중
+                    widget.onScrollChanged?.call(true);
+                  } else if (notification is ScrollEndNotification) {
+                    // 스크롤 멈춤
+                    widget.onScrollChanged?.call(false);
+                  }
+                  return false;
                 },
-                itemBuilder: (context, i) {
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: lots.length + 1, // 광고를 위한 +1
+                  separatorBuilder: (_, index) {
+                    // 광고 다음에만 separator 추가
+                    if (index == 0) return const SizedBox(height: 8);
+                    return const SizedBox(height: 10);
+                  },
+                  itemBuilder: (context, i) {
                   // 첫 번째 아이템은 광고
                   if (i == 0) {
                     return Padding(
@@ -1194,15 +1230,27 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   return lotTile({...lots[i - 1], 'id': lots[i - 1]['id']});
                 },
               ),
-              ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: sales.length + 1, // 광고를 위한 +1
-                separatorBuilder: (_, index) {
-                  // 광고 다음에만 separator 추가
-                  if (index == 0) return const SizedBox(height: 8);
-                  return const SizedBox(height: 10);
+              ),
+              NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollUpdateNotification) {
+                    // 스크롤 중
+                    widget.onScrollChanged?.call(true);
+                  } else if (notification is ScrollEndNotification) {
+                    // 스크롤 멈춤
+                    widget.onScrollChanged?.call(false);
+                  }
+                  return false;
                 },
-                itemBuilder: (context, i) {
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: sales.length + 1, // 광고를 위한 +1
+                  separatorBuilder: (_, index) {
+                    // 광고 다음에만 separator 추가
+                    if (index == 0) return const SizedBox(height: 8);
+                    return const SizedBox(height: 10);
+                  },
+                  itemBuilder: (context, i) {
                   // 첫 번째 아이템은 광고
                   if (i == 0) {
                     return Padding(
@@ -1213,6 +1261,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   // 나머지는 판매 리스트
                   return saleTile({...sales[i - 1], 'id': sales[i - 1]['id']});
                 },
+              ),
               ),
             ],
           ),

@@ -105,6 +105,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final DatabaseReference _versionReference =
   FirebaseDatabase.instance.ref("VERSION");
   bool _giftFabOpen = false;
+  bool _isScrolling = false; // 스크롤 중인지 여부
   
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
@@ -309,10 +310,16 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             body: Stack(
               children: [
-                const TabBarView(
+                TabBarView(
                   physics: NeverScrollableScrollPhysics(),
                   children: [
-                    GiftcardInfoScreen(),
+                    GiftcardInfoScreen(
+                      onScrollChanged: (isScrolling) {
+                        setState(() {
+                          _isScrolling = isScrolling;
+                        });
+                      },
+                    ),
                     GiftcardMapScreen(),
                   ],
                 ),
@@ -393,6 +400,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   builder: (context, _) {
                     final showFab = controller.index == 0;
                     if (!showFab) return const SizedBox.shrink();
+                    
+                    // 스크롤 중이면 FAB 숨김
+                    if (_isScrolling) return const SizedBox.shrink();
 
                     final user = FirebaseAuth.instance.currentUser;
                     // 로그인 안된 경우: 로그인 유도 FAB 노출
