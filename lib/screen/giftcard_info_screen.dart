@@ -1145,11 +1145,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -1178,15 +1173,43 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             children: [
               ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: lots.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, i) => lotTile({...lots[i], 'id': lots[i]['id']}),
+                itemCount: lots.length + 1, // 광고를 위한 +1
+                separatorBuilder: (_, index) {
+                  // 광고 다음에만 separator 추가
+                  if (index == 0) return const SizedBox(height: 8);
+                  return const SizedBox(height: 10);
+                },
+                itemBuilder: (context, i) {
+                  // 첫 번째 아이템은 광고
+                  if (i == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
+                    );
+                  }
+                  // 나머지는 구매 리스트
+                  return lotTile({...lots[i - 1], 'id': lots[i - 1]['id']});
+                },
               ),
               ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: sales.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, i) => saleTile({...sales[i], 'id': sales[i]['id']}),
+                itemCount: sales.length + 1, // 광고를 위한 +1
+                separatorBuilder: (_, index) {
+                  // 광고 다음에만 separator 추가
+                  if (index == 0) return const SizedBox(height: 8);
+                  return const SizedBox(height: 10);
+                },
+                itemBuilder: (context, i) {
+                  // 첫 번째 아이템은 광고
+                  if (i == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
+                    );
+                  }
+                  // 나머지는 판매 리스트
+                  return saleTile({...sales[i - 1], 'id': sales[i - 1]['id']});
+                },
               ),
             ],
           ),
