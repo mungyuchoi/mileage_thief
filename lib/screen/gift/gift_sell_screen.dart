@@ -397,11 +397,15 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                               final d = ts.toDate();
                               dateLabel = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
                             }
+                            final memo = l['memo'] as String?;
+                            final memoText = (memo != null && memo.trim().isNotEmpty) ? '  $memo' : '';
                             return DropdownMenuItem<String>(
                               value: l['lotId'] as String,
                               child: Text(
-                                '${l['giftcardId'] ?? ''}  ${l['buyUnit']}원 x ${l['qty']}  |  $dateLabel',
+                                '${l['giftcardId'] ?? ''}  ${l['buyUnit']}원 x ${l['qty']}  |  $dateLabel$memoText',
                                 style: const TextStyle(color: Colors.black),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             );
                           })

@@ -182,6 +182,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     _load();
   }
   
+  // 외부에서 호출할 수 있는 새로고침 메서드
+  void refresh() {
+    _load();
+  }
+  
   @override
   void dispose() {
     _tabController.dispose();

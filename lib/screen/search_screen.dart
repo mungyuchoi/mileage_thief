@@ -106,6 +106,7 @@ class _SearchScreenState extends State<SearchScreen> {
   FirebaseDatabase.instance.ref("VERSION");
   bool _giftFabOpen = false;
   bool _isScrolling = false; // 스크롤 중인지 여부
+  final GlobalKey<State<GiftcardInfoScreen>> _giftcardInfoKey = GlobalKey<State<GiftcardInfoScreen>>();
   
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
@@ -314,6 +315,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   physics: NeverScrollableScrollPhysics(),
                   children: [
                     GiftcardInfoScreen(
+                      key: _giftcardInfoKey,
                       onScrollChanged: (isScrolling) {
                         setState(() {
                           _isScrolling = isScrolling;
@@ -366,24 +368,38 @@ class _SearchScreenState extends State<SearchScreen> {
                         GiftActionPill(
                           icon: Icons.shopping_cart_outlined,
                           label: '상품권 구매',
-                          onTap: () {
+                          onTap: () async {
                             setState(() => _giftFabOpen = false);
-                            Navigator.push(
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const GiftBuyScreen()),
                             );
+                            // 저장 성공 시 데이터 새로고침
+                            if (result == true && _giftcardInfoKey.currentState != null) {
+                              final state = _giftcardInfoKey.currentState;
+                              if (state != null && state is State<GiftcardInfoScreen>) {
+                                (state as dynamic).refresh();
+                              }
+                            }
                           },
                         ),
                         const SizedBox(height: 12),
                         GiftActionPill(
                           icon: Icons.attach_money_outlined,
                           label: '상품권 판매',
-                          onTap: () {
+                          onTap: () async {
                             setState(() => _giftFabOpen = false);
-                            Navigator.push(
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const GiftSellScreen()),
                             );
+                            // 저장 성공 시 데이터 새로고침
+                            if (result == true && _giftcardInfoKey.currentState != null) {
+                              final state = _giftcardInfoKey.currentState;
+                              if (state != null && state is State<GiftcardInfoScreen>) {
+                                (state as dynamic).refresh();
+                              }
+                            }
                           },
                         ),
                       ],
