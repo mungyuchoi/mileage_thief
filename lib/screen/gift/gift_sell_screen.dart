@@ -17,6 +17,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
   final TextEditingController _sellUnitController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
+  final TextEditingController _qtyController = TextEditingController();
   DateTime _sellDate = DateTime.now();
 
   bool _saving = false;
@@ -66,6 +67,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       _selectedBranchId = sale['branchId'] as String?;
       _sellUnitController.text = ((sale['sellUnit'] as num?)?.toInt() ?? 0).toString();
       _discountController.text = ((sale['discount'] as num?)?.toDouble() ?? 0).toString();
+      _qtyController.text = ((sale['qty'] as num?)?.toInt() ?? 0).toString();
       final ts = sale['sellDate'];
       if (ts is Timestamp) _sellDate = ts.toDate();
     });
@@ -84,6 +86,11 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         if (_openLots.isNotEmpty) {
           _selectedLotId = _openLots.first['lotId'] as String;
           _selectedLot = _openLots.first;
+          // lot 선택 시 수량을 전체 수량으로 초기화
+          final totalQty = (_selectedLot!['qty'] as int?) ?? 0;
+          _qtyController.text = totalQty.toString();
+        } else {
+          _qtyController.text = '0';
         }
       });
     } catch (_) {}
@@ -113,6 +120,13 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     setState(() {
       _selectedLotId = lotId;
       _selectedLot = _openLots.firstWhere((e) => e['lotId'] == lotId, orElse: () => {});
+      // lot 변경 시 수량을 전체 수량으로 초기화
+      if (_selectedLot != null && _selectedLot!.isNotEmpty) {
+        final totalQty = (_selectedLot!['qty'] as int?) ?? 0;
+        _qtyController.text = totalQty.toString();
+      } else {
+        _qtyController.text = '0';
+      }
     });
   }
 
@@ -144,14 +158,23 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     }
   }
 
+  int _getSellQty() {
+    if (widget.editSaleId != null) {
+      // 수정 모드일 때는 기존 판매 수량 사용
+      return (_existingSale?['qty'] as int?) ?? ((_selectedLot?['qty'] as int?) ?? 0);
+    }
+    // 신규 모드일 때는 입력된 수량 사용
+    return int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+  }
+
   int _sellTotal() {
-    final qty = (_selectedLot?['qty'] as int?) ?? 0;
+    final qty = _getSellQty();
     final unit = int.tryParse(_sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
     return qty * unit;
   }
 
   int _buyTotal() {
-    final qty = (_selectedLot?['qty'] as int?) ?? 0;
+    final qty = _getSellQty();
     final unit = (_selectedLot?['buyUnit'] as int?) ?? 0;
     return qty * unit;
   }
@@ -208,11 +231,21 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       setState(() { _error = '판매가를 입력하세요.'; });
       return;
     }
+    final sellQty = int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (sellQty <= 0) {
+      setState(() { _error = '수량은 1개 이상이어야 합니다.'; });
+      return;
+    }
+    final totalQty = (_selectedLot?['qty'] as int?) ?? 0;
+    if (sellQty > totalQty) {
+      setState(() { _error = '판매 수량이 전체 수량보다 많을 수 없습니다.'; });
+      return;
+    }
 
     if (_saving) return;
     setState(() { _saving = true; });
     try {
-      final qty = (_selectedLot?['qty'] as int?) ?? 0;
+      final qty = sellQty;
       final faceValue = (_selectedLot?['faceValue'] as int?) ?? 100000;
       final buyTotal = _buyTotal();
       final sellTotal = qty * sellUnit;
@@ -249,10 +282,44 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       await salesRef.doc(saleId).set(payload, SetOptions(merge: true));
 
       if (widget.editSaleId == null) {
-        // 신규 저장일 때만 lot 상태 sold 업데이트
-        await FirebaseFirestore.instance
-            .collection('users').doc(uid).collection('lots').doc(_selectedLotId)
-            .update({'status': 'sold', 'updatedAt': FieldValue.serverTimestamp()});
+        // 신규 저장일 때만 lot 처리
+        final lotsRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('lots');
+        final originalLotRef = lotsRef.doc(_selectedLotId!);
+        
+        if (qty < totalQty) {
+          // 부분 판매: lot 분할
+          // 1. 원본 lot 업데이트: qty를 판매 수량으로 변경, status를 sold로 변경
+          await originalLotRef.update({
+            'qty': qty,
+            'status': 'sold',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          
+          // 2. 새로운 lot 생성: 나머지 수량
+          final remainingQty = totalQty - qty;
+          final newLotId = 'lot_${DateTime.now().millisecondsSinceEpoch}';
+          final newLotData = {
+            'faceValue': (_selectedLot!['faceValue'] as int?) ?? 100000,
+            'buyDate': _selectedLot!['buyDate'],
+            'payType': _selectedLot!['payType'],
+            'buyUnit': (_selectedLot!['buyUnit'] as int?) ?? 0,
+            'discount': (_selectedLot!['discount'] as num?)?.toDouble() ?? 0,
+            'qty': remainingQty,
+            'cardId': _selectedLot!['cardId'],
+            'status': 'open',
+            'giftcardId': _selectedLot!['giftcardId'],
+            'memo': _selectedLot!['memo'] ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+          await lotsRef.doc(newLotId).set(newLotData);
+        } else {
+          // 전체 판매: 원본 lot의 status만 sold로 변경
+          await originalLotRef.update({
+            'status': 'sold',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
       }
 
       // 지점 선택 시 월간 랭킹 반영
@@ -469,9 +536,29 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    if (widget.editSaleId == null && _selectedLot != null) ...[
+                      const Text('수량', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _qtyController,
+                        keyboardType: TextInputType.number,
+                        cursorColor: const Color(0xFF74512D),
+                        decoration: InputDecoration(
+                          labelText: '판매 수량 (최대 ${_selectedLot!['qty']}개)',
+                          hintText: '0',
+                          border: const OutlineInputBorder(),
+                          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 2)),
+                          labelStyle: const TextStyle(color: Colors.black54),
+                          floatingLabelStyle: const TextStyle(color: Color(0xFF74512D)),
+                        ),
+                        onChanged: (value) => setState(() {}),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     if (_selectedLot != null) ...[
-                      Text('수량: ${_selectedLot!['qty']}'),
+                      Text('수량: ${_getSellQty()}'),
                       const SizedBox(height: 4),
                       Text('총 판매금액: ${_sellTotal()}원'),
                       const SizedBox(height: 4),
