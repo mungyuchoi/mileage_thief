@@ -3,25 +3,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-class BranchStep2Page extends StatefulWidget {
-  final double latitude;
-  final double longitude;
-  final String address;
-  final String detailAddress;
+class BranchEditScreen extends StatefulWidget {
+  final String branchId;
+  final Map<String, dynamic> branchData;
 
-  const BranchStep2Page({
+  const BranchEditScreen({
     super.key,
-    required this.latitude,
-    required this.longitude,
-    required this.address,
-    required this.detailAddress,
+    required this.branchId,
+    required this.branchData,
   });
 
   @override
-  State<BranchStep2Page> createState() => _BranchStep2PageState();
+  State<BranchEditScreen> createState() => _BranchEditScreenState();
 }
 
-class _BranchStep2PageState extends State<BranchStep2Page> {
+class _BranchEditScreenState extends State<BranchEditScreen> {
   final TextEditingController _branchIdController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -60,6 +56,112 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
 
   String? _error;
   bool _saving = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingData();
+  }
+
+  Future<void> _loadExistingData() async {
+    try {
+      final data = widget.branchData;
+      
+      _branchIdController.text = widget.branchId;
+      _nameController.text = (data['name'] as String?) ?? '';
+      _phoneController.text = (data['phone'] as String?) ?? '';
+      _noticeController.text = (data['notice'] as String?) ?? '';
+
+      // openingHours 파싱
+      final openingHours = data['openingHours'];
+      if (openingHours is Map) {
+        _parseOpeningHours(Map<String, dynamic>.from(openingHours));
+      }
+
+      setState(() {
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = '데이터를 불러오는 중 오류가 발생했습니다.';
+        _loading = false;
+      });
+    }
+  }
+
+  void _parseOpeningHours(Map<String, dynamic> openingHours) {
+    final dayNames = {'mon': '월', 'tue': '화', 'wed': '수', 'thu': '목', 'fri': '금', 'sat': '토', 'sun': '일'};
+    final dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+    for (final entry in openingHours.entries) {
+      final key = entry.key;
+      final value = entry.value.toString();
+      
+      if (value == '휴무') continue;
+
+      // 시간 파싱 (예: "09:00-19:00")
+      final parts = value.split('-');
+      if (parts.length != 2) continue;
+
+      final openTimeStr = parts[0].trim();
+      final closeTimeStr = parts[1].trim();
+
+      final openTime = _parseTimeString(openTimeStr);
+      final closeTime = _parseTimeString(closeTimeStr);
+
+      if (openTime == null || closeTime == null) continue;
+
+      // 키에 해당하는 요일들 찾기
+      List<String> days = [];
+      
+      if (key == 'monFri') {
+        days = ['mon', 'tue', 'wed', 'thu', 'fri'];
+      } else if (key == 'monSat') {
+        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      } else if (key == 'monSun') {
+        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      } else if (key.length == 6 && dayOrder.contains(key.substring(0, 3)) && dayOrder.contains(key.substring(3, 6))) {
+        // 조합된 키 (예: tueWed)
+        final startDay = key.substring(0, 3);
+        final endDay = key.substring(3, 6);
+        final startIdx = dayOrder.indexOf(startDay);
+        final endIdx = dayOrder.indexOf(endDay);
+        if (startIdx != -1 && endIdx != -1) {
+          days = dayOrder.sublist(startIdx, endIdx + 1);
+        }
+      } else if (dayOrder.contains(key)) {
+        // 단일 요일
+        days = [key];
+      }
+
+      // 각 요일에 시간 설정
+      for (final day in days) {
+        final dayKr = dayNames[day];
+        if (dayKr != null) {
+          setState(() {
+            _dayOpen[dayKr] = true;
+            _dayOpenTime[dayKr] = openTime;
+            _dayCloseTime[dayKr] = closeTime;
+          });
+        }
+      }
+    }
+  }
+
+  TimeOfDay? _parseTimeString(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length != 2) return null;
+      final hour = int.tryParse(parts[0]);
+      final minute = int.tryParse(parts[1]);
+      if (hour == null || minute == null) return null;
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void dispose() {
@@ -237,24 +339,19 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
     setState(() { _saving = true; });
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
-      final String fullAddress = (widget.detailAddress.trim().isEmpty)
-          ? widget.address
-          : '${widget.address} ${widget.detailAddress.trim()}';
 
+      // 지점 정보 업데이트 (createdByUid도 현재 사용자로 업데이트)
       await FirebaseFirestore.instance.collection('branches').doc(branchId).set({
         'branchId': branchId,
         'name': name,
         'phone': phone,
         'openingHours': openingHours,
         'notice': notice.isEmpty ? null : notice,
-        'latitude': widget.latitude,
-        'longitude': widget.longitude,
-        'address': fullAddress,
-        'createdByUid': uid,
+        'createdByUid': uid, // 수정한 사용자의 UID로 업데이트
       }, SetOptions(merge: true));
 
       if (!mounted) return;
-      Fluttertoast.showToast(msg: '지점이 저장되었습니다.');
+      Fluttertoast.showToast(msg: '지점이 수정되었습니다.');
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
@@ -267,71 +364,63 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        title: const Text('지점 수정', style: TextStyle(color: Colors.black)),
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(color: const Color(0xFF74512D), borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(color: const Color(0xFF74512D), borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('상품권 지점의\n정보를 알려주세요', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.black)),
-            ),
-            const SizedBox(height: 12),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 16),
                     Row(
                       children: const [
                         Text('branchId', style: TextStyle(fontWeight: FontWeight.w600)),
                         SizedBox(width: 4),
                         Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
                         SizedBox(width: 8),
-                        Expanded(child: Text('(소문자, 숫자, _ 만 사용 가능)', textAlign: TextAlign.right, style: TextStyle(color: Colors.black54, fontSize: 12))),
+                        Expanded(child: Text('(수정 불가)', textAlign: TextAlign.right, style: TextStyle(color: Colors.black54, fontSize: 12))),
                       ],
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _branchIdController,
+                      enabled: false,
                       decoration: InputDecoration(
                         hintText: '예: gangnam_main',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.grey[100],
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
-                        focusedBorder: OutlineInputBorder(
+                        disabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
@@ -349,7 +438,8 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         hintText: '예: 강남점',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
@@ -375,7 +465,8 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         hintText: '예: 031-123-1234',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
@@ -462,7 +553,8 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       maxLines: 3,
                       decoration: InputDecoration(
                         hintText: '지점 이용 안내를 입력하세요 (선택)',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
@@ -494,19 +586,28 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                         side: const BorderSide(color: Color(0xFFE6E6E9)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('이전', style: TextStyle(color: Colors.black87)),
+                      child: const Text('취소', style: TextStyle(color: Colors.black87)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _onSubmit,
+                      onPressed: _saving ? null : _onSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF74512D),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      child: const Text('완료', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      child: _saving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text('수정 완료', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -518,5 +619,4 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
     );
   }
 }
-
 

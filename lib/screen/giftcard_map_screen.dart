@@ -5,10 +5,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'branch/branch_edit_screen.dart';
 
 class GiftcardMapScreen extends StatefulWidget {
   const GiftcardMapScreen({super.key});
@@ -326,7 +328,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     Map<String, dynamic>? firstUser,
     Map<String, dynamic>? secondUser,
     Map<String, dynamic>? thirdUser,
-  }) {
+  }) async {
     final String name = (branchData['name'] as String?) ?? branchId;
     final String? phone = branchData['phone'] as String?;
     final Map<String, dynamic>? openingHours = branchData['openingHours'] is Map
@@ -336,6 +338,32 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     final String? address = branchData['address'] as String?;
 
     final String monthLabel = DateFormat('yyyy.MM').format(DateTime.now());
+
+    // Admin 체크 및 특정 UID 편집 권한 체크
+    bool canEdit = false;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final currentUid = currentUser.uid;
+      
+      // 특정 UID에 편집 권한 부여
+      const allowedUids = ['xhMasz7TbTSAyRkLbFsUKQcQhc33'];
+      if (allowedUids.contains(currentUid)) {
+        canEdit = true;
+      } else {
+        // Admin 권한 체크
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUid)
+              .get();
+          final userData = userDoc.data();
+          final roles = userData?['roles'] ?? [];
+          canEdit = roles.contains('admin');
+        } catch (_) {
+          canEdit = false;
+        }
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -401,6 +429,27 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        if (canEdit)
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20, color: Color(0xFF74512D)),
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BranchEditScreen(
+                                    branchId: branchId,
+                                    branchData: branchData,
+                                  ),
+                                ),
+                              );
+                              if (result == true) {
+                                // 수정 후 마커 다시 로드
+                                _loadMonthlyMarkers();
+                              }
+                            },
+                            tooltip: '편집',
+                          ),
                         Text('$monthLabel 기준', style: const TextStyle(fontSize: 12, color: Colors.black54)),
                       ],
                     ),
@@ -417,7 +466,17 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: openingHours.entries
-                              .map((e) => Text('${_localizeHoursKey(e.key)}: ${e.value}'))
+                              .map((e) {
+                                final timeValue = e.value.toString();
+                                final displayValue = timeValue == '휴무' ? '휴무' : timeValue;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    '${_localizeHoursKey(e.key)}: $displayValue',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                );
+                              })
                               .toList(),
                         ),
                       ),
@@ -493,14 +552,51 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   }
 
   String _localizeHoursKey(String key) {
+    // 일반적인 그룹 키
     switch (key) {
       case 'monFri':
-        return '월금';
+        return '월~금';
+      case 'monSat':
+        return '월~토';
+      case 'monSun':
+        return '월~일';
       case 'sat':
         return '토';
       case 'sun':
-        return '주말,공휴일';
+        return '일';
+      case 'mon':
+        return '월';
+      case 'tue':
+        return '화';
+      case 'wed':
+        return '수';
+      case 'thu':
+        return '목';
+      case 'fri':
+        return '금';
       default:
+        // 조합된 키 처리 (예: tueWed, thuFri 등)
+        if (key.length >= 6) {
+          // 두 요일 조합 처리
+          final dayMap = {
+            'mon': '월',
+            'tue': '화',
+            'wed': '수',
+            'thu': '목',
+            'fri': '금',
+            'sat': '토',
+            'sun': '일',
+          };
+          
+          // 3글자씩 나누어 처리
+          if (key.length == 6) {
+            final first = key.substring(0, 3);
+            final second = key.substring(3, 6);
+            if (dayMap.containsKey(first) && dayMap.containsKey(second)) {
+              return '${dayMap[first]}~${dayMap[second]}';
+            }
+          }
+        }
         return key;
     }
   }
