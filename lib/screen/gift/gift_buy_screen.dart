@@ -305,9 +305,15 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                 child: const Text('카드 규칙이 없습니다. 카드 생성 메뉴에서 먼저 카드를 추가하세요.', style: TextStyle(color: Colors.black87)),
               ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
+              child: GestureDetector(
+                onTap: () {
+                  // EditText가 아닌 곳을 클릭하면 키보드 숨기기
+                  FocusScope.of(context).unfocus();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
@@ -516,6 +522,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                     ],
                     const SizedBox(height: 80),
                   ],
+                ),
                 ),
               ),
             ),
