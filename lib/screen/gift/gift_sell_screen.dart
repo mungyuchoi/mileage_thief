@@ -443,11 +443,17 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: GestureDetector(
+                onTap: () {
+                  // EditText가 아닌 곳을 탭하면 키보드 숨기기
+                  FocusScope.of(context).unfocus();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     const SizedBox(height: 12),
                     const Text('구매 선택(Lot)', style: TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
@@ -595,7 +601,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                       Text(_error!, style: const TextStyle(color: Colors.red)),
                     ],
                     const SizedBox(height: 80),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

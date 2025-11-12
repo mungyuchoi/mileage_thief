@@ -6,6 +6,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mileage_thief/services/user_service.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 
@@ -1007,6 +1009,58 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
+  // 편집 진입 전 땅콩 확인 및 차감 처리
+  Future<void> _confirmAndConsumePeanutsThen(Function() onConfirmed, {int cost = 20}) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final userData = await UserService.getUserFromFirestore(uid);
+      final currentPeanuts = (userData?['peanutCount'] as int?) ?? 0;
+
+      if (currentPeanuts < cost) {
+        Fluttertoast.showToast(
+          msg: '수정을 하기 위해서는 땅콩이 필요합니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        return;
+      }
+
+      final bool? ok = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            content: const Text('땅콩 20개가 소모됩니다.', style: TextStyle(color: Colors.black)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('취소', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (ok == true) {
+        await UserService.updatePeanutCount(uid, currentPeanuts - cost);
+        onConfirmed();
+      }
+    } catch (e) {
+      // 무시하고 진행하지 않음
+    }
+  }
+
   Widget _buildDaily() {
     final List<Map<String, dynamic>> lots = List<Map<String, dynamic>>.from(_lots.map((e) => {...e}));
     final List<Map<String, dynamic>> sales = List<Map<String, dynamic>>.from(_sales.map((e) => {...e}));
@@ -1073,6 +1127,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 _InfoPill(text: '구매', icon: Icons.shopping_cart_outlined, filled: true, fillColor: buyColor),
                 const SizedBox(width: 8),
                 Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black54),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: '편집',
+                  onPressed: () async {
+                    await _confirmAndConsumePeanutsThen(() async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
+                      );
+                      if (mounted) _load();
+                    }, cost: 20);
+                  },
+                ),
               ]),
               const SizedBox(height: 8),
               Wrap(
