@@ -157,6 +157,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   List<Map<String, dynamic>> _sales = [];
   Map<String, String> _giftcardNames = {}; // giftcardId -> name
   Map<String, String> _branchNames = {}; // branchId -> name
+  Map<String, String> _whereToBuyNames = {}; // whereToBuyId -> name
   final DateFormat _yMd = DateFormat('yyyy-MM-dd');
   final NumberFormat _won = NumberFormat('#,###');
 
@@ -210,6 +211,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final cardsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').get();
       final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
       final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
+      final whereToBuySnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('where_to_buy')
+          .get();
       setState(() {
         _lots = lotsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
         _sales = salesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
@@ -227,6 +233,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         };
         _branchNames = {
           for (final d in branchesSnap.docs)
+            d.id: (d.data()['name'] as String?) ?? d.id
+        };
+        _whereToBuyNames = {
+          for (final d in whereToBuySnap.docs)
             d.id: (d.data()['name'] as String?) ?? d.id
         };
         _loading = false;
@@ -817,20 +827,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: GestureDetector(
-                  onLongPress: () async {
-                    if (isSale) {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
-                      );
-                    } else {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
-                      );
-                    }
-                    if (mounted) _load();
-                  },
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -1117,13 +1113,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
       final String? memo = m['memo'] as String?;
       return GestureDetector(
-        onLongPress: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
-          );
-          if (mounted) _load();
-        },
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -1139,6 +1128,13 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 _InfoPill(text: '구매', icon: Icons.shopping_cart_outlined, filled: true, fillColor: buyColor),
                 const SizedBox(width: 8),
                 Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+                if ((m['whereToBuyId'] as String?) != null) ...[
+                  const SizedBox(width: 8),
+                  _InfoPill(
+                    icon: Icons.storefront_outlined,
+                    text: _whereToBuyNames[(m['whereToBuyId'] as String?)!] ?? (m['whereToBuyId'] as String),
+                  ),
+                ],
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black54),
                   padding: EdgeInsets.zero,
@@ -1201,13 +1197,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       }
       
       return GestureDetector(
-        onLongPress: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
-          );
-          if (mounted) _load();
-        },
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(

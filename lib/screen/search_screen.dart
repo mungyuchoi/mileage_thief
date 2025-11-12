@@ -25,6 +25,8 @@ import 'giftcard_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../branch/card_manage.dart';
 import '../branch/card_step.dart';
+import '../branch/wheretobuy_manage.dart';
+import '../branch/wheretobuy_step.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
@@ -276,23 +278,62 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: const Icon(Icons.chat, color: Colors.black54),
                   onPressed: _launchOpenChat,
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.black54),
-                  color: Colors.white,
-                  onSelected: (value) async {
-                    switch (value) {
-                      case 'manage_cards':
-                        await Navigator.push(context, MaterialPageRoute(builder: (_) => const CardManagePage()));
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'manage_cards',
-                      child: Text('카드 관리'),
-                    ),
-                  ],
-                ),
+                Builder(builder: (context) {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null) {
+                    return PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: Colors.black54),
+                      color: Colors.white,
+                      onSelected: (value) async {
+                        if (value == 'manage_cards') {
+                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const CardManagePage()));
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'manage_cards',
+                          child: Text('카드 관리'),
+                        ),
+                      ],
+                    );
+                  }
+                  return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .collection('where_to_buy')
+                        .limit(1)
+                        .snapshots(),
+                    builder: (context, snap) {
+                      final hasWhereToBuy = snap.hasData && snap.data!.docs.isNotEmpty;
+                      return PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, color: Colors.black54),
+                        color: Colors.white,
+                        onSelected: (value) async {
+                          switch (value) {
+                            case 'manage_cards':
+                              await Navigator.push(context, MaterialPageRoute(builder: (_) => const CardManagePage()));
+                              break;
+                            case 'manage_where_to_buy':
+                              await Navigator.push(context, MaterialPageRoute(builder: (_) => const WhereToBuyManagePage()));
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'manage_cards',
+                            child: Text('카드 관리'),
+                          ),
+                          if (hasWhereToBuy)
+                            const PopupMenuItem(
+                              value: 'manage_where_to_buy',
+                              child: Text('구매처 관리'),
+                            ),
+                        ],
+                      );
+                    },
+                  );
+                }),
               ],
               bottom: TabBar(
                 labelColor: Colors.black,
@@ -360,6 +401,20 @@ class _SearchScreenState extends State<SearchScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const CardStepPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        GiftActionPill(
+                          icon: Icons.storefront_outlined,
+                          label: '구매처 생성',
+                          onTap: () {
+                            setState(() => _giftFabOpen = false);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const WhereToBuyStepPage(),
                               ),
                             );
                           },
@@ -654,6 +709,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   Navigator.pop(ctx);
                 },
               ),
+                      ListTile(
+                        leading: const Icon(Icons.storefront_outlined),
+                        title: const Text('구매처 생성'),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const WhereToBuyStepPage()),
+                          );
+                        },
+                      ),
               ListTile(
                 leading: const Icon(Icons.call_made_outlined),
                 title: const Text('상품권 구매'),

@@ -22,6 +22,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
 
   String? _selectedGiftcardId;
   String? _selectedCardId;
+  String? _selectedWhereToBuyId;
   String _payType = '신용';
   DateTime _buyDate = DateTime.now();
   final List<int> _faceValueOptions = [10000, 50000, 100000, 500000];
@@ -31,12 +32,14 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   String? _error;
   List<Map<String, dynamic>> _cards = [];
   List<Map<String, dynamic>> _giftcards = [];
+  List<Map<String, dynamic>> _whereToBuys = [];
   Map<String, dynamic>? _existingLot;
 
   @override
   void initState() {
     super.initState();
     _loadCardsAndGiftcards();
+    _loadWhereToBuys();
     _buyUnitController.addListener(_onBuyUnitChanged);
     _discountController.addListener(_onDiscountChanged);
     _qtyController.addListener(() => setState(() {}));
@@ -57,6 +60,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       _existingLot = {'id': doc.id, ...data};
       _selectedGiftcardId = data['giftcardId'] as String?;
       _selectedCardId = data['cardId'] as String?;
+      _selectedWhereToBuyId = data['whereToBuyId'] as String?;
       _payType = (data['payType'] as String?) ?? '신용';
       final ts = data['buyDate'];
       if (ts is Timestamp) {
@@ -109,6 +113,28 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
           }
         } else {
           _selectedGiftcardId = null;
+        }
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _loadWhereToBuys() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('where_to_buy')
+          .get();
+      setState(() {
+        _whereToBuys = snap.docs
+            .map((d) => {'whereToBuyId': d.id, ...d.data()})
+            .toList()
+          ..sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
+        if (_selectedWhereToBuyId != null &&
+            !_whereToBuys.any((w) => w['whereToBuyId'] == _selectedWhereToBuyId)) {
+          _selectedWhereToBuyId = null;
         }
       });
     } catch (_) {}
@@ -195,6 +221,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         'cardId': _selectedCardId,
         'status': _existingLot?['status'] ?? 'open',
         'giftcardId': _selectedGiftcardId,
+        'whereToBuyId': _selectedWhereToBuyId,
         'memo': _memoController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -357,6 +384,36 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                               ))
                           .toList(),
                       onChanged: hasCards ? (v) => setState(() => _selectedCardId = v) : null,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
+                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black87, width: 1.5)),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('구매처 (선택)', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: _selectedWhereToBuyId ?? '',
+                      dropdownColor: Colors.white,
+                      style: const TextStyle(color: Colors.black),
+                      iconEnabledColor: Colors.black54,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: '',
+                          child: Text('선택 안 함', style: TextStyle(color: Colors.black54)),
+                        ),
+                        ..._whereToBuys.map((w) => DropdownMenuItem<String>(
+                              value: w['whereToBuyId'] as String,
+                              child: Text(
+                                (w['name'] as String?) ?? (w['whereToBuyId'] as String),
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                            ))
+                      ],
+                      onChanged: (v) => setState(() => _selectedWhereToBuyId = (v == null || v.isEmpty) ? null : v),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
