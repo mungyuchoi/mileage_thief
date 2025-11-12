@@ -1223,6 +1223,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 const _InfoPill(text: '판매', icon: Icons.attach_money_outlined, filled: true),
                 const SizedBox(width: 8),
                 Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black54),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: '편집',
+                  onPressed: () async {
+                    await _confirmAndConsumePeanutsThen(() async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
+                      );
+                      if (mounted) _load();
+                    }, cost: 20);
+                  },
+                ),
               ]),
               const SizedBox(height: 8),
               Wrap(
