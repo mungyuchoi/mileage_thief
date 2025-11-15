@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
@@ -32,6 +34,29 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   late final double _markerHueBrown; // #73532E
   final Map<String, BitmapDescriptor> _logoIconCache = <String, BitmapDescriptor>{};
   final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
+
+  static const String _fallbackMarkerPhotoUrl =
+      'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2FaP3C0N511beyK7QZG9GyChs5oqO2.png?alt=media&token=5e0ddec7-45ad-4f0e-b83e-485ee1babf1d';
+
+  // 비어있지 않은 첫 번째 URL을 선택 (null/빈문자열 모두 건너뜀)
+  String _pickMarkerPhotoUrl({
+    String? firstUserPhoto,
+    String? storedFirstUserPhoto,
+    String? logoUrl,
+  }) {
+    final List<String?> candidates = <String?>[
+      firstUserPhoto,
+      storedFirstUserPhoto,
+      logoUrl,
+      _fallbackMarkerPhotoUrl,
+    ];
+    for (final String? c in candidates) {
+      if (c != null && c.trim().isNotEmpty) {
+        return c;
+      }
+    }
+    return _fallbackMarkerPhotoUrl;
+  }
 
   @override
   void initState() {
@@ -86,7 +111,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     });
     try {
       final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
-      final List<Marker> newMarkers = [];
+      // 기존 마커 초기화 후 지점별 기본 마커를 즉시 추가
+      setState(() {
+        _markers.clear();
+      });
 
       for (final doc in branchesSnap.docs) {
         final data = doc.data();
@@ -169,11 +197,20 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         final Marker marker = _buildMarker(
           BitmapDescriptor.defaultMarkerWithHue(_markerHueBrown),
         );
-        newMarkers.add(marker);
+        setState(() {
+          _markers.add(marker);
+        });
 
-        // firstUser의 photoUrl로 커스텀 마커 로딩 후 교체 (없으면 지점 로고 사용)
-        final String? markerPhoto = (firstUser?['photoUrl'] as String?) ?? data['logoUrl'] as String?;
-        if (markerPhoto != null && markerPhoto.isNotEmpty) {
+        // firstUser의 photoUrl로 커스텀 마커 로딩 후 교체 (없으면 지점 로고/저장된 firstUser/폴백 사용)
+        final String markerPhoto = _pickMarkerPhotoUrl(
+          firstUserPhoto: firstUser?['photoUrl'] as String?,
+          storedFirstUserPhoto: (ratesData['firstUser'] is Map)
+              ? (Map<String, dynamic>.from(ratesData['firstUser'] as Map))['photoUrl'] as String?
+              : null,
+          logoUrl: data['logoUrl'] as String?,
+        );
+        debugPrint('[Map] ${doc.id}: loading marker icon from ${markerPhoto.length > 120 ? markerPhoto.substring(0, 120) + '...' : markerPhoto}');
+        if (markerPhoto.isNotEmpty) {
           _getCircleMarkerFromUrl(markerPhoto).then((BitmapDescriptor icon) {
             if (!mounted) return;
             setState(() {
@@ -182,15 +219,19 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             });
           }).catchError((_) {
             // 무시: 로고 로딩 실패 시 기본 마커 유지
+            debugPrint('[Map] ${doc.id}: marker icon load failed, try fallback');
+            _getCircleMarkerFromUrl(_fallbackMarkerPhotoUrl).then((BitmapDescriptor icon) {
+              if (!mounted) return;
+              setState(() {
+                _markers.removeWhere((m) => m.markerId.value == doc.id);
+                _markers.add(_buildMarker(icon, customAnchor: true));
+              });
+            }).catchError((_) {
+              debugPrint('[Map] ${doc.id}: fallback icon load failed, keep default');
+            });
           });
         }
       }
-
-      setState(() {
-        _markers
-          ..clear()
-          ..addAll(newMarkers);
-      });
     } catch (_) {
       // silent fail for now
     } finally {
@@ -214,8 +255,29 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
     try {
       final Uri uri = Uri.parse(url);
-      final ByteData byteData = await NetworkAssetBundle(uri).load(uri.toString());
-      final Uint8List bytes = byteData.buffer.asUint8List();
+
+      // 1차: 기본 NetworkAssetBundle
+      Uint8List? bytes;
+      try {
+        final ByteData byteData = await NetworkAssetBundle(uri).load(uri.toString());
+        bytes = byteData.buffer.asUint8List();
+      } catch (e) {
+        debugPrint('[Map] bundle load failed: $e, url=$url');
+      }
+
+      // 2차: HttpClient로 재시도(리다이렉트/403 등 대응)
+      if (bytes == null) {
+        try {
+          final HttpClient client = HttpClient()..autoUncompress = true;
+          final HttpClientRequest request = await client.getUrl(uri);
+          final HttpClientResponse response = await request.close();
+          bytes = await consolidateHttpClientResponseBytes(response);
+          client.close(force: true);
+        } catch (e) {
+          debugPrint('[Map] http load failed: $e, url=$url');
+          rethrow;
+        }
+      }
 
       final ui.Codec codec = await ui.instantiateImageCodec(bytes, targetWidth: diameter, targetHeight: diameter);
       final ui.FrameInfo frameInfo = await codec.getNextFrame();
