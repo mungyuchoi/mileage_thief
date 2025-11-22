@@ -278,6 +278,20 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: const Icon(Icons.chat, color: Colors.black54),
                   onPressed: _launchOpenChat,
                 ),
+                // 로그인 시에만 텔레그램 유사 아이콘 표시 (3번째 아이템)
+                Builder(builder: (context) {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null) return const SizedBox.shrink();
+                  return IconButton(
+                    icon: const Icon(Icons.send_rounded, color: Colors.black54),
+                    onPressed: () async {
+                      final uri = Uri.parse('https://t.me/+6ZxoqIXFsI5kMzVl');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  );
+                }),
                 Builder(builder: (context) {
                   final user = FirebaseAuth.instance.currentUser;
                   if (user == null) {
