@@ -5,7 +5,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
-// import 'package:mileage_thief/screen/dan_screen.dart';
+import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/login_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -564,6 +564,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
+                      Icon(Icons.flight_takeoff),
+                      SizedBox(height: 2),
+                      Text('대한항공', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
                       Icon(Icons.settings),
                       SizedBox(height: 2),
                       Text('설정', style: TextStyle(fontSize: 12)),
@@ -589,7 +600,9 @@ class _SearchScreenState extends State<SearchScreen> {
               ? '${_communityNoticeTitle.isNotEmpty ? ' $_communityNoticeTitle' : ''}'
               : _currentIndex == 1
                   ? '상품권'
-                  : '설정',
+                  : _currentIndex == 2
+                      ? '대한항공'
+                      : '설정',
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: SizedBox(
@@ -671,6 +684,17 @@ class _SearchScreenState extends State<SearchScreen> {
             icon: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
+                Icon(Icons.flight_takeoff),
+                SizedBox(height: 2),
+                Text('대한항공', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
                 Icon(Icons.settings),
                 SizedBox(height: 2),
                 Text('설정', style: TextStyle(fontSize: 12)),
@@ -691,6 +715,8 @@ class _SearchScreenState extends State<SearchScreen> {
       case 1:
         return const GiftcardMapScreen();
       case 2:
+        return const SearchDanScreen();
+      case 3:
         return buildSettingsWidget();
       default:
         return const CommunityScreen();
