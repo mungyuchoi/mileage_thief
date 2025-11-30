@@ -23,7 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 
 class MyPageScreen extends StatefulWidget {
-  const MyPageScreen({Key? key}) : super(key: key);
+  final bool highlightAds;
+  const MyPageScreen({Key? key, this.highlightAds = false}) : super(key: key);
 
   @override
   State<MyPageScreen> createState() => _MyPageScreenState();
@@ -34,6 +35,7 @@ class _MyPageScreenState extends State<MyPageScreen>
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
   TabController? _tabController;
+  bool _showAdHighlight = false;
 
   // 페이징 관련 변수 추가
   final int _pageSize = 50;
@@ -103,6 +105,56 @@ class _MyPageScreenState extends State<MyPageScreen>
     );
   }
 
+  // 광고 하이라이트 배너
+  Widget _buildAdHighlightBanner() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFD54F)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFD54F).withOpacity(0.5),
+              blurRadius: 16,
+              spreadRadius: 1,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(Icons.ondemand_video, color: Color(0xFFFFA000)),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '광고를 시청하면 땅콩을 얻을 수 있어요!',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _showAdHighlight = false;
+                });
+                _showAdManagementDialog();
+              },
+              child: const Text('바로가기', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -117,6 +169,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _initAdState();
     _loadInterstitialAd();
     _loadRewardedAd();
+    _showAdHighlight = widget.highlightAds;
   }
 
   @override
@@ -1657,6 +1710,9 @@ class _MyPageScreenState extends State<MyPageScreen>
                       // 스카이 이펙트 영역
                       _buildSkyEffectSection(),
                       const SizedBox(height: 8),
+                      // 광고 하이라이트 안내
+                      if (_showAdHighlight) _buildAdHighlightBanner(),
+                      if (_showAdHighlight) const SizedBox(height: 8),
                       // 광고 관리 영역
                       _buildAdManagementSection(),
                       const SizedBox(height: 8),

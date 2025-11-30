@@ -12,8 +12,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'branch/branch_edit_screen.dart';
 import 'user_profile_screen.dart';
+import 'my_page_screen.dart';
 
 class GiftcardMapScreen extends StatefulWidget {
   const GiftcardMapScreen({super.key});
@@ -735,7 +737,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: _showMonthPickerSheet,
+              onTap: () => _requirePeanutsAndThen(_showMonthPickerSheet),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -767,7 +769,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: _showBranchRankingsSheet,
+                onTap: () => _requirePeanutsAndThen(_showBranchRankingsSheet),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -795,7 +797,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: _showUserRankingsSheet,
+                onTap: () => _requirePeanutsAndThen(_showUserRankingsSheet),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -1162,6 +1164,69 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         );
       },
     );
+  }
+
+  Future<void> _requirePeanutsAndThen(FutureOr<void> Function() action) async {
+    final bool ok = await _confirmAndSpendPeanuts(amount: 10);
+    if (ok) {
+      await action();
+    }
+  }
+
+  Future<bool> _confirmAndSpendPeanuts({required int amount}) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        Fluttertoast.showToast(msg: '땅콩을 얻으려면 광고를 시청해주세요.');
+        if (mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPageScreen(highlightAds: true)));
+        }
+        return false;
+      }
+
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
+      if (peanuts < amount) {
+        Fluttertoast.showToast(msg: '땅콩을 얻으려면 광고를 시청해주세요.');
+        if (mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPageScreen(highlightAds: true)));
+        }
+        return false;
+      }
+
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            content: Text('땅콩 $amount개가 소모됩니다.', style: const TextStyle(color: Colors.black)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('취소', style: TextStyle(color: Colors.black)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      );
+      if (confirm != true) return false;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'peanutCount': FieldValue.increment(-amount)});
+
+      Fluttertoast.showToast(msg: '땅콩 $amount개가 사용되었습니다.');
+      return true;
+    } catch (_) {
+      Fluttertoast.showToast(msg: '처리 중 오류가 발생했습니다.');
+      return false;
+    }
   }
 }
 
