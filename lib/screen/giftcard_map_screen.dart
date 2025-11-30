@@ -36,6 +36,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   final Map<String, BitmapDescriptor> _logoIconCache = <String, BitmapDescriptor>{};
   final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
   final List<Map<String, dynamic>> _branchRankings = <Map<String, dynamic>>[]; // 지점별 월 랭킹(총액 기준 내림차순)
+  final List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[]; // 사용자 월 랭킹(모든 지점 합산)
 
   static const String _fallbackMarkerPhotoUrl =
       'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2FaP3C0N511beyK7QZG9GyChs5oqO2.png?alt=media&token=5e0ddec7-45ad-4f0e-b83e-485ee1babf1d';
@@ -118,7 +119,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       setState(() {
         _markers.clear();
         _branchRankings.clear();
+        _userRankings.clear();
       });
+
+      // 사용자 집계를 위한 전역 agg
+      final Map<String, Map<String, dynamic>> userAgg = <String, Map<String, dynamic>>{};
 
       for (final doc in branchesSnap.docs) {
         final data = doc.data();
@@ -155,6 +160,14 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           cur['displayName'] = dn;
           cur['photoUrl'] = pu;
           agg[uid] = cur;
+
+          // 전역 사용자 합산
+          final Map<String, dynamic> g = userAgg[uid] ?? {'uid': uid, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0, 'branches': 0};
+          g['sellTotal'] = ((g['sellTotal'] as int?) ?? 0) + v;
+          g['displayName'] = dn;
+          g['photoUrl'] = pu;
+          g['branches'] = ((g['branches'] as int?) ?? 0) + 1;
+          userAgg[uid] = g;
         }
         final List<Map<String, dynamic>> ranked = agg.values.toList()
           ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
@@ -253,6 +266,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
       // 총액 기준 내림차순 정렬
       _branchRankings.sort((a, b) => ((b['total'] as int) - (a['total'] as int)));
+
+      // 사용자 랭킹 정렬
+      _userRankings.addAll(userAgg.values);
+      _userRankings.sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
     } catch (_) {
       // silent fail for now
     } finally {
@@ -745,7 +762,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         if (_branchRankings.isNotEmpty)
           Positioned(
             left: 12,
-            bottom: 24,
+            bottom: 76,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -764,6 +781,34 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       Icon(Icons.leaderboard, size: 16, color: Colors.black87),
                       SizedBox(width: 6),
                       Text('지점 랭킹', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (_userRankings.isNotEmpty)
+          Positioned(
+            left: 12,
+            bottom: 24,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _showUserRankingsSheet,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.emoji_events_outlined, size: 16, color: Colors.black87),
+                      SizedBox(width: 6),
+                      Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -991,6 +1036,128 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
               ],
             ),
           ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showUserRankingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final double screenH = MediaQuery.of(ctx).size.height;
+        final double reservedTop =
+            MediaQuery.of(ctx).padding.top + kToolbarHeight + 48.0 + 52.0;
+        final double maxHeight = (screenH - reservedTop).clamp(280.0, screenH);
+        final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
+        return SafeArea(
+          child: SizedBox(
+            height: maxHeight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                        const Spacer(),
+                        Text('${_userRankings.length}명', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: _userRankings.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final Map<String, dynamic> u = _userRankings[index];
+                        final String uid = u['uid'] as String? ?? '';
+                        final String name = u['displayName'] as String? ?? '익명';
+                        final String? photo = u['photoUrl'] as String?;
+                        final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
+
+                        Color bg;
+                        Color fg = Colors.white;
+                        String label;
+                        switch (index) {
+                          case 0:
+                            bg = const Color(0xFFFFD700);
+                            label = '1';
+                            break;
+                          case 1:
+                            bg = const Color(0xFFB0BEC5);
+                            label = '2';
+                            break;
+                          case 2:
+                            bg = const Color(0xFFCD7F32);
+                            label = '3';
+                            break;
+                          default:
+                            bg = Colors.grey.shade200;
+                            fg = Colors.black87;
+                            label = '${index + 1}';
+                        }
+
+                        return InkWell(
+                          onTap: () {
+                            if (uid.isNotEmpty) {
+                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserProfileScreen(userUid: uid)));
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                                  child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w800)),
+                                ),
+                                const SizedBox(width: 12),
+                                CircleAvatar(radius: 14, backgroundImage: (photo != null && photo.isNotEmpty) ? NetworkImage(photo) : null),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 2),
+                                      Text('총 ${_formatCurrency(total)}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
