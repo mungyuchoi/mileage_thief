@@ -161,6 +161,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   final DateFormat _yMd = DateFormat('yyyy-MM-dd');
   final NumberFormat _won = NumberFormat('#,###');
 
+  // 대시보드: 월 필터 상태
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _pieByAmount = true; // true: 금액, false: 수량
@@ -206,8 +209,24 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       return;
     }
     try {
-      final lotsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('lots').get();
-      final salesSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('sales').get();
+      // 선택된 월 범위
+      final DateTime start = DateTime(_selectedMonth.year, _selectedMonth.month);
+      final DateTime end = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+
+      // 실거래 기준: lots는 buyDate, sales는 sellDate
+      final lotsSnap = await FirebaseFirestore.instance
+          .collection('users').doc(uid).collection('lots')
+          .where('buyDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('buyDate', isLessThan: Timestamp.fromDate(end))
+          .orderBy('buyDate')
+          .get();
+
+      final salesSnap = await FirebaseFirestore.instance
+          .collection('users').doc(uid).collection('sales')
+          .where('sellDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('sellDate', isLessThan: Timestamp.fromDate(end))
+          .orderBy('sellDate')
+          .get();
       final cardsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').get();
       final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
       final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
@@ -243,6 +262,54 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       });
     } catch (_) {
       setState(() { _loading = false; });
+    }
+  }
+
+  String _formatYearMonth(DateTime d) {
+    final m = d.month.toString().padLeft(2, '0');
+    return '${d.year}년도 $m월';
+  }
+
+  Future<void> _showMonthPicker() async {
+    // 최근 24개월 제공
+    final DateTime now = DateTime.now();
+    final List<DateTime> months = List.generate(
+      24,
+      (i) => DateTime(now.year, now.month - i),
+    );
+    final selected = await showModalBottomSheet<DateTime>(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return SafeArea(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemBuilder: (context, index) {
+              final d = months[index];
+              final isCurrent = d.year == _selectedMonth.year && d.month == _selectedMonth.month;
+              return ListTile(
+                title: Text(
+                  _formatYearMonth(d),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, d),
+              );
+            },
+            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+            itemCount: months.length,
+          ),
+        );
+      },
+    );
+    if (selected != null) {
+      setState(() {
+        _selectedMonth = DateTime(selected.year, selected.month);
+        _loading = true;
+      });
+      await _load();
     }
   }
 
@@ -333,6 +400,34 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 월 헤더: "YYYY년도 MM월"  |  "MM월 ▼" 필터 버튼
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _formatYearMonth(_selectedMonth),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+                ),
+                TextButton.icon(
+                  onPressed: _showMonthPicker,
+                  icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
+                  label: Text(
+                    '${_selectedMonth.month.toString().padLeft(2, '0')}월 ▼',
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.black26),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           // KPI
           Row(
             children: [
