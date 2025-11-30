@@ -13,6 +13,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'branch/branch_edit_screen.dart';
+import 'user_profile_screen.dart';
 
 class GiftcardMapScreen extends StatefulWidget {
   const GiftcardMapScreen({super.key});
@@ -30,10 +31,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   bool _locationEnabled = false;
   final Set<Marker> _markers = <Marker>{};
   bool _isLoading = false;
-  late final String _monthKey;
+  late DateTime _selectedMonth;
   late final double _markerHueBrown; // #73532E
   final Map<String, BitmapDescriptor> _logoIconCache = <String, BitmapDescriptor>{};
   final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
+  final List<Map<String, dynamic>> _branchRankings = <Map<String, dynamic>>[]; // 지점별 월 랭킹(총액 기준 내림차순)
 
   static const String _fallbackMarkerPhotoUrl =
       'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2FaP3C0N511beyK7QZG9GyChs5oqO2.png?alt=media&token=5e0ddec7-45ad-4f0e-b83e-485ee1babf1d';
@@ -61,7 +63,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   @override
   void initState() {
     super.initState();
-    _monthKey = DateFormat('yyyyMM').format(DateTime.now());
+    _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
     _markerHueBrown = HSVColor.fromColor(const Color(0xFF73532E)).hue;
     _initLocation();
     _loadMonthlyMarkers();
@@ -110,10 +112,12 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       _isLoading = true;
     });
     try {
+      final String monthKey = DateFormat('yyyyMM').format(_selectedMonth);
       final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
       // 기존 마커 초기화 후 지점별 기본 마커를 즉시 추가
       setState(() {
         _markers.clear();
+        _branchRankings.clear();
       });
 
       for (final doc in branchesSnap.docs) {
@@ -128,7 +132,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             .collection('branches')
             .doc(doc.id)
             .collection('rates_monthly')
-            .doc(_monthKey);
+            .doc(monthKey);
         final ratesDoc = await ratesRef.get();
         if (!ratesDoc.exists) {
           continue; // 이번 달 데이터 없으면 마커 표시 안함
@@ -157,6 +161,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         final Map<String, dynamic>? firstUser = ranked.isNotEmpty ? ranked[0] : null;
         final Map<String, dynamic>? secondUser = ranked.length > 1 ? ranked[1] : null;
         final Map<String, dynamic>? thirdUser = ranked.length > 2 ? ranked[2] : null;
+        final int branchTotal = ranked.fold<int>(0, (sum, u) => sum + ((u['sellTotal'] as num?)?.toInt() ?? 0));
 
         // 저장된 top3와 다르면 업데이트(베스트 effort)
         try {
@@ -175,10 +180,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
         final LatLng position = LatLng(lat, lng);
         Marker _buildMarker(BitmapDescriptor icon, {bool customAnchor = false}) {
+          final String monthTitle = '${DateFormat('M').format(_selectedMonth)}월 판매왕';
           return Marker(
             markerId: MarkerId(doc.id),
             position: position,
-            infoWindow: InfoWindow(title: '$branchName (이달 판매왕)', snippet: snippet),
+            infoWindow: InfoWindow(title: '$branchName ($monthTitle)', snippet: snippet),
             icon: icon,
             anchor: customAnchor ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
             onTap: () {
@@ -231,7 +237,22 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             });
           });
         }
+
+        // 바텀시트용 지점 랭킹 데이터 누적
+        _branchRankings.add(<String, dynamic>{
+          'branchId': doc.id,
+          'branchName': branchName,
+          'lat': lat,
+          'lng': lng,
+          'firstUser': firstUser,
+          'secondUser': secondUser,
+          'thirdUser': thirdUser,
+          'total': branchTotal,
+        });
       }
+
+      // 총액 기준 내림차순 정렬
+      _branchRankings.sort((a, b) => ((b['total'] as int) - (a['total'] as int)));
     } catch (_) {
       // silent fail for now
     } finally {
@@ -399,7 +420,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     final String? notice = branchData['notice'] as String?;
     final String? address = branchData['address'] as String?;
 
-    final String monthLabel = DateFormat('yyyy.MM').format(DateTime.now());
+    final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
 
     // Admin 체크 및 특정 UID 편집 권한 체크
     bool canEdit = false;
@@ -689,7 +710,290 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             }
           },
         ),
+        // 좌상단 월 라벨
+        Positioned(
+          left: 12,
+          top: 12,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: _showMonthPickerSheet,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${DateFormat('yyyy.MM').format(_selectedMonth)} 기준',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.expand_more, size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // 좌하단 '지점 랭킹' Chip
+        if (_branchRankings.isNotEmpty)
+          Positioned(
+            left: 12,
+            bottom: 24,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _showBranchRankingsSheet,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.leaderboard, size: 16, color: Colors.black87),
+                      SizedBox(width: 6),
+                      Text('지점 랭킹', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
+    );
+  }
+
+  void _showBranchRankingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final double screenH = MediaQuery.of(ctx).size.height;
+        // 상단(AppBar+TabBar) + 칩 영역을 보존하여 시트가 그 위로 넘어가지 않도록 제한
+        final double reservedTop =
+            MediaQuery.of(ctx).padding.top + kToolbarHeight + 48.0 + 52.0; // status + appbar + tabbar + chip 여유
+        final double maxHeight = (screenH - reservedTop).clamp(280.0, screenH);
+        final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
+        return SafeArea(
+          child: SizedBox(
+            height: maxHeight,
+            child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Text('지점 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                      const Spacer(),
+                      Text('${_branchRankings.length}개 지점', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _branchRankings.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final Map<String, dynamic> b = _branchRankings[index];
+                      final String name = (b['branchName'] as String?) ?? b['branchId'] as String;
+                      final int total = (b['total'] as num?)?.toInt() ?? 0;
+                      final Map<String, dynamic>? first = b['firstUser'] as Map<String, dynamic>?;
+                      final String? firstUid = first?['uid'] as String?;
+                      final String? firstPhoto = first?['photoUrl'] as String?;
+                      final int firstTotal = (first?['sellTotal'] as num?)?.toInt() ?? 0;
+
+                      Color bg;
+                      Color fg = Colors.white;
+                      String label;
+                      switch (index) {
+                        case 0:
+                          bg = const Color(0xFFFFD700); // gold
+                          label = '1';
+                          break;
+                        case 1:
+                          bg = const Color(0xFFB0BEC5); // silver-ish
+                          label = '2';
+                          break;
+                        case 2:
+                          bg = const Color(0xFFCD7F32); // bronze
+                          label = '3';
+                          break;
+                        default:
+                          bg = Colors.grey.shade200;
+                          fg = Colors.black87;
+                          label = '${index + 1}';
+                      }
+
+                      return InkWell(
+                        onTap: () async {
+                          final GoogleMapController c = await _mapController.future;
+                          final double lat = (b['lat'] as num).toDouble();
+                          final double lng = (b['lng'] as num).toDouble();
+                          await c.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 16));
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                                child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w800)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        if (firstPhoto != null && firstPhoto.isNotEmpty && firstUid != null && firstUid.isNotEmpty)
+                                          GestureDetector(
+                                            onTap: () {
+                                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserProfileScreen(userUid: firstUid)));
+                                            },
+                                            child: CircleAvatar(radius: 10, backgroundImage: NetworkImage(firstPhoto)),
+                                          )
+                                        else
+                                          const CircleAvatar(radius: 10, backgroundColor: Color(0xFFE0E0E0), child: Icon(Icons.person, size: 12, color: Colors.white)),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            (first != null)
+                                                ? '1위 ${first['displayName'] ?? '익명'} · ${_formatCurrency(firstTotal)}'
+                                                : '데이터 없음',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMonthPickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final double screenH = MediaQuery.of(ctx).size.height;
+        final double reservedTop =
+            MediaQuery.of(ctx).padding.top + kToolbarHeight + 48.0 + 52.0;
+        final double maxHeight = (screenH - reservedTop).clamp(280.0, screenH);
+        final DateTime start = DateTime(2025, 11);
+        final DateTime now = DateTime(DateTime.now().year, DateTime.now().month);
+        final List<DateTime> months = <DateTime>[];
+        DateTime cur = now;
+        while (!(cur.year == start.year && cur.month == start.month)) {
+          months.add(cur);
+          cur = DateTime(cur.year, cur.month - 1);
+        }
+        months.add(start);
+
+        return SafeArea(
+          child: SizedBox(
+            height: maxHeight,
+            child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('월 선택', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: months.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final DateTime m = months[index];
+                      final String label = DateFormat('yyyy.MM').format(m);
+                      final bool selected = (m.year == _selectedMonth.year && m.month == _selectedMonth.month);
+                      return ListTile(
+                        title: Text(label),
+                        trailing: selected ? const Icon(Icons.check, color: Color(0xFF73532E)) : null,
+                        onTap: () async {
+                          Navigator.pop(context);
+                          setState(() {
+                            _selectedMonth = m;
+                          });
+                          await _loadMonthlyMarkers();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ),
+        );
+      },
     );
   }
 }
