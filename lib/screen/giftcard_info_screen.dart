@@ -164,6 +164,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   // 대시보드: 월 필터 상태
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
+  // 캘린더 탭: 대시보드와 독립적인 월/데이터 상태
+  DateTime _calendarMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  List<Map<String, dynamic>> _calendarLots = [];
+  List<Map<String, dynamic>> _calendarSales = [];
+
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _pieByAmount = true; // true: 금액, false: 수량
@@ -186,6 +191,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       }
     });
     _load();
+    // 초기 캘린더 월 데이터 로드 (대시보드 월과는 독립적으로 관리)
+    _loadCalendarMonth(_calendarMonth);
   }
   
   // 외부에서 호출할 수 있는 새로고침 메서드
@@ -262,6 +269,50 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       });
     } catch (_) {
       setState(() { _loading = false; });
+    }
+  }
+
+  /// 캘린더 탭 전용: 캘린더에서 보고 있는 월에 맞춰 별도로 데이터 로드
+  Future<void> _loadCalendarMonth(DateTime month) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      setState(() {
+        _calendarMonth = DateTime(month.year, month.month);
+        _calendarLots = [];
+        _calendarSales = [];
+      });
+      return;
+    }
+    try {
+      final DateTime start = DateTime(month.year, month.month);
+      final DateTime end = DateTime(month.year, month.month + 1);
+
+      final lotsSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .where('buyDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('buyDate', isLessThan: Timestamp.fromDate(end))
+          .orderBy('buyDate')
+          .get();
+
+      final salesSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sales')
+          .where('sellDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('sellDate', isLessThan: Timestamp.fromDate(end))
+          .orderBy('sellDate')
+          .get();
+
+      if (!mounted) return;
+      setState(() {
+        _calendarMonth = DateTime(month.year, month.month);
+        _calendarLots = lotsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+        _calendarSales = salesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+      });
+    } catch (_) {
+      // 캘린더 데이터 로드 실패 시 기존 값 유지 (조용히 무시)
     }
   }
 
@@ -821,15 +872,17 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
   Widget _buildCalendar() {
     // 판매 기준으로 표시, 날짜 클릭 시 해당 일 매입/판매 리스트
+    // ⚠️ 캘린더는 대시보드의 월 필터(_selectedMonth)와 독립적으로,
+    //     자체적으로 관리하는 _calendarMonth 기준 데이터(_calendarLots/_calendarSales)를 사용한다.
     final Map<DateTime, List<Map<String, dynamic>>> byDay = {};
-    for (final s in _sales) {
+    for (final s in _calendarSales) {
       final ts = s['sellDate'];
       if (ts is Timestamp) {
         final d = DateTime(ts.toDate().year, ts.toDate().month, ts.toDate().day);
         byDay.putIfAbsent(d, () => []).add({...s, 'type': 'sale'});
       }
     }
-    for (final l in _lots) {
+    for (final l in _calendarLots) {
       final ts = l['buyDate'];
       if (ts is Timestamp) {
         final d = DateTime(ts.toDate().year, ts.toDate().month, ts.toDate().day);
@@ -849,6 +902,13 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           selectedDayPredicate: (day) => _selectedDay != null && day.year == _selectedDay!.year && day.month == _selectedDay!.month && day.day == _selectedDay!.day,
           calendarStyle: const CalendarStyle(todayDecoration: BoxDecoration(color: Color(0x2074512D), shape: BoxShape.circle)),
           headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+          // 달(페이지)이 변경될 때마다 해당 월 기준으로 캘린더 전용 데이터를 다시 로드
+          onPageChanged: (focused) {
+            setState(() {
+              _focusedDay = focused;
+            });
+            _loadCalendarMonth(DateTime(focused.year, focused.month));
+          },
           onDaySelected: (selected, focused) {
             setState(() {
               _selectedDay = DateTime(selected.year, selected.month, selected.day);
@@ -895,7 +955,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               return false;
             },
             child: RefreshIndicator(
-              onRefresh: _load,
+              // 캘린더 탭에서는 현재 보고 있는 월(_calendarMonth) 기준으로만 새로고침
+              onRefresh: () => _loadCalendarMonth(_calendarMonth),
               color: const Color(0xFF74512D),
               backgroundColor: Colors.white,
               child: ListView.builder(
