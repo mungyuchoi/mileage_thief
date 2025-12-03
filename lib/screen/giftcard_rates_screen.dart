@@ -1,6 +1,91 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+// 액면가(faceValue) 기준으로 퍼센트 계산 (기본 10만 원)
+double? _calcRateFromPrice(num? price, {num faceValue = 100000}) {
+  if (price == null) return null;
+  final double face = faceValue.toDouble();
+  if (face == 0) return null;
+  final double p = price.toDouble();
+  return ((face - p) / face) * 100.0;
+}
+
+/// 시세 카드에서 사용하는 설명 아이콘 라벨
+class _RateLabel extends StatelessWidget {
+  final String label;
+  final String description;
+
+  const _RateLabel({required this.label, required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: () {
+            showDialog<void>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: Colors.white,
+                title: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  description,
+                  style: const TextStyle(color: Colors.black87, fontSize: 14),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text(
+                      '확인',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: Container(
+            width: 16,
+            height: 16,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0x1174512D),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Text(
+              '!',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF74512D),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// 상품권 탭 > "시세" 탭 진입용 메인 위젯
 /// 1단계: giftcards 컬렉션 기반 브랜드별 요약 시세 목록
@@ -144,12 +229,9 @@ class GiftcardRatesTab extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      '팔 때 (사용자가 지점에 판매)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.black54,
-                                      ),
+                                    _RateLabel(
+                                      label: '팔 때',
+                                      description: '사용자가 지점에 상품권을 파는 경우 (지점이 금액을 지급합니다).',
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -171,12 +253,9 @@ class GiftcardRatesTab extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      '살 때 (사용자가 지점에서 매입)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.black54,
-                                      ),
+                                    _RateLabel(
+                                      label: '살 때',
+                                      description: '사용자가 지점에서 상품권을 사는 경우 (사용자가 금액을 지불합니다).',
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -261,7 +340,13 @@ class GiftcardBrandRatesPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(giftcardName),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
+      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _load(),
         builder: (context, snapshot) {
@@ -288,10 +373,12 @@ class GiftcardBrandRatesPage extends StatelessWidget {
             return sb.compareTo(sa);
           });
 
+          final double bottomInset = MediaQuery.of(context).padding.bottom;
+
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
             itemCount: rows.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final row = rows[index];
               final String branchId = row['branchId'] as String;
@@ -302,40 +389,169 @@ class GiftcardBrandRatesPage extends StatelessWidget {
 
               final branchName =
                   (branch['name'] as String?) ?? (branchId.isNotEmpty ? branchId : '알 수 없음');
+              final address = branch['address'] as String?;
 
               final sellPrice = data['sellPrice_general'] as num?;
               final buyPrice = data['buyPrice_general'] as num?;
-              final sellRate = data['sellFeeRate_general'] as num?;
-              final buyRate = data['buyDiscountRate_general'] as num?;
+              double? sellRate =
+                  (data['sellFeeRate_general'] as num?)?.toDouble();
+              double? buyRate =
+                  (data['buyDiscountRate_general'] as num?)?.toDouble();
 
-              return ListTile(
+              // 퍼센트 값이 없으면 10만원 기준으로 계산
+              sellRate ??= _calcRateFromPrice(sellPrice);
+              buyRate ??= _calcRateFromPrice(buyPrice);
+
+              return InkWell(
                 onTap: () {
-                  if (branchId == null) return;
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => BranchRatesDetailPage(
-                        branchId: branchId!,
+                        branchId: branchId,
                         branchName: branchName,
                       ),
                     ),
                   );
                 },
-                title: Text(branchName),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '팔 때: ${_fmtPrice(sellPrice)}'
-                      '${sellRate != null ? ' (${sellRate.toStringAsFixed(2)}%)' : ''}',
-                    ),
-                    Text(
-                      '살 때: ${_fmtPrice(buyPrice)}'
-                      '${buyRate != null ? ' (${buyRate.toStringAsFixed(2)}%)' : ''}',
-                    ),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0x1174512D),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.storefront_outlined,
+                              size: 18,
+                              color: Color(0xFF74512D),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  branchName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                if (address != null && address.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      address,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right,
+                              color: Colors.black38),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.south_west,
+                                  size: 16,
+                                  color: Color(0xFF1E88E5),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        '팔 때',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${_fmtPrice(sellPrice)}'
+                                        '${sellRate != null ? ' (${sellRate.toStringAsFixed(2)}%)' : ''}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.north_east,
+                                  size: 16,
+                                  color: Color(0xFFD81B60),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        '살 때',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${_fmtPrice(buyPrice)}'
+                                        '${buyRate != null ? ' (${buyRate.toStringAsFixed(2)}%)' : ''}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                trailing:
-                    const Icon(Icons.chevron_right, color: Colors.black38),
               );
             },
           );
@@ -411,7 +627,13 @@ class BranchRatesDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(branchName),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
+      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _load(),
         builder: (context, snapshot) {
@@ -437,6 +659,7 @@ class BranchRatesDetailPage extends StatelessWidget {
           final phone = branch?['phone'] as String?;
           final notice = branch?['notice'] as String?;
           final openingHours = branch?['openingHours'] as Map<String, dynamic>?;
+          final url = branch?['url'] as String?;
 
           return FutureBuilder<String?>(
             future: _latestDailyId(),
@@ -452,8 +675,10 @@ class BranchRatesDetailPage extends StatelessWidget {
                 baseDateLabel = '기준일 정보 없음';
               }
 
+              final double bottomInset = MediaQuery.of(context).padding.bottom;
+
               return ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
                 children: [
                   Text(
                     baseDateLabel,
@@ -471,36 +696,69 @@ class BranchRatesDetailPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (address != null) ...[
-                          const Text(
-                            '주소',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.place_outlined,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '주소',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(address),
                           const SizedBox(height: 8),
                         ],
                         if (phone != null) ...[
-                          const Text(
-                            '연락처',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '연락처',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(phone),
                           const SizedBox(height: 8),
                         ],
                         if (openingHours != null) ...[
-                          const Text(
-                            '영업시간',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.access_time_outlined,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '영업시간',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -511,15 +769,67 @@ class BranchRatesDetailPage extends StatelessWidget {
                           const SizedBox(height: 8),
                         ],
                         if (notice != null) ...[
-                          const Text(
-                            '안내사항',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.info_outline,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '안내사항',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(notice),
+                          const SizedBox(height: 8),
+                        ],
+                        if (url != null && url.trim().isNotEmpty) ...[
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.language,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'URL',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          GestureDetector(
+                            onTap: () async {
+                              final uri = Uri.tryParse(url.trim());
+                              if (uri != null) {
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            },
+                            child: Text(
+                              url.trim(),
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -602,8 +912,13 @@ class BranchRatesDetailPage extends StatelessWidget {
 
     final sellPrice = data['sellPrice_general'] as num?;
     final buyPrice = data['buyPrice_general'] as num?;
-    final sellRate = data['sellFeeRate_general'] as num?;
-    final buyRate = data['buyDiscountRate_general'] as num?;
+    double? sellRate = (data['sellFeeRate_general'] as num?)?.toDouble();
+    double? buyRate =
+        (data['buyDiscountRate_general'] as num?)?.toDouble();
+
+    // 퍼센트 값이 없으면 10만원 기준으로 계산
+    sellRate ??= _calcRateFromPrice(sellPrice);
+    buyRate ??= _calcRateFromPrice(buyPrice);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
