@@ -13,6 +13,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'branch/branch_edit_screen.dart';
 import 'user_profile_screen.dart';
 import 'my_page_screen.dart';
@@ -39,6 +40,9 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
   final List<Map<String, dynamic>> _branchRankings = <Map<String, dynamic>>[]; // 지점별 월 랭킹(총액 기준 내림차순)
   final List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[]; // 사용자 월 랭킹(모든 지점 합산)
+
+  // 지도 탭 땅콩 차감 안내 다이얼로그 "다시 보지 않기" 플래그
+  static const String _kPeanutDialogDontShowKey = 'giftcard_map_peanut_dialog_dont_show';
 
   static const String _fallbackMarkerPhotoUrl =
       'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2FaP3C0N511beyK7QZG9GyChs5oqO2.png?alt=media&token=5e0ddec7-45ad-4f0e-b83e-485ee1babf1d';
@@ -1177,44 +1181,110 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        Fluttertoast.showToast(msg: '땅콩을 얻으려면 광고를 시청해주세요.');
-        if (mounted) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPageScreen(highlightAds: true)));
-        }
+        // 로그인하지 않은 경우에는 땅콩 사용 기능을 제공하지 않음
+        Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
         return false;
       }
 
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
       if (peanuts < amount) {
-        Fluttertoast.showToast(msg: '땅콩을 얻으려면 광고를 시청해주세요.');
-        if (mounted) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyPageScreen(highlightAds: true)));
-        }
+        // 요구 조건: 10개 미만이면 토스트로 안내만 하고 동작하지 않도록
+        Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
         return false;
       }
 
-      final bool? confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            content: Text('땅콩 $amount개가 소모됩니다.', style: const TextStyle(color: Colors.black)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('취소', style: TextStyle(color: Colors.black)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          );
-        },
-      );
-      if (confirm != true) return false;
+      // "다시 보지 않기"가 설정되어 있는지 확인
+      final prefs = await SharedPreferences.getInstance();
+      final bool dontShowDialog =
+          prefs.getBool(_kPeanutDialogDontShowKey) ?? false;
+
+      bool proceed = false;
+      if (!dontShowDialog) {
+        bool localDontShow = false;
+        final bool? dontShowNext = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  title: const Text(
+                    '안내',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '해당 기능을 이용할 때마다 땅콩 $amount개가 소모됩니다.',
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text(
+                          '다시 보지 않기',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        value: localDontShow,
+                        activeColor: const Color(0xFF74512D),
+                        onChanged: (v) {
+                          setState(() {
+                            localDontShow = v ?? false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(localDontShow),
+                      child: const Text(
+                        '확인',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+
+        if (dontShowNext == null) {
+          // 사용자가 취소를 눌렀을 때
+          return false;
+        }
+
+        // 확인 버튼을 누른 경우에는 땅콩 차감 진행
+        proceed = true;
+
+        // true이면 "다시 보지 않기" 저장
+        if (dontShowNext == true) {
+          await prefs.setBool(_kPeanutDialogDontShowKey, true);
+        }
+      } else {
+        // 이미 "다시 보지 않기"를 선택한 경우에는 바로 진행
+        proceed = true;
+      }
+
+      if (!proceed) return false;
 
       await FirebaseFirestore.instance
           .collection('users')

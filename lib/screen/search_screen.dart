@@ -19,6 +19,7 @@ import '../services/auth_service.dart';
 import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
 import 'giftcard_map_screen.dart';
+import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
@@ -241,7 +242,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return WillPopScope(
         onWillPop: _onWillPop,
         child: DefaultTabController(
-          length: 2,
+          length: 3,
           child: Scaffold(
             backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
             appBar: AppBar(
@@ -361,6 +362,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 tabs: const [
                   Tab(text: '정보'),
                   Tab(text: '지도'),
+                  Tab(text: '시세'),
                 ],
               ),
             ),
@@ -378,6 +380,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       },
                     ),
                     GiftcardMapScreen(),
+                    const GiftcardRatesTab(),
                   ],
                 ),
                 if (_giftFabOpen)
