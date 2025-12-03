@@ -1,7 +1,275 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
+
+// 추천 대시보드 땅콩 안내 다이얼로그 "다시 보지 않기" 플래그
+const String _kRecommendPeanutDialogDontShowKey =
+    'giftcard_recommend_peanut_dialog_dont_show';
+
+/// 추천 대시보드용 상품권 선택 다이얼로그
+Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
+  try {
+    final snap = await FirebaseFirestore.instance
+        .collection('giftcards')
+        .orderBy('sortOrder', descending: false)
+        .get();
+
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+        snap.docs;
+    if (docs.isEmpty) return const <String>[];
+
+    final List<String> ids = docs.map((d) => d.id).toList();
+    final Map<String, String> names = {
+      for (final d in docs)
+        d.id: (d.data()['name'] as String?) ?? d.id.toUpperCase()
+    };
+
+    // 기본: 아무것도 선택되지 않은 상태
+    final Set<String> selected = <String>{};
+
+    final List<String>? result = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+            return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              scrollable: false,
+              backgroundColor: Colors.white,
+              title: const Text(
+                '상품권 선택',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '추천을 보고 싶은 상품권을 선택해주세요.',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 260,
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          for (final id in ids)
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                names[id] ?? id,
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                              value: selected.contains(id),
+                              activeColor: const Color(0xFF74512D),
+                              onChanged: (v) {
+                                setState(() {
+                                  if (v == true) {
+                                    selected.add(id);
+                                  } else {
+                                    selected.remove(id);
+                                  }
+                                });
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '선택한 상품권: ${selected.length}개 · 예상 땅콩 소모: ${selected.length * 3}개',
+                        style: const TextStyle(
+                          color: Color(0xFF74512D),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (selected.isEmpty) {
+                      Fluttertoast.showToast(
+                          msg: '최소 1개 이상의 상품권을 선택해주세요.');
+                      return;
+                    }
+                    Navigator.of(context).pop(selected.toList());
+                  },
+                  child: const Text(
+                    '확인',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    return result;
+  } catch (_) {
+    Fluttertoast.showToast(msg: '상품권 목록을 불러오지 못했습니다.');
+    return null;
+  }
+}
+
+/// 추천 대시보드 진입 전 땅콩 20개 확인 및 차감
+Future<bool> _confirmAndSpendPeanutsForRecommend(
+    BuildContext context, {
+  int amount = 20,
+}) async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(msg: '땅콩이 부족합니다.');
+      return false;
+    }
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    final int peanuts =
+        (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
+    if (peanuts < amount) {
+      Fluttertoast.showToast(msg: '땅콩이 부족합니다.');
+      return false;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final bool dontShowDialog =
+        prefs.getBool(_kRecommendPeanutDialogDontShowKey) ?? false;
+
+    bool proceed = false;
+
+    if (!dontShowDialog) {
+      bool localDontShow = false;
+      final bool? dontShowNext = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                title: const Text(
+                  '추천 대시보드',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '해당 기능을 사용할 때마다 땅콩 $amount개가 소모됩니다.',
+                      style:
+                          const TextStyle(color: Colors.black, fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        '다시 보지 않기',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      value: localDontShow,
+                      activeColor: const Color(0xFF74512D),
+                      onChanged: (v) {
+                        setState(() {
+                          localDontShow = v ?? false;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(context).pop(null),
+                    child: const Text(
+                      '취소',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(context).pop(localDontShow),
+                    child: const Text(
+                      '확인',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      if (dontShowNext == null) {
+        // 취소
+        return false;
+      }
+
+      proceed = true;
+      if (dontShowNext == true) {
+        await prefs.setBool(
+            _kRecommendPeanutDialogDontShowKey, true);
+      }
+    } else {
+      proceed = true;
+    }
+
+    if (!proceed) return false;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .update({'peanutCount': FieldValue.increment(-amount)});
+
+    Fluttertoast.showToast(msg: '땅콩 $amount개가 사용되었습니다.');
+    return true;
+  } catch (_) {
+    Fluttertoast.showToast(msg: '처리 중 오류가 발생했습니다.');
+    return false;
+  }
+}
 
 // 액면가(faceValue) 기준으로 퍼센트 계산 (기본 10만 원)
 double? _calcRateFromPrice(num? price, {num faceValue = 100000}) {
@@ -96,27 +364,39 @@ class GiftcardRatesTab extends StatelessWidget {
 
   String _fmtPrice(num? v) => v == null ? '-' : '${_won.format(v)}원';
 
-   /// giftcardId -> asset 경로 매핑
-   String? _assetForGiftcard(String id) {
-     switch (id) {
-       case 'costco':
-         return 'asset/img/costco.png';
-       case 'eland':
-         return 'asset/img/eland.png';
-       case 'galleria':
-         return 'asset/img/galleria.png';
-       case 'hyundai':
-         return 'asset/img/hyundai.png';
-       case 'lotte':
-         return 'asset/img/lotte.png';
-       case 'samsung':
-         return 'asset/img/samsung.png';
-       case 'shinsegae':
-         return 'asset/img/shinsegae.png';
-       default:
-         return null;
-     }
-   }
+  /// giftcardId -> asset 경로 매핑
+  String? _assetForGiftcard(String id) {
+    switch (id) {
+      case 'costco':
+        return 'asset/img/costco.png';
+      case 'eland':
+        return 'asset/img/eland.png';
+      case 'galleria':
+        return 'asset/img/galleria.png';
+      case 'hyundai':
+        return 'asset/img/hyundai.png';
+      case 'lotte':
+        return 'asset/img/lotte.png';
+      case 'samsung':
+        return 'asset/img/samsung.png';
+      case 'shinsegae':
+        return 'asset/img/shinsegae.png';
+      // 금강/농협/AK/CJ 개별 아이콘
+      case 'kumkang':
+        return 'asset/img/kumkang.png';
+      case 'nh':
+      case 'nonghyup':
+      case '농협':
+        return 'asset/img/nh.jpg';
+      case 'ak':
+        return 'asset/img/ak.jpg';
+      case 'cj':
+      case 'cjgift':
+        return 'asset/img/cj.png';
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,10 +424,15 @@ class GiftcardRatesTab extends StatelessWidget {
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemCount: docs.length + 1,
+          separatorBuilder: (context, index) =>
+              index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final doc = docs[index];
+            if (index == 0) {
+              return _RecommendEntryCard();
+            }
+
+            final doc = docs[index - 1];
             final data = doc.data();
             final giftcardId = doc.id;
             final name = (data['name'] as String?) ?? giftcardId;
@@ -155,6 +440,8 @@ class GiftcardRatesTab extends StatelessWidget {
             // 우선 giftcardId 기준 asset 매핑을 시도하고, 없으면 앱 아이콘으로 대체.
             final assetPath =
                 _assetForGiftcard(giftcardId) ?? 'asset/img/app_icon.png';
+            final bool isNhLogo =
+                giftcardId == 'nh' || giftcardId == 'nonghyup' || giftcardId == '농협';
             final logoUrl = data['logoUrl'] as String?;
 
             final num? bestSellPrice = data['bestSellPrice'] as num?;
@@ -199,7 +486,10 @@ class GiftcardRatesTab extends StatelessWidget {
                           child: assetPath != null
                               ? Image.asset(
                                   assetPath,
-                                  fit: BoxFit.contain, // 영역 안에서 전체가 보이도록
+                                  // NH 로고는 너무 작게 보여서 박스를 가득 채우도록 확대
+                                  fit: isNhLogo
+                                      ? BoxFit.cover
+                                      : BoxFit.contain, // 기본은 영역 안에서 전체가 보이도록
                                 )
                               : Image.network(
                                   logoUrl!,
@@ -285,6 +575,101 @@ class GiftcardRatesTab extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// 추천 대시보드 진입용 카드
+class _RecommendEntryCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        // 1) 상품권 선택 다이얼로그
+        final List<String>? selectedIds =
+            await _showGiftcardSelectDialog(context);
+        if (selectedIds == null || selectedIds.isEmpty) return;
+
+        // 2) 땅콩 확인 및 차감 (선택 개수 * 3개)
+        final int cost = selectedIds.length * 3;
+        final bool ok =
+            await _confirmAndSpendPeanutsForRecommend(context, amount: cost);
+        if (!ok) return;
+        if (!context.mounted) return;
+
+        // 3) 추천 대시보드로 이동
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                GiftcardRecommendDashboardPage(selectedGiftcardIds: selectedIds),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF74512D),
+              Color(0xFFB38A60),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Color(0xFF74512D),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    '오늘 어디에 팔면 제일 이득일까?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '선택한 상품권 기준 Top 2 지점을 한 눈에 비교해보세요.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -556,6 +941,471 @@ class GiftcardBrandRatesPage extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class GiftcardRecommendDashboardPage extends StatefulWidget {
+  final List<String>? selectedGiftcardIds;
+
+  const GiftcardRecommendDashboardPage({super.key, this.selectedGiftcardIds});
+
+  @override
+  State<GiftcardRecommendDashboardPage> createState() =>
+      _GiftcardRecommendDashboardPageState();
+}
+
+class _GiftcardRecommendDashboardPageState
+    extends State<GiftcardRecommendDashboardPage> {
+  bool _loading = true;
+  String? _error;
+  Position? _position;
+  List<_RecommendItem> _items = <_RecommendItem>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      // 1) 현재 위치 시도
+      Position? pos;
+      try {
+        final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (serviceEnabled) {
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+          }
+          if (permission == LocationPermission.always ||
+              permission == LocationPermission.whileInUse) {
+            pos = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high,
+            );
+          }
+        }
+      } catch (_) {
+        // 위치 실패는 치명적이지 않으므로 무시
+      }
+
+      // 2) 지점 + 현재 시세 로드
+      final branchesSnap =
+          await FirebaseFirestore.instance.collection('branches').get();
+
+      final Map<String, Map<String, dynamic>> giftcards =
+          <String, Map<String, dynamic>>{};
+
+      final Map<String, List<_RecommendRow>> perGiftcard =
+          <String, List<_RecommendRow>>{};
+
+      for (final branchDoc in branchesSnap.docs) {
+        final String branchId = branchDoc.id;
+        final Map<String, dynamic> branchData = branchDoc.data();
+
+        final ratesSnap = await branchDoc.reference
+            .collection('giftcardRates_current')
+            .get();
+
+        for (final rate in ratesSnap.docs) {
+          final Map<String, dynamic> rateData = rate.data();
+          final String giftcardId =
+              (rateData['giftcardId'] as String?) ?? rate.id;
+          final num? sellPrice = rateData['sellPrice_general'] as num?;
+          if (sellPrice == null) continue;
+
+          double? distanceKm;
+          if (pos != null) {
+            final double? lat = (branchData['latitude'] as num?)?.toDouble();
+            final double? lng = (branchData['longitude'] as num?)?.toDouble();
+            if (lat != null && lng != null) {
+              final double d = Geolocator.distanceBetween(
+                    pos.latitude,
+                    pos.longitude,
+                    lat,
+                    lng,
+                  ) /
+                  1000.0;
+              distanceKm = d;
+            }
+          }
+
+          perGiftcard.putIfAbsent(giftcardId, () => <_RecommendRow>[]).add(
+                _RecommendRow(
+                  branchId: branchId,
+                  branch: branchData,
+                  rate: rateData,
+                  sellPrice: sellPrice.toDouble(),
+                  distanceKm: distanceKm,
+                ),
+              );
+        }
+      }
+
+      // 3) giftcards 메타 로드 (이름/로고)
+      final giftsSnap =
+          await FirebaseFirestore.instance.collection('giftcards').get();
+      for (final doc in giftsSnap.docs) {
+        giftcards[doc.id] = doc.data();
+      }
+
+      // 4) 각 상품권별 Top2 선정
+      final List<_RecommendItem> items = <_RecommendItem>[];
+      final Set<String>? filter =
+          widget.selectedGiftcardIds == null ||
+                  widget.selectedGiftcardIds!.isEmpty
+              ? null
+              : widget.selectedGiftcardIds!.toSet();
+
+      perGiftcard.forEach((giftcardId, rows) {
+        if (filter != null && !filter.contains(giftcardId)) return;
+        if (rows.isEmpty) return;
+        rows.sort((a, b) {
+          final int cmp = b.sellPrice.compareTo(a.sellPrice);
+          if (cmp != 0) return cmp;
+          final double da = a.distanceKm ?? double.infinity;
+          final double db = b.distanceKm ?? double.infinity;
+          return da.compareTo(db);
+        });
+
+        final branchRows = rows.take(2).toList();
+        final Map<String, dynamic> giftMeta =
+            giftcards[giftcardId] ?? <String, dynamic>{};
+        items.add(
+          _RecommendItem(
+            giftcardId: giftcardId,
+            giftName:
+                (giftMeta['name'] as String?) ?? giftcardId.toUpperCase(),
+            logoUrl: giftMeta['logoUrl'] as String?,
+            rows: branchRows,
+          ),
+        );
+      });
+
+      setState(() {
+        _position = pos;
+        _items = items;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = '추천 정보를 불러오지 못했습니다.';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('추천 대시보드'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+              ),
+            )
+          : _error != null
+              ? Center(
+                  child: Text(
+                    _error!,
+                    style:
+                        const TextStyle(color: Colors.black54, fontSize: 14),
+                  ),
+                )
+              : _items.isEmpty
+                  ? const Center(
+                      child: Text('추천할 지점이 없습니다.'),
+                    )
+                  : Builder(
+                      builder: (context) {
+                        final double bottomInset =
+                            MediaQuery.of(context).padding.bottom;
+                        return ListView.builder(
+                          padding:
+                              EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
+                          itemCount: _items.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    '선택한 상품권별로 오늘 팔 때 가장 많이 쳐주는 지점 2곳을 추천해드려요.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '가격이 같다면 내 위치에서 더 가까운 지점이 먼저 보여집니다.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12),
+                                ],
+                              );
+                            }
+                            final _RecommendItem item =
+                                _items[index - 1];
+                            return _RecommendCard(
+                              item: item,
+                              position: _position,
+                            );
+                          },
+                        );
+                      },
+                    ),
+    );
+  }
+}
+
+class _RecommendRow {
+  final String branchId;
+  final Map<String, dynamic> branch;
+  final Map<String, dynamic> rate;
+  final double sellPrice;
+  final double? distanceKm;
+
+  _RecommendRow({
+    required this.branchId,
+    required this.branch,
+    required this.rate,
+    required this.sellPrice,
+    required this.distanceKm,
+  });
+}
+
+class _RecommendItem {
+  final String giftcardId;
+  final String giftName;
+  final String? logoUrl;
+  final List<_RecommendRow> rows;
+
+  _RecommendItem({
+    required this.giftcardId,
+    required this.giftName,
+    required this.logoUrl,
+    required this.rows,
+  });
+}
+
+class _RecommendCard extends StatelessWidget {
+  final _RecommendItem item;
+  final Position? position;
+
+  const _RecommendCard({required this.item, required this.position});
+
+  String _fmtWon(double v) => NumberFormat('#,###').format(v);
+
+  String? _assetForGiftcard(String id) {
+    switch (id) {
+      case 'costco':
+        return 'asset/img/costco.png';
+      case 'eland':
+        return 'asset/img/eland.png';
+      case 'galleria':
+        return 'asset/img/galleria.png';
+      case 'hyundai':
+        return 'asset/img/hyundai.png';
+      case 'lotte':
+        return 'asset/img/lotte.png';
+      case 'samsung':
+        return 'asset/img/samsung.png';
+      case 'shinsegae':
+        return 'asset/img/shinsegae.png';
+      case 'kumkang':
+        return 'asset/img/kumkang.png';
+      case 'nh':
+      case 'nonghyup':
+      case '농협':
+        return 'asset/img/nh.jpg';
+      case 'ak':
+        return 'asset/img/ak.jpg';
+      case 'cj':
+      case 'cjgift':
+        return 'asset/img/cj.png';
+      default:
+        return 'asset/img/app_icon.png';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String? assetPath = _assetForGiftcard(item.giftcardId);
+    final bool isNhLogo = item.giftcardId == 'nh' ||
+        item.giftcardId == 'nonghyup' ||
+        item.giftcardId == '농협';
+
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => GiftcardBrandRatesPage(
+              giftcardId: item.giftcardId,
+              giftcardName: item.giftName,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.black12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (assetPath != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      color: Colors.white,
+                      child: Image.asset(
+                        assetPath,
+                        fit: isNhLogo ? BoxFit.cover : BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                if (assetPath != null) const SizedBox(width: 10),
+                Text(
+                  item.giftName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            for (int i = 0; i < item.rows.length; i++)
+              _buildRow(context, item.rows[i], rank: i + 1),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(BuildContext context, _RecommendRow row,
+      {required int rank}) {
+    final String branchName =
+        (row.branch['name'] as String?) ?? row.branchId;
+    final double? sellRate =
+        (row.rate['sellFeeRate_general'] as num?)?.toDouble();
+    final double? distanceKm = row.distanceKm;
+
+    return Padding(
+      padding: EdgeInsets.only(top: rank == 1 ? 0 : 8),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => BranchRatesDetailPage(
+                branchId: row.branchId,
+                branchName: branchName,
+              ),
+            ),
+          );
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: rank == 1
+                    ? const Color(0xFFFFD54F)
+                    : const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '$rank',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: rank == 1 ? Colors.black : Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    branchName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        '팔 때 ${_fmtWon(row.sellPrice)}원',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      if (sellRate != null) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '(${sellRate.toStringAsFixed(2)}%)',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (distanceKm != null)
+                    Text(
+                      '~ ${distanceKm.toStringAsFixed(1)}km',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black54,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
