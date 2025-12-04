@@ -449,6 +449,11 @@ class GiftcardRatesTab extends StatelessWidget {
             final num? bestBuyPrice = data['bestBuyPrice'] as num?;
             final num? worstBuyPrice = data['worstBuyPrice'] as num?;
 
+            final double? bestSellRate = _calcRateFromPrice(bestSellPrice);
+            final double? worstSellRate = _calcRateFromPrice(worstSellPrice);
+            final double? bestBuyRate = _calcRateFromPrice(bestBuyPrice);
+            final double? worstBuyRate = _calcRateFromPrice(worstBuyPrice);
+
             return InkWell(
               onTap: () {
                 Navigator.of(context).push(
@@ -525,11 +530,13 @@ class GiftcardRatesTab extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '최대: ${_fmtPrice(bestSellPrice)}',
+                                      '최대: ${_fmtPrice(bestSellPrice)}'
+                                      '${bestSellRate != null ? ' (${bestSellRate.toStringAsFixed(2)}%)' : ''}',
                                       style: const TextStyle(fontSize: 12),
                                     ),
                                     Text(
-                                      '최소: ${_fmtPrice(worstSellPrice)}',
+                                      '최소: ${_fmtPrice(worstSellPrice)}'
+                                      '${worstSellRate != null ? ' (${worstSellRate.toStringAsFixed(2)}%)' : ''}',
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Colors.black54,
@@ -549,11 +556,13 @@ class GiftcardRatesTab extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '최소: ${_fmtPrice(bestBuyPrice)}',
+                                      '최소: ${_fmtPrice(bestBuyPrice)}'
+                                      '${bestBuyRate != null ? ' (${bestBuyRate.toStringAsFixed(2)}%)' : ''}',
                                       style: const TextStyle(fontSize: 12),
                                     ),
                                     Text(
-                                      '최대: ${_fmtPrice(worstBuyPrice)}',
+                                      '최대: ${_fmtPrice(worstBuyPrice)}'
+                                      '${worstBuyRate != null ? ' (${worstBuyRate.toStringAsFixed(2)}%)' : ''}',
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Colors.black54,
@@ -778,14 +787,8 @@ class GiftcardBrandRatesPage extends StatelessWidget {
 
               final sellPrice = data['sellPrice_general'] as num?;
               final buyPrice = data['buyPrice_general'] as num?;
-              double? sellRate =
-                  (data['sellFeeRate_general'] as num?)?.toDouble();
-              double? buyRate =
-                  (data['buyDiscountRate_general'] as num?)?.toDouble();
-
-              // 퍼센트 값이 없으면 10만원 기준으로 계산
-              sellRate ??= _calcRateFromPrice(sellPrice);
-              buyRate ??= _calcRateFromPrice(buyPrice);
+              final double? sellRate = _calcRateFromPrice(sellPrice);
+              final double? buyRate = _calcRateFromPrice(buyPrice);
 
               return InkWell(
                 onTap: () {
@@ -1324,8 +1327,7 @@ class _RecommendCard extends StatelessWidget {
       {required int rank}) {
     final String branchName =
         (row.branch['name'] as String?) ?? row.branchId;
-    final double? sellRate =
-        (row.rate['sellFeeRate_general'] as num?)?.toDouble();
+    final double? sellRate = _calcRateFromPrice(row.sellPrice);
     final double? distanceKm = row.distanceKm;
 
     return Padding(
@@ -1762,13 +1764,8 @@ class BranchRatesDetailPage extends StatelessWidget {
 
     final sellPrice = data['sellPrice_general'] as num?;
     final buyPrice = data['buyPrice_general'] as num?;
-    double? sellRate = (data['sellFeeRate_general'] as num?)?.toDouble();
-    double? buyRate =
-        (data['buyDiscountRate_general'] as num?)?.toDouble();
-
-    // 퍼센트 값이 없으면 10만원 기준으로 계산
-    sellRate ??= _calcRateFromPrice(sellPrice);
-    buyRate ??= _calcRateFromPrice(buyPrice);
+    final double? sellRate = _calcRateFromPrice(sellPrice);
+    final double? buyRate = _calcRateFromPrice(buyPrice);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
