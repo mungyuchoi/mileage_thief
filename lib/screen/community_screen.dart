@@ -43,6 +43,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool _hasMoreData = true;
   final int _postsPerPage = 20;
   
+  // 등급 안내 고정 게시글 (공지) 이동용 상수
+  static const String _gradeGuidePostId =
+      'e466cdbe-2ab6-48c5-8060-c0950f6b84f6';
+  static const String _gradeGuidePostDateString = '20250825';
+  static const String _gradeGuideBoardId = 'notice';
+  
   // 초기 로딩 상태 관리
   bool _isInitialLoading = true;
   
@@ -212,53 +218,107 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             userProfile!['displayName'] ?? '사용자';
                         final displayGrade =
                             userProfile!['displayGrade'] ?? '이코노미 Lv.1';
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context); // drawer 닫기
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MyPageScreen(),
-                              ),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              Builder(
-                                builder: (context) {
-                                  // 사용자 프로필에서 photoURL 가져오기 (fallback 포함)
-                                  final photoURL = userProfile!['photoURL'] ?? '';
-                                  
-                                  return CircleAvatar(
-                                    backgroundColor: Colors.grey[300],
-                                    radius: 18,
-                                    backgroundImage: photoURL.isNotEmpty
-                                        ? NetworkImage(photoURL)
-                                        : null,
-                                    child: photoURL.isEmpty
-                                        ? const Icon(Icons.person,
-                                            color: Colors.black, size: 20)
-                                        : null,
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context); // drawer 닫기
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const MyPageScreen(),
+                                    ),
                                   );
                                 },
+                                child: Row(
+                                  children: [
+                                    Builder(
+                                      builder: (context) {
+                                        // 사용자 프로필에서 photoURL 가져오기 (fallback 포함)
+                                        final photoURL =
+                                            userProfile!['photoURL'] ?? '';
+                                        
+                                        return CircleAvatar(
+                                          backgroundColor: Colors.grey[300],
+                                          radius: 18,
+                                          backgroundImage: photoURL.isNotEmpty
+                                              ? NetworkImage(photoURL)
+                                              : null,
+                                          child: photoURL.isEmpty
+                                              ? const Icon(Icons.person,
+                                                  color: Colors.black, size: 20)
+                                              : null,
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(displayName,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Colors.black)),
+                                        Text('등급: $displayGrade',
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black54)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(displayName,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          color: Colors.black)),
-                                  Text('등급: $displayGrade',
-                                      style: const TextStyle(
-                                          fontSize: 13, color: Colors.black54)),
-                                ],
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: () async {
+                                // 등급 안내 고정 게시글로 이동
+                                try {
+                                  await _incrementViewCount(
+                                      _gradeGuidePostId,
+                                      _gradeGuidePostDateString);
+                                } catch (_) {}
+                                
+                                Navigator.pop(context); // drawer 닫기
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CommunityDetailScreen(
+                                      postId: _gradeGuidePostId,
+                                      boardId: _gradeGuideBoardId,
+                                      boardName:
+                                          _getBoardName(_gradeGuideBoardId),
+                                      dateString: _gradeGuidePostDateString,
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                minimumSize: const Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                foregroundColor: const Color(0xFF74512D),
                               ),
-                            ],
-                          ),
+                              icon: const Icon(
+                                Icons.grade_outlined,
+                                size: 18,
+                                color: Color(0xFF74512D),
+                              ),
+                              label: const Text(
+                                '등급',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF74512D),
+                                ),
+                              ),
+                            ),
+                          ],
                         );
                       } else {
                         return const Text(
@@ -314,51 +374,99 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   ),
                 ),
                 ...boards.map(
-                  (board) => Container(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: selectedBoardId == board['id']
-                        ? BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                          )
-                        : null,
-                    child: ListTile(
-                      leading: Icon(
-                        getBoardIcon(board['icon']),
-                        color: selectedBoardId == board['id']
-                            ? Colors.white
-                            : Colors.black54,
-                      ),
-                      title: Text(
-                        board['name']!,
-                        style: TextStyle(
-                          color: selectedBoardId == board['id']
+                  (board) {
+                    final String boardId = board['id'] ?? '';
+                    final bool isLv2RequiredBoard =
+                        boardId == 'deal' || boardId == 'seats';
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: selectedBoardId == boardId
+                          ? BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                            )
+                          : null,
+                      child: ListTile(
+                        leading: Icon(
+                          getBoardIcon(board['icon']),
+                          color: selectedBoardId == boardId
                               ? Colors.white
-                              : Colors.black87,
-                          fontWeight: selectedBoardId == board['id']
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                              : Colors.black54,
                         ),
+                        title: Text(
+                          board['name']!,
+                          style: TextStyle(
+                            color: selectedBoardId == boardId
+                                ? Colors.white
+                                : Colors.black87,
+                            fontWeight: selectedBoardId == boardId
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        // Lv2 이상 입장제한 배지
+                        trailing: isLv2RequiredBoard
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: selectedBoardId == boardId
+                                      ? Colors.white.withOpacity(0.15)
+                                      : const Color(0xFFFFF3E0),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: selectedBoardId == boardId
+                                        ? Colors.white70
+                                        : const Color(0xFFFFB74D),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.lock_outline,
+                                      size: 14,
+                                      color: selectedBoardId == boardId
+                                          ? Colors.white
+                                          : const Color(0xFFFF9800),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Lv.2+',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: selectedBoardId == boardId
+                                            ? Colors.white
+                                            : const Color(0xFFEF6C00),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                        selected: selectedBoardId == boardId,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        tileColor: Colors.transparent,
+                        onTap: () {
+                          setState(() {
+                            selectedBoardId = boardId;
+                            selectedBoardName = board['name']!;
+                          });
+                          Navigator.pop(context);
+                          _refreshPosts();
+                        },
                       ),
-                      selected: selectedBoardId == board['id'],
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      tileColor: Colors.transparent,
-                      onTap: () {
-                        setState(() {
-                          selectedBoardId = board['id']!;
-                          selectedBoardName = board['name']!;
-                        });
-                        Navigator.pop(context);
-                        _refreshPosts();
-                      },
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ],
             ),
