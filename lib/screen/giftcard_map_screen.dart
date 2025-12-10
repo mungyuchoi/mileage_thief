@@ -16,6 +16,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'branch/branch_edit_screen.dart';
 import 'user_profile_screen.dart';
+import 'branch/branch_detail_screen.dart';
 import 'my_page_screen.dart';
 
 class GiftcardMapScreen extends StatefulWidget {
@@ -442,6 +443,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         : null;
     final String? notice = branchData['notice'] as String?;
     final String? address = branchData['address'] as String?;
+    final bool isVerified = (branchData['verified'] as bool?) ?? false;
 
     final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
 
@@ -501,9 +503,70 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            name,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isVerified) ...[
+                                const SizedBox(width: 6),
+                                GestureDetector(
+                                  onTap: () {
+                                    showDialog<void>(
+                                      context: context,
+                                      builder: (dCtx) {
+                                        return AlertDialog(
+                                          backgroundColor: Colors.white,
+                                          title: const Text(
+                                            '공식 인증 지점',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          content: const Text(
+                                            '이 지점은 마일캐치에서 검증한 공식 인증 지점입니다.\n'
+                                            '운영자 확인을 거쳐 등록되었으며, 최신 정보 유지를 위해 주기적으로 점검하고 있어요.',
+                                            style: TextStyle(color: Colors.black87, fontSize: 14),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(dCtx).pop(),
+                                              child: const Text(
+                                                '확인',
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Image.asset(
+                                      'asset/img/verified.jpg',
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 6),
                           if (phone != null && phone.isNotEmpty)
@@ -535,6 +598,38 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        if (isVerified)
+                          TextButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BranchDetailScreen(
+                                    branchId: branchId,
+                                    branchName: name,
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.rate_review_outlined,
+                                size: 18, color: Color(0xFF74512D)),
+                            label: const Text(
+                              '리뷰 쓰기',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF74512D),
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              minimumSize: const Size(0, 0),
+                              tapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
                         if (canEdit)
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20, color: Color(0xFF74512D)),
