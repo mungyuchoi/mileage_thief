@@ -11,6 +11,12 @@ import 'package:mileage_thief/services/user_service.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 
+/// 상품권 대시보드 기간 타입
+/// - month: 특정 월
+/// - year: 특정 연도 전체
+/// - all: 전체 기간
+enum DashboardPeriodType { month, year, all }
+
 class _KpiValue extends StatelessWidget {
   final String label;
   final String value;
@@ -161,8 +167,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   final DateFormat _yMd = DateFormat('yyyy-MM-dd');
   final NumberFormat _won = NumberFormat('#,###');
 
-  // 대시보드: 월 필터 상태
+  // 대시보드: 기간 필터 상태
+  DashboardPeriodType _periodType = DashboardPeriodType.month;
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  int _selectedYear = DateTime.now().year;
 
   // 캘린더 탭: 대시보드와 독립적인 월/데이터 상태
   DateTime _calendarMonth = DateTime(DateTime.now().year, DateTime.now().month);
@@ -216,24 +224,52 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       return;
     }
     try {
-      // 선택된 월 범위
-      final DateTime start = DateTime(_selectedMonth.year, _selectedMonth.month);
-      final DateTime end = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+      // 선택된 기간 범위 계산
+      DateTime? start;
+      DateTime? end;
+      switch (_periodType) {
+        case DashboardPeriodType.month:
+          start = DateTime(_selectedMonth.year, _selectedMonth.month);
+          end = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+          break;
+        case DashboardPeriodType.year:
+          start = DateTime(_selectedYear, 1, 1);
+          end = DateTime(_selectedYear + 1, 1, 1);
+          break;
+        case DashboardPeriodType.all:
+          // 전체 기간: 날짜 필터 없이 전체 조회
+          start = null;
+          end = null;
+          break;
+      }
 
       // 실거래 기준: lots는 buyDate, sales는 sellDate
-      final lotsSnap = await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('lots')
-          .where('buyDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('buyDate', isLessThan: Timestamp.fromDate(end))
-          .orderBy('buyDate')
-          .get();
+      Query lotsQuery = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots');
+      Query salesQuery = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sales');
 
-      final salesSnap = await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('sales')
-          .where('sellDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('sellDate', isLessThan: Timestamp.fromDate(end))
-          .orderBy('sellDate')
-          .get();
+      if (start != null && end != null) {
+        lotsQuery = lotsQuery
+            .where('buyDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+            .where('buyDate', isLessThan: Timestamp.fromDate(end))
+            .orderBy('buyDate');
+        salesQuery = salesQuery
+            .where('sellDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+            .where('sellDate', isLessThan: Timestamp.fromDate(end))
+            .orderBy('sellDate');
+      } else {
+        // 전체 기간: 날짜 조건 없이 정렬만
+        lotsQuery = lotsQuery.orderBy('buyDate');
+        salesQuery = salesQuery.orderBy('sellDate');
+      }
+
+      final lotsSnap = await lotsQuery.get();
+      final salesSnap = await salesQuery.get();
       final cardsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').get();
       final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
       final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
@@ -243,8 +279,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           .collection('where_to_buy')
           .get();
       setState(() {
-        _lots = lotsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
-        _sales = salesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+        _lots = lotsSnap.docs
+            .map<Map<String, dynamic>>(
+              (d) => <String, dynamic>{'id': d.id, ...d.data() as Map<String, dynamic>},
+            )
+            .toList();
+        _sales = salesSnap.docs
+            .map<Map<String, dynamic>>(
+              (d) => <String, dynamic>{'id': d.id, ...d.data() as Map<String, dynamic>},
+            )
+            .toList();
         _cards = {
           for (final d in cardsSnap.docs)
             d.id: {
@@ -321,47 +365,207 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     return '${d.year}년도 $m월';
   }
 
+  String _dashboardTitleText() {
+    switch (_periodType) {
+      case DashboardPeriodType.all:
+        return '전체 기간';
+      case DashboardPeriodType.year:
+        return '${_selectedYear}년도 전체';
+      case DashboardPeriodType.month:
+        return _formatYearMonth(_selectedMonth);
+    }
+  }
+
+  String _dashboardFilterLabel() {
+    switch (_periodType) {
+      case DashboardPeriodType.all:
+        return '전체 ▼';
+      case DashboardPeriodType.year:
+        return '$_selectedYear년 ▼';
+      case DashboardPeriodType.month:
+        return '${_selectedMonth.month.toString().padLeft(2, '0')}월 ▼';
+    }
+  }
+
   Future<void> _showMonthPicker() async {
-    // 최근 24개월 제공
+    // 최근 24개월 + 최근 5년, 전체 기간 선택
     final DateTime now = DateTime.now();
     final List<DateTime> months = List.generate(
       24,
       (i) => DateTime(now.year, now.month - i),
     );
-    final selected = await showModalBottomSheet<DateTime>(
+    final List<int> years = List.generate(5, (i) => now.year - i);
+
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
-      builder: (context) {
-        return SafeArea(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemBuilder: (context, index) {
-              final d = months[index];
-              final isCurrent = d.year == _selectedMonth.year && d.month == _selectedMonth.month;
-              return ListTile(
-                title: Text(
-                  _formatYearMonth(d),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+      isScrollControlled: false,
+      builder: (sheetContext) {
+        DashboardPeriodType mode = _periodType;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            Widget buildTypeChip(DashboardPeriodType type, String label) {
+              final bool selected = mode == type;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setModalState(() {
+                      mode = type;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selected ? const Color(0xFF74512D) : Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: selected ? const Color(0xFF74512D) : Colors.black26,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: selected ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-                onTap: () => Navigator.pop(context, d),
               );
-            },
-            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
-            itemCount: months.length,
-          ),
+            }
+
+            Widget body;
+            if (mode == DashboardPeriodType.all) {
+              body = ListTile(
+                title: const Text(
+                  '전체 기간 보기',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text(
+                  '모든 매입/판매 데이터를 기준으로 대시보드를 보여줍니다.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  setState(() {
+                    _periodType = DashboardPeriodType.all;
+                    _loading = true;
+                  });
+                  await _load();
+                },
+              );
+            } else if (mode == DashboardPeriodType.year) {
+              body = Expanded(
+                child: ListView.separated(
+                  itemCount: years.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                  itemBuilder: (context, index) {
+                    final int y = years[index];
+                    final bool isCurrent = _periodType == DashboardPeriodType.year && _selectedYear == y;
+                    return ListTile(
+                      title: Text(
+                        '$y년도 전체',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      onTap: () async {
+                        Navigator.pop(sheetContext);
+                        setState(() {
+                          _periodType = DashboardPeriodType.year;
+                          _selectedYear = y;
+                          _loading = true;
+                        });
+                        await _load();
+                      },
+                    );
+                  },
+                ),
+              );
+            } else {
+              body = Expanded(
+                child: ListView.separated(
+                  itemCount: months.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                  itemBuilder: (context, index) {
+                    final d = months[index];
+                    final bool isCurrent = _periodType == DashboardPeriodType.month &&
+                        d.year == _selectedMonth.year &&
+                        d.month == _selectedMonth.month;
+                    return ListTile(
+                      title: Text(
+                        _formatYearMonth(d),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      onTap: () async {
+                        Navigator.pop(sheetContext);
+                        setState(() {
+                          _periodType = DashboardPeriodType.month;
+                          _selectedMonth = DateTime(d.year, d.month);
+                          _selectedYear = d.year;
+                          _loading = true;
+                        });
+                        await _load();
+                      },
+                    );
+                  },
+                ),
+              );
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '기간 선택',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        buildTypeChip(DashboardPeriodType.all, '전체'),
+                        const SizedBox(width: 8),
+                        buildTypeChip(DashboardPeriodType.year, '연도별'),
+                        const SizedBox(width: 8),
+                        buildTypeChip(DashboardPeriodType.month, '월별'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (mode == DashboardPeriodType.all)
+                      body
+                    else
+                      SizedBox(
+                        height: 280,
+                        child: body,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
-    if (selected != null) {
-      setState(() {
-        _selectedMonth = DateTime(selected.year, selected.month);
-        _loading = true;
-      });
-      await _load();
-    }
   }
 
   // 집계 헬퍼
@@ -458,14 +662,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _formatYearMonth(_selectedMonth),
+                  _dashboardTitleText(),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
                 ),
                 TextButton.icon(
                   onPressed: _showMonthPicker,
                   icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
                   label: Text(
-                    '${_selectedMonth.month.toString().padLeft(2, '0')}월 ▼',
+                    _dashboardFilterLabel(),
                     style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
                   ),
                   style: TextButton.styleFrom(
