@@ -1272,184 +1272,182 @@ class _SearchScreenState extends State<SearchScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: false,
-      // 아래 네비게이션바가 보이도록, 배경은 투명 처리 후
-      // 안쪽에 margin을 준 컨테이너를 따로 둔다.
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (BuildContext context) {
+        final Size screenSize = MediaQuery.of(context).size;
+        // 화면 높이의 55% 정도를 BottomSheet 높이로 사용해서
+        // 작은 기기에서도 overflow를 줄이고, 이미지 영역을 넉넉하게 확보한다.
+        final double sheetHeight = screenSize.height * 0.55;
         final PageController pageController = PageController();
         int currentPage = 0;
         bool dontShowForWeek = false;
 
         return StatefulBuilder(
           builder: (context, setState) {
-            final double bottomPadding = kBottomNavigationBarHeight +
-                MediaQuery.of(context).padding.bottom +
-                8;
             return SafeArea(
               top: false,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: bottomPadding),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    height: 330,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(16),
+              child: SizedBox(
+                height: sheetHeight,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(100),
                       ),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 8),
-                        Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: PageView.builder(
-                            controller: pageController,
-                            itemCount: ads.length,
-                            onPageChanged: (index) {
-                              setState(() {
-                                currentPage = index;
-                              });
-                            },
-                            itemBuilder: (context, index) {
-                              final Map<String, dynamic> ad = ads[index];
-                              final String title =
-                                  (ad['title'] as String?) ?? '';
-                              final String imageUrl =
-                                  (ad['imageUrl'] as String?) ?? '';
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                child: GestureDetector(
-                                  onTap: () => _handleAdTap(context, ad),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (title.isNotEmpty) ...[
-                                        Text(
-                                          title,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                      ],
-                                      ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        child: AspectRatio(
-                                          aspectRatio: 16 / 9,
-                                          child: imageUrl.isNotEmpty
-                                              ? Image.network(
-                                                  imageUrl,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  color: Colors.grey[200],
-                                                  child: const Center(
-                                                    child: Text(
-                                                      '이미지가 없습니다',
-                                                      style: TextStyle(
-                                                        color:
-                                                            Colors.black54,
-                                                      ),
-                                                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: pageController,
+                        itemCount: ads.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            currentPage = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final Map<String, dynamic> ad = ads[index];
+                          final String title =
+                              (ad['title'] as String?) ?? '';
+                          final String imageUrl =
+                              (ad['imageUrl'] as String?) ?? '';
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: GestureDetector(
+                              onTap: () => _handleAdTap(context, ad),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  if (title.isNotEmpty) ...[
+                                    Text(
+                                      title,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                  ],
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius:
+                                          BorderRadius.circular(12),
+                                      child: imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              imageUrl,
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              fit: BoxFit.fill, // fitXY 느낌으로 영역 꽉 채움
+                                            )
+                                          : Container(
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child: Text(
+                                                  '이미지가 없습니다',
+                                                  style: TextStyle(
+                                                    color: Colors.black54,
                                                   ),
                                                 ),
-                                        ),
-                                      ),
-                                    ],
+                                              ),
+                                            ),
+                                    ),
                                   ),
-                                ),
-                              );
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${currentPage + 1}/${ads.length}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    CheckboxListTile(
+                      value: dontShowForWeek,
+                      onChanged: (value) {
+                        setState(() {
+                          dontShowForWeek = value ?? false;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      visualDensity: VisualDensity.compact,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 0,
+                      ),
+                      activeColor: Color(0xFF74512D), // 갈색 계열로 체크 색상 변경
+                      title: const Text(
+                        '일주일 동안 보지 않기',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4, // 체크박스와의 간격을 조금 줄인다
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () async {
+                              if (dontShowForWeek) {
+                                final DateTime hideUntil =
+                                    DateTime.now().add(
+                                  const Duration(days: 7),
+                                );
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(uid)
+                                      .update(
+                                    <String, dynamic>{
+                                      'hideBottomSheetAdUntil':
+                                          Timestamp.fromDate(hideUntil),
+                                    },
+                                  );
+                                } catch (e) {
+                                  print(
+                                      'hideBottomSheetAdUntil 업데이트 오류: $e');
+                                }
+                              }
+                              if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
                             },
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${currentPage + 1}/${ads.length}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        CheckboxListTile(
-                          value: dontShowForWeek,
-                          onChanged: (value) {
-                            setState(() {
-                              dontShowForWeek = value ?? false;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity.leading,
-                          title: const Text(
-                            '일주일 동안 보지 않기',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.black87,
+                            child: const Text(
+                              '닫기',
+                              style: TextStyle(color: Colors.black),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed: () async {
-                                  if (dontShowForWeek) {
-                                    final DateTime hideUntil =
-                                        DateTime.now().add(
-                                      const Duration(days: 7),
-                                    );
-                                    try {
-                                      await FirebaseFirestore.instance
-                                          .collection('users')
-                                          .doc(uid)
-                                          .update(
-                                        <String, dynamic>{
-                                          'hideBottomSheetAdUntil':
-                                              Timestamp.fromDate(hideUntil),
-                                        },
-                                      );
-                                    } catch (e) {
-                                      print(
-                                          'hideBottomSheetAdUntil 업데이트 오류: $e');
-                                    }
-                                  }
-                                  if (Navigator.of(context).canPop()) {
-                                    Navigator.of(context).pop();
-                                  }
-                                },
-                                child: const Text(
-                                  '닫기',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             );
