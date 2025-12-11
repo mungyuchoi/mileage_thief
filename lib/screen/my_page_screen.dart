@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../services/auth_service.dart';
+import 'branch/branch_detail_screen.dart';
 import '../services/user_service.dart';
 import '../helper/AdHelper.dart';
 import 'community_detail_screen.dart';
@@ -67,6 +68,14 @@ class _MyPageScreenState extends State<MyPageScreen>
   bool _hasMoreBookmarks = true;
   bool _isBookmarksLoading = false;
   final ScrollController _bookmarksScrollController = ScrollController();
+
+  // 지점 리뷰(브랜치 댓글) 페이징
+  List<DocumentSnapshot> _branchComments = [];
+  DocumentSnapshot? _lastBranchCommentDoc;
+  bool _hasMoreBranchComments = true;
+  bool _isBranchCommentsLoading = false;
+  final ScrollController _branchCommentsScrollController =
+      ScrollController();
 
   bool _isUpdatingProfileImage = false;
   bool _isUpdatingDisplayName = false;
@@ -166,6 +175,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _commentsScrollController.addListener(_onCommentsScroll);
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
     _bookmarksScrollController.addListener(_onBookmarksScroll);
+    _branchCommentsScrollController.addListener(_onBranchCommentsScroll);
     _initAdState();
     _loadInterstitialAd();
     _loadRewardedAd();
@@ -180,6 +190,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _commentsScrollController.dispose();
     _likedPostsScrollController.dispose();
     _bookmarksScrollController.dispose();
+    _branchCommentsScrollController.dispose();
     _myPageBannerAd?.dispose();
     _interstitialAd?.dispose();
     _rewardedAd?.dispose();
@@ -203,7 +214,8 @@ class _MyPageScreenState extends State<MyPageScreen>
   }
 
   void _initializeTabController() {
-    _tabController = TabController(length: 4, vsync: this);
+    // 게시글, 댓글, 리뷰, 좋아요, 북마크 → 총 5개 탭
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   void _onPostsScroll() {
@@ -242,6 +254,15 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
   }
 
+  void _onBranchCommentsScroll() {
+    if (_branchCommentsScrollController.position.pixels >=
+        _branchCommentsScrollController.position.maxScrollExtent - 200) {
+      if (!_isBranchCommentsLoading && _hasMoreBranchComments) {
+        _loadBranchComments(loadMore: true);
+      }
+    }
+  }
+
   Future<void> _loadUserProfile() async {
     final user = AuthService.currentUser;
     if (user != null) {
@@ -264,6 +285,7 @@ class _MyPageScreenState extends State<MyPageScreen>
       _loadUserComments(),
       _loadLikedPosts(),
       _loadBookmarks(),
+      _loadBranchComments(),
     ]);
   }
 
@@ -419,6 +441,50 @@ class _MyPageScreenState extends State<MyPageScreen>
       print('북마크한 게시글 로드 오류: $e');
       setState(() {
         _isBookmarksLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadBranchComments({bool loadMore = false}) async {
+    final user = AuthService.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isBranchCommentsLoading = true;
+    });
+
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('branch_comments')
+          .orderBy('createdAt', descending: true)
+          .limit(_pageSize);
+
+      if (loadMore && _lastBranchCommentDoc != null) {
+        query = query.startAfterDocument(_lastBranchCommentDoc!);
+      }
+
+      final querySnapshot = await query.get();
+
+      if (loadMore) {
+        _branchComments.addAll(querySnapshot.docs);
+      } else {
+        _branchComments = querySnapshot.docs;
+      }
+
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastBranchCommentDoc = querySnapshot.docs.last;
+      }
+
+      _hasMoreBranchComments = querySnapshot.docs.length == _pageSize;
+      setState(() {
+        _isBranchCommentsLoading = false;
+      });
+    } catch (e) {
+      print('사용자 지점 리뷰 로드 오류: $e');
+      setState(() {
+        _isBranchCommentsLoading = false;
       });
     }
   }
@@ -1775,6 +1841,27 @@ class _MyPageScreenState extends State<MyPageScreen>
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  const Text('리뷰'),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${_branchComments.length}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Tab(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
                                   const Text('좋아요'),
                                   const SizedBox(width: 4),
                                   Container(
@@ -1826,6 +1913,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                 children: [
                   _buildPostsList(),
                   _buildCommentsList(),
+                  _buildBranchCommentsList(),
                   _buildLikedPostsList(),
                   _buildBookmarksList(),
                 ],
@@ -2684,6 +2772,122 @@ class _MyPageScreenState extends State<MyPageScreen>
                 children: [
                   // 댓글 내용 (멘션 파란색)
                   _buildMentionText(content),
+                  const SizedBox(height: 10),
+                  // 작성일
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        DateFormat('yyyy.MM.dd').format(createdAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBranchCommentsList() {
+    if (_isBranchCommentsLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF74512D)),
+      );
+    }
+
+    if (_branchComments.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.reviews, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('작성한 리뷰가 없습니다', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _branchCommentsScrollController,
+      padding: const EdgeInsets.all(12),
+      itemCount: _branchComments.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _branchComments.length) {
+          return const SizedBox(height: 32);
+        }
+
+        final branchComment =
+            _branchComments[index].data() as Map<String, dynamic>;
+        final createdAt =
+            (branchComment['createdAt'] as Timestamp?)?.toDate() ??
+                DateTime.now();
+        final branchName = branchComment['branchName'] ?? '지점';
+        final branchId = branchComment['branchId'] ?? '';
+        final content = _removeHtmlTags(
+            branchComment['contentHtml'] ?? '리뷰 내용 없음');
+
+        return GestureDetector(
+          onTap: () {
+            if (branchId is String && branchId.isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BranchDetailScreen(
+                    branchId: branchId,
+                    branchName: branchName,
+                  ),
+                ),
+              );
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 지점명
+                  Text(
+                    branchName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.brown[300],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // 리뷰 내용
+                  Text(
+                    content,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 10),
                   // 작성일
                   Row(

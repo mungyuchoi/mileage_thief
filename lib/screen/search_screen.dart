@@ -16,6 +16,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
 import 'giftcard_map_screen.dart';
@@ -31,6 +32,8 @@ import '../branch/wheretobuy_step.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
+import 'branch/branch_detail_screen.dart';
+import 'ad_manage_screen.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -129,6 +132,7 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadCommunityNoticeTitle();
     _loadNotificationSettings();
     _checkForceUpdateAndNotice();
+    _checkAndShowStartupAdBottomSheet();
   }
 
   Future<void> _checkForceUpdateAndNotice() async {
@@ -893,146 +897,192 @@ class _SearchScreenState extends State<SearchScreen> {
         stream: AuthService.authStateChanges,
         builder: (context, snapshot) {
           final user = snapshot.data;
-          
-          return SettingsList(
-            platform: DevicePlatform.iOS,
-            sections: [
-              SettingsSection(
-                title: const Text('알림 설정'),
-                tiles: [
 
-                  SettingsTile.switchTile(
-                    initialValue: _postLikeNotification,
-                    onToggle: (bool value) {
-                      setPostLikeNotification(value);
-                      setState(() {
-                        _postLikeNotification = value;
-                      });
-                    },
-                    title: const Text('게시글 좋아요 알림'),
-                    leading: const Icon(Icons.thumb_up_outlined),
-                    activeSwitchColor: Colors.black54,
+          return FutureBuilder<Map<String, dynamic>?>(
+            future: user != null
+                ? UserService.getUserFromFirestore(user.uid)
+                : Future.value(null),
+            builder: (context, userSnapshot) {
+              final Map<String, dynamic>? userData = userSnapshot.data;
+              final List<dynamic> rawRoles =
+                  (userData?['roles'] as List<dynamic>?) ??
+                      const <dynamic>['user'];
+              final List<String> roles =
+                  rawRoles.map((e) => e.toString()).toList();
+              final bool isAdmin = roles.contains('admin');
+
+              return SettingsList(
+                platform: DevicePlatform.iOS,
+                sections: [
+                  SettingsSection(
+                    title: const Text('알림 설정'),
+                    tiles: [
+                      SettingsTile.switchTile(
+                        initialValue: _postLikeNotification,
+                        onToggle: (bool value) {
+                          setPostLikeNotification(value);
+                          setState(() {
+                            _postLikeNotification = value;
+                          });
+                        },
+                        title: const Text('게시글 좋아요 알림'),
+                        leading: const Icon(Icons.thumb_up_outlined),
+                        activeSwitchColor: Colors.black54,
+                      ),
+                      SettingsTile.switchTile(
+                        initialValue: _postCommentNotification,
+                        onToggle: (bool value) {
+                          setPostCommentNotification(value);
+                          setState(() {
+                            _postCommentNotification = value;
+                          });
+                        },
+                        title: const Text('게시글 댓글 알림'),
+                        leading: const Icon(Icons.comment_outlined),
+                        activeSwitchColor: Colors.black54,
+                      ),
+                      SettingsTile.switchTile(
+                        initialValue: _commentReplyNotification,
+                        onToggle: (bool value) {
+                          setCommentReplyNotification(value);
+                          setState(() {
+                            _commentReplyNotification = value;
+                          });
+                        },
+                        title: const Text('대댓글 알림'),
+                        leading: const Icon(Icons.reply_outlined),
+                        activeSwitchColor: Colors.black54,
+                      ),
+                      SettingsTile.switchTile(
+                        initialValue: _commentLikeNotification,
+                        onToggle: (bool value) {
+                          setCommentLikeNotification(value);
+                          setState(() {
+                            _commentLikeNotification = value;
+                          });
+                        },
+                        title: const Text('댓글 좋아요 알림'),
+                        leading: const Icon(Icons.favorite_border_outlined),
+                        activeSwitchColor: Colors.black54,
+                      ),
+                    ],
                   ),
-                  SettingsTile.switchTile(
-                    initialValue: _postCommentNotification,
-                    onToggle: (bool value) {
-                      setPostCommentNotification(value);
-                      setState(() {
-                        _postCommentNotification = value;
-                      });
-                    },
-                    title: const Text('게시글 댓글 알림'),
-                    leading: const Icon(Icons.comment_outlined),
-                    activeSwitchColor: Colors.black54,
-                  ),
-                  SettingsTile.switchTile(
-                    initialValue: _commentReplyNotification,
-                    onToggle: (bool value) {
-                      setCommentReplyNotification(value);
-                      setState(() {
-                        _commentReplyNotification = value;
-                      });
-                    },
-                    title: const Text('대댓글 알림'),
-                    leading: const Icon(Icons.reply_outlined),
-                    activeSwitchColor: Colors.black54,
-                  ),
-                  SettingsTile.switchTile(
-                    initialValue: _commentLikeNotification,
-                    onToggle: (bool value) {
-                      setCommentLikeNotification(value);
-                      setState(() {
-                        _commentLikeNotification = value;
-                      });
-                    },
-                    title: const Text('댓글 좋아요 알림'),
-                    leading: const Icon(Icons.favorite_border_outlined),
-                    activeSwitchColor: Colors.black54,
-                  ),
-                ],
-              ),
-              SettingsSection(
-                title: const Text('계정'),
-                tiles: [
-                  SettingsTile(
-                    onPressed: (context) => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
+                  SettingsSection(
+                    title: const Text('계정'),
+                    tiles: [
+                      SettingsTile(
+                        onPressed: (context) => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          )
+                        },
+                        title: Text(user == null ? '로그인' : '내 정보'),
+                        description: Text(
+                          user == null
+                              ? '로그인하여 땅콩을 클라우드에 저장하세요'
+                              : '${user.displayName ?? user.email ?? "사용자"}님, 안녕하세요!',
                         ),
-                      )
-                    },
-                    title: Text(user == null ? '로그인' : '내 정보'),
-                    description: Text(user == null 
-                      ? '로그인하여 땅콩을 클라우드에 저장하세요'
-                      : '${user.displayName ?? user.email ?? "사용자"}님, 안녕하세요!'),
-                    leading: Icon(user == null ? Icons.login : Icons.account_circle_outlined),
-                  ),
-                  SettingsTile(
-                    onPressed: (context) => {
-                      _launchMileageThief(AdHelper.mileageTheifMarketUrl)
-                    },
-                    title: const Text("스토어로 이동"),
-                    leading: const Icon(Icons.info_outline),
-                  ),
-                  SettingsTile(
-                    onPressed: (context) async {
-                      final info = await PackageInfo.fromPlatform();
-                      final deviceInfoPlugin = DeviceInfoPlugin();
-                      String os = '';
-                      String model = '';
-                      if (Platform.isAndroid) {
-                        final androidInfo = await deviceInfoPlugin.androidInfo;
-                        os = 'Android ${androidInfo.version.release}';
-                        model = androidInfo.model ?? '';
-                      } else if (Platform.isIOS) {
-                        final iosInfo = await deviceInfoPlugin.iosInfo;
-                        os = 'iOS ${iosInfo.systemVersion}';
-                        model = iosInfo.utsname.machine ?? '';
-                      }
-                      final body = Uri.encodeComponent('문의내역:\n버전: ${info.version}\nOS: $os\n모델명: $model');
-                      final uri = Uri.parse('mailto:skylife927@gmail.com?subject=FAQ 문의&body=$body');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      } else {
-                        Fluttertoast.showToast(msg: '이메일 앱을 열 수 없습니다.');
-                      }
-                    },
-                    title: const Text('FAQ'),
-                    leading: const Icon(Icons.question_answer_outlined),
-                  ),
-                  SettingsTile(
-                    onPressed: (context) => {
-                      _version == _latestVersion
-                          ? Fluttertoast.showToast(
-                              msg: "최신버전입니다.",
-                              gravity: ToastGravity.BOTTOM,
-                              timeInSecForIosWeb: 5,
-                              backgroundColor: Colors.grey[800],
-                              fontSize: 16,
-                              textColor: Colors.white,
-                              toastLength: Toast.LENGTH_SHORT,
-                            )
-                          : Fluttertoast.showToast(
-                              msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
-                              gravity: ToastGravity.BOTTOM,
-                              timeInSecForIosWeb: 5,
-                              backgroundColor: Colors.grey[800],
-                              fontSize: 16,
-                              textColor: Colors.white,
-                              toastLength: Toast.LENGTH_SHORT,
-                            )
-                    },
-                    title: const Text('버전 정보'),
-                    description: Text(_version == _latestVersion
-                        ? 'Version: $_version (최신버전입니다.)'
-                        : 'Version: $_version (최신버전이 아닙니다.)'),
-                    leading: const Icon(Icons.info_outline),
+                        leading: Icon(
+                          user == null
+                              ? Icons.login
+                              : Icons.account_circle_outlined,
+                        ),
+                      ),
+                      SettingsTile(
+                        onPressed: (context) => {
+                          _launchMileageThief(AdHelper.mileageTheifMarketUrl)
+                        },
+                        title: const Text("스토어로 이동"),
+                        leading: const Icon(Icons.info_outline),
+                      ),
+                      SettingsTile(
+                        onPressed: (context) async {
+                          final info = await PackageInfo.fromPlatform();
+                          final deviceInfoPlugin = DeviceInfoPlugin();
+                          String os = '';
+                          String model = '';
+                          if (Platform.isAndroid) {
+                            final androidInfo =
+                                await deviceInfoPlugin.androidInfo;
+                            os = 'Android ${androidInfo.version.release}';
+                            model = androidInfo.model ?? '';
+                          } else if (Platform.isIOS) {
+                            final iosInfo =
+                                await deviceInfoPlugin.iosInfo;
+                            os = 'iOS ${iosInfo.systemVersion}';
+                            model = iosInfo.utsname.machine ?? '';
+                          }
+                          final body = Uri.encodeComponent(
+                            '문의내역:\n버전: ${info.version}\nOS: $os\n모델명: $model',
+                          );
+                          final uri = Uri.parse(
+                            'mailto:skylife927@gmail.com?subject=FAQ 문의&body=$body',
+                          );
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          } else {
+                            Fluttertoast.showToast(
+                              msg: '이메일 앱을 열 수 없습니다.',
+                            );
+                          }
+                        },
+                        title: const Text('FAQ'),
+                        leading: const Icon(Icons.question_answer_outlined),
+                      ),
+                      if (isAdmin)
+                        SettingsTile(
+                          onPressed: (context) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AdManageScreen(),
+                              ),
+                            );
+                          },
+                          title: const Text('광고'),
+                          description: const Text(
+                            '앱 진입 BottomSheet 광고를 설정합니다.',
+                          ),
+                          leading: const Icon(Icons.campaign_outlined),
+                        ),
+                      SettingsTile(
+                        onPressed: (context) => {
+                          _version == _latestVersion
+                              ? Fluttertoast.showToast(
+                                  msg: "최신버전입니다.",
+                                  gravity: ToastGravity.BOTTOM,
+                                  timeInSecForIosWeb: 5,
+                                  backgroundColor: Colors.grey[800],
+                                  fontSize: 16,
+                                  textColor: Colors.white,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                )
+                              : Fluttertoast.showToast(
+                                  msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
+                                  gravity: ToastGravity.BOTTOM,
+                                  timeInSecForIosWeb: 5,
+                                  backgroundColor: Colors.grey[800],
+                                  fontSize: 16,
+                                  textColor: Colors.white,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                )
+                        },
+                        title: const Text('버전 정보'),
+                        description: Text(
+                          _version == _latestVersion
+                              ? 'Version: $_version (최신버전입니다.)'
+                              : 'Version: $_version (최신버전이 아닙니다.)',
+                        ),
+                        leading: const Icon(Icons.info_outline),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           );
         },
       ),
@@ -1159,6 +1209,293 @@ class _SearchScreenState extends State<SearchScreen> {
       _commentReplyNotification = prefs.getBool('comment_reply_notification') ?? true;
       _commentLikeNotification = prefs.getBool('comment_like_notification') ?? true;
     });
+  }
+
+  Future<void> _checkAndShowStartupAdBottomSheet() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+      final Map<String, dynamic>? userData = userDoc.data();
+      final Timestamp? hideUntilTs =
+          userData?['hideBottomSheetAdUntil'] as Timestamp?;
+      final DateTime now = DateTime.now();
+
+      if (hideUntilTs != null &&
+          hideUntilTs.toDate().isAfter(now)) {
+        return;
+      }
+
+      final QuerySnapshot<Map<String, dynamic>> snap =
+          await FirebaseFirestore.instance
+              .collection('bottom_sheet_ads')
+              .where('isActive', isEqualTo: true)
+              .orderBy('priority', descending: false)
+              .get();
+
+      final List<Map<String, dynamic>> ads = snap.docs
+          .map<Map<String, dynamic>>(
+            (d) => <String, dynamic>{'id': d.id, ...d.data()},
+          )
+          .where((ad) {
+        final Timestamp? startTs = ad['startAt'] as Timestamp?;
+        final Timestamp? endTs = ad['endAt'] as Timestamp?;
+        final DateTime? startAt =
+            startTs != null ? startTs.toDate() : null;
+        final DateTime? endAt =
+            endTs != null ? endTs.toDate() : null;
+        final bool startOk =
+            startAt == null || !startAt.isAfter(now);
+        final bool endOk =
+            endAt == null || !endAt.isBefore(now);
+        return startOk && endOk;
+      }).toList();
+
+      if (ads.isEmpty) return;
+      if (!mounted) return;
+
+      _showStartupAdBottomSheet(ads, user.uid);
+    } catch (e) {
+      print('초기 광고 BottomSheet 로드 오류: $e');
+    }
+  }
+
+  void _showStartupAdBottomSheet(
+    List<Map<String, dynamic>> ads,
+    String uid,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: false,
+      // 아래 네비게이션바가 보이도록, 배경은 투명 처리 후
+      // 안쪽에 margin을 준 컨테이너를 따로 둔다.
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        final PageController pageController = PageController();
+        int currentPage = 0;
+        bool dontShowForWeek = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final double bottomPadding = kBottomNavigationBarHeight +
+                MediaQuery.of(context).padding.bottom +
+                8;
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: bottomPadding),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: 330,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: PageView.builder(
+                            controller: pageController,
+                            itemCount: ads.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                currentPage = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final Map<String, dynamic> ad = ads[index];
+                              final String title =
+                                  (ad['title'] as String?) ?? '';
+                              final String imageUrl =
+                                  (ad['imageUrl'] as String?) ?? '';
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () => _handleAdTap(context, ad),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (title.isNotEmpty) ...[
+                                        Text(
+                                          title,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                      ],
+                                      ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                        child: AspectRatio(
+                                          aspectRatio: 16 / 9,
+                                          child: imageUrl.isNotEmpty
+                                              ? Image.network(
+                                                  imageUrl,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Container(
+                                                  color: Colors.grey[200],
+                                                  child: const Center(
+                                                    child: Text(
+                                                      '이미지가 없습니다',
+                                                      style: TextStyle(
+                                                        color:
+                                                            Colors.black54,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${currentPage + 1}/${ads.length}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        CheckboxListTile(
+                          value: dontShowForWeek,
+                          onChanged: (value) {
+                            setState(() {
+                              dontShowForWeek = value ?? false;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: const Text(
+                            '일주일 동안 보지 않기',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () async {
+                                  if (dontShowForWeek) {
+                                    final DateTime hideUntil =
+                                        DateTime.now().add(
+                                      const Duration(days: 7),
+                                    );
+                                    try {
+                                      await FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(uid)
+                                          .update(
+                                        <String, dynamic>{
+                                          'hideBottomSheetAdUntil':
+                                              Timestamp.fromDate(hideUntil),
+                                        },
+                                      );
+                                    } catch (e) {
+                                      print(
+                                          'hideBottomSheetAdUntil 업데이트 오류: $e');
+                                    }
+                                  }
+                                  if (Navigator.of(context).canPop()) {
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                                child: const Text(
+                                  '닫기',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _handleAdTap(
+    BuildContext context,
+    Map<String, dynamic> ad,
+  ) {
+    final String linkType = (ad['linkType'] as String?) ?? 'web';
+    final String linkValue = (ad['linkValue'] as String?) ?? '';
+
+    if (linkType == 'web') {
+      if (linkValue.isEmpty) return;
+      final Uri uri = Uri.parse(linkValue);
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    if (linkType == 'deeplink') {
+      _handleInternalDeeplink(context, linkValue);
+    }
+  }
+
+  void _handleInternalDeeplink(
+    BuildContext context,
+    String deeplink,
+  ) {
+    // 규칙 예시: 'branch:jungang' → branchId=jungang 지점 상세 화면으로 이동
+    if (deeplink.startsWith('branch:')) {
+      final String branchId = deeplink.substring('branch:'.length);
+      if (branchId.isEmpty) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BranchDetailScreen(
+            branchId: branchId,
+          ),
+        ),
+      );
+      return;
+    }
   }
 
   _launchMileageThief(String mileageTheifMarketUrl) async {

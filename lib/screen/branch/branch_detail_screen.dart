@@ -17,12 +17,13 @@ import 'branch_event_manage_screen.dart';
 /// 로 분리해서 관리한다.
 class BranchDetailScreen extends StatefulWidget {
   final String branchId;
-  final String branchName;
+  /// 최초 진입 시 표시할 지점 이름 (선택). 생략하면 Firestore의 branches/{branchId}.name을 사용한다.
+  final String? branchName;
 
   const BranchDetailScreen({
     super.key,
     required this.branchId,
-    required this.branchName,
+    this.branchName,
   });
 
   @override
@@ -48,6 +49,14 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
   bool _isEventManager = false;
 
   String _commentSortOrder = '등록순';
+
+  /// 화면에 보여줄 최종 지점 이름
+  String get _effectiveBranchName {
+    final Map<String, dynamic>? b = _branch;
+    final String? fromBranch =
+        b != null ? (b['name'] as String? ?? b['title'] as String?) : null;
+    return fromBranch ?? widget.branchName ?? widget.branchId;
+  }
 
   @override
   void initState() {
@@ -592,7 +601,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
         'commentPath':
             'branches/${widget.branchId}/comments/${commentRef.id}',
         'branchId': widget.branchId,
-        'branchName': widget.branchName,
+        'branchName': _effectiveBranchName,
         'contentHtml': data['contentHtml'],
         'contentType': data['contentType'],
         'attachments': attachments,
@@ -663,7 +672,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  widget.branchName,
+                  _effectiveBranchName,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -1223,7 +1232,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FA),
       appBar: AppBar(
-        title: Text(widget.branchName),
+        title: Text(_effectiveBranchName),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -1237,7 +1246,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
                   MaterialPageRoute(
                     builder: (_) => BranchEventManageScreen(
                       branchId: widget.branchId,
-                      branchName: widget.branchName,
+                      branchName: _effectiveBranchName,
                     ),
                   ),
                 );
