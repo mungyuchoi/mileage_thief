@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../services/user_service.dart';
 
 /// 상품권 지점 리뷰 상세/작성 화면
 /// 구조는 community_detail_screen.dart의 댓글 구조를 최대한 재사용하되,
@@ -128,6 +130,41 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
     });
   }
 
+  /// 브랜치 댓글용 이미지 업로드
+  /// Storage 경로: branches/{branchId}/comments/{commentId}/images/{fileName}.jpg
+  Future<String?> _uploadImage(File imageFile, String commentId) async {
+    try {
+      FirebaseStorage storage;
+      if (Platform.isIOS) {
+        storage = FirebaseStorage.instanceFor(
+            bucket: 'mileagethief.firebasestorage.app');
+      } else {
+        storage = FirebaseStorage.instance;
+      }
+
+      if (!await imageFile.exists()) {
+        return null;
+      }
+
+      final fileName =
+          '${commentId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath =
+          'branches/${widget.branchId}/comments/$commentId/images/$fileName';
+
+      final storageRef = storage.ref().child(storagePath);
+      final uploadTask = storageRef.putFile(imageFile);
+      final snapshot = await uploadTask;
+
+      if (snapshot.state == TaskState.success) {
+        return await snapshot.ref.getDownloadURL();
+      }
+      return null;
+    } catch (e) {
+      debugPrint('브랜치 댓글 이미지 업로드 오류: $e');
+      return null;
+    }
+  }
+
   Future<void> _submitComment() async {
     if (_currentUser == null) {
       Fluttertoast.showToast(msg: '로그인이 필요합니다.');
@@ -149,15 +186,45 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
           .doc(widget.branchId)
           .collection('comments')
           .doc();
+      String contentHtml = content;
+      final List<Map<String, dynamic>> attachments = <Map<String, dynamic>>[];
 
-      final now = DateTime.now();
+      // 이미지가 있으면 업로드
+      if (_selectedImage != null) {
+        final String? imageUrl =
+            await _uploadImage(_selectedImage!, commentRef.id);
+        if (imageUrl != null) {
+          contentHtml +=
+              '<br><img src="$imageUrl" alt="첨부이미지" style="max-width: 100%; border-radius: 8px;" />';
+          attachments.add(<String, dynamic>{
+            'type': 'image',
+            'url': imageUrl,
+            'filename':
+                'image_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          });
+        }
+      }
+
+      // 최신 사용자 정보 가져오기 (프로필 이미지/닉네임)
+      final Map<String, dynamic>? userData =
+          await UserService.getUserFromFirestore(_currentUser!.uid);
+      final String displayName =
+          (userData?['displayName'] as String?) ??
+              _currentUser!.displayName ??
+              '사용자';
+      final String profileImageUrl =
+          (userData?['photoURL'] as String?) ??
+              (_currentUser!.photoURL ?? '');
+
       final Map<String, dynamic> data = <String, dynamic>{
         'authorId': _currentUser!.uid,
-        'authorDisplayName': _currentUser!.displayName ?? '사용자',
-        'authorPhotoURL': _currentUser!.photoURL,
-        'contentHtml': '<p>$content</p>',
+        'authorDisplayName': displayName,
+        'authorPhotoURL': profileImageUrl,
+        'profileImageUrl': profileImageUrl,
+        'contentHtml':
+            contentHtml.isEmpty ? '<p>이미지</p>' : '<p>$contentHtml</p>',
         'contentType': 'html',
-        'attachments': <Map<String, dynamic>>[],
+        'attachments': attachments,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'isDeleted': false,
@@ -185,7 +252,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
         'branchName': widget.branchName,
         'contentHtml': data['contentHtml'],
         'contentType': data['contentType'],
-        'attachments': data['attachments'],
+        'attachments': attachments,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -338,6 +405,20 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
     final DateTime createdAt =
         createdAtTs?.toDate() ?? DateTime.now();
 
+    final List<dynamic> rawAttachments =
+        (comment['attachments'] as List<dynamic>?) ?? const [];
+    final List<Map<String, dynamic>> imageAttachments = rawAttachments
+        .whereType<Map<String, dynamic>>()
+        .where((a) => (a['type'] == 'image') && (a['url'] != null))
+        .toList();
+
+    final bool isMyComment =
+        _currentUser != null && comment['authorId'] == _currentUser!.uid;
+
+    final String? photoUrl =
+        (comment['authorPhotoURL'] ??
+                comment['profileImageUrl']) as String?;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -357,10 +438,19 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 14,
-                backgroundColor: Color(0x1174512D),
-                child: Icon(Icons.person, size: 16, color: Color(0xFF74512D)),
+                backgroundColor: const Color(0x1174512D),
+                backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                    ? NetworkImage(photoUrl)
+                    : null,
+                child: (photoUrl == null || photoUrl.isEmpty)
+                    ? const Icon(
+                        Icons.person,
+                        size: 16,
+                        color: Color(0xFF74512D),
+                      )
+                    : null,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -380,6 +470,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
                   color: Colors.black45,
                 ),
               ),
+              if (isMyComment) _buildCommentMoreOptions(comment),
             ],
           ),
           const SizedBox(height: 8),
@@ -387,9 +478,269 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
             content,
             style: const TextStyle(fontSize: 13, color: Colors.black87),
           ),
+          if (imageAttachments.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageAttachments.first['url'] as String,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildCommentMoreOptions(Map<String, dynamic> comment) {
+    if (_currentUser == null ||
+        comment['authorId'] != _currentUser!.uid) {
+      return const SizedBox.shrink();
+    }
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert, size: 16, color: Colors.grey[500]),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      onSelected: (String value) {
+        switch (value) {
+          case 'edit':
+            _editComment(comment);
+            break;
+          case 'delete':
+            _deleteComment(comment);
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit_outlined, size: 20, color: Colors.black87),
+              SizedBox(width: 12),
+              Text('수정하기'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, size: 20, color: Colors.red),
+              SizedBox(width: 12),
+              Text('삭제하기', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editComment(Map<String, dynamic> comment) async {
+    final String? commentId = comment['commentId'] as String?;
+    if (commentId == null) return;
+
+    final TextEditingController controller = TextEditingController(
+      text: (comment['plainText'] as String?) ?? '',
+    );
+
+    final String? newText = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text(
+            '리뷰 수정',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            maxLines: 5,
+            minLines: 1,
+            style: const TextStyle(color: Colors.black),
+            decoration: const InputDecoration(
+              hintText: '리뷰 내용을 수정하세요.',
+              hintStyle: TextStyle(color: Colors.black38),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(controller.text.trim()),
+              child: const Text(
+                '저장',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newText == null || newText.isEmpty) return;
+
+    try {
+      final String html = '<p>$newText</p>';
+
+      // branches/{branchId}/comments
+      await FirebaseFirestore.instance
+          .collection('branches')
+          .doc(widget.branchId)
+          .collection('comments')
+          .doc(commentId)
+          .update(<String, dynamic>{
+        'plainText': newText,
+        'contentHtml': html,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // users/{uid}/branch_comments
+      if (_currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('branch_comments')
+            .doc(commentId)
+            .update(<String, dynamic>{
+          'contentHtml': html,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await _loadComments();
+    } catch (e) {
+      debugPrint('브랜치 댓글 수정 오류: $e');
+      Fluttertoast.showToast(
+        msg: '리뷰 수정 중 오류가 발생했습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> _deleteComment(Map<String, dynamic> comment) async {
+    final String? commentId = comment['commentId'] as String?;
+    if (commentId == null) return;
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text(
+            '리뷰 삭제',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            '해당 리뷰를 삭제하시겠습니까?',
+            style: TextStyle(color: Colors.black87),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                '삭제',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // 1) 댓글 문서를 먼저 읽어서 첨부 이미지 목록 확보
+      final DocumentSnapshot<Map<String, dynamic>> doc = await FirebaseFirestore
+          .instance
+          .collection('branches')
+          .doc(widget.branchId)
+          .collection('comments')
+          .doc(commentId)
+          .get();
+
+      final List<dynamic> attachments =
+          (doc.data()?['attachments'] as List<dynamic>?) ?? const [];
+
+      // 2) Firestore에서 댓글 / 사용자 로그 삭제
+      await FirebaseFirestore.instance
+          .collection('branches')
+          .doc(widget.branchId)
+          .collection('comments')
+          .doc(commentId)
+          .delete();
+
+      if (_currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('branch_comments')
+            .doc(commentId)
+            .delete();
+      }
+
+      // 3) Storage 이미지 삭제 (type == image 인 첨부만)
+      for (final dynamic raw in attachments) {
+        if (raw is! Map<String, dynamic>) continue;
+        if (raw['type'] != 'image') continue;
+        final String? url = raw['url'] as String?;
+        if (url == null || url.isEmpty) continue;
+        try {
+          final Reference ref = FirebaseStorage.instance.refFromURL(url);
+          await ref.delete();
+        } catch (e) {
+          debugPrint('브랜치 댓글 이미지 삭제 오류: $e');
+        }
+      }
+
+      await _loadComments();
+
+      Fluttertoast.showToast(
+        msg: '리뷰가 삭제되었습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    } catch (e) {
+      debugPrint('브랜치 댓글 삭제 오류: $e');
+      Fluttertoast.showToast(
+        msg: '리뷰 삭제 중 오류가 발생했습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
   }
 
   Widget _buildCommentsSection() {

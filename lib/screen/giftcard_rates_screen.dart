@@ -510,12 +510,20 @@ class GiftcardRatesTab extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 6),
                           Row(
@@ -709,6 +717,7 @@ class GiftcardBrandRatesPage extends StatelessWidget {
     for (final branchDoc in branchesSnap.docs) {
       final branchId = branchDoc.id;
       final branchData = branchDoc.data();
+      final bool isVerified = (branchData['verified'] as bool?) ?? false;
 
       final rateDoc = await branchDoc.reference
           .collection('giftcardRates_current')
@@ -723,6 +732,7 @@ class GiftcardBrandRatesPage extends StatelessWidget {
         'branchId': branchId,
         'branch': branchData,
         'rate': rateData,
+        'verified': isVerified,
       });
     }
 
@@ -780,6 +790,7 @@ class GiftcardBrandRatesPage extends StatelessWidget {
                   (row['branch'] as Map<String, dynamic>) ?? {};
               final Map<String, dynamic> data =
                   (row['rate'] as Map<String, dynamic>) ?? {};
+              final bool isVerified = (row['verified'] as bool?) ?? false;
 
               final branchName =
                   (branch['name'] as String?) ?? (branchId.isNotEmpty ? branchId : '알 수 없음');
@@ -838,12 +849,31 @@ class GiftcardBrandRatesPage extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  branchName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        branchName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (isVerified) ...[
+                                      const SizedBox(width: 4),
+                                      SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: Image.asset(
+                                          'asset/img/verified.jpg',
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 if (address != null && address.isNotEmpty)
                                   Padding(
@@ -1508,6 +1538,7 @@ class BranchRatesDetailPage extends StatelessWidget {
               snapshot.data!['giftcards'] as Map<String, Map<String, dynamic>>;
 
           final address = branch?['address'] as String?;
+          final bool isVerified = (branch?['verified'] as bool?) ?? false;
           final phone = branch?['phone'] as String?;
           final notice = branch?['notice'] as String?;
           final openingHours = branch?['openingHours'] as Map<String, dynamic>?;
@@ -1534,7 +1565,8 @@ class BranchRatesDetailPage extends StatelessWidget {
                 children: [
                   Text(
                     baseDateLabel,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -1547,7 +1579,32 @@ class BranchRatesDetailPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (address != null) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  branchName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              if (isVerified)
+                                const SizedBox(width: 4),
+                              if (isVerified)
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: Image.asset(
+                                    'asset/img/verified.jpg',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (address != null) ...[
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: const [
@@ -1569,7 +1626,7 @@ class BranchRatesDetailPage extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(address),
                           const SizedBox(height: 8),
-                        ],
+                          ],
                         if (phone != null) ...[
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
