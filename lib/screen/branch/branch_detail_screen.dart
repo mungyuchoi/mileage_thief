@@ -40,7 +40,11 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
 
   bool _isLoading = true;
   bool _isLoadingComments = true;
+  bool _isLoadingEvents = true;
   List<Map<String, dynamic>> _comments = <Map<String, dynamic>>[];
+
+  List<Map<String, dynamic>> _events = <Map<String, dynamic>>[];
+  bool _isEventManager = false;
 
   String _commentSortOrder = '등록순';
 
@@ -49,6 +53,8 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
     super.initState();
     _loadBranch();
     _loadComments();
+    _loadUserRole();
+    _loadEvents();
   }
 
   @override
@@ -111,6 +117,81 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
     }
   }
 
+  /// 현재 사용자 role 로드 (admin, branch 여부 확인)
+  Future<void> _loadUserRole() async {
+    if (_currentUser == null) {
+      setState(() {
+        _isEventManager = false;
+      });
+      return;
+    }
+
+    try {
+      final Map<String, dynamic>? userData =
+          await UserService.getUserFromFirestore(_currentUser!.uid);
+      final List<dynamic> rawRoles =
+          (userData?['roles'] as List<dynamic>?) ?? const <dynamic>['user'];
+
+      // roles 예시:
+      // - ['user']
+      // - ['user', 'admin']          → 전체 지점 관리 가능
+      // - ['user', 'branch']         → 전체 지점 이벤트 관리 가능
+      // - ['user', 'jungang']        → jungang 지점만 이벤트 관리 가능 (branchId 직접 사용)
+      final List<String> roles = rawRoles.map((e) => e.toString()).toList();
+
+      final bool isAdmin = roles.contains('admin');
+      final bool isGlobalBranchManager = roles.contains('branch');
+      // branchId 자체가 roles 안에 있으면 해당 지점의 오너로 취급
+      final bool isBranchOwnerById = roles.contains(widget.branchId);
+
+      final bool isManager =
+          isAdmin || isGlobalBranchManager || isBranchOwnerById;
+
+      setState(() {
+        _isEventManager = isManager;
+      });
+    } catch (e) {
+      debugPrint('사용자 권한 로드 오류: $e');
+      setState(() {
+        _isEventManager = false;
+      });
+    }
+  }
+
+  /// 지점별 진행 중인 이벤트 로드
+  Future<void> _loadEvents() async {
+    try {
+      setState(() {
+        _isLoadingEvents = true;
+      });
+
+      final QuerySnapshot<Map<String, dynamic>> snap =
+          await FirebaseFirestore.instance
+              .collection('branches')
+              .doc(widget.branchId)
+              .collection('events')
+              .where('isActive', isEqualTo: true)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+      final List<Map<String, dynamic>> list = snap.docs
+          .map<Map<String, dynamic>>(
+            (d) => <String, dynamic>{'eventId': d.id, ...d.data()},
+          )
+          .toList();
+
+      setState(() {
+        _events = list;
+        _isLoadingEvents = false;
+      });
+    } catch (e) {
+      debugPrint('브랜치 이벤트 로드 오류: $e');
+      setState(() {
+        _isLoadingEvents = false;
+      });
+    }
+  }
+
   Future<void> _pickImage() async {
     final XFile? picked = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -163,6 +244,414 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
       debugPrint('브랜치 댓글 이미지 업로드 오류: $e');
       return null;
     }
+  }
+
+  /// 이벤트 생성 다이얼로그
+  Future<void> _showCreateEventDialog() async {
+    if (_currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+    if (!_isEventManager) {
+      Fluttertoast.showToast(msg: '이벤트를 생성할 수 있는 권한이 없습니다.');
+      return;
+    }
+
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+    final TextEditingController peanutController = TextEditingController();
+
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            '이벤트 추가',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    labelText: '이벤트명',
+                    labelStyle: TextStyle(color: Colors.black54),
+                    hintText: '예) 중앙상품권 5월 이벤트',
+                    hintStyle: TextStyle(color: Colors.black38),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    labelText: '이벤트 비밀번호',
+                    labelStyle: TextStyle(color: Colors.black54),
+                    hintText: '참여 시 입력할 비밀번호',
+                    hintStyle: TextStyle(color: Colors.black38),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: peanutController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: const InputDecoration(
+                    labelText: '땅콩 개수 (최대 100개)',
+                    labelStyle: TextStyle(color: Colors.black54),
+                    hintText: '1~100 사이 숫자를 입력하세요.',
+                    hintStyle: TextStyle(color: Colors.black38),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                '추가',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    final String name = nameController.text.trim();
+    final String password = passwordController.text.trim();
+    final String peanutText = peanutController.text.trim();
+
+    if (name.isEmpty || password.isEmpty || peanutText.isEmpty) {
+      Fluttertoast.showToast(msg: '이벤트명, 비밀번호, 땅콩 개수를 모두 입력해주세요.');
+      return;
+    }
+
+    final int? peanutCount = int.tryParse(peanutText);
+    if (peanutCount == null || peanutCount <= 0 || peanutCount > 100) {
+      Fluttertoast.showToast(msg: '땅콩 개수는 1~100 사이의 숫자만 가능합니다.');
+      return;
+    }
+
+    try {
+      final DocumentReference<Map<String, dynamic>> eventRef =
+          FirebaseFirestore.instance
+              .collection('branches')
+              .doc(widget.branchId)
+              .collection('events')
+              .doc();
+
+      await eventRef.set(<String, dynamic>{
+        'name': name,
+        'password': password,
+        'peanutCount': peanutCount,
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'branchId': widget.branchId,
+      });
+
+      await _loadEvents();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('이벤트가 추가되었습니다.'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      debugPrint('이벤트 생성 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('이벤트 생성 중 오류가 발생했습니다: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// 이벤트 참여 다이얼로그
+  Future<void> _showJoinEventDialog() async {
+    if (_currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+    if (_events.isEmpty) {
+      Fluttertoast.showToast(msg: '현재 진행 중인 이벤트가 없습니다.');
+      return;
+    }
+
+    final TextEditingController passwordController = TextEditingController();
+    String selectedEventId = _events.first['eventId'] as String;
+    Map<String, dynamic> selectedEvent = _events.first;
+    bool isProcessing = false;
+    bool hasJoined = false;
+
+    Future<void> checkAndJoin(
+      BuildContext dialogContext,
+      void Function(void Function()) setStateDialog,
+    ) async {
+      if (isProcessing || hasJoined) return;
+
+      final String inputPassword = passwordController.text.trim();
+      if (inputPassword.isEmpty) {
+        Fluttertoast.showToast(msg: '비밀번호를 입력해주세요.');
+        return;
+      }
+
+      setStateDialog(() {
+        isProcessing = true;
+      });
+
+      try {
+        final String? savedPassword =
+            selectedEvent['password'] as String?;
+        if (savedPassword == null || savedPassword.isEmpty) {
+          Fluttertoast.showToast(msg: '이벤트 정보가 올바르지 않습니다.');
+          setStateDialog(() {
+            isProcessing = false;
+          });
+          return;
+        }
+
+        // 비밀번호 검증
+        if (inputPassword != savedPassword) {
+          Fluttertoast.showToast(msg: '비밀번호가 잘못 입력되었습니다.');
+          setStateDialog(() {
+            isProcessing = false;
+          });
+          return;
+        }
+
+        final int peanutCount =
+            (selectedEvent['peanutCount'] as int?) ?? 0;
+        if (peanutCount <= 0) {
+          Fluttertoast.showToast(msg: '유효하지 않은 땅콩 개수입니다.');
+          setStateDialog(() {
+            isProcessing = false;
+          });
+          return;
+        }
+
+        // 이미 참여했는지 확인
+        final DocumentReference<Map<String, dynamic>> userEventRef =
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(_currentUser!.uid)
+                .collection('events')
+                .doc(selectedEventId);
+
+        final DocumentSnapshot<Map<String, dynamic>> userEventDoc =
+            await userEventRef.get();
+
+        if (userEventDoc.exists) {
+          Fluttertoast.showToast(msg: '이미 참여한 이벤트입니다.');
+          setStateDialog(() {
+            hasJoined = true;
+            isProcessing = false;
+          });
+          return;
+        }
+
+        // 현재 땅콩 개수 조회 후 업데이트
+        final Map<String, dynamic>? userData =
+            await UserService.getUserFromFirestore(_currentUser!.uid);
+        final int currentPeanuts =
+            (userData?['peanutCount'] as int?) ?? 0;
+        final int newPeanuts = currentPeanuts + peanutCount;
+
+        await UserService.updatePeanutCount(
+          _currentUser!.uid,
+          newPeanuts,
+        );
+
+        // 유저 이벤트 참여 기록 저장
+        await userEventRef.set(<String, dynamic>{
+          'branchId': widget.branchId,
+          'eventId': selectedEventId,
+          'eventName': selectedEvent['name'] ?? '',
+          'joined': true,
+          'peanutCount': peanutCount,
+          'joinedAt': FieldValue.serverTimestamp(),
+        });
+
+        setStateDialog(() {
+          hasJoined = true;
+          isProcessing = false;
+        });
+
+        Navigator.of(dialogContext).pop();
+
+        Fluttertoast.showToast(
+          msg: '이벤트 참여를 통해 땅콩 $peanutCount개를 받았습니다.',
+        );
+      } catch (e) {
+        debugPrint('이벤트 참여 오류: $e');
+        Fluttertoast.showToast(
+          msg: '이벤트 참여 중 오류가 발생했습니다.',
+        );
+        setStateDialog(() {
+          isProcessing = false;
+        });
+      }
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                '이벤트 참여',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '이벤트 선택',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButton<String>(
+                      value: selectedEventId,
+                      isExpanded: true,
+                      items: _events.map((Map<String, dynamic> e) {
+                        return DropdownMenuItem<String>(
+                          value: e['eventId'] as String,
+                          child: Text(
+                            (e['name'] as String?) ?? '이벤트',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? value) {
+                        if (value == null) return;
+                        final Map<String, dynamic>? selected =
+                            _events.firstWhere(
+                          (Map<String, dynamic> e) =>
+                              e['eventId'] == value,
+                          orElse: () => <String, dynamic>{},
+                        );
+                        if (selected == null || selected.isEmpty) {
+                          return;
+                        }
+                        setStateDialog(() {
+                          selectedEventId = value;
+                          selectedEvent = selected;
+                          hasJoined = false;
+                          passwordController.clear();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    if (!hasJoined) ...[
+                      const Text(
+                        '비밀번호 입력',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        enabled: !isProcessing,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          hintText: '이벤트 비밀번호를 입력하세요.',
+                          hintStyle: TextStyle(color: Colors.black38),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ] else ...[
+                      const Text(
+                        '이미 참여한 이벤트입니다.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text(
+                    '닫기',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+                if (!hasJoined)
+                  TextButton(
+                    onPressed: isProcessing
+                        ? null
+                        : () => checkAndJoin(dialogContext, setStateDialog),
+                    child: isProcessing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : const Text(
+                            '참여하기',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _submitComment() async {
@@ -886,6 +1375,29 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          if (_isEventManager)
+            IconButton(
+              icon: const Icon(Icons.event_available_outlined),
+              tooltip: '이벤트 추가',
+              onPressed: _showCreateEventDialog,
+            ),
+          if (!_isLoadingEvents && _events.isNotEmpty)
+            TextButton(
+              onPressed: _showJoinEventDialog,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF74512D),
+              ),
+              child: const Text(
+                '이벤트 참여',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: _isLoading
           ? const Center(

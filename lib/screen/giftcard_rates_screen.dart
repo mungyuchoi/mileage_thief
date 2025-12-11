@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'branch/branch_detail_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -808,6 +809,7 @@ class GiftcardBrandRatesPage extends StatelessWidget {
                       builder: (_) => BranchRatesDetailPage(
                         branchId: branchId,
                         branchName: branchName,
+                        isVerified: isVerified,
                       ),
                     ),
                   );
@@ -1369,6 +1371,7 @@ class _RecommendCard extends StatelessWidget {
               builder: (_) => BranchRatesDetailPage(
                 branchId: row.branchId,
                 branchName: branchName,
+                isVerified: (row.branch['verified'] as bool?) ?? false,
               ),
             ),
           );
@@ -1447,11 +1450,13 @@ class _RecommendCard extends StatelessWidget {
 class BranchRatesDetailPage extends StatelessWidget {
   final String branchId;
   final String branchName;
+  final bool isVerified;
 
   const BranchRatesDetailPage({
     super.key,
     required this.branchId,
     required this.branchName,
+    this.isVerified = false,
   });
 
   NumberFormat get _won => NumberFormat('#,###');
@@ -1508,12 +1513,57 @@ class BranchRatesDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(branchName),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                branchName,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isVerified) ...[
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: Image.asset(
+                  'asset/img/verified.jpg',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
+          ],
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          if (isVerified)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => BranchDetailScreen(
+                      branchId: branchId,
+                      branchName: branchName,
+                    ),
+                  ),
+                );
+              },
+              child: const Text(
+                '리뷰 쓰기',
+                style: TextStyle(
+                  color: Color(0xFF74512D),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          const SizedBox(width: 4),
+        ],
       ),
       backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -1538,7 +1588,6 @@ class BranchRatesDetailPage extends StatelessWidget {
               snapshot.data!['giftcards'] as Map<String, Map<String, dynamic>>;
 
           final address = branch?['address'] as String?;
-          final bool isVerified = (branch?['verified'] as bool?) ?? false;
           final phone = branch?['phone'] as String?;
           final notice = branch?['notice'] as String?;
           final openingHours = branch?['openingHours'] as Map<String, dynamic>?;
@@ -1579,32 +1628,15 @@ class BranchRatesDetailPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  branchName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                              if (isVerified)
-                                const SizedBox(width: 4),
-                              if (isVerified)
-                                SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: Image.asset(
-                                    'asset/img/verified.jpg',
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                            ],
+                        Text(
+                          branchName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
                           ),
-                          const SizedBox(height: 8),
-                          if (address != null) ...[
+                        ),
+                        const SizedBox(height: 8),
+                        if (address != null) ...[
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: const [
