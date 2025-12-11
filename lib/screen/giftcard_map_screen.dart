@@ -481,6 +481,20 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
       builder: (ctx) {
+        // verified 지점인 경우 지점 상세 화면으로 이동하는 공통 함수
+        Future<void> openBranchDetail() async {
+          Navigator.pop(ctx);
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BranchDetailScreen(
+                branchId: branchId,
+                branchName: name,
+              ),
+            ),
+          );
+        }
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -503,70 +517,85 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  name,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                          Builder(
+                            builder: (context) {
+                              // 상단 지점 이름 Row (verified일 때는 전체 Row 탭으로 상세 화면 이동)
+                              Widget titleRow = Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (isVerified) ...[
-                                const SizedBox(width: 6),
-                                GestureDetector(
-                                  onTap: () {
-                                    showDialog<void>(
-                                      context: context,
-                                      builder: (dCtx) {
-                                        return AlertDialog(
-                                          backgroundColor: Colors.white,
-                                          title: const Text(
-                                            '공식 인증 지점',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          content: const Text(
-                                            '이 지점은 마일캐치에서 검증한 공식 인증 지점입니다.\n'
-                                            '운영자 확인을 거쳐 등록되었으며, 최신 정보 유지를 위해 주기적으로 점검하고 있어요.',
-                                            style: TextStyle(color: Colors.black87, fontSize: 14),
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.of(dCtx).pop(),
-                                              child: const Text(
-                                                '확인',
+                                  if (isVerified) ...[
+                                    const SizedBox(width: 6),
+                                    GestureDetector(
+                                      onTap: () {
+                                        showDialog<void>(
+                                          context: context,
+                                          builder: (dCtx) {
+                                            return AlertDialog(
+                                              backgroundColor: Colors.white,
+                                              title: const Text(
+                                                '공식 인증 지점',
                                                 style: TextStyle(
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                              content: const Text(
+                                                '이 지점은 마일캐치에서 검증한 공식 인증 지점입니다.\n'
+                                                '운영자 확인을 거쳐 등록되었으며, 최신 정보 유지를 위해 주기적으로 점검하고 있어요.',
+                                                style: TextStyle(color: Colors.black87, fontSize: 14),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(dCtx).pop(),
+                                                  child: const Text(
+                                                    '확인',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
                                         );
                                       },
-                                    );
-                                  },
-                                  child: Container(
-                                    width: 22,
-                                    height: 22,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(999),
+                                      child: Container(
+                                        width: 22,
+                                        height: 22,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Image.asset(
+                                          'asset/img/verified.jpg',
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
                                     ),
-                                    child: Image.asset(
-                                      'asset/img/verified.jpg',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
+                                  ],
+                                ],
+                              );
+
+                              if (isVerified) {
+                                titleRow = GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: openBranchDetail,
+                                  child: titleRow,
+                                );
+                              }
+
+                              return titleRow;
+                            },
                           ),
                           const SizedBox(height: 6),
                           if (phone != null && phone.isNotEmpty)
@@ -600,18 +629,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       children: [
                         if (isVerified)
                           TextButton.icon(
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BranchDetailScreen(
-                                    branchId: branchId,
-                                    branchName: name,
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: openBranchDetail,
                             icon: const Icon(Icons.rate_review_outlined,
                                 size: 18, color: Color(0xFF74512D)),
                             label: const Text(
@@ -727,18 +745,21 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         final String nameLabel = (u['displayName'] as String?) ?? '익명';
                         final String? p = u['photoUrl'] as String?;
                         final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
-                        return Row(
-                          children: [
-                            Container(
-                              width: 28,
-                              alignment: Alignment.center,
-                              child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                            ),
-                            CircleAvatar(radius: 14, backgroundImage: (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(nameLabel, style: const TextStyle(color: Colors.black87))),
-                            Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
-                          ],
+                        return InkWell(
+                          onTap: isVerified ? openBranchDetail : null,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 28,
+                                alignment: Alignment.center,
+                                child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                              ),
+                              CircleAvatar(radius: 14, backgroundImage: (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(nameLabel, style: const TextStyle(color: Colors.black87))),
+                              Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+                            ],
+                          ),
                         );
                       },
                     ),

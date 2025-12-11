@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../services/user_service.dart';
+import 'branch_event_manage_screen.dart';
 
 /// 상품권 지점 리뷰 상세/작성 화면
 /// 구조는 community_detail_screen.dart의 댓글 구조를 최대한 재사용하되,
@@ -243,153 +244,6 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
     } catch (e) {
       debugPrint('브랜치 댓글 이미지 업로드 오류: $e');
       return null;
-    }
-  }
-
-  /// 이벤트 생성 다이얼로그
-  Future<void> _showCreateEventDialog() async {
-    if (_currentUser == null) {
-      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
-      return;
-    }
-    if (!_isEventManager) {
-      Fluttertoast.showToast(msg: '이벤트를 생성할 수 있는 권한이 없습니다.');
-      return;
-    }
-
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController peanutController = TextEditingController();
-
-    final bool? result = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            '이벤트 추가',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: const InputDecoration(
-                    labelText: '이벤트명',
-                    labelStyle: TextStyle(color: Colors.black54),
-                    hintText: '예) 중앙상품권 5월 이벤트',
-                    hintStyle: TextStyle(color: Colors.black38),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: const InputDecoration(
-                    labelText: '이벤트 비밀번호',
-                    labelStyle: TextStyle(color: Colors.black54),
-                    hintText: '참여 시 입력할 비밀번호',
-                    hintStyle: TextStyle(color: Colors.black38),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: peanutController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: const InputDecoration(
-                    labelText: '땅콩 개수 (최대 100개)',
-                    labelStyle: TextStyle(color: Colors.black54),
-                    hintText: '1~100 사이 숫자를 입력하세요.',
-                    hintStyle: TextStyle(color: Colors.black38),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text(
-                '취소',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text(
-                '추가',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (result != true) return;
-
-    final String name = nameController.text.trim();
-    final String password = passwordController.text.trim();
-    final String peanutText = peanutController.text.trim();
-
-    if (name.isEmpty || password.isEmpty || peanutText.isEmpty) {
-      Fluttertoast.showToast(msg: '이벤트명, 비밀번호, 땅콩 개수를 모두 입력해주세요.');
-      return;
-    }
-
-    final int? peanutCount = int.tryParse(peanutText);
-    if (peanutCount == null || peanutCount <= 0 || peanutCount > 100) {
-      Fluttertoast.showToast(msg: '땅콩 개수는 1~100 사이의 숫자만 가능합니다.');
-      return;
-    }
-
-    try {
-      final DocumentReference<Map<String, dynamic>> eventRef =
-          FirebaseFirestore.instance
-              .collection('branches')
-              .doc(widget.branchId)
-              .collection('events')
-              .doc();
-
-      await eventRef.set(<String, dynamic>{
-        'name': name,
-        'password': password,
-        'peanutCount': peanutCount,
-        'isActive': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        'branchId': widget.branchId,
-      });
-
-      await _loadEvents();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('이벤트가 추가되었습니다.'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    } catch (e) {
-      debugPrint('이벤트 생성 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('이벤트 생성 중 오류가 발생했습니다: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
@@ -1377,10 +1231,25 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
         surfaceTintColor: Colors.transparent,
         actions: [
           if (_isEventManager)
-            IconButton(
-              icon: const Icon(Icons.event_available_outlined),
-              tooltip: '이벤트 추가',
-              onPressed: _showCreateEventDialog,
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => BranchEventManageScreen(
+                      branchId: widget.branchId,
+                      branchName: widget.branchName,
+                    ),
+                  ),
+                );
+              },
+              child: const Text(
+                '이벤트 관리',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
             ),
           if (!_isLoadingEvents && _events.isNotEmpty)
             TextButton(
