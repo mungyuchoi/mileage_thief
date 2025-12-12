@@ -171,6 +171,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   DashboardPeriodType _periodType = DashboardPeriodType.month;
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   int _selectedYear = DateTime.now().year;
+  DateTime? _minDataMonth; // lots/sales에서 가장 오래된 월
 
   // 캘린더 탭: 대시보드와 독립적인 월/데이터 상태
   DateTime _calendarMonth = DateTime(DateTime.now().year, DateTime.now().month);
@@ -199,6 +200,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       }
     });
     _load();
+    _loadMinDataMonth(); // 가장 오래된 데이터 월 계산
     // 초기 캘린더 월 데이터 로드 (대시보드 월과는 독립적으로 관리)
     _loadCalendarMonth(_calendarMonth);
   }
@@ -316,6 +318,56 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
+  /// lots/sales 전체에서 가장 오래된 매입/판매 일자를 찾아
+  /// 해당 연/월을 _minDataMonth에 저장한다.
+  Future<void> _loadMinDataMonth() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      DateTime? oldest;
+
+      final lotsMinSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .orderBy('buyDate')
+          .limit(1)
+          .get();
+      if (lotsMinSnap.docs.isNotEmpty) {
+        final data = lotsMinSnap.docs.first.data();
+        final ts = data['buyDate'];
+        if (ts is Timestamp) {
+          oldest = ts.toDate();
+        }
+      }
+
+      final salesMinSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sales')
+          .orderBy('sellDate')
+          .limit(1)
+          .get();
+      if (salesMinSnap.docs.isNotEmpty) {
+        final data = salesMinSnap.docs.first.data();
+        final ts = data['sellDate'];
+        if (ts is Timestamp) {
+          final d = ts.toDate();
+          if (oldest == null || d.isBefore(oldest)) {
+            oldest = d;
+          }
+        }
+      }
+
+      if (!mounted || oldest == null) return;
+      setState(() {
+        _minDataMonth = DateTime(oldest!.year, oldest!.month);
+      });
+    } catch (_) {
+      // 실패 시 조용히 무시
+    }
+  }
+
   /// 캘린더 탭 전용: 캘린더에서 보고 있는 월에 맞춰 별도로 데이터 로드
   Future<void> _loadCalendarMonth(DateTime month) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -388,25 +440,23 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   Future<void> _showMonthPicker() async {
-    // 최근 24개월 + 최근 5년, 전체 기간 선택 (단, 최소 2025년 / 2025년 10월부터)
     final DateTime now = DateTime.now();
-    final DateTime minMonth = DateTime(2025, 10); // 월은 2025년 10월부터
-    final int minYear = 2025; // 연도는 2025년부터
+    // lots/sales에서 가장 오래된 월 기준, 없으면 현재 월 기준
+    final DateTime effectiveMinMonth = _minDataMonth ?? DateTime(now.year, now.month);
+    final DateTime minMonth = DateTime(effectiveMinMonth.year, effectiveMinMonth.month);
+    final int minYear = minMonth.year;
 
-    // 월 리스트: 현재 월부터 거슬러 올라가되, 2025-10 이전은 제외
+    // 월 리스트: 현재 월부터 거슬러 올라가되, 가장 오래된 월 이전은 제외
     final List<DateTime> months = [];
     DateTime cursor = DateTime(now.year, now.month);
-    for (int i = 0; i < 24; i++) {
-      if (cursor.isBefore(minMonth)) break;
+    while (!cursor.isBefore(minMonth)) {
       months.add(cursor);
       cursor = DateTime(cursor.year, cursor.month - 1);
     }
 
-    // 연도 리스트: 최근 5년 안에서 2025년 이상만
+    // 연도 리스트: 가장 오래된 연도까지 내려감
     final List<int> years = [];
-    for (int i = 0; i < 5; i++) {
-      final int y = now.year - i;
-      if (y < minYear) break;
+    for (int y = now.year; y >= minYear; y--) {
       years.add(y);
     }
 
