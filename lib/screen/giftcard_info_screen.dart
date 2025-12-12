@@ -388,18 +388,32 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   Future<void> _showMonthPicker() async {
-    // 최근 24개월 + 최근 5년, 전체 기간 선택
+    // 최근 24개월 + 최근 5년, 전체 기간 선택 (단, 최소 2025년 / 2025년 10월부터)
     final DateTime now = DateTime.now();
-    final List<DateTime> months = List.generate(
-      24,
-      (i) => DateTime(now.year, now.month - i),
-    );
-    final List<int> years = List.generate(5, (i) => now.year - i);
+    final DateTime minMonth = DateTime(2025, 10); // 월은 2025년 10월부터
+    final int minYear = 2025; // 연도는 2025년부터
+
+    // 월 리스트: 현재 월부터 거슬러 올라가되, 2025-10 이전은 제외
+    final List<DateTime> months = [];
+    DateTime cursor = DateTime(now.year, now.month);
+    for (int i = 0; i < 24; i++) {
+      if (cursor.isBefore(minMonth)) break;
+      months.add(cursor);
+      cursor = DateTime(cursor.year, cursor.month - 1);
+    }
+
+    // 연도 리스트: 최근 5년 안에서 2025년 이상만
+    final List<int> years = [];
+    for (int i = 0; i < 5; i++) {
+      final int y = now.year - i;
+      if (y < minYear) break;
+      years.add(y);
+    }
 
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
-      isScrollControlled: false,
+      isScrollControlled: true, // 높이를 비율로 제어
       builder: (sheetContext) {
         DashboardPeriodType mode = _periodType;
         return StatefulBuilder(
@@ -456,109 +470,107 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 },
               );
             } else if (mode == DashboardPeriodType.year) {
-              body = Expanded(
-                child: ListView.separated(
-                  itemCount: years.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
-                  itemBuilder: (context, index) {
-                    final int y = years[index];
-                    final bool isCurrent = _periodType == DashboardPeriodType.year && _selectedYear == y;
-                    return ListTile(
-                      title: Text(
-                        '$y년도 전체',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                        ),
+              body = ListView.separated(
+                itemCount: years.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                itemBuilder: (context, index) {
+                  final int y = years[index];
+                  final bool isCurrent = _periodType == DashboardPeriodType.year && _selectedYear == y;
+                  return ListTile(
+                    title: Text(
+                      '$y년도 전체',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                       ),
-                      onTap: () async {
-                        Navigator.pop(sheetContext);
-                        setState(() {
-                          _periodType = DashboardPeriodType.year;
-                          _selectedYear = y;
-                          _loading = true;
-                        });
-                        await _load();
-                      },
-                    );
-                  },
-                ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      setState(() {
+                        _periodType = DashboardPeriodType.year;
+                        _selectedYear = y;
+                        _loading = true;
+                      });
+                      await _load();
+                    },
+                  );
+                },
               );
             } else {
-              body = Expanded(
-                child: ListView.separated(
-                  itemCount: months.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
-                  itemBuilder: (context, index) {
-                    final d = months[index];
-                    final bool isCurrent = _periodType == DashboardPeriodType.month &&
-                        d.year == _selectedMonth.year &&
-                        d.month == _selectedMonth.month;
-                    return ListTile(
-                      title: Text(
-                        _formatYearMonth(d),
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                        ),
+              body = ListView.separated(
+                itemCount: months.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                itemBuilder: (context, index) {
+                  final d = months[index];
+                  final bool isCurrent = _periodType == DashboardPeriodType.month &&
+                      d.year == _selectedMonth.year &&
+                      d.month == _selectedMonth.month;
+                  return ListTile(
+                    title: Text(
+                      _formatYearMonth(d),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                       ),
-                      onTap: () async {
-                        Navigator.pop(sheetContext);
-                        setState(() {
-                          _periodType = DashboardPeriodType.month;
-                          _selectedMonth = DateTime(d.year, d.month);
-                          _selectedYear = d.year;
-                          _loading = true;
-                        });
-                        await _load();
-                      },
-                    );
-                  },
-                ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      setState(() {
+                        _periodType = DashboardPeriodType.month;
+                        _selectedMonth = DateTime(d.year, d.month);
+                        _selectedYear = d.year;
+                        _loading = true;
+                      });
+                      await _load();
+                    },
+                  );
+                },
               );
             }
 
             return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          '기간 선택',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+              child: FractionallySizedBox(
+                heightFactor: 0.7, // 화면 높이의 70%까지만 차지
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '기간 선택',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () => Navigator.pop(sheetContext),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        buildTypeChip(DashboardPeriodType.all, '전체'),
-                        const SizedBox(width: 8),
-                        buildTypeChip(DashboardPeriodType.year, '연도별'),
-                        const SizedBox(width: 8),
-                        buildTypeChip(DashboardPeriodType.month, '월별'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    if (mode == DashboardPeriodType.all)
-                      body
-                    else
-                      SizedBox(
-                        height: 280,
-                        child: body,
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: () => Navigator.pop(sheetContext),
+                          ),
+                        ],
                       ),
-                  ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          buildTypeChip(DashboardPeriodType.all, '전체'),
+                          const SizedBox(width: 8),
+                          buildTypeChip(DashboardPeriodType.year, '연도별'),
+                          const SizedBox(width: 8),
+                          buildTypeChip(DashboardPeriodType.month, '월별'),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // 리스트 영역은 남은 공간을 차지하면서 스크롤되도록
+                      Expanded(
+                        child: mode == DashboardPeriodType.all
+                            ? SingleChildScrollView(child: body)
+                            : body,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

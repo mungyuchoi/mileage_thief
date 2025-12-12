@@ -85,7 +85,75 @@ class CardManagePage extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.black54),
                             onPressed: () async {
-                              await Navigator.push(context, MaterialPageRoute(builder: (_) => CardStepPage(editCardId: d.id)));
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CardStepPage(editCardId: d.id),
+                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.black54),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) {
+                                      return AlertDialog(
+                                        backgroundColor: Colors.white,
+                                        title: const Text(
+                                          '카드 삭제',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        content: const Text(
+                                          '정말로 삭제하시겠습니까?\n기존의 상품권 구매 및 판매 이력에 문제가 있을 수 있습니다.',
+                                          style: TextStyle(color: Colors.black87),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(ctx).pop(false),
+                                            child: const Text('취소', style: TextStyle(color: Colors.black)),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.of(ctx).pop(true),
+                                            child: const Text(
+                                              '그래도 삭제',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ) ??
+                                  false;
+
+                              if (!confirm) return;
+
+                              try {
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(uid)
+                                    .collection('cards')
+                                    .doc(d.id)
+                                    .delete();
+                                Fluttertoast.showToast(
+                                  msg: '카드가 삭제되었습니다.',
+                                  gravity: ToastGravity.BOTTOM,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                );
+                              } catch (e) {
+                                Fluttertoast.showToast(
+                                  msg: '카드 삭제 중 오류가 발생했습니다.',
+                                  gravity: ToastGravity.BOTTOM,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                );
+                              }
                             },
                           ),
                         ],
