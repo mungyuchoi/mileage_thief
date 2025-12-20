@@ -226,7 +226,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       return;
     }
     try {
-      // 선택된 기간 범위 계산
+      // 선택된 기간 범위 계산 (매입월 기준)
       DateTime? start;
       DateTime? end;
       switch (_periodType) {
@@ -245,33 +245,60 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           break;
       }
 
-      // 실거래 기준: lots는 buyDate, sales는 sellDate
-      Query lotsQuery = FirebaseFirestore.instance
+      // lots는 항상 buyDate 기준으로 기간 필터
+      final lotsRef = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('lots');
-      Query salesQuery = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('sales');
 
+      Query lotsQuery = lotsRef;
       if (start != null && end != null) {
         lotsQuery = lotsQuery
             .where('buyDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
             .where('buyDate', isLessThan: Timestamp.fromDate(end))
             .orderBy('buyDate');
-        salesQuery = salesQuery
-            .where('sellDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-            .where('sellDate', isLessThan: Timestamp.fromDate(end))
-            .orderBy('sellDate');
       } else {
-        // 전체 기간: 날짜 조건 없이 정렬만
         lotsQuery = lotsQuery.orderBy('buyDate');
-        salesQuery = salesQuery.orderBy('sellDate');
       }
 
       final lotsSnap = await lotsQuery.get();
-      final salesSnap = await salesQuery.get();
+
+      // 매입월 기준 대시보드를 위해:
+      // - 선택한 기간에 매입한 lot 들만 _lots 에 포함
+      // - _sales 는 "그 lotId 들과 연결된 판매"만 모아서 사용
+      final salesRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sales');
+
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> saleDocs = [];
+
+      if (_periodType == DashboardPeriodType.all) {
+        // 전체 기간: 모든 판매를 불러와서 사용 (어차피 모든 lot 이 포함됨)
+        final salesSnap = await salesRef.orderBy('sellDate').get();
+        saleDocs = salesSnap.docs;
+      } else {
+        final lotIds = lotsSnap.docs.map((d) => d.id).toList();
+        if (lotIds.isNotEmpty) {
+          final List<QueryDocumentSnapshot<Map<String, dynamic>>> allSales = [];
+          // Firestore whereIn 은 최대 10개까지만 지원하므로 10개 단위로 나누어 조회
+          for (int i = 0; i < lotIds.length; i += 10) {
+            final int endIndex = (i + 10 < lotIds.length) ? i + 10 : lotIds.length;
+            final List<String> chunk = lotIds.sublist(i, endIndex);
+            final snap = await salesRef.where('lotId', whereIn: chunk).get();
+            allSales.addAll(snap.docs);
+          }
+          // 중복 제거 (동일 saleId 가 여러 chunk 에 걸쳐 나올 수 있으므로)
+          final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> byId = {};
+          for (final d in allSales) {
+            byId[d.id] = d;
+          }
+          saleDocs = byId.values.toList();
+        } else {
+          saleDocs = [];
+        }
+      }
+
       final cardsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').get();
       final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
       final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
@@ -286,7 +313,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               (d) => <String, dynamic>{'id': d.id, ...d.data() as Map<String, dynamic>},
             )
             .toList();
-        _sales = salesSnap.docs
+        _sales = saleDocs
             .map<Map<String, dynamic>>(
               (d) => <String, dynamic>{'id': d.id, ...d.data() as Map<String, dynamic>},
             )

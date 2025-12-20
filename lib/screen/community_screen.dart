@@ -1161,9 +1161,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
     
     // 로그인하지 않은 사용자는 알림 버튼만 표시 (뱃지 없음)
     if (user == null) {
-      return IconButton(
-        icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-        onPressed: () async {
+      return InkWell(
+        // 아이콘 주변의 여백까지 모두 터치 가능하도록 InkWell로 전체 영역 감싸기
+        borderRadius: BorderRadius.circular(24),
+        onTap: () async {
           // 로그인 확인 후 알림 화면으로 이동
           final isLoggedIn = await _checkLoginAndNavigate();
           if (isLoggedIn) {
@@ -1175,7 +1176,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
             );
           }
         },
-        tooltip: '커뮤니티 알림',
+        child: const SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: Icon(
+              Icons.notifications_outlined,
+              color: Colors.white,
+            ),
+          ),
+        ),
       );
     }
 
@@ -1184,52 +1194,59 @@ class _CommunityScreenState extends State<CommunityScreen> {
       stream: CommunityNotificationHistoryService.getUnreadCount(user.uid),
       builder: (context, snapshot) {
         final unreadCount = snapshot.data ?? 0;
-        
-        return Stack(
-          children: [
-            IconButton(
-              icon: Icon(
-                unreadCount > 0 ? Icons.notifications : Icons.notifications_outlined,
-                color: Colors.white,
+
+        return InkWell(
+          // 숫자 뱃지가 있을 때/없을 때 모두 넓은 터치 영역을 보장
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CommunityNotificationHistoryScreen(),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CommunityNotificationHistoryScreen(),
-                  ),
-                );
-              },
-              tooltip: '커뮤니티 알림',
-            ),
-            // 읽지 않은 알림 뱃지
-            if (unreadCount > 0)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
-                  ),
-                  child: Center(
-                    child: Text(
-                      unreadCount > 99 ? '99+' : unreadCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+            );
+          },
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  unreadCount > 0 ? Icons.notifications : Icons.notifications_outlined,
+                  color: Colors.white,
+                ),
+                // 읽지 않은 알림 뱃지
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 20,
+                        minHeight: 20,
+                      ),
+                      child: Center(
+                        child: Text(
+                          unreadCount > 99 ? '99+' : unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-          ],
+              ],
+            ),
+          ),
         );
       },
     );
