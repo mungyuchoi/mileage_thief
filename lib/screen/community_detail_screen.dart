@@ -109,6 +109,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   // 광고 없애기 상태 관리
   bool _isAdRemovalActive = false;
 
+  // 베스트 게시글 상태
+  bool _isBestPost = false;
+  bool _isTogglingBest = false;
+
   // 광고 위젯 생성 함수
   Widget _buildBannerAd(String adUnitId) {
     return Container(
@@ -149,6 +153,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _loadProfileBannerAd();
     _loadContentBannerAd();
     _checkAdRemovalStatus(); // 광고 없애기 상태 확인
+    _loadBestPostStatus(); // 베스트 게시글 여부 확인
   }
 
   void _loadProfileBannerAd() {
@@ -202,6 +207,27 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     setState(() {
       _myUserProfile = data;
     });
+  }
+
+  // 메타 컬렉션에서 베스트 게시글 여부 확인
+  Future<void> _loadBestPostStatus() async {
+    try {
+      final metaDoc = await FirebaseFirestore.instance
+          .collection('meta')
+          .doc('bestPosts')
+          .get();
+
+      final metaData = metaDoc.data() as Map<String, dynamic>?;
+      final List<dynamic> idsDynamic = metaData?['postIds'] ?? [];
+      final List<String> postIds =
+          idsDynamic.map((e) => e.toString()).toList();
+
+      setState(() {
+        _isBestPost = postIds.contains(widget.postId);
+      });
+    } catch (e) {
+      print('베스트 게시글 상태 로드 오류: $e');
+    }
   }
 
   // 내가 신고한 댓글 ID 목록 불러오기
@@ -312,6 +338,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         setState(() {
           _post = docSnapshot.data() as Map<String, dynamic>;
         });
+        // 새로고침 시에도 베스트 상태 최신화
+        await _loadBestPostStatus();
       }
     } catch (e) {
       print('게시글 새로고침 오류: $e');
@@ -383,6 +411,67 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       setState(() {
         _isLoadingComments = false;
       });
+    }
+  }
+
+  // 베스트 게시글 토글 (관리자 전용)
+  Future<void> _toggleBestPost() async {
+    if (_isTogglingBest) return;
+    setState(() {
+      _isTogglingBest = true;
+    });
+
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final ref = FirebaseFirestore.instance
+            .collection('meta')
+            .doc('bestPosts');
+        final snap = await transaction.get(ref);
+
+        final data = snap.data() as Map<String, dynamic>? ?? {};
+        final List<dynamic> idsDynamic = data['postIds'] ?? [];
+        final List<String> ids =
+            idsDynamic.map((e) => e.toString()).toList();
+
+        if (ids.contains(widget.postId)) {
+          // 해지
+          ids.remove(widget.postId);
+        } else {
+          // 중복 제거 후 맨 앞에 추가, 최대 10개 유지
+          ids.remove(widget.postId);
+          ids.insert(0, widget.postId);
+          if (ids.length > 10) {
+            ids.removeRange(10, ids.length);
+          }
+        }
+
+        transaction.set(ref, {'postIds': ids}, SetOptions(merge: true));
+      });
+
+      if (mounted) {
+        setState(() {
+          _isBestPost = !_isBestPost;
+        });
+      }
+
+      Fluttertoast.showToast(
+        msg: _isBestPost
+            ? '베스트 게시글로 선정되었습니다.'
+            : '베스트 게시글에서 해지되었습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+      );
+    } catch (e) {
+      print('베스트 게시글 토글 오류: $e');
+      Fluttertoast.showToast(
+        msg: '베스트 게시글 변경 중 오류가 발생했습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTogglingBest = false;
+        });
+      }
     }
   }
 
@@ -842,6 +931,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           case 'unhide':
             _unhidePost();
             break;
+          case 'toggleBest':
+            _toggleBestPost();
+            break;
         }
       },
       itemBuilder: (BuildContext context) {
@@ -883,7 +975,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
           );
         }
-        // 관리자라면 이동하기 옵션 추가 (본인/남의 게시글 상관없이)
+        // 관리자라면 이동하기/숨김/베스트 옵션 추가 (본인/남의 게시글 상관없이)
         if (isAdmin) {
           items.addAll([
             const PopupMenuItem<String>(
@@ -910,6 +1002,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     _post?['isHidden'] == true ? '숨김 해제' : '숨김처리',
                     style: TextStyle(
                       color: _post?['isHidden'] == true ? Colors.green : Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'toggleBest',
+              child: Row(
+                children: [
+                  Icon(
+                    _isBestPost ? Icons.star : Icons.star_border,
+                    size: 20,
+                    color: _isBestPost ? Colors.orange : Colors.amber[700],
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _isBestPost ? '베스트 게시글 해지하기' : '베스트 게시글 선정하기',
+                    style: TextStyle(
+                      color: _isBestPost ? Colors.orange : Colors.black87,
                     ),
                   ),
                 ],

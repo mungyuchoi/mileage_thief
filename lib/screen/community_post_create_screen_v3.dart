@@ -461,6 +461,17 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     }
   }
 
+  /// contentHtml 후처리:
+  /// 마지막 <img> 태그 바로 뒤에 끝부분에만 붙어 있는 <br> / <br/> / <br /> 들을 제거한다.
+  /// 내부의 <br> 은 그대로 두고, 문자열 끝 부분만 정리한다.
+  String _cleanupTrailingBrAfterLastImg(String html) {
+    final reg = RegExp(
+      r'(<img[^>]*>)(\s*<br\s*/?>\s*)+$',
+      caseSensitive: false,
+    );
+    return html.replaceFirst(reg, r'$1');
+  }
+
   @override
   void dispose() {
     _editorController.dispose();
@@ -838,11 +849,12 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       if (widget.isEditMode) {
         // 수정 모드에서는 HTML 처리
         final processedHtml = await _editorController.getProcessedHtml();
+        final cleanedHtml = _cleanupTrailingBrAfterLastImg(processedHtml);
 
         postData = {
           'boardId': _editorController.postData.boardId,
           'title': finalTitle,
-          'contentHtml': processedHtml.trim(),
+          'contentHtml': cleanedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
         // dealType 저장 제거
@@ -860,13 +872,14 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         final String postNumberStr = allocatedPostNumber.toString();
 
         final processedHtml = await _editorController.getProcessedHtml();
+        final cleanedHtml = _cleanupTrailingBrAfterLastImg(processedHtml);
 
         postData = {
           'postId': postId,
           'postNumber': postNumberStr,
           'boardId': _editorController.postData.boardId,
           'title': finalTitle,
-          'contentHtml': processedHtml.trim(),
+          'contentHtml': cleanedHtml.trim(),
           'author': {
             'uid': currentUser.uid,
             'displayName': userProfile['displayName'] ?? '익명',

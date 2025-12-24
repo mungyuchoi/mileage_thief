@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -40,176 +41,233 @@ class _AdManageScreenState extends State<AdManageScreen> {
         elevation: 0.5,
       ),
       backgroundColor: const Color(0xFFF7F7FA),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('bottom_sheet_ads')
-            .orderBy('priority', descending: false)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+      body: Column(
+        children: [
+          // 현재 사용자 BottomSheet 광고 숨김 상태 초기화 (admin 전용 유틸)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('현재 계정의 앱 진입 광고 숨김 상태 초기화'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black87,
+                  side: const BorderSide(color: Color(0xFF74512D)),
+                ),
+                onPressed: () async {
+                  try {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user == null) {
+                      Fluttertoast.showToast(
+                        msg: '로그인이 필요합니다.',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                      );
+                      return;
+                    }
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .update(
+                      <String, dynamic>{
+                        'hideBottomSheetAdUntil': FieldValue.delete(),
+                      },
+                    );
+                    Fluttertoast.showToast(
+                      msg: '해당 계정의 앱 진입 광고 숨김 상태를 초기화했습니다.',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                    );
+                  } catch (e) {
+                    Fluttertoast.showToast(
+                      msg: '초기화 중 오류가 발생했습니다: $e',
+                      toastLength: Toast.LENGTH_LONG,
+                      gravity: ToastGravity.BOTTOM,
+                    );
+                  }
+                },
               ),
-            );
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                '광고를 불러오는 중 오류가 발생했습니다.\n${snapshot.error}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black54),
-              ),
-            );
-          }
-
-          final docs = snapshot.data?.docs ?? <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-          if (docs.isEmpty) {
-            return const Center(
-              child: Text(
-                '등록된 광고가 없습니다.\n오른쪽 아래 + 버튼을 눌러 추가해주세요.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data();
-              final title = (data['title'] as String?) ?? '제목 없음';
-              final imageUrl = (data['imageUrl'] as String?) ?? '';
-              final linkType = (data['linkType'] as String?) ?? 'web';
-              final linkValue = (data['linkValue'] as String?) ?? '';
-              final isActive = (data['isActive'] as bool?) ?? true;
-              final priority = (data['priority'] as int?) ?? 0;
-              final Timestamp? startTs = data['startAt'] as Timestamp?;
-              final Timestamp? endTs = data['endAt'] as Timestamp?;
-
-              String periodText = '기간 제한 없음';
-              if (startTs != null || endTs != null) {
-                final start = startTs?.toDate();
-                final end = endTs?.toDate();
-                if (start != null && end != null) {
-                  periodText =
-                      '${_formatDate(start)} ~ ${_formatDate(end)}';
-                } else if (start != null) {
-                  periodText = '${_formatDate(start)} 이후';
-                } else if (end != null) {
-                  periodText = '${_formatDate(end)} 이전';
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('bottom_sheet_ads')
+                  .orderBy('priority', descending: false)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                    ),
+                  );
                 }
-              }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      '광고를 불러오는 중 오류가 발생했습니다.\n${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  );
+                }
 
-              return Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _showEditAdDialog(doc.id, data),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
-                                  width: 72,
-                                  height: 72,
-                                  fit: BoxFit.cover,
-                                )
-                              : Container(
-                                  width: 72,
-                                  height: 72,
-                                  color: Colors.grey[200],
-                                  child: const Icon(
-                                    Icons.image_not_supported_outlined,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                final docs = snapshot.data?.docs ??
+                    <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                if (docs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      '등록된 광고가 없습니다.\n오른쪽 아래 + 버튼을 눌러 추가해주세요.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data();
+                    final title = (data['title'] as String?) ?? '제목 없음';
+                    final imageUrl = (data['imageUrl'] as String?) ?? '';
+                    final linkType = (data['linkType'] as String?) ?? 'web';
+                    final linkValue = (data['linkValue'] as String?) ?? '';
+                    final isActive = (data['isActive'] as bool?) ?? true;
+                    final priority = (data['priority'] as int?) ?? 0;
+                    final Timestamp? startTs = data['startAt'] as Timestamp?;
+                    final Timestamp? endTs = data['endAt'] as Timestamp?;
+
+                    String periodText = '기간 제한 없음';
+                    if (startTs != null || endTs != null) {
+                      final start = startTs?.toDate();
+                      final end = endTs?.toDate();
+                      if (start != null && end != null) {
+                        periodText =
+                            '${_formatDate(start)} ~ ${_formatDate(end)}';
+                      } else if (start != null) {
+                        periodText = '${_formatDate(start)} 이후';
+                      } else if (end != null) {
+                        periodText = '${_formatDate(end)} 이전';
+                      }
+                    }
+
+                    return Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _showEditAdDialog(doc.id, data),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      title,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: imageUrl.isNotEmpty
+                                    ? Image.network(
+                                        imageUrl,
+                                        width: 72,
+                                        height: 72,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        width: 72,
+                                        height: 72,
+                                        color: Colors.grey[200],
+                                        child: const Icon(
+                                          Icons.image_not_supported_outlined,
+                                          color: Colors.grey,
+                                        ),
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            title,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.black,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Switch(
+                                          value: isActive,
+                                          activeColor:
+                                              const Color(0xFF74512D),
+                                          onChanged: (value) async {
+                                            await doc.reference.update(
+                                              <String, dynamic>{
+                                                'isActive': value,
+                                                'updatedAt': FieldValue
+                                                    .serverTimestamp(),
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Switch(
-                                    value: isActive,
-                                    activeColor: const Color(0xFF74512D),
-                                    onChanged: (value) async {
-                                      await doc.reference.update(
-                                        <String, dynamic>{
-                                          'isActive': value,
-                                          'updatedAt':
-                                              FieldValue.serverTimestamp(),
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '링크: $linkType / ${linkValue.isEmpty ? '미설정' : linkValue}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '링크: $linkType / ${linkValue.isEmpty ? '미설정' : linkValue}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      periodText,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '우선순위: $priority',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black45,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                periodText,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.redAccent,
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '우선순위: $priority',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black45,
-                                ),
+                                onPressed: () => _confirmDeleteAd(doc),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.redAccent,
-                          ),
-                          onPressed: () => _confirmDeleteAd(doc),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemCount: docs.length,
-          );
-        },
+                      ),
+                    );
+                  },
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemCount: docs.length,
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF74512D),

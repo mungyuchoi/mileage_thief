@@ -1283,7 +1283,7 @@ class _SearchScreenState extends State<SearchScreen> {
         final double sheetHeight = screenSize.height * 0.55;
         final PageController pageController = PageController();
         int currentPage = 0;
-        bool dontShowForWeek = false;
+        bool dontShowForToday = false;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -1384,10 +1384,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ),
                     CheckboxListTile(
-                      value: dontShowForWeek,
+                      value: dontShowForToday,
                       onChanged: (value) {
                         setState(() {
-                          dontShowForWeek = value ?? false;
+                          dontShowForToday = value ?? false;
                         });
                       },
                       controlAffinity: ListTileControlAffinity.leading,
@@ -1398,7 +1398,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                       activeColor: Color(0xFF74512D), // 갈색 계열로 체크 색상 변경
                       title: const Text(
-                        '일주일 동안 보지 않기',
+                        '오늘만 보지 않기',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.black87,
@@ -1415,10 +1415,10 @@ class _SearchScreenState extends State<SearchScreen> {
                         children: [
                           TextButton(
                             onPressed: () async {
-                              if (dontShowForWeek) {
+                              if (dontShowForToday) {
                                 final DateTime hideUntil =
                                     DateTime.now().add(
-                                  const Duration(days: 7),
+                                  const Duration(days: 1),
                                 );
                                 try {
                                   await FirebaseFirestore.instance

@@ -42,6 +42,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   final int _postsPerPage = 20;
+
+  // 베스트 게시글 섹션 데이터
+  List<DocumentSnapshot> _bestPosts = [];
+  bool _isLoadingBestPosts = false;
   
   // 등급 안내 고정 게시글 (공지) 이동용 상수
   static const String _gradeGuidePostId =
@@ -65,6 +69,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     _loadUserProfile();
     _loadBoards();
     _loadInitialPosts();
+    _loadBestPostsIfNeeded();
     _scrollController.addListener(_onScroll);
   }
 
@@ -162,6 +167,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
         .replaceAll('-', '_');
     return IconsMap[normalized] ?? Icons.list;
   }
+
+  bool get _showBestSection =>
+      selectedBoardId == 'all' && _bestPosts.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -626,142 +634,211 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             ],
                           ),
                         )
-                      : ListView.separated(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 8),
-                      itemCount: _posts.length + (_isLoadingMore ? 1 : 0),
-                      separatorBuilder: (context, index) =>
-                          isCompactView ? const SizedBox.shrink() : const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        // 로딩 인디케이터 표시
-                        if (index == _posts.length) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF74512D),
-                              ),
-                            ),
-                          );
-                        }
+                      : Builder(
+                          builder: (context) {
+                            final hasBestSection = _showBestSection;
+                            final loadingItemCount =
+                                _isLoadingMore ? 1 : 0;
+                            final baseCount =
+                                _posts.length + loadingItemCount;
+                            final itemCount =
+                                baseCount + (hasBestSection ? 1 : 0);
 
-                        final post =
-                            _posts[index].data() as Map<String, dynamic>;
-                        final createdAt =
-                            (post['createdAt'] as Timestamp?)?.toDate() ??
-                                DateTime.now();
-
-                        // HTML 태그 제거해서 미리보기 텍스트 만들기
-                        String plainText =
-                            _removeHtmlTags(post['contentHtml'] ?? '');
-
-                        // 뷰 모드에 따라 다른 위젯 반환
-                        if (isCompactView) {
-                          return _buildCompactListItem(post, createdAt, index);
-                        }
-
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          elevation: 1.5,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(18),
-                            onTap: () => _onPostTap(post, index),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(18),
-                                color: Colors.white,
-                              ),
+                            return ListView.separated(
+                              controller: _scrollController,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // 프로필 영역 (프로필 이미지, 닉네임, 시간)
-                                  _buildCardAuthorRow(post, createdAt),
-                                  const SizedBox(height: 12),
+                                  vertical: 8, horizontal: 8),
+                              itemCount: itemCount,
+                              separatorBuilder: (context, index) {
+                                // 베스트 섹션과 목록 사이에는 기본 간격 유지
+                                if (hasBestSection && index == 0) {
+                                  return const SizedBox(height: 12);
+                                }
+                                return isCompactView
+                                    ? const SizedBox.shrink()
+                                    : const SizedBox(height: 12);
+                              },
+                              itemBuilder: (context, index) {
+                                final hasBest = hasBestSection;
 
-                                  // 제목 (굵게) + 최신 키워드
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          post['title'] ?? '제목 없음',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 17,
-                                            color: Colors.black,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
+                                // 1. 베스트 게시글 섹션
+                                if (hasBest && index == 0) {
+                                  return _buildBestPostsSection();
+                                }
 
-                                  // contentHtml 텍스트로만 1줄
-                                  if (plainText.isNotEmpty)
-                                    Text(
-                                      plainText,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                        fontSize: 14,
-                                        color: Colors.black54,
+                                // 실제 게시글 인덱스로 변환
+                                final adjustedIndex =
+                                    hasBest ? index - 1 : index;
+
+                                // 2. 로딩 인디케이터
+                                if (adjustedIndex == _posts.length &&
+                                    _isLoadingMore) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF74512D),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  const SizedBox(height: 12),
+                                  );
+                                }
 
-                                  // 조회수, 댓글, 좋아요
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '조회 ${post['viewsCount'] ?? 0}회',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.black54,
-                                        ),
+                                if (adjustedIndex < 0 ||
+                                    adjustedIndex >= _posts.length) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                final post = _posts[adjustedIndex].data()
+                                    as Map<String, dynamic>;
+                                final createdAt =
+                                    (post['createdAt'] as Timestamp?)
+                                            ?.toDate() ??
+                                        DateTime.now();
+
+                                // HTML 태그 제거해서 미리보기 텍스트 만들기
+                                String plainText =
+                                    _removeHtmlTags(post['contentHtml'] ?? '');
+
+                                // 뷰 모드에 따라 다른 위젯 반환
+                                if (isCompactView) {
+                                  return _buildCompactListItem(
+                                      post, createdAt, adjustedIndex);
+                                }
+
+                                return Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  elevation: 1.5,
+                                  child: InkWell(
+                                    borderRadius:
+                                        BorderRadius.circular(18),
+                                    onTap: () => _onPostTap(
+                                        post, adjustedIndex),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius:
+                                            BorderRadius.circular(18),
+                                        color: Colors.white,
                                       ),
-                                      Row(
+                                      padding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 14),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(
-                                              Icons.comment,
-                                              size: 16,
-                                              color: Colors.black54),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${post['commentCount'] ?? 0}',
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54),
+                                          // 프로필 영역 (프로필 이미지, 닉네임, 시간)
+                                          _buildCardAuthorRow(
+                                              post, createdAt),
+                                          const SizedBox(height: 12),
+
+                                          // 제목 (굵게) + 최신 키워드
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  post['title'] ??
+                                                      '제목 없음',
+                                                  style:
+                                                      const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight
+                                                            .bold,
+                                                    fontSize: 17,
+                                                    color:
+                                                        Colors.black,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow
+                                                      .ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 16),
-                                          const Icon(Icons.favorite_border,
-                                              size: 16, color: Colors.black54),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${post['likesCount'] ?? 0}',
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54),
+                                          const SizedBox(height: 8),
+
+                                          // contentHtml 텍스트로만 1줄
+                                          if (plainText.isNotEmpty)
+                                            Text(
+                                              plainText,
+                                              style: const TextStyle(
+                                                fontWeight:
+                                                    FontWeight.normal,
+                                                fontSize: 14,
+                                                color: Colors.black54,
+                                              ),
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                            ),
+                                          const SizedBox(height: 12),
+
+                                          // 조회수, 댓글, 좋아요
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment
+                                                    .spaceBetween,
+                                            children: [
+                                              Text(
+                                                '조회 ${post['viewsCount'] ?? 0}회',
+                                                style:
+                                                    const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                      Icons.comment,
+                                                      size: 16,
+                                                      color: Colors
+                                                          .black54),
+                                                  const SizedBox(
+                                                      width: 4),
+                                                  Text(
+                                                    '${post['commentCount'] ?? 0}',
+                                                    style:
+                                                        const TextStyle(
+                                                            fontSize:
+                                                                13,
+                                                            color: Colors
+                                                                .black54),
+                                                  ),
+                                                  const SizedBox(
+                                                      width: 16),
+                                                  const Icon(
+                                                      Icons
+                                                          .favorite_border,
+                                                      size: 16,
+                                                      color: Colors
+                                                          .black54),
+                                                  const SizedBox(
+                                                      width: 4),
+                                                  Text(
+                                                    '${post['likesCount'] ?? 0}',
+                                                    style:
+                                                        const TextStyle(
+                                                            fontSize:
+                                                                13,
+                                                            color: Colors
+                                                                .black54),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                                );
+                              },
+                            );
+                          },
+                        ),
             ),
           ),
         ],
@@ -843,6 +920,85 @@ class _CommunityScreenState extends State<CommunityScreen> {
       if (!_isLoadingMore && _hasMoreData) {
         _loadMorePosts();
       }
+    }
+  }
+
+  /// 메타 컬렉션에서 베스트 게시글(postId 리스트)을 불러와서 상세 정보 조회
+  Future<void> _loadBestPostsIfNeeded() async {
+    // 전체글이 아닐 때는 베스트 섹션 숨김
+    if (selectedBoardId != 'all') {
+      if (_bestPosts.isNotEmpty) {
+        setState(() {
+          _bestPosts = [];
+        });
+      }
+      return;
+    }
+
+    try {
+      setState(() {
+        _isLoadingBestPosts = true;
+      });
+
+      final metaDoc = await FirebaseFirestore.instance
+          .collection('meta')
+          .doc('bestPosts')
+          .get();
+
+      final metaData = metaDoc.data() as Map<String, dynamic>?;
+      final List<dynamic> idsDynamic = metaData?['postIds'] ?? [];
+      final List<String> postIds =
+          idsDynamic.map((e) => e.toString()).toList().take(10).toList();
+
+      if (postIds.isEmpty) {
+        setState(() {
+          _bestPosts = [];
+          _isLoadingBestPosts = false;
+        });
+        return;
+      }
+
+      // 차단 유저 목록 (클라이언트에서 필터링)
+      List<String> blockedUids = [];
+      final user = AuthService.currentUser;
+      if (user != null) {
+        final blockedSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('blocked')
+            .get();
+        blockedUids = blockedSnapshot.docs.map((doc) => doc.id).toList();
+      }
+
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('posts')
+          .where('postId', whereIn: postIds)
+          .where('isDeleted', isEqualTo: false)
+          .get();
+
+      // meta에 저장된 순서를 유지하도록 정렬
+      final docs = snapshot.docs.toList()
+        ..sort((a, b) =>
+            postIds.indexOf(a.id).compareTo(postIds.indexOf(b.id)));
+
+      final filteredDocs = docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        final authorUid = data['author']?['uid'];
+        if (authorUid != null && blockedUids.contains(authorUid)) {
+          return false;
+        }
+        return data['isHidden'] != true;
+      }).toList();
+
+      setState(() {
+        _bestPosts = filteredDocs;
+        _isLoadingBestPosts = false;
+      });
+    } catch (e) {
+      print('베스트 게시글 로드 오류: $e');
+      setState(() {
+        _isLoadingBestPosts = false;
+      });
     }
   }
 
@@ -972,6 +1128,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       _isInitialLoading = true; // 새로고침 시 로딩 상태 활성화
     });
     _loadInitialPosts();
+    _loadBestPostsIfNeeded();
   }
 
   // HTML 태그 제거 (<br> 태그 전까지만 추출)
@@ -988,6 +1145,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
         .trim();
     
     return cleaned;
+  }
+
+  // contentHtml에서 첫 번째 이미지 URL 추출
+  String? _extractFirstImageUrl(String htmlString) {
+    if (htmlString.isEmpty) return null;
+
+    final imgTag = RegExp('<img[^>]+src=["\']([^"\']+)["\']',
+            caseSensitive: false)
+        .firstMatch(htmlString);
+    if (imgTag != null && imgTag.groupCount >= 1) {
+      return imgTag.group(1);
+    }
+    return null;
   }
 
   // boardId로 게시판 이름 가져오기
@@ -1019,6 +1189,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   // 게시글 진입 조건 체크 및 상세화면 이동 함수
   Future<void> _onPostTap(Map<String, dynamic> post, int index) async {
+    if (index < 0 || index >= _posts.length) return;
+    final doc = _posts[index];
+    await _openPostDocument(doc);
+  }
+
+  // DocumentSnapshot 기반으로 게시글 상세 화면 진입 (일반 목록 + 베스트 공용)
+  Future<void> _openPostDocument(DocumentSnapshot doc) async {
+    final post = doc.data() as Map<String, dynamic>;
     final boardId = post['boardId'] ?? '';
     final user = AuthService.currentUser;
 
@@ -1127,16 +1305,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
 
     // 통과 시 상세화면 이동
-    _incrementViewCount(_posts[index].id, _posts[index].reference.parent.parent!.id);
+    _incrementViewCount(doc.id, doc.reference.parent.parent!.id);
 
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CommunityDetailScreen(
-          postId: _posts[index].id,
+          postId: doc.id,
           boardId: boardId,
           boardName: _getBoardName(boardId),
-          dateString: _posts[index].reference.parent.parent!.id,
+          dateString: doc.reference.parent.parent!.id,
         ),
       ),
     );
@@ -1373,6 +1551,137 @@ class _CommunityScreenState extends State<CommunityScreen> {
           color: Colors.black12,
           indent: 16,
           endIndent: 16,
+        ),
+      ],
+    );
+  }
+
+  // 베스트 게시글 섹션 위젯
+  Widget _buildBestPostsSection() {
+    if (_bestPosts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(8, 8, 8, 4),
+          child: Text(
+            '베스트 게시글',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 240,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _bestPosts.length,
+            itemBuilder: (context, index) {
+              final doc = _bestPosts[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final createdAt =
+                  (data['createdAt'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
+              final imageUrl =
+                  _extractFirstImageUrl(data['contentHtml'] ?? '');
+
+              return GestureDetector(
+                onTap: () => _openPostDocument(doc),
+                child: Container(
+                  width: 160,
+                  margin: EdgeInsets.only(
+                    left: index == 0 ? 2 : 4,
+                    right: index == _bestPosts.length - 1 ? 2 : 0,
+                  ),
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 1.5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 썸네일 이미지 영역 (정사각형)
+                        if (imageUrl != null)
+                          AspectRatio(
+                            aspectRatio: 1,
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        else
+                          AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              color: Colors.grey[200],
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.image_outlined,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data['title'] ?? '제목 없음',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      data['author']?['displayName'] ??
+                                          '익명',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatTime(createdAt),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.black45,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
