@@ -24,6 +24,7 @@ import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
+import 'deals/deals_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../branch/card_manage.dart';
 import '../branch/card_step.dart';
@@ -241,7 +242,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_currentIndex == 1) {
+    if (_currentIndex == 2) {
       // 상품권 탭 전용: 상단 TabBar(지도/정보) + FAB
       return WillPopScope(
         onWillPop: _onWillPop,
@@ -560,6 +561,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
+                      Icon(Icons.local_offer_outlined),
+                      SizedBox(height: 2),
+                      Text('특가', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
                       Icon(Icons.card_giftcard),
                       SizedBox(height: 2),
                       Text('상품권', style: TextStyle(fontSize: 12)),
@@ -606,10 +618,12 @@ class _SearchScreenState extends State<SearchScreen> {
           _currentIndex == 0
               ? '${_communityNoticeTitle.isNotEmpty ? ' $_communityNoticeTitle' : ''}'
               : _currentIndex == 1
-                  ? '상품권'
+                  ? '특가'
                   : _currentIndex == 2
-                      ? '대한항공'
-                      : '설정',
+                      ? '상품권'
+                      : _currentIndex == 3
+                          ? '대한항공'
+                          : '설정',
           style: const TextStyle(color: Colors.black, fontSize: 16),
         ),
         leading: SizedBox(
@@ -627,7 +641,7 @@ class _SearchScreenState extends State<SearchScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         actions: <Widget>[
-          if (_currentIndex != 1) ...[
+          if (_currentIndex != 2) ...[
             IconButton(
               icon: const Icon(Icons.share, color: Colors.black54),
               onPressed: () {
@@ -680,6 +694,17 @@ class _SearchScreenState extends State<SearchScreen> {
             icon: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
+                Icon(Icons.local_offer_outlined),
+                SizedBox(height: 2),
+                Text('특가', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
                 Icon(Icons.card_giftcard),
                 SizedBox(height: 2),
                 Text('상품권', style: TextStyle(fontSize: 12)),
@@ -720,10 +745,12 @@ class _SearchScreenState extends State<SearchScreen> {
       case 0:
         return const CommunityScreen();
       case 1:
-        return const GiftcardMapScreen();
+        return const DealsScreen();
       case 2:
-        return const SearchDanScreen();
+        return const GiftcardMapScreen();
       case 3:
+        return const SearchDanScreen();
+      case 4:
         return buildSettingsWidget();
       default:
         return const CommunityScreen();
