@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -35,6 +36,201 @@ import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
 import 'branch/branch_detail_screen.dart';
 import 'ad_manage_screen.dart';
+
+// AdBottomSheetContent
+class _AdBottomSheetContent extends StatefulWidget {
+  final List<Map<String, dynamic>> ads;
+  final String uid;
+  final Function(BuildContext, Map<String, dynamic>) onAdTap;
+
+  const _AdBottomSheetContent({
+    required this.ads,
+    required this.uid,
+    required this.onAdTap,
+  });
+
+  @override
+  State<_AdBottomSheetContent> createState() => _AdBottomSheetContentState();
+}
+
+class _AdBottomSheetContentState extends State<_AdBottomSheetContent> {
+  late PageController pageController;
+  int currentPage = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    pageController = PageController();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (pageController.hasClients) {
+        final currentPageValue = pageController.page?.round() ?? currentPage;
+        int nextPage = (currentPageValue + 1) % widget.ads.length;
+        pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final double sheetHeight = screenSize.height * 0.55;
+
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: sheetHeight,
+        child: Stack(
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: PageView.builder(
+                    controller: pageController,
+                    itemCount: widget.ads.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final Map<String, dynamic> ad = widget.ads[index];
+                      final String imageUrl =
+                          (ad['imageUrl'] as String?) ?? '';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: GestureDetector(
+                          onTap: () => widget.onAdTap(context, ad),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(
+                                    imageUrl,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.fill,
+                                  )
+                                : Container(
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: Text(
+                                        '이미지가 없습니다',
+                                        style: TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          final DateTime hideUntil =
+                              DateTime.now().add(
+                            const Duration(days: 1),
+                          );
+                          try {
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(widget.uid)
+                                .update(
+                              <String, dynamic>{
+                                'hideBottomSheetAdUntil':
+                                    Timestamp.fromDate(hideUntil),
+                              },
+                            );
+                          } catch (e) {
+                            print(
+                                'hideBottomSheetAdUntil 업데이트 오류: $e');
+                          }
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text(
+                          '오늘 하루 보지 않기',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text(
+                          '닫기',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 12,
+              right: 16,
+              child: Text(
+                '${currentPage + 1}/${widget.ads.length}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -1304,182 +1500,7 @@ class _SearchScreenState extends State<SearchScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (BuildContext context) {
-        final Size screenSize = MediaQuery.of(context).size;
-        // 화면 높이의 55% 정도를 BottomSheet 높이로 사용해서
-        // 작은 기기에서도 overflow를 줄이고, 이미지 영역을 넉넉하게 확보한다.
-        final double sheetHeight = screenSize.height * 0.55;
-        final PageController pageController = PageController();
-        int currentPage = 0;
-        bool dontShowForToday = false;
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return SafeArea(
-              top: false,
-              child: SizedBox(
-                height: sheetHeight,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: PageView.builder(
-                        controller: pageController,
-                        itemCount: ads.length,
-                        onPageChanged: (index) {
-                          setState(() {
-                            currentPage = index;
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          final Map<String, dynamic> ad = ads[index];
-                          final String title =
-                              (ad['title'] as String?) ?? '';
-                          final String imageUrl =
-                              (ad['imageUrl'] as String?) ?? '';
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: GestureDetector(
-                              onTap: () => _handleAdTap(context, ad),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  if (title.isNotEmpty) ...[
-                                    Text(
-                                      title,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                  ],
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius:
-                                          BorderRadius.circular(12),
-                                      child: imageUrl.isNotEmpty
-                                          ? Image.network(
-                                              imageUrl,
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                              fit: BoxFit.fill, // fitXY 느낌으로 영역 꽉 채움
-                                            )
-                                          : Container(
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                              color: Colors.grey[200],
-                                              child: const Center(
-                                                child: Text(
-                                                  '이미지가 없습니다',
-                                                  style: TextStyle(
-                                                    color: Colors.black54,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${currentPage + 1}/${ads.length}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    CheckboxListTile(
-                      value: dontShowForToday,
-                      onChanged: (value) {
-                        setState(() {
-                          dontShowForToday = value ?? false;
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity.leading,
-                      visualDensity: VisualDensity.compact,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 0,
-                      ),
-                      activeColor: Color(0xFF74512D), // 갈색 계열로 체크 색상 변경
-                      title: const Text(
-                        '오늘만 보지 않기',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4, // 체크박스와의 간격을 조금 줄인다
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () async {
-                              if (dontShowForToday) {
-                                final DateTime hideUntil =
-                                    DateTime.now().add(
-                                  const Duration(days: 1),
-                                );
-                                try {
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(uid)
-                                      .update(
-                                    <String, dynamic>{
-                                      'hideBottomSheetAdUntil':
-                                          Timestamp.fromDate(hideUntil),
-                                    },
-                                  );
-                                } catch (e) {
-                                  print(
-                                      'hideBottomSheetAdUntil 업데이트 오류: $e');
-                                }
-                              }
-                              if (Navigator.of(context).canPop()) {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            child: const Text(
-                              '닫기',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
+        return _AdBottomSheetContent(ads: ads, uid: uid, onAdTap: _handleAdTap);
       },
     );
   }
