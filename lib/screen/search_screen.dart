@@ -137,7 +137,7 @@ class _AdBottomSheetContentState extends State<_AdBottomSheetContent> {
                                     imageUrl,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    fit: BoxFit.fill,
+                                    fit: BoxFit.cover,
                                   )
                                 : Container(
                                     width: double.infinity,
