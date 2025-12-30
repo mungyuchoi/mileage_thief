@@ -1451,6 +1451,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     );
   }
 
+  // HTML 전처리: 불필요한 div 태그 정리 및 공백 최소화
+  String _cleanupHtmlContent(String htmlContent) {
+    String cleaned = htmlContent;
+    
+    // 1. 빈 div 태그 제거 (<div></div>, <div><br></div> 등)
+    cleaned = cleaned.replaceAll(RegExp(r'<div[^>]*>\s*</div>', caseSensitive: false), '');
+    cleaned = cleaned.replaceAll(RegExp(r'<div[^>]*>\s*<br\s*/?>\s*</div>', caseSensitive: false), '');
+    
+    // 2. 연속된 <br> 태그를 하나로 줄이기 (최대 2개까지만)
+    cleaned = cleaned.replaceAll(RegExp(r'(<br\s*/?>\s*){3,}', caseSensitive: false), '<br><br>');
+    
+    // 3. <div> 안에 <div>만 있는 경우 외부 div 제거
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'<div[^>]*>(\s*<div[^>]*>.*?</div>\s*)</div>', caseSensitive: false, dotAll: true),
+      (match) => match.group(1) ?? '',
+    );
+    
+    return cleaned;
+  }
+
   Future<void> _pickImage() async {
     try {
       // iOS에서 권한 확인 및 요청
@@ -2063,12 +2083,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                             widget.boardId == 'seats'
                                 ? _buildContentWithDetails()
                                 : Html(
-                              data: _makeImagesClickable(_post!['contentHtml'] ?? ''),
+                              data: _makeImagesClickable(_cleanupHtmlContent(_post!['contentHtml'] ?? '')),
                               style: {
                                 "body": Style(
                                   fontSize: FontSize(15),
                                   color: Colors.black87,
-                                  lineHeight: LineHeight(1.5),
+                                  lineHeight: LineHeight(1.4),
                                   margin: Margins.zero,
                                 ),
                                 "p": Style(
@@ -2076,8 +2096,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   padding: HtmlPaddings.zero,
                                   whiteSpace: WhiteSpace.pre,
                                 ),
+                                "div": Style(
+                                  margin: Margins.zero,
+                                  padding: HtmlPaddings.zero,
+                                  display: Display.inline,
+                                ),
                                 "br": Style(
-                                  margin: Margins.only(bottom: 8),
+                                  margin: Margins.zero,
                                   display: Display.block,
                                 ),
                                 "img": Style(
@@ -2783,6 +2808,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         "p": Style(
           margin: Margins.only(bottom: 2),
           whiteSpace: WhiteSpace.pre,
+        ),
+        "div": Style(
+          margin: Margins.zero,
+          padding: HtmlPaddings.zero,
         ),
         "br": Style(
           margin: Margins.zero,
