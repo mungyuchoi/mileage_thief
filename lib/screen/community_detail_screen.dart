@@ -1455,18 +1455,29 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   String _cleanupHtmlContent(String htmlContent) {
     String cleaned = htmlContent;
     
-    // 1. 빈 div 태그 제거 (<div></div>, <div><br></div> 등)
+    // 1. <div>...</div> 패턴을 내용 + <br>로 변환 (줄바꿈 보존)
+    // 먼저 중첩된 div를 처리하기 위해 재귀적으로 처리
+    while (cleaned.contains(RegExp(r'<div[^>]*>.*?</div>', caseSensitive: false, dotAll: true))) {
+      cleaned = cleaned.replaceAllMapped(
+        RegExp(r'<div[^>]*>(.*?)</div>', caseSensitive: false, dotAll: true),
+        (match) {
+          final content = match.group(1)?.trim() ?? '';
+          // 빈 div는 제거
+          if (content.isEmpty) return '';
+          // 내용이 있으면 내용 + <br>로 변환
+          return '$content<br>';
+        },
+      );
+    }
+    
+    // 2. <div><br></div> 패턴을 <br>로 변환 (이미 위에서 처리되지만 안전을 위해)
+    cleaned = cleaned.replaceAll(RegExp(r'<div[^>]*>\s*<br\s*/?>\s*</div>', caseSensitive: false), '<br>');
+    
+    // 3. 남은 빈 div 태그 제거
     cleaned = cleaned.replaceAll(RegExp(r'<div[^>]*>\s*</div>', caseSensitive: false), '');
-    cleaned = cleaned.replaceAll(RegExp(r'<div[^>]*>\s*<br\s*/?>\s*</div>', caseSensitive: false), '');
     
-    // 2. 연속된 <br> 태그를 하나로 줄이기 (최대 2개까지만)
+    // 4. 연속된 <br> 태그를 하나로 줄이기 (최대 2개까지만)
     cleaned = cleaned.replaceAll(RegExp(r'(<br\s*/?>\s*){3,}', caseSensitive: false), '<br><br>');
-    
-    // 3. <div> 안에 <div>만 있는 경우 외부 div 제거
-    cleaned = cleaned.replaceAllMapped(
-      RegExp(r'<div[^>]*>(\s*<div[^>]*>.*?</div>\s*)</div>', caseSensitive: false, dotAll: true),
-      (match) => match.group(1) ?? '',
-    );
     
     return cleaned;
   }
@@ -2102,8 +2113,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                   display: Display.inline,
                                 ),
                                 "br": Style(
-                                  margin: Margins.zero,
+                                  margin: Margins.only(bottom: 4),
                                   display: Display.block,
+                                  height: Height(1, Unit.em),
                                 ),
                                 "img": Style(
                                   margin: Margins.zero,
@@ -2814,7 +2826,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           padding: HtmlPaddings.zero,
         ),
         "br": Style(
-          margin: Margins.zero,
+          margin: Margins.only(bottom: 4),
+          display: Display.block,
+          height: Height(1, Unit.em),
         ),
         "img": Style(
           margin: Margins.zero,
