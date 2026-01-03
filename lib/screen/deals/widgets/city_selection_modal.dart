@@ -18,39 +18,97 @@ class CitySelectionModal extends StatefulWidget {
 
 class _CitySelectionModalState extends State<CitySelectionModal> {
   late List<String> _selectedCities;
-  String _selectedRegion = '아시아';
+  String _selectedRegion = '일본';
   final TextEditingController _searchController = TextEditingController();
 
-  // 지역별 도시 데이터 (예시)
+  // 지역별 도시 데이터
   final Map<String, List<Map<String, dynamic>>> _citiesByRegion = {
-    '아시아': [
-      {'code': 'JP', 'city': '도쿄', 'airport': 'NRT', 'country': '일본'},
-      {'code': 'JP', 'city': '오사카', 'airport': 'KIX', 'country': '일본'},
+    '일본': [
+      {'code': 'JP', 'city': '나가사키', 'airport': 'NGS', 'country': '일본'},
       {'code': 'JP', 'city': '후쿠오카', 'airport': 'FUK', 'country': '일본'},
-      {'code': 'JP', 'city': '삿포로', 'airport': 'CTS', 'country': '일본'},
-      {'code': 'CN', 'city': '상하이', 'airport': 'PVG', 'country': '중국'},
-      {'code': 'CN', 'city': '베이징', 'airport': 'PEK', 'country': '중국'},
-      {'code': 'TH', 'city': '방콕', 'airport': 'BKK', 'country': '태국'},
+      {'code': 'JP', 'city': '오사카(간사이)', 'airport': 'KIX', 'country': '일본'},
+      {'code': 'JP', 'city': '나고야', 'airport': 'NGO', 'country': '일본'},
+      {'code': 'JP', 'city': '도쿄(나리타)', 'airport': 'NRT', 'country': '일본'},
+      {'code': 'JP', 'city': '도쿄(하네다)', 'airport': 'HND', 'country': '일본'},
+      {'code': 'JP', 'city': '쿠마모토', 'airport': 'KMJ', 'country': '일본'},
+      {'code': 'JP', 'city': '삿포로(치토세)', 'airport': 'CTS', 'country': '일본'},
+      {'code': 'JP', 'city': '마츠야마', 'airport': 'MYJ', 'country': '일본'},
+      {'code': 'JP', 'city': '오키나와', 'airport': 'OKA', 'country': '일본'},
+      {'code': 'JP', 'city': '가고시마', 'airport': 'KOJ', 'country': '일본'},
+      {'code': 'JP', 'city': '우베', 'airport': 'UBJ', 'country': '일본'},
+      {'code': 'JP', 'city': '사가', 'airport': 'HSG', 'country': '일본'},
+      {'code': 'JP', 'city': '시즈오카', 'airport': 'FSZ', 'country': '일본'},
+      {'code': 'JP', 'city': '다카마쓰', 'airport': 'TAK', 'country': '일본'},
+    ],
+    '아시아': [
+      {'code': 'TH', 'city': '방콕(돈무앙)', 'airport': 'DMK', 'country': '태국'},
+      {'code': 'TH', 'city': '방콕(수완나폼)', 'airport': 'BKK', 'country': '태국'},
+      {'code': 'TH', 'city': '치앙마이', 'airport': 'CNX', 'country': '태국'},
+      {'code': 'TH', 'city': '푸켓', 'airport': 'HKT', 'country': '태국'},
+      {'code': 'PH', 'city': '세부', 'airport': 'CEB', 'country': '필리핀'},
+      {'code': 'PH', 'city': '마닐라', 'airport': 'MNL', 'country': '필리핀'},
+      {'code': 'PH', 'city': '칼리보(보라카이)', 'airport': 'KLO', 'country': '필리핀'},
+      {'code': 'PH', 'city': '클락', 'airport': 'CRK', 'country': '필리핀'},
+      {'code': 'PH', 'city': '보홀', 'airport': 'TAG', 'country': '필리핀'},
+      {'code': 'VN', 'city': '다낭', 'airport': 'DAD', 'country': '베트남'},
       {'code': 'VN', 'city': '하노이', 'airport': 'HAN', 'country': '베트남'},
       {'code': 'VN', 'city': '호치민', 'airport': 'SGN', 'country': '베트남'},
-      {'code': 'PH', 'city': '마닐라', 'airport': 'MNL', 'country': '필리핀'},
-      {'code': 'SG', 'city': '싱가포르', 'airport': 'SIN', 'country': '싱가포르'},
+      {'code': 'VN', 'city': '나트랑(깜랑)', 'airport': 'CXR', 'country': '베트남'},
+      {'code': 'VN', 'city': '푸꾸옥', 'airport': 'PQC', 'country': '베트남'},
       {'code': 'MY', 'city': '쿠알라룸푸르', 'airport': 'KUL', 'country': '말레이시아'},
+      {'code': 'MY', 'city': '코타키나발루', 'airport': 'BKI', 'country': '말레이시아'},
+      {'code': 'ID', 'city': '발리(덴파사)', 'airport': 'DPS', 'country': '인도네시아'},
+      {'code': 'ID', 'city': '마나도', 'airport': 'MDC', 'country': '인도네시아'},
+      {'code': 'ID', 'city': '바탐', 'airport': 'BTH', 'country': '인도네시아'},
+      {'code': 'SG', 'city': '싱가포르(창이공항)', 'airport': 'SIN', 'country': '싱가포르'},
+      {'code': 'HK', 'city': '홍콩', 'airport': 'HKG', 'country': '홍콩'},
+      {'code': 'TW', 'city': '대만(타이페이)', 'airport': 'TPE', 'country': '대만'},
+      {'code': 'BN', 'city': '반다르세리베가완(브루나이)', 'airport': 'BWN', 'country': '브루나이'},
+    ],
+    '중국': [
+      {'code': 'CN', 'city': '제남', 'airport': 'TNA', 'country': '중국'},
+      {'code': 'TW', 'city': '가오슝', 'airport': 'KHH', 'country': '대만'},
+      {'code': 'CN', 'city': '상해(푸동)', 'airport': 'PVG', 'country': '중국'},
+      {'code': 'TW', 'city': '송산', 'airport': 'TSA', 'country': '대만'},
+      {'code': 'CN', 'city': '청도', 'airport': 'TAO', 'country': '중국'},
+      {'code': 'TW', 'city': '타이중', 'airport': 'RMQ', 'country': '대만'},
+      {'code': 'TW', 'city': '타이페이', 'airport': 'TPE', 'country': '대만'},
+      {'code': 'CN', 'city': '하문', 'airport': 'XMN', 'country': '중국'},
+      {'code': 'HK', 'city': '홍콩', 'airport': 'HKG', 'country': '홍콩'},
+      {'code': 'MO', 'city': '마카오', 'airport': 'MFM', 'country': '마카오'},
+    ],
+    '남태평양': [
+      {'code': 'AU', 'city': '시드니', 'airport': 'SYD', 'country': '호주'},
+      {'code': 'AU', 'city': '브리즈번', 'airport': 'BNE', 'country': '호주'},
+      {'code': 'GU', 'city': '괌', 'airport': 'GUM', 'country': '괌'},
+      {'code': 'MP', 'city': '사이판', 'airport': 'SPN', 'country': '사이판'},
+    ],
+    '유럽': [
+      {'code': 'IT', 'city': '로마(레오나르도다빈치)', 'airport': 'FCO', 'country': '이탈리아'},
+      {'code': 'PT', 'city': '리스본', 'airport': 'LIS', 'country': '포르투갈'},
+      {'code': 'IT', 'city': '밀라노(말펜사)', 'airport': 'MXP', 'country': '이탈리아'},
+      {'code': 'ES', 'city': '바르셀로나', 'airport': 'BCN', 'country': '스페인'},
+      {'code': 'GR', 'city': '아테네', 'airport': 'ATH', 'country': '그리스'},
+      {'code': 'TR', 'city': '이스탄불', 'airport': 'IST', 'country': '터키'},
+      {'code': 'CH', 'city': '취리히', 'airport': 'ZRH', 'country': '스위스'},
+      {'code': 'DK', 'city': '코펜하겐', 'airport': 'CPH', 'country': '덴마크'},
+      {'code': 'DE', 'city': '프랑크푸르트', 'airport': 'FRA', 'country': '독일'},
+      {'code': 'FI', 'city': '헬싱키', 'airport': 'HEL', 'country': '핀란드'},
+      {'code': 'GB', 'city': '런던', 'airport': 'LHR', 'country': '영국'},
+      {'code': 'FR', 'city': '파리', 'airport': 'CDG', 'country': '프랑스'},
+      {'code': 'ES', 'city': '마드리드', 'airport': 'MAD', 'country': '스페인'},
+    ],
+    '중동/아프리카': [
+      {'code': 'AE', 'city': '두바이', 'airport': 'DXB', 'country': 'UAE'},
+      {'code': 'AE', 'city': '아부다비', 'airport': 'AUH', 'country': 'UAE'},
+      {'code': 'EG', 'city': '카이로', 'airport': 'CAI', 'country': '이집트'},
+      {'code': 'MA', 'city': '카사블랑카', 'airport': 'CMN', 'country': '모로코'},
     ],
     '아메리카': [
       {'code': 'US', 'city': '뉴욕', 'airport': 'JFK', 'country': '미국'},
       {'code': 'US', 'city': '로스앤젤레스', 'airport': 'LAX', 'country': '미국'},
       {'code': 'US', 'city': '하와이', 'airport': 'HNL', 'country': '미국'},
-    ],
-    '유럽': [
-      {'code': 'GB', 'city': '런던', 'airport': 'LHR', 'country': '영국'},
-      {'code': 'FR', 'city': '파리', 'airport': 'CDG', 'country': '프랑스'},
-      {'code': 'IT', 'city': '로마', 'airport': 'FCO', 'country': '이탈리아'},
-      {'code': 'ES', 'city': '마드리드', 'airport': 'MAD', 'country': '스페인'},
-    ],
-    '오세아니아': [
-      {'code': 'AU', 'city': '시드니', 'airport': 'SYD', 'country': '호주'},
-      {'code': 'AU', 'city': '멜버른', 'airport': 'MEL', 'country': '호주'},
+      {'code': 'AM', 'city': '예레반', 'airport': 'EVN', 'country': '아르메니아'},
     ],
   };
 
@@ -68,7 +126,7 @@ class _CitySelectionModalState extends State<CitySelectionModal> {
 
   @override
   Widget build(BuildContext context) {
-    final regions = ['아시아', '아메리카', '유럽', '오세아니아', '중동/아프리카'];
+    final regions = ['일본', '아시아', '중국', '남태평양', '유럽', '중동/아프리카', '아메리카'];
     final cities = _citiesByRegion[_selectedRegion] ?? [];
 
     return Container(

@@ -124,20 +124,29 @@ class _DealsScreenState extends State<DealsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // 필터 섹션
-          SliverToBoxAdapter(
-            child: _buildFilterSection(),
-          ),
-          // 업데이트 정보
-          SliverToBoxAdapter(
-            child: _buildUpdateInfo(),
-          ),
-          // 리스트
-          _buildDealsListSliver(),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _loadInitialDeals();
+          // 데이터가 로드될 때까지 대기
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        color: ColorConstants.milecatchBrown,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // 필터 섹션
+            SliverToBoxAdapter(
+              child: _buildFilterSection(),
+            ),
+            // 업데이트 정보
+            SliverToBoxAdapter(
+              child: _buildUpdateInfo(),
+            ),
+            // 리스트
+            _buildDealsListSliver(),
+          ],
+        ),
       ),
     );
   }
@@ -148,36 +157,6 @@ class _DealsScreenState extends State<DealsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         children: [
-          // 출발지 탭
-          Row(
-            children: [
-              Expanded(
-                child: _buildAirportTab(
-                  label: '인천국제공항',
-                  icon: Icons.flight_takeoff,
-                  isSelected: !_isAllCitiesMode,
-                  onTap: () {
-                    setState(() {
-                      _isAllCitiesMode = false;
-                      _selectedOriginAirport = 'ICN';
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildAirportTab(
-                  label: '전체 도시',
-                  icon: Icons.flight_land,
-                  isSelected: _isAllCitiesMode,
-                  onTap: () {
-                    _showCitySelectionModal();
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           // 출발지 및 도착지 검색
           Row(
             children: [
