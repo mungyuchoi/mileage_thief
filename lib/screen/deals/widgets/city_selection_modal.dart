@@ -1,0 +1,394 @@
+import 'package:flutter/material.dart';
+import '../../../milecatch_rich_editor/src/constants/color_constants.dart';
+import '../../../utils/deal_image_utils.dart';
+
+class CitySelectionModal extends StatefulWidget {
+  final List<String> selectedCities;
+  final Function(List<String>) onConfirm;
+
+  const CitySelectionModal({
+    super.key,
+    required this.selectedCities,
+    required this.onConfirm,
+  });
+
+  @override
+  State<CitySelectionModal> createState() => _CitySelectionModalState();
+}
+
+class _CitySelectionModalState extends State<CitySelectionModal> {
+  late List<String> _selectedCities;
+  String _selectedRegion = '아시아';
+  final TextEditingController _searchController = TextEditingController();
+
+  // 지역별 도시 데이터 (예시)
+  final Map<String, List<Map<String, dynamic>>> _citiesByRegion = {
+    '아시아': [
+      {'code': 'JP', 'city': '도쿄', 'airport': 'NRT', 'country': '일본'},
+      {'code': 'JP', 'city': '오사카', 'airport': 'KIX', 'country': '일본'},
+      {'code': 'JP', 'city': '후쿠오카', 'airport': 'FUK', 'country': '일본'},
+      {'code': 'JP', 'city': '삿포로', 'airport': 'CTS', 'country': '일본'},
+      {'code': 'CN', 'city': '상하이', 'airport': 'PVG', 'country': '중국'},
+      {'code': 'CN', 'city': '베이징', 'airport': 'PEK', 'country': '중국'},
+      {'code': 'TH', 'city': '방콕', 'airport': 'BKK', 'country': '태국'},
+      {'code': 'VN', 'city': '하노이', 'airport': 'HAN', 'country': '베트남'},
+      {'code': 'VN', 'city': '호치민', 'airport': 'SGN', 'country': '베트남'},
+      {'code': 'PH', 'city': '마닐라', 'airport': 'MNL', 'country': '필리핀'},
+      {'code': 'SG', 'city': '싱가포르', 'airport': 'SIN', 'country': '싱가포르'},
+      {'code': 'MY', 'city': '쿠알라룸푸르', 'airport': 'KUL', 'country': '말레이시아'},
+    ],
+    '아메리카': [
+      {'code': 'US', 'city': '뉴욕', 'airport': 'JFK', 'country': '미국'},
+      {'code': 'US', 'city': '로스앤젤레스', 'airport': 'LAX', 'country': '미국'},
+      {'code': 'US', 'city': '하와이', 'airport': 'HNL', 'country': '미국'},
+    ],
+    '유럽': [
+      {'code': 'GB', 'city': '런던', 'airport': 'LHR', 'country': '영국'},
+      {'code': 'FR', 'city': '파리', 'airport': 'CDG', 'country': '프랑스'},
+      {'code': 'IT', 'city': '로마', 'airport': 'FCO', 'country': '이탈리아'},
+      {'code': 'ES', 'city': '마드리드', 'airport': 'MAD', 'country': '스페인'},
+    ],
+    '오세아니아': [
+      {'code': 'AU', 'city': '시드니', 'airport': 'SYD', 'country': '호주'},
+      {'code': 'AU', 'city': '멜버른', 'airport': 'MEL', 'country': '호주'},
+    ],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCities = List.from(widget.selectedCities);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final regions = ['아시아', '아메리카', '유럽', '오세아니아', '중동/아프리카'];
+    final cities = _citiesByRegion[_selectedRegion] ?? [];
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // 드래그 핸들
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // 헤더
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Text(
+                  '국가, 도시, 공항 검색',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: ColorConstants.milecatchBrown,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // 검색바
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: '도시명 또는 공항 코드로 검색',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
+          ),
+          // 선택된 도시 태그
+          if (_selectedCities.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _selectedCities.map((airportCode) {
+                  final cityData = _findCityData(airportCode);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: ColorConstants.milecatchBrown.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: ColorConstants.milecatchBrown),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          cityData?['city'] ?? airportCode,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: ColorConstants.milecatchBrown,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCities.remove(airportCode);
+                            });
+                          },
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: ColorConstants.milecatchBrown,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          // 지역 탭
+          Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: regions.length,
+              itemBuilder: (context, index) {
+                final region = regions[index];
+                final isSelected = _selectedRegion == region;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedRegion = region;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: isSelected
+                                ? ColorConstants.milecatchBrown
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        region,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? ColorConstants.milecatchBrown
+                              : Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // 도시 리스트
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: cities.length,
+              itemBuilder: (context, index) {
+              final city = cities[index];
+              final cityKey = city['airport'] as String; // 공항 코드만 사용
+              final isSelected = _selectedCities.contains(cityKey);
+
+                // 검색 필터
+                if (_searchController.text.isNotEmpty) {
+                  final searchText = _searchController.text.toLowerCase();
+                  if (!city['city'].toString().toLowerCase().contains(searchText) &&
+                      !city['airport'].toString().toLowerCase().contains(searchText)) {
+                    return const SizedBox.shrink();
+                  }
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedCities.remove(cityKey);
+                        } else {
+                          if (!_selectedCities.contains(cityKey)) {
+                            _selectedCities.add(cityKey);
+                          }
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? ColorConstants.milecatchBrown.withOpacity(0.1)
+                            : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? ColorConstants.milecatchBrown
+                              : Colors.grey[300]!,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          DealImageUtils.getCountryFlag(
+                            city['code'] as String,
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  city['city'] as String,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? ColorConstants.milecatchBrown
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${city['airport']} · ${city['country']}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check_circle,
+                              color: ColorConstants.milecatchBrown,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // 하단 버튼
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedCities.clear();
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: ColorConstants.milecatchBrown),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      '초기화',
+                      style: TextStyle(
+                        color: ColorConstants.milecatchBrown,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      widget.onConfirm(_selectedCities);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorConstants.milecatchBrown,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      '확인',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic>? _findCityData(String cityKey) {
+    for (final cities in _citiesByRegion.values) {
+      for (final city in cities) {
+        if (city['airport'] == cityKey) {
+          return city;
+        }
+      }
+    }
+    return null;
+  }
+}
+
