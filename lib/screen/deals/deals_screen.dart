@@ -29,7 +29,7 @@ class _DealsScreenState extends State<DealsScreen> {
   List<int> _selectedTravelDurations = [];
   List<String> _selectedAirlines = []; // 선택된 항공사
   List<String> _selectedAgencies = []; // 선택된 여행사
-  String _sortBy = 'price'; // 기본: 가격순
+  String _sortBy = 'price'; // 기본: 가격 낮은순
   final TextEditingController _destinationSearchController = TextEditingController();
   
   // 페이지네이션 관련 변수
@@ -221,7 +221,7 @@ class _DealsScreenState extends State<DealsScreen> {
                   onTap: () => _showScheduleSelectionModal(),
                 ),
                 const SizedBox(width: 8),
-                // 가격순
+                // 가격 정렬
                 _buildFilterButton(
                   label: _getSortLabel(),
                   icon: Icons.arrow_drop_down,
@@ -347,13 +347,13 @@ class _DealsScreenState extends State<DealsScreen> {
   String _getSortLabel() {
     switch (_sortBy) {
       case 'price':
-        return '가격순';
+        return '가격 낮은순';
       case 'price_desc':
         return '가격 높은순';
       case 'price_change':
         return '가격 변동순';
       default:
-        return '가격순';
+        return '가격 낮은순';
     }
   }
 
@@ -402,13 +402,13 @@ class _DealsScreenState extends State<DealsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.swap_vert,
+                  _getSortIcon(),
                   size: 16,
                   color: ColorConstants.milecatchBrown,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '가격 변동순',
+                  _getSortLabel(),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -421,6 +421,19 @@ class _DealsScreenState extends State<DealsScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getSortIcon() {
+    switch (_sortBy) {
+      case 'price':
+        return Icons.arrow_upward;
+      case 'price_desc':
+        return Icons.arrow_downward;
+      case 'price_change':
+        return Icons.swap_vert;
+      default:
+        return Icons.arrow_upward;
+    }
   }
 
   Widget _buildDealsListSliver() {
@@ -612,45 +625,47 @@ class _DealsScreenState extends State<DealsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                '정렬 선택',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: ColorConstants.milecatchBrown,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
-            _buildSortOption('가격순', 'price', Icons.arrow_upward),
-            _buildSortOption('가격 높은순', 'price_desc', Icons.arrow_downward),
-            _buildSortOption('가격 변동순', 'price_change', Icons.swap_vert),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  '정렬 선택',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: ColorConstants.milecatchBrown,
+                  ),
+                ),
+              ),
+              _buildSortOption('가격 낮은순', 'price', Icons.arrow_upward, setModalState),
+              _buildSortOption('가격 높은순', 'price_desc', Icons.arrow_downward, setModalState),
+              _buildSortOption('가격 변동순', 'price_change', Icons.swap_vert, setModalState),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSortOption(String label, String value, IconData icon) {
+  Widget _buildSortOption(String label, String value, IconData icon, StateSetter? setModalState) {
     final isSelected = _sortBy == value;
     return ListTile(
       leading: Icon(icon, color: isSelected ? ColorConstants.milecatchBrown : Colors.grey),
@@ -665,9 +680,15 @@ class _DealsScreenState extends State<DealsScreen> {
           ? Icon(Icons.check, color: ColorConstants.milecatchBrown)
           : null,
       onTap: () {
-        setState(() {
-          _sortBy = value;
-        });
+        if (_sortBy != value) {
+          setState(() {
+            _sortBy = value;
+          });
+          // 모달 상태도 업데이트
+          setModalState?.call(() {});
+          // 정렬 변경 시 즉시 데이터 재로드
+          _loadInitialDeals();
+        }
         Navigator.pop(context);
       },
     );

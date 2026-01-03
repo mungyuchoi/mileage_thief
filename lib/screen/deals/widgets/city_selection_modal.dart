@@ -237,37 +237,109 @@ class _CitySelectionModalState extends State<CitySelectionModal> {
               itemBuilder: (context, index) {
                 final region = regions[index];
                 final isSelected = _selectedRegion == region;
+                final citiesInRegion = _citiesByRegion[region] ?? [];
+                final allCitiesSelected = citiesInRegion.isNotEmpty &&
+                    citiesInRegion.every((city) => 
+                        _selectedCities.contains(city['airport'] as String));
+                final someCitiesSelected = citiesInRegion.isNotEmpty &&
+                    citiesInRegion.any((city) => 
+                        _selectedCities.contains(city['airport'] as String));
+                
                 return Padding(
                   padding: const EdgeInsets.only(right: 12),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedRegion = region;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isSelected
-                                ? ColorConstants.milecatchBrown
-                                : Colors.transparent,
-                            width: 2,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 지역 탭
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedRegion = region;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: isSelected
+                                    ? ColorConstants.milecatchBrown
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            region,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected
+                                  ? ColorConstants.milecatchBrown
+                                  : Colors.black54,
+                            ),
                           ),
                         ),
                       ),
-                      child: Text(
-                        region,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected
-                              ? ColorConstants.milecatchBrown
-                              : Colors.black54,
+                      // 전체 선택 체크박스
+                      if (isSelected && citiesInRegion.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (allCitiesSelected) {
+                                  // 모두 선택되어 있으면 모두 해제
+                                  for (final city in citiesInRegion) {
+                                    _selectedCities.remove(city['airport'] as String);
+                                  }
+                                } else {
+                                  // 일부만 선택되어 있거나 아무것도 선택 안 되어 있으면 모두 선택
+                                  for (final city in citiesInRegion) {
+                                    final airportCode = city['airport'] as String;
+                                    if (!_selectedCities.contains(airportCode)) {
+                                      _selectedCities.add(airportCode);
+                                    }
+                                  }
+                                }
+                              });
+                            },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: allCitiesSelected
+                                      ? ColorConstants.milecatchBrown
+                                      : (someCitiesSelected
+                                          ? ColorConstants.milecatchBrown.withOpacity(0.3)
+                                          : Colors.transparent),
+                                  border: Border.all(
+                                    color: allCitiesSelected || someCitiesSelected
+                                        ? ColorConstants.milecatchBrown
+                                        : Colors.grey[400]!,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: allCitiesSelected
+                                    ? Icon(
+                                        Icons.check,
+                                        size: 16,
+                                        color: Colors.white,
+                                      )
+                                    : (someCitiesSelected
+                                        ? Icon(
+                                            Icons.remove,
+                                            size: 16,
+                                            color: Colors.white,
+                                          )
+                                        : SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                          )),
+                              ),
+                          ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
                 );
               },
