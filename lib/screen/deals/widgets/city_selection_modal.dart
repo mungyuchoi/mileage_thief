@@ -311,7 +311,10 @@ class _CitySelectionModalState extends State<CitySelectionModal> {
           ),
           // 하단 버튼
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [

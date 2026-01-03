@@ -126,7 +126,12 @@ class _DepartureMonthModalState extends State<DepartureMonthModal> {
           const SizedBox(height: 20),
           // 버튼
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: 16 + MediaQuery.of(context).padding.bottom,
+            ),
             child: Row(
               children: [
                 Expanded(

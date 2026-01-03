@@ -10,7 +10,9 @@ class DealsService {
     List<String>? destAirports,
     List<int>? selectedMonths,
     List<int>? travelDurations,
-    String? sortBy, // 'price', 'price_change', 'price_asc'
+    List<String>? airlines,
+    List<String>? agencies,
+    String? sortBy, // 'price', 'price_change', 'price_desc'
     int limit = 50, // 초기 로딩 속도 개선을 위해 limit 감소
     bool loadPriceHistory = true, // 가격 이력 로드 여부 (초기 로딩 시 false로 설정 가능)
   }) {
@@ -51,6 +53,20 @@ class DealsService {
           if (travelDurations != null && travelDurations.isNotEmpty) {
             final days = deal.travelDays;
             if (days == 0 || !travelDurations.contains(days)) {
+              continue;
+            }
+          }
+
+          // 항공사 필터링
+          if (airlines != null && airlines.isNotEmpty) {
+            if (!airlines.contains(deal.airlineCode)) {
+              continue;
+            }
+          }
+
+          // 여행사 필터링
+          if (agencies != null && agencies.isNotEmpty) {
+            if (!agencies.contains(deal.agencyCode)) {
               continue;
             }
           }
