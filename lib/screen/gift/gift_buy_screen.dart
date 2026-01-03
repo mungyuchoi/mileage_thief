@@ -229,6 +229,41 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         data['createdAt'] = FieldValue.serverTimestamp();
       }
       await lotsRef.doc(targetId).set(data, SetOptions(merge: true));
+      
+      // status가 sold인 경우, 연결된 sales의 buyTotal도 업데이트
+      final status = data['status'] as String?;
+      if (status == 'sold' && widget.editLotId != null) {
+        final salesRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('sales');
+        final salesQuery = await salesRef.where('lotId', isEqualTo: targetId).get();
+        
+        // 새로운 buyTotal 계산: buyUnit * qty
+        final newBuyTotal = buyUnit * qty;
+        
+        // 연결된 모든 sales 문서의 buyTotal 업데이트
+        final batch = FirebaseFirestore.instance.batch();
+        for (final saleDoc in salesQuery.docs) {
+          final saleData = saleDoc.data();
+          final saleQty = (saleData['qty'] as num?)?.toInt() ?? qty;
+          final sellTotal = (saleData['sellTotal'] as num?)?.toDouble() ?? 0.0;
+          
+          // sales의 qty에 맞춰 buyTotal 계산 (lot의 buyUnit * sale의 qty)
+          final saleBuyTotal = buyUnit * saleQty;
+          final profit = sellTotal - saleBuyTotal;
+          final milePerKRW = (saleData['mileRuleUsedPerMileKRW'] as num?)?.toDouble() ?? 0.0;
+          final miles = milePerKRW == 0 ? 0 : (saleBuyTotal / milePerKRW).round();
+          final costPerMile = miles == 0 ? 0 : (-profit / miles);
+          
+          batch.update(saleDoc.reference, {
+            'buyTotal': saleBuyTotal,
+            'profit': profit,
+            'miles': miles,
+            'costPerMile': costPerMile,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      }
+      
       Fluttertoast.showToast(msg: widget.editLotId == null ? '구매가 저장되었습니다.' : '구매가 수정되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
