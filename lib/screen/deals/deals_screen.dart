@@ -13,6 +13,7 @@ import 'widgets/city_selection_modal.dart';
 import 'widgets/airline_selection_modal.dart';
 import 'widgets/agency_selection_modal.dart';
 import 'widgets/schedule_selection_modal.dart';
+import 'deal_notification_screen.dart';
 
 class DealsScreen extends StatefulWidget {
   const DealsScreen({super.key});
@@ -135,6 +136,36 @@ class _DealsScreenState extends State<DealsScreen> {
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            // AppBar
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              backgroundColor: Colors.white,
+              elevation: 0,
+              title: const Text(
+                '특가 항공권',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.black87,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DealNotificationScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
             // 필터 섹션
             SliverToBoxAdapter(
               child: _buildFilterSection(),
