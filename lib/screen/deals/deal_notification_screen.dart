@@ -230,6 +230,7 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -376,15 +377,28 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
                 if (!isExpired)
                   TextButton(
                     onPressed: () => _showExtendDialog(docId, expiresAt),
-                    child: const Text('연장'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                    ),
+                    child: const Text(
+                      '연장',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 const SizedBox(width: 8),
                 TextButton(
                   onPressed: () => _showDeleteDialog(docId, region, maxPrice),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
+                    foregroundColor: Colors.black87,
                   ),
-                  child: const Text('삭제'),
+                  child: const Text(
+                    '삭제',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),

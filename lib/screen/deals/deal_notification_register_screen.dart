@@ -177,6 +177,8 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
       airportCount: _selectedAirports.length,
       days: _selectedDays,
       hasOriginAirport: !_isAllOriginAirports && _selectedOriginAirport != null,
+      isAllOriginAirports: _isAllOriginAirports,
+      hasPrice: _maxPrice != null && _maxPrice! > 0,
     );
   }
 
@@ -380,9 +382,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _isAllOriginAirports
-                    ? ColorConstants.milecatchBrown.withOpacity(0.1)
-                    : Colors.grey[50],
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: _isAllOriginAirports
@@ -420,9 +420,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: !_isAllOriginAirports && _selectedOriginAirport != null
-                    ? ColorConstants.milecatchBrown.withOpacity(0.1)
-                    : Colors.grey[50],
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: !_isAllOriginAirports && _selectedOriginAirport != null
@@ -497,9 +495,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _selectedAirports.isNotEmpty
-                    ? ColorConstants.milecatchBrown.withOpacity(0.1)
-                    : Colors.grey[50],
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: _selectedAirports.isNotEmpty
@@ -742,9 +738,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? ColorConstants.milecatchBrown
-              : Colors.grey[50],
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
@@ -759,7 +753,9 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : Colors.black87,
+              color: isSelected
+                  ? ColorConstants.milecatchBrown
+                  : Colors.black87,
             ),
           ),
         ),
@@ -768,7 +764,76 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
   }
 
   Widget _buildBottomBar() {
-    final totalPeanuts = _calculatePeanuts();
+    // 현재 단계에서 추가되는 땅콩 계산
+    int currentStepPeanuts = 0;
+    
+    // Step 1: 출발지 선택
+    if (_currentStep == 1) {
+      if (_isAllOriginAirports) {
+        currentStepPeanuts = 20;
+      } else if (_selectedOriginAirport != null) {
+        currentStepPeanuts = 1;
+      }
+    }
+    
+    // Step 2: 도착지 선택
+    if (_currentStep == 2) {
+      currentStepPeanuts = _selectedAirports.length * 5;
+    }
+    
+    // Step 3: 가격 설정
+    if (_currentStep == 3) {
+      if (_maxPrice != null && _maxPrice! > 0) {
+        currentStepPeanuts = 10;
+      }
+    }
+    
+    // Step 4: 기간 선택
+    if (_currentStep == 4) {
+      if (_selectedDays == 7) {
+        currentStepPeanuts = 10;
+      } else if (_selectedDays == 14) {
+        currentStepPeanuts = 15;
+      } else {
+        currentStepPeanuts = 20;
+      }
+    }
+    
+    // 전체 누적 합계 계산
+    int totalPeanuts = 0;
+    
+    // Step 1: 출발지 선택
+    if (_currentStep >= 1) {
+      if (_isAllOriginAirports) {
+        totalPeanuts += 20;
+      } else if (_selectedOriginAirport != null) {
+        totalPeanuts += 1;
+      }
+    }
+    
+    // Step 2: 도착지 선택
+    if (_currentStep >= 2) {
+      totalPeanuts += _selectedAirports.length * 5;
+    }
+    
+    // Step 3: 가격 설정
+    if (_currentStep >= 3) {
+      if (_maxPrice != null && _maxPrice! > 0) {
+        totalPeanuts += 10;
+      }
+    }
+    
+    // Step 4: 기간 선택
+    if (_currentStep >= 4) {
+      if (_selectedDays == 7) {
+        totalPeanuts += 10;
+      } else if (_selectedDays == 14) {
+        totalPeanuts += 15;
+      } else {
+        totalPeanuts += 20;
+      }
+    }
+    
     final canProceed = _canProceedToNextStep();
 
     return Container(
@@ -791,15 +856,30 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '소모 땅콩: $totalPeanuts개',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: totalPeanuts > _userPeanutCount
-                        ? Colors.red
-                        : Colors.black87,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '소모 땅콩: $currentStepPeanuts개',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: totalPeanuts > _userPeanutCount
+                            ? Colors.red
+                            : Colors.black87,
+                      ),
+                    ),
+                    if (totalPeanuts > 0) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '합계: $totalPeanuts개',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 Text(
                   '보유 땅콩: $_userPeanutCount개',

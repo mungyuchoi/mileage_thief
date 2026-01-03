@@ -142,29 +142,7 @@ class _DealsScreenState extends State<DealsScreen> {
               floating: false,
               backgroundColor: Colors.white,
               elevation: 0,
-              title: const Text(
-                '특가 항공권',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.black87,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DealNotificationScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
+              toolbarHeight: 0,
             ),
             // 필터 섹션
             SliverToBoxAdapter(
@@ -245,6 +223,41 @@ class _DealsScreenState extends State<DealsScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
+                // 알림 버튼
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DealNotificationScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.notifications_outlined, size: 18, color: Colors.grey[600]),
+                        const SizedBox(width: 6),
+                        const Text(
+                          '특가 알림',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 // 일정 선택
                 _buildFilterButton(
                   label: _getScheduleLabel(),

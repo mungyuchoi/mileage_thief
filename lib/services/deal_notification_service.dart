@@ -127,30 +127,35 @@ class DealNotificationService {
     required int airportCount,
     required int days,
     bool hasOriginAirport = false,
+    bool isAllOriginAirports = false,
+    bool hasPrice = false,
   }) {
     int peanuts = 0;
 
-    // 1. 선택한 도시 개수에 따른 땅콩
-    if (airportCount <= 3) {
-      peanuts += 2;
-    } else if (airportCount <= 5) {
-      peanuts += 3;
-    } else {
-      peanuts += 5;
-    }
-
-    // 2. 알림 기간에 따른 땅콩
-    if (days == 7) {
-      peanuts += 2;
-    } else if (days == 14) {
-      peanuts += 3;
-    } else {
-      peanuts += 5;
-    }
-
-    // 3. 출발지 선택 시 추가 땅콩
-    if (hasOriginAirport) {
+    // 1. 출발지 선택에 따른 땅콩
+    if (isAllOriginAirports) {
+      // 모든 출발지 선택 시 기본 20개
+      peanuts += 20;
+    } else if (hasOriginAirport) {
+      // 특정 출발지 선택 시 추가 땅콩 (기존 로직 유지)
       peanuts += 1;
+    }
+
+    // 2. 도착지 선택에 따른 땅콩 (도시 1개당 5개)
+    peanuts += airportCount * 5;
+
+    // 3. 알림 기간에 따른 땅콩
+    if (days == 7) {
+      peanuts += 10;
+    } else if (days == 14) {
+      peanuts += 15;
+    } else {
+      peanuts += 20;
+    }
+
+    // 4. 가격 조건 설정 시 추가 땅콩 10개
+    if (hasPrice) {
+      peanuts += 10;
     }
 
     return peanuts;
