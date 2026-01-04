@@ -353,6 +353,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -472,6 +473,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -591,6 +593,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -669,6 +672,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(

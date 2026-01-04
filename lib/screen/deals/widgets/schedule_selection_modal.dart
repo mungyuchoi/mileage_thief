@@ -194,6 +194,7 @@ class ScheduleSelectionModal extends StatelessWidget {
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: () {
+                      onConfirm(selectedMonths, selectedTravelDurations);
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(

@@ -7,44 +7,44 @@
 다음 항공사 코드에 대한 로고 이미지가 필요합니다:
 
 ### 한국 항공사
-- `airline_7c.png` - 제주항공
-- `airline_ke.png` - 대한항공
-- `airline_oz.png` - 아시아나항공
-- `airline_lj.png` - 진에어
-- `airline_tw.png` - 티웨이항공
-- `airline_bx.png` - 에어부산
-- `airline_ze.png` - 이스타항공
-- `airline_rs.png` - 에어서울
-- `airline_yp.png` - 에어프레미아
-- `airline_rf.png` - 에어로케이항공
+/- `airline_7c.png` - 제주항공
+/- `airline_ke.png` - 대한항공
+/- `airline_oz.png` - 아시아나항공
+/- `airline_lj.png` - 진에어
+/- `airline_tw.png` - 티웨이항공
+/- `airline_bx.png` - 에어부산
+/- `airline_ze.png` - 이스타항공
+/- `airline_rs.png` - 에어서울
+/- `airline_yp.png` - 에어프레미아
+/- `airline_rf.png` - 에어로케이항공
 
 ### 일본 항공사
-- `airline_nh.png` - 전일본공수 (ANA)
-- `airline_jl.png` - 일본항공 (JAL)
-- `airline_mm.png` - 피치항공
-- `airline_gk.png` - 제트스타재팬
-- `airline_sl.png` - 타이라이항공
+/- `airline_nh.png` - 전일본공수 (ANA)
+/- `airline_jl.png` - 일본항공 (JAL)
+/- `airline_mm.png` - 피치항공
+/- `airline_gk.png` - 제트스타재팬
+/- `airline_sl.png` - 타이라이항공
 
 ### 동남아시아 항공사
-- `airline_5j.png` - 세부퍼시픽항공 (Cebu Pacific)
-- `airline_pr.png` - 필리핀항공 (Philippine Airlines)
-- `airline_ak.png` - 에어아시아 (AirAsia)
-- `airline_d7.png` - 에어아시아X (AirAsia X)
-- `airline_od.png` - 바틱에어 말레이시아 (Batik Air Malaysia)
-- `airline_jq.png` - 젯스타항공 (Jetstar)
-- `airline_vn.png` - 베트남항공 (Vietnam Airlines)
-- `airline_vj.png` - 비엣젯항공 (VietJet Air)
-- `airline_vz.png` - 타이 비엣젯항공 (Thai Vietjet)
-- `airline_tr.png` - 스쿠트항공 (Scoot)
-- `airline_we.png` - 파라타항공 (Parata Air)
+/- `airline_5j.png` - 세부퍼시픽항공 (Cebu Pacific)
+/- `airline_pr.png` - 필리핀항공 (Philippine Airlines)
+/- `airline_ak.png` - 에어아시아 (AirAsia)
+/- `airline_d7.png` - 에어아시아X (AirAsia X)
+/- `airline_od.png` - 바틱에어 말레이시아 (Batik Air Malaysia)
+/- `airline_jq.png` - 젯스타항공 (Jetstar)
+/- `airline_vn.png` - 베트남항공 (Vietnam Airlines)
+/- `airline_vj.png` - 비엣젯항공 (VietJet Air) 
+/- `airline_vz.png` - 타이 비엣젯항공 (Thai Vietjet)
+/- `airline_tr.png` - 스쿠트항공 (Scoot)
+/- `airline_we.png` - 파라타항공 (Parata Air)
 
 ### 동아시아 항공사
-- `airline_cx.png` - 캐세이퍼시픽 (Cathay Pacific)
-- `airline_hx.png` - 홍콩항공 (Hong Kong Airlines)
-- `airline_ci.png` - 중화항공 (China Airlines)
+/- `airline_cx.png` - 캐세이퍼시픽 (Cathay Pacific)
+/- `airline_hx.png` - 홍콩항공 (Hong Kong Airlines)
+/- `airline_ci.png` - 중화항공 (China Airlines)
 
 ### 기타
-- `airline_bi.png` - 로열브루나이항공 (Royal Brunei Airlines)
+/- `airline_bi.png` - 로열브루나이항공 (Royal Brunei Airlines)
 
 **참고**: 실제로 사용되는 항공사만 추가하셔도 됩니다. 없는 항공사는 기본 아이콘이 표시됩니다.
 

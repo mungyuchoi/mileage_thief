@@ -590,6 +590,7 @@ class _DealsScreenState extends State<DealsScreen> {
           setState(() {
             _selectedOriginAirport = airport;
           });
+          _loadInitialDeals();
         },
       ),
     );
@@ -642,6 +643,7 @@ class _DealsScreenState extends State<DealsScreen> {
               _selectedOriginAirport = null;
             }
           });
+          _loadInitialDeals();
         },
       ),
     );
@@ -660,6 +662,7 @@ class _DealsScreenState extends State<DealsScreen> {
             _selectedMonths = months;
             _selectedTravelDurations = durations;
           });
+          _loadInitialDeals();
         },
       ),
     );
@@ -749,6 +752,7 @@ class _DealsScreenState extends State<DealsScreen> {
           setState(() {
             _selectedAirlines = airlines;
           });
+          _loadInitialDeals();
         },
       ),
     );
@@ -765,6 +769,7 @@ class _DealsScreenState extends State<DealsScreen> {
           setState(() {
             _selectedAgencies = agencies;
           });
+          _loadInitialDeals();
         },
       ),
     );

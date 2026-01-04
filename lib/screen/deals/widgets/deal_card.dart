@@ -25,6 +25,63 @@ class DealCard extends StatelessWidget {
     );
     final isRoundTrip = deal.tripType == 'VV' || deal.tripType == 'RT';
     final firstDate = deal.availableDates.isNotEmpty ? deal.availableDates.first : null;
+    
+    // availableDates가 비어있을 때 date_ranges나 supply_start_date/supply_end_date로 날짜 생성
+    String? fallbackDepartureDate;
+    String? fallbackDepartureDateStr;
+    String? fallbackReturnDate;
+    String? fallbackReturnDateStr;
+    
+    if (firstDate == null) {
+      // date_ranges 우선 사용
+      if (deal.dateRanges.isNotEmpty) {
+        final dateRange = deal.dateRanges.first;
+        try {
+          final startDate = DateTime.parse(dateRange.start);
+          final endDate = DateTime.parse(dateRange.end);
+          final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+          
+          fallbackDepartureDate = '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
+          fallbackDepartureDateStr = dateRange.start;
+          
+          if (isRoundTrip) {
+            fallbackReturnDate = '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
+            fallbackReturnDateStr = dateRange.end;
+          }
+        } catch (e) {
+          // 파싱 실패 시 무시
+        }
+      }
+      
+      // date_ranges도 없으면 supply_start_date/supply_end_date 사용
+      if (fallbackDepartureDateStr == null && deal.supplyStartDate.isNotEmpty) {
+        try {
+          if (deal.supplyStartDate.length == 8) {
+            final year = int.parse(deal.supplyStartDate.substring(0, 4));
+            final month = int.parse(deal.supplyStartDate.substring(4, 6));
+            final day = int.parse(deal.supplyStartDate.substring(6, 8));
+            final startDate = DateTime(year, month, day);
+            final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+            
+            fallbackDepartureDate = '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
+            fallbackDepartureDateStr = '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          }
+          
+          if (isRoundTrip && deal.supplyEndDate.isNotEmpty && deal.supplyEndDate.length == 8) {
+            final year = int.parse(deal.supplyEndDate.substring(0, 4));
+            final month = int.parse(deal.supplyEndDate.substring(4, 6));
+            final day = int.parse(deal.supplyEndDate.substring(6, 8));
+            final endDate = DateTime(year, month, day);
+            final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+            
+            fallbackReturnDate = '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
+            fallbackReturnDateStr = '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          }
+        } catch (e) {
+          // 파싱 실패 시 무시
+        }
+      }
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -85,8 +142,8 @@ class DealCard extends StatelessWidget {
                         dest: deal.destCity,
                         destAirport: deal.destAirport,
                         flightInfo: deal.outbound,
-                        date: firstDate?.departure,
-                        dateStr: firstDate?.departureDate,
+                        date: firstDate?.departure ?? fallbackDepartureDate,
+                        dateStr: firstDate?.departureDate ?? fallbackDepartureDateStr,
                         duration: deal.flightDuration,
                         isDirect: deal.isDirect,
                       ),
@@ -100,8 +157,8 @@ class DealCard extends StatelessWidget {
                             dest: deal.originCity,
                             destAirport: deal.originAirport,
                             flightInfo: deal.inbound,
-                            date: firstDate?.returnDate,
-                            dateStr: firstDate?.returnDateStr,
+                            date: firstDate?.returnDate ?? fallbackReturnDate,
+                            dateStr: firstDate?.returnDateStr ?? fallbackReturnDateStr,
                             duration: deal.inbound?.durationText ?? deal.flightDuration,
                             isDirect: deal.isDirect,
                           ),
