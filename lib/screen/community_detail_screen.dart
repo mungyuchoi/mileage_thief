@@ -3879,16 +3879,24 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       }
     }
 
-    // 2. 각 섹션 (h2 + 기본테이블 + details) 추출 - 더 정확한 정규식 사용
-    final sectionRegex = RegExp(r'<h2[^>]*>.*?</h2>.*?<table[^>]*>.*?</table>.*?<details.*?</details>', caseSensitive: false, dotAll: true);
-    final sectionMatches = sectionRegex.allMatches(processedContent);
-
-    print('=== 발견된 섹션 개수: ${sectionMatches.length} ===');
+    // 2. 각 섹션 (h2부터 다음 h2 전까지 또는 끝까지) 추출
+    // details가 있는 섹션과 없는 섹션 모두 처리
+    final h2Matches = RegExp(r'<h2[^>]*>', caseSensitive: false).allMatches(processedContent);
+    
+    print('=== 발견된 h2 태그 개수: ${h2Matches.length} ===');
     print('=== 전체 HTML 길이: ${processedContent.length} ===');
 
-    for (final match in sectionMatches) {
-      final sectionHtml = match.group(0) ?? '';
-      widgets.add(_buildFlightSection(sectionHtml));
+    for (int i = 0; i < h2Matches.length; i++) {
+      final h2Start = h2Matches.elementAt(i).start;
+      final h2End = i < h2Matches.length - 1 
+          ? h2Matches.elementAt(i + 1).start 
+          : processedContent.length;
+      
+      final sectionHtml = processedContent.substring(h2Start, h2End).trim();
+      
+      if (sectionHtml.isNotEmpty) {
+        widgets.add(_buildFlightSection(sectionHtml));
+      }
     }
 
     return SingleChildScrollView(
