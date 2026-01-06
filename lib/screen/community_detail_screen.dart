@@ -113,6 +113,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isBestPost = false;
   bool _isTogglingBest = false;
 
+  // meta/ads/tag 값
+  String? _adsTagHtml;
+
   // 광고 위젯 생성 함수
   Widget _buildBannerAd(String adUnitId) {
     return Container(
@@ -154,6 +157,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _loadContentBannerAd();
     _checkAdRemovalStatus(); // 광고 없애기 상태 확인
     _loadBestPostStatus(); // 베스트 게시글 여부 확인
+    _loadAdsTag(); // meta/ads/tag 값 불러오기
   }
 
   void _loadProfileBannerAd() {
@@ -227,6 +231,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       });
     } catch (e) {
       print('베스트 게시글 상태 로드 오류: $e');
+    }
+  }
+
+  // meta/ads/tag 값 불러오기
+  Future<void> _loadAdsTag() async {
+    try {
+      final adsDoc = await FirebaseFirestore.instance
+          .collection('meta')
+          .doc('ads')
+          .get();
+
+      if (adsDoc.exists) {
+        final data = adsDoc.data() as Map<String, dynamic>?;
+        final tagHtml = data?['tag'] as String?;
+        setState(() {
+          _adsTagHtml = tagHtml;
+        });
+      }
+    } catch (e) {
+      print('meta/ads/tag 로드 오류: $e');
     }
   }
 
@@ -1436,19 +1460,38 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // HTML의 이미지를 클릭 가능한 링크로 변환
   String _makeImagesClickable(String htmlContent) {
-    // <img src="..." /> 형태의 이미지를 <a href="..."><img src="..." /></a> 형태로 변환
-    return htmlContent.replaceAllMapped(
+    // 이미 <a> 태그로 감싸진 이미지는 처리하지 않음
+    // 1. 먼저 <a> 태그로 감싸진 이미지를 임시 마커로 치환
+    final Map<String, String> linkImageMap = {};
+    int linkImageCounter = 0;
+    
+    String processed = htmlContent;
+    final linkImagePattern = RegExp(r'<a[^>]*>.*?<img[^>]*>.*?</a>', caseSensitive: false, dotAll: true);
+    
+    processed = processed.replaceAllMapped(linkImagePattern, (match) {
+      final marker = '__LINK_IMAGE_${linkImageCounter}__';
+      linkImageMap[marker] = match.group(0) ?? '';
+      linkImageCounter++;
+      return marker;
+    });
+    
+    // 2. 나머지 이미지들을 링크로 감싸기
+    processed = processed.replaceAllMapped(
       RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false),
-          (match) {
-        final fullMatch = match.group(0) ?? '';
+      (match) {
         final beforeSrc = match.group(1) ?? '';
         final srcUrl = match.group(2) ?? '';
         final afterSrc = match.group(3) ?? '';
-
-        // 이미지를 링크로 감싸기
         return '<a href="$srcUrl"><img${beforeSrc}src="$srcUrl"${afterSrc}/></a>';
       },
     );
+    
+    // 3. 임시 마커를 원래 내용으로 복원
+    linkImageMap.forEach((marker, original) {
+      processed = processed.replaceAll(marker, original);
+    });
+    
+    return processed;
   }
 
   // HTML 전처리: 불필요한 div 태그 정리 및 공백 최소화
@@ -2093,96 +2136,198 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           // boardId가 seats이면 특별한 렌더링, 아니면 기본 Html 렌더링
                             widget.boardId == 'seats'
                                 ? _buildContentWithDetails()
-                                : Html(
-                              data: _makeImagesClickable(_cleanupHtmlContent(_post!['contentHtml'] ?? '')),
-                              style: {
-                                "body": Style(
-                                  fontSize: FontSize(15),
-                                  color: Colors.black87,
-                                  lineHeight: LineHeight(1.4),
-                                  margin: Margins.zero,
-                                ),
-                                "p": Style(
-                                  margin: Margins.zero,
-                                  padding: HtmlPaddings.zero,
-                                  whiteSpace: WhiteSpace.pre,
-                                ),
-                                "div": Style(
-                                  margin: Margins.zero,
-                                  padding: HtmlPaddings.zero,
-                                  display: Display.inline,
-                                ),
-                                "br": Style(
-                                  margin: Margins.only(bottom: 4),
-                                  display: Display.block,
-                                  height: Height(1, Unit.em),
-                                ),
-                                "img": Style(
-                                  margin: Margins.zero,
-                                  display: Display.block,
-                                ),
-                                "u": Style(
-                                  margin: Margins.zero,
-                                ),
-                                "a": Style(
-                                  color: Colors.blue,
-                                  textDecoration: TextDecoration.underline,
-                                ),
-                              },
-                              onLinkTap: (url, _, __) {
-                                if (url != null) {
-                                  // 이미지 URL인지 확인
-                                  if (_isImageUrl(url)) {
-                                    _openImageViewerFromHtml(url, _post!['contentHtml'] ?? '');
-                                  } else {
-                                    _launchUrl(url);
-                                  }
-                                }
-                              },
-                              extensions: [
-                                TagExtension(
-                                  tagsToExtend: {'link-preview'},
-                                  builder: (ctx) {
-                                    final link = ctx.attributes['link'];
-                                    if (link == null || link.isEmpty) return const SizedBox.shrink();
-                                    final normalized = link.startsWith('http') ? link : 'https://$link';
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                      child: AnyLinkPreview(
-                                        link: normalized,
-                                        displayDirection: UIDirection.uiDirectionHorizontal,
-                                        showMultimedia: true,
-                                        bodyMaxLines: 3,
-                                        bodyTextOverflow: TextOverflow.ellipsis,
-                                        boxShadow: const [],
-                                        backgroundColor: Colors.grey[100]!,
-                                        errorWidget: Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey[300]!),
-                                          ),
-                                          child: Text(normalized, style: const TextStyle(color: Colors.blue)),
-                                        ),
-                                      ),
-                                    );
+                                : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 게시글 본문 contentHtml
+                                Html(
+                                  data: _makeImagesClickable(_cleanupHtmlContent(_post!['contentHtml'] ?? '')),
+                                  style: {
+                                    "body": Style(
+                                      fontSize: FontSize(15),
+                                      color: Colors.black87,
+                                      lineHeight: LineHeight(1.4),
+                                      margin: Margins.zero,
+                                    ),
+                                    "p": Style(
+                                      margin: Margins.zero,
+                                      padding: HtmlPaddings.zero,
+                                      whiteSpace: WhiteSpace.pre,
+                                    ),
+                                    "div": Style(
+                                      margin: Margins.zero,
+                                      padding: HtmlPaddings.zero,
+                                      display: Display.inline,
+                                    ),
+                                    "br": Style(
+                                      margin: Margins.only(bottom: 4),
+                                      display: Display.block,
+                                      height: Height(1, Unit.em),
+                                    ),
+                                    "img": Style(
+                                      margin: Margins.zero,
+                                      display: Display.block,
+                                    ),
+                                    "u": Style(
+                                      margin: Margins.zero,
+                                    ),
+                                    "a": Style(
+                                      color: Colors.blue,
+                                      textDecoration: TextDecoration.underline,
+                                    ),
                                   },
-                                ),
-                                // video 태그 렌더링 지원
-                                TagExtension(
-                                  tagsToExtend: {'video'},
-                                  builder: (ctx) {
-                                    final src = ctx.attributes['src'];
-                                    if (src == null || src.isEmpty) {
-                                      return const SizedBox.shrink();
+                                  onLinkTap: (url, _, __) {
+                                    if (url != null) {
+                                      // 이미지 URL인지 확인
+                                      if (_isImageUrl(url)) {
+                                        _openImageViewerFromHtml(url, _post!['contentHtml'] ?? '');
+                                      } else {
+                                        _launchUrl(url);
+                                      }
                                     }
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                      child: _HtmlNetworkVideoPlayer(url: src),
-                                    );
                                   },
+                                  extensions: [
+                                    TagExtension(
+                                      tagsToExtend: {'link-preview'},
+                                      builder: (ctx) {
+                                        final link = ctx.attributes['link'];
+                                        if (link == null || link.isEmpty) return const SizedBox.shrink();
+                                        final normalized = link.startsWith('http') ? link : 'https://$link';
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          child: AnyLinkPreview(
+                                            link: normalized,
+                                            displayDirection: UIDirection.uiDirectionHorizontal,
+                                            showMultimedia: true,
+                                            bodyMaxLines: 3,
+                                            bodyTextOverflow: TextOverflow.ellipsis,
+                                            boxShadow: const [],
+                                            backgroundColor: Colors.grey[100]!,
+                                            errorWidget: Container(
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[100],
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: Colors.grey[300]!),
+                                              ),
+                                              child: Text(normalized, style: const TextStyle(color: Colors.blue)),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    // video 태그 렌더링 지원
+                                    TagExtension(
+                                      tagsToExtend: {'video'},
+                                      builder: (ctx) {
+                                        final src = ctx.attributes['src'];
+                                        if (src == null || src.isEmpty) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          child: _HtmlNetworkVideoPlayer(url: src),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
+                                // meta/ads/tag 값 표시
+                                if (_adsTagHtml != null && _adsTagHtml!.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  Html(
+                                    data: _makeImagesClickable(_cleanupHtmlContent(_adsTagHtml!)),
+                                    style: {
+                                      "body": Style(
+                                        fontSize: FontSize(15),
+                                        color: Colors.black87,
+                                        lineHeight: LineHeight(1.4),
+                                        margin: Margins.zero,
+                                      ),
+                                      "p": Style(
+                                        margin: Margins.zero,
+                                        padding: HtmlPaddings.zero,
+                                        whiteSpace: WhiteSpace.pre,
+                                      ),
+                                      "div": Style(
+                                        margin: Margins.zero,
+                                        padding: HtmlPaddings.zero,
+                                        display: Display.inline,
+                                      ),
+                                      "br": Style(
+                                        margin: Margins.only(bottom: 4),
+                                        display: Display.block,
+                                        height: Height(1, Unit.em),
+                                      ),
+                                      "img": Style(
+                                        margin: Margins.zero,
+                                        display: Display.block,
+                                      ),
+                                      "u": Style(
+                                        margin: Margins.zero,
+                                      ),
+                                      "a": Style(
+                                        color: Colors.blue,
+                                        textDecoration: TextDecoration.underline,
+                                      ),
+                                    },
+                                    onLinkTap: (url, _, __) {
+                                      if (url != null) {
+                                        // 이미지 URL인지 확인
+                                        if (_isImageUrl(url)) {
+                                          _openImageViewerFromHtml(url, _adsTagHtml!);
+                                        } else {
+                                          _launchUrl(url);
+                                        }
+                                      }
+                                    },
+                                    extensions: [
+                                      TagExtension(
+                                        tagsToExtend: {'link-preview'},
+                                        builder: (ctx) {
+                                          final link = ctx.attributes['link'];
+                                          if (link == null || link.isEmpty) return const SizedBox.shrink();
+                                          final normalized = link.startsWith('http') ? link : 'https://$link';
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            child: AnyLinkPreview(
+                                              link: normalized,
+                                              displayDirection: UIDirection.uiDirectionHorizontal,
+                                              showMultimedia: true,
+                                              bodyMaxLines: 3,
+                                              bodyTextOverflow: TextOverflow.ellipsis,
+                                              boxShadow: const [],
+                                              backgroundColor: Colors.grey[100]!,
+                                              errorWidget: Container(
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[100],
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: Colors.grey[300]!),
+                                                ),
+                                                child: Text(normalized, style: const TextStyle(color: Colors.blue)),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      // video 태그 렌더링 지원
+                                      TagExtension(
+                                        tagsToExtend: {'video'},
+                                        builder: (ctx) {
+                                          final src = ctx.attributes['src'];
+                                          if (src == null || src.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            child: _HtmlNetworkVideoPlayer(url: src),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                         ],
