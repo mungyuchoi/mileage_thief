@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../milecatch_rich_editor/src/constants/color_constants.dart';
 import '../../models/deal_model.dart';
 import '../../services/deals_service.dart';
@@ -23,6 +26,8 @@ class DealsScreen extends StatefulWidget {
 }
 
 class _DealsScreenState extends State<DealsScreen> {
+  static const String _kPriceChangeSortDialogDontShowKey = 'deals_price_change_sort_dialog_dont_show';
+  
   String? _selectedOriginAirport = 'ICN'; // 기본값: 인천국제공항
   bool _isAllCitiesMode = false;
   List<String> _selectedDestAirports = []; // 선택된 도착지 공항들
@@ -481,8 +486,16 @@ class _DealsScreenState extends State<DealsScreen> {
   }
 
   Widget _buildDealsListSliver() {
+    // 가격 변동순일 때 할인율이 있는 항목만 필터링
+    final filteredDeals = _sortBy == 'price_change'
+        ? _allDeals.where((deal) {
+            final discountPercent = deal.priceChangePercent ?? deal.discountPercent;
+            return discountPercent != null && discountPercent < 0;
+          }).toList()
+        : _allDeals;
+
     // 초기 로딩 중
-    if (_allDeals.isEmpty && _isLoadingMore) {
+    if (filteredDeals.isEmpty && _isLoadingMore) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
@@ -494,7 +507,7 @@ class _DealsScreenState extends State<DealsScreen> {
     }
 
     // 데이터가 없는 경우
-    if (_allDeals.isEmpty) {
+    if (filteredDeals.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
@@ -524,7 +537,7 @@ class _DealsScreenState extends State<DealsScreen> {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           // 마지막 아이템이면 로딩 인디케이터 표시
-          if (index == _allDeals.length) {
+          if (index == filteredDeals.length) {
             if (_isLoadingMore) {
               return Container(
                 padding: const EdgeInsets.all(20),
@@ -538,11 +551,11 @@ class _DealsScreenState extends State<DealsScreen> {
           }
           
           return DealCard(
-            deal: _allDeals[index],
+            deal: filteredDeals[index],
             index: index + 1,
           );
         },
-        childCount: _allDeals.length + (_isLoadingMore ? 1 : 0),
+        childCount: filteredDeals.length + (_isLoadingMore ? 1 : 0),
       ),
     );
   }
@@ -726,8 +739,17 @@ class _DealsScreenState extends State<DealsScreen> {
       trailing: isSelected
           ? Icon(Icons.check, color: ColorConstants.milecatchBrown)
           : null,
-      onTap: () {
+      onTap: () async {
         if (_sortBy != value) {
+          // 가격 변동순 선택 시 땅콩 소모 확인
+          if (value == 'price_change') {
+            final ok = await _confirmAndSpendPeanutsForPriceChange();
+            if (!ok) {
+              Navigator.pop(context);
+              return;
+            }
+          }
+          
           setState(() {
             _sortBy = value;
           });
@@ -773,6 +795,122 @@ class _DealsScreenState extends State<DealsScreen> {
         },
       ),
     );
+  }
+
+  Future<bool> _confirmAndSpendPeanutsForPriceChange() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
+        return false;
+      }
+
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
+      if (peanuts < 10) {
+        Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
+        return false;
+      }
+
+      // "다시 보지 않기"가 설정되어 있는지 확인
+      final prefs = await SharedPreferences.getInstance();
+      final bool dontShowDialog =
+          prefs.getBool(_kPriceChangeSortDialogDontShowKey) ?? false;
+
+      bool proceed = false;
+      if (!dontShowDialog) {
+        bool localDontShow = false;
+        final bool? dontShowNext = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  title: const Text(
+                    '안내',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '가격 변동순 정렬을 이용할 때마다 땅콩 10개가 소모됩니다.',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text(
+                          '다시 보지 않기',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        value: localDontShow,
+                        activeColor: const Color(0xFF74512D),
+                        onChanged: (v) {
+                          setState(() {
+                            localDontShow = v ?? false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(localDontShow),
+                      child: const Text(
+                        '확인',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+
+        if (dontShowNext == null) {
+          return false;
+        }
+
+        proceed = true;
+
+        if (dontShowNext == true) {
+          await prefs.setBool(_kPriceChangeSortDialogDontShowKey, true);
+        }
+      } else {
+        proceed = true;
+      }
+
+      if (!proceed) return false;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'peanutCount': FieldValue.increment(-10)});
+
+      Fluttertoast.showToast(msg: '땅콩 10개가 사용되었습니다.');
+      return true;
+    } catch (_) {
+      Fluttertoast.showToast(msg: '처리 중 오류가 발생했습니다.');
+      return false;
+    }
   }
 }
 

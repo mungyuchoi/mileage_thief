@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../models/deal_model.dart';
 import '../../../utils/deal_image_utils.dart';
 import '../../../milecatch_rich_editor/src/constants/color_constants.dart';
+import 'price_graph_dialog.dart';
 
 class DealCard extends StatelessWidget {
+  static const String _kPriceGraphDialogDontShowKey = 'deals_price_graph_dialog_dont_show';
+  
   final DealModel deal;
   final int index;
 
@@ -248,31 +254,13 @@ class DealCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // 할인율
-                      if (discountPercent != null && discountPercent < 0)
-                        Container(
-                          margin: const EdgeInsets.only(right: 8, bottom: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.red[50],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${discountPercent.toStringAsFixed(1)}%',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red[700],
-                            ),
-                          ),
-                        ),
                       // 가격
                       Text(
                         deal.priceDisplay.isNotEmpty 
                             ? deal.priceDisplay 
                             : '${deal.price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.red[600],
                         ),
@@ -285,28 +273,30 @@ class DealCard extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 가격그래프 버튼
-                    ElevatedButton(
-                      onPressed: () => _handlePriceGraph(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[400],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    // 가격그래프 버튼 (할인율이 있을 때만 표시)
+                    if (discountPercent != null && discountPercent < 0)
+                      ElevatedButton(
+                        onPressed: () => _handlePriceGraph(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[400],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                          minimumSize: const Size(0, 36),
                         ),
-                        elevation: 0,
-                        minimumSize: const Size(0, 36),
-                      ),
-                      child: const Text(
-                        '가격그래프',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                        child: const Text(
+                          '가격그래프',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
+                    if (discountPercent != null && discountPercent < 0)
+                      const SizedBox(width: 6),
                     // 예약하기 버튼
                     ElevatedButton(
                       onPressed: () => _handleBooking(context),
@@ -472,14 +462,132 @@ class DealCard extends StatelessWidget {
     );
   }
 
-  void _handlePriceGraph(BuildContext context) {
-    Fluttertoast.showToast(
-      msg: "기능 준비중입니다.",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.grey[800],
-      textColor: Colors.white,
-    );
+  Future<void> _handlePriceGraph(BuildContext context) async {
+    final ok = await _confirmAndSpendPeanutsForPriceGraph(context);
+    if (ok) {
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => PriceGraphDialog(deal: deal),
+        );
+      }
+    }
+  }
+
+  Future<bool> _confirmAndSpendPeanutsForPriceGraph(BuildContext context) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
+        return false;
+      }
+
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
+      if (peanuts < 5) {
+        Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
+        return false;
+      }
+
+      // "다시 보지 않기"가 설정되어 있는지 확인
+      final prefs = await SharedPreferences.getInstance();
+      final bool dontShowDialog =
+          prefs.getBool(_kPriceGraphDialogDontShowKey) ?? false;
+
+      bool proceed = false;
+      if (!dontShowDialog) {
+        bool localDontShow = false;
+        final bool? dontShowNext = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  title: const Text(
+                    '안내',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '가격 그래프를 이용할 때마다 땅콩 5개가 소모됩니다.',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text(
+                          '다시 보지 않기',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        value: localDontShow,
+                        activeColor: const Color(0xFF74512D),
+                        onChanged: (v) {
+                          setState(() {
+                            localDontShow = v ?? false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(localDontShow),
+                      child: const Text(
+                        '확인',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+
+        if (dontShowNext == null) {
+          return false;
+        }
+
+        proceed = true;
+
+        if (dontShowNext == true) {
+          await prefs.setBool(_kPriceGraphDialogDontShowKey, true);
+        }
+      } else {
+        proceed = true;
+      }
+
+      if (!proceed) return false;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'peanutCount': FieldValue.increment(-5)});
+
+      Fluttertoast.showToast(msg: '땅콩 5개가 사용되었습니다.');
+      return true;
+    } catch (_) {
+      Fluttertoast.showToast(msg: '처리 중 오류가 발생했습니다.');
+      return false;
+    }
   }
 
   void _handleBooking(BuildContext context) async {
