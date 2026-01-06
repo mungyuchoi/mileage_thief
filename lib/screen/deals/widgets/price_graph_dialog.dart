@@ -337,9 +337,13 @@ class _PriceGraphDialogState extends State<PriceGraphDialog> {
       spots.add(FlSpot(currentPriceIndex, normalizedY));
     }
 
-    // X축 레이블 (날짜 + 현재)
+    // X축 레이블 (날짜 + 현재) - 모든 포인트에 대해 생성
     final xLabels = <String>[];
-    for (var item in _priceHistory) {
+    final xLabelMap = <int, String>{}; // 인덱스별 레이블 맵
+    
+    // 가격 이력의 모든 항목에 대해 날짜 레이블 생성
+    for (var i = 0; i < _priceHistory.length; i++) {
+      final item = _priceHistory[i];
       final recordedAt = item['recorded_at'];
       DateTime? dateTime;
       if (recordedAt != null) {
@@ -350,15 +354,19 @@ class _PriceGraphDialogState extends State<PriceGraphDialog> {
         }
       }
       if (dateTime != null) {
-        xLabels.add(DateFormat('MM.dd', 'ko').format(dateTime));
+        final label = DateFormat('MM.dd', 'ko').format(dateTime);
+        xLabels.add(label);
+        xLabelMap[i] = label;
       } else {
         xLabels.add('');
+        xLabelMap[i] = '';
       }
     }
     
     // 현재 가격 레이블 추가
     if (widget.deal.price > 0) {
       xLabels.add('현재');
+      xLabelMap[_priceHistory.length] = '현재';
     }
 
     return LineChart(
@@ -386,14 +394,14 @@ class _PriceGraphDialogState extends State<PriceGraphDialog> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval: xLabels.length > 10 ? 2 : 1,
+              interval: 1, // 모든 포인트에 대해 레이블 표시
               getTitlesWidget: (value, meta) {
-                final index = value.toInt();
-                if (index >= 0 && index < xLabels.length) {
+                final index = value.round(); // round() 사용하여 가장 가까운 정수로 변환
+                if (xLabelMap.containsKey(index)) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      xLabels[index],
+                      xLabelMap[index]!,
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey[600],

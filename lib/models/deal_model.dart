@@ -145,34 +145,54 @@ class DealModel {
 
   // 여행 기간 계산 (일수)
   int get travelDays {
-    if (availableDates.isEmpty) return 0;
-    final firstDate = availableDates.first;
-    
-    // ISO 형식 날짜 문자열 사용 (departureDate, returnDateStr)
-    if (firstDate.departureDate == null || firstDate.returnDateStr == null) {
-      // 날짜 문자열이 없으면 supply_start_date와 supply_end_date로 계산 시도
-      if (supplyStartDate.isNotEmpty && supplyEndDate.isNotEmpty) {
+    // 1. availableDates 우선 확인
+    if (availableDates.isNotEmpty) {
+      final firstDate = availableDates.first;
+      
+      // ISO 형식 날짜 문자열 사용 (departureDate, returnDateStr)
+      if (firstDate.departureDate != null && firstDate.returnDateStr != null) {
         try {
-          final start = _parseSupplyDate(supplyStartDate);
-          final end = _parseSupplyDate(supplyEndDate);
-          if (start != null && end != null) {
-            return end.difference(start).inDays;
-          }
+          final departure = DateTime.parse(firstDate.departureDate!);
+          final returnDate = DateTime.parse(firstDate.returnDateStr!);
+          final days = returnDate.difference(departure).inDays;
+          // 최소 0일 (같은 날 출발/귀국) 반환
+          return days >= 0 ? days : 0;
         } catch (e) {
-          return 0;
+          // 파싱 실패 시 다음 방법 시도
         }
       }
-      return 0;
     }
     
-    try {
-      final departure = DateTime.parse(firstDate.departureDate!);
-      final returnDate = DateTime.parse(firstDate.returnDateStr!);
-      return returnDate.difference(departure).inDays;
-    } catch (e) {
-      // 파싱 실패 시 0 반환
-      return 0;
+    // 2. date_ranges 확인
+    if (dateRanges.isNotEmpty) {
+      final dateRange = dateRanges.first;
+      try {
+        final startDate = DateTime.parse(dateRange.start);
+        final endDate = DateTime.parse(dateRange.end);
+        final days = endDate.difference(startDate).inDays;
+        // 최소 0일 (같은 날 출발/귀국) 반환
+        return days >= 0 ? days : 0;
+      } catch (e) {
+        // 파싱 실패 시 다음 방법 시도
+      }
     }
+    
+    // 3. supply_start_date와 supply_end_date로 계산 시도
+    if (supplyStartDate.isNotEmpty && supplyEndDate.isNotEmpty) {
+      try {
+        final start = _parseSupplyDate(supplyStartDate);
+        final end = _parseSupplyDate(supplyEndDate);
+        if (start != null && end != null) {
+          final days = end.difference(start).inDays;
+          // 최소 0일 (같은 날 출발/귀국) 반환
+          return days >= 0 ? days : 0;
+        }
+      } catch (e) {
+        // 파싱 실패 시 0 반환
+      }
+    }
+    
+    return 0;
   }
 
   // YYYYMMDD 형식의 날짜를 DateTime으로 변환
