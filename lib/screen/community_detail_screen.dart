@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:io';
+import 'dart:async';
 import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import '../services/category_service.dart';
@@ -113,8 +114,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isBestPost = false;
   bool _isTogglingBest = false;
 
-  // meta/ads/tag 값
-  String? _adsTagHtml;
+  // meta/ads/tag 값 (배열)
+  List<String>? _adsTagHtmlList;
+  int _currentAdIndex = 0;
+  Timer? _adsRotationTimer;
 
   // 광고 위젯 생성 함수
   Widget _buildBannerAd(String adUnitId) {
@@ -202,6 +205,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _scrollController.dispose();
     _profileBannerAd?.dispose();
     _contentBannerAd?.dispose();
+    _adsRotationTimer?.cancel();
     super.dispose();
   }
 
@@ -234,7 +238,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     }
   }
 
-  // meta/ads/tag 값 불러오기
+  // meta/ads/tag 값 불러오기 (배열)
   Future<void> _loadAdsTag() async {
     try {
       final adsDoc = await FirebaseFirestore.instance
@@ -244,14 +248,49 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       if (adsDoc.exists) {
         final data = adsDoc.data() as Map<String, dynamic>?;
-        final tagHtml = data?['tag'] as String?;
-        setState(() {
-          _adsTagHtml = tagHtml;
-        });
+        final tagList = data?['tag'] as List<dynamic>?;
+        
+        if (tagList != null && tagList.isNotEmpty) {
+          final List<String> tagHtmlList = tagList
+              .map((e) => e.toString())
+              .where((html) => html.isNotEmpty)
+              .toList();
+          
+          setState(() {
+            _adsTagHtmlList = tagHtmlList;
+            _currentAdIndex = 0;
+          });
+          
+          // 기존 타이머 취소
+          _adsRotationTimer?.cancel();
+          
+          // 광고가 2개 이상일 때만 타이머 시작
+          if (tagHtmlList.length > 1) {
+            _startAdsRotationTimer();
+          }
+        } else {
+          setState(() {
+            _adsTagHtmlList = null;
+            _currentAdIndex = 0;
+          });
+          _adsRotationTimer?.cancel();
+        }
       }
     } catch (e) {
       print('meta/ads/tag 로드 오류: $e');
     }
+  }
+
+  // 광고 순환 타이머 시작
+  void _startAdsRotationTimer() {
+    _adsRotationTimer?.cancel();
+    _adsRotationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted && _adsTagHtmlList != null && _adsTagHtmlList!.isNotEmpty) {
+        setState(() {
+          _currentAdIndex = (_currentAdIndex + 1) % _adsTagHtmlList!.length;
+        });
+      }
+    });
   }
 
   // 내가 신고한 댓글 ID 목록 불러오기
@@ -2232,11 +2271,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     ),
                                   ],
                                 ),
-                                // meta/ads/tag 값 표시
-                                if (_adsTagHtml != null && _adsTagHtml!.isNotEmpty) ...[
+                                // meta/ads/tag 값 표시 (5초마다 순환)
+                                if (_adsTagHtmlList != null && 
+                                    _adsTagHtmlList!.isNotEmpty && 
+                                    _currentAdIndex < _adsTagHtmlList!.length) ...[
                                   const SizedBox(height: 16),
                                   Html(
-                                    data: _makeImagesClickable(_cleanupHtmlContent(_adsTagHtml!)),
+                                    data: _makeImagesClickable(_cleanupHtmlContent(_adsTagHtmlList![_currentAdIndex])),
                                     style: {
                                       "body": Style(
                                         fontSize: FontSize(15),
@@ -2275,7 +2316,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       if (url != null) {
                                         // 이미지 URL인지 확인
                                         if (_isImageUrl(url)) {
-                                          _openImageViewerFromHtml(url, _adsTagHtml!);
+                                          _openImageViewerFromHtml(url, _adsTagHtmlList![_currentAdIndex]);
                                         } else {
                                           _launchUrl(url);
                                         }
