@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'flight_deals_screen.dart';
+import 'hotel_deals_screen.dart';
 
 class _PressScale extends StatefulWidget {
   final Widget child;
@@ -124,10 +124,11 @@ class _DealsScreenState extends State<DealsScreen> {
                   height: 140,
                   child: _PressScale(
                     onTap: () {
-                      Fluttertoast.showToast(
-                        msg: '기능 준비중입니다.',
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.BOTTOM,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HotelDealsScreen(),
+                        ),
                       );
                     },
                     child: Container(
