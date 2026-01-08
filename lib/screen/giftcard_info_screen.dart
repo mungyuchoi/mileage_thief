@@ -180,6 +180,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  // 대시보드 하단(고급) 섹션들 임시 비활성화 플래그
+  // - 브랜드별 분포
+  // - 카드별 평균 수익률 비교
+  // - 재고 현황
+  bool _showDashboardAdvancedSections = false;
+
   bool _pieByAmount = true; // true: 금액, false: 수량
   Map<String, Map<String, dynamic>> _cards = {}; // cardId -> {credit, check, name}
   final TextEditingController _marketPriceController = TextEditingController();
@@ -665,11 +671,31 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     );
   }
 
-  // 집계 헬퍼
-  int _sumBuy() => _lots.fold(0, (p, e) => p + ((e['buyUnit'] ?? 0) as int) * ((e['qty'] ?? 0) as int));
-  int _sumSell() => _sales.fold(0, (p, e) => p + ((e['sellTotal'] ?? 0) as int));
-  int _sumProfit() => _sales.fold(0, (p, e) => p + ((e['profit'] ?? 0) as int));
-  int _sumMiles() => _sales.fold(0, (p, e) => p + ((e['miles'] ?? 0) as int));
+  // 집계/파싱 헬퍼
+  int _asInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  double _asDouble(dynamic v) {
+    if (v == null) return 0;
+    if (v is double) return v;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0;
+  }
+
+  int _sumBuy() => _lots.fold(
+        0,
+        (p, e) => p + _asInt(e['buyUnit']) * _asInt(e['qty']),
+      );
+  int _sumSell() =>
+      _sales.fold(0, (p, e) => p + _asInt(e['sellTotal']));
+  int _sumProfit() =>
+      _sales.fold(0, (p, e) => p + _asInt(e['profit']));
+  int _sumMiles() =>
+      _sales.fold(0, (p, e) => p + _asInt(e['miles']));
   String _fmtWon(num v) => '${_won.format(v)}원';
 
   // 브랜드별 분포(금액 기준)
@@ -677,7 +703,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final Map<String, int> m = {};
     for (final lot in _lots) {
       final brand = (lot['giftcardId'] as String?) ?? '기타';
-      m[brand] = (m[brand] ?? 0) + ((lot['buyUnit'] ?? 0) as int) * ((lot['qty'] ?? 0) as int);
+      m[brand] = (m[brand] ?? 0) + _asInt(lot['buyUnit']) * _asInt(lot['qty']);
     }
     return m;
   }
@@ -686,7 +712,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final Map<String, int> m = {};
     for (final lot in _lots) {
       final brand = (lot['giftcardId'] as String?) ?? '기타';
-      m[brand] = (m[brand] ?? 0) + ((lot['qty'] ?? 0) as int);
+      m[brand] = (m[brand] ?? 0) + _asInt(lot['qty']);
     }
     return m;
   }
@@ -699,8 +725,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       if (ts is Timestamp) {
         final d = ts.toDate();
         final key = '${d.year}-${d.month.toString().padLeft(2, '0')}';
-        final profit = (s['profit'] ?? 0) as int;
-        final miles = (s['miles'] ?? 0) as int;
+        final profit = _asInt(s['profit']);
+        final miles = _asInt(s['miles']);
         m.putIfAbsent(key, () => {'profit': 0, 'miles': 0});
         m[key]!['profit'] = (m[key]!['profit'] ?? 0) + profit;
         m[key]!['miles'] = (m[key]!['miles'] ?? 0) + miles;
@@ -728,8 +754,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final sumMiles = _sumMiles();
     final avgCostPerMile = sumMiles == 0 ? 0 : (-sumProfit / sumMiles);
 
-    final brandMap = _pieByAmount ? _pieByBrandAmount() : _pieByBrandCount();
-    final brandEntries = brandMap.entries.toList();
+    final bool showAdvanced = _showDashboardAdvancedSections;
+    final Map<String, int> brandMap =
+        showAdvanced ? (_pieByAmount ? _pieByBrandAmount() : _pieByBrandCount()) : const <String, int>{};
+    final List<MapEntry<String, int>> brandEntries = brandMap.entries.toList();
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -811,88 +839,105 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             child: _GiftBanner(adUnitId: AdHelper.giftDashboardBannerAdUnitId),
           ),
 
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(_pieByAmount ? '브랜드별 분포 (금액 기준)' : '브랜드별 분포 (수량 기준)',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
-              Row(
-                children: [
-                  const Text('수량', style: TextStyle(fontSize: 12)),
-                  Switch(
-                    value: _pieByAmount,
-                    activeColor: const Color(0xFF74512D),
-                    onChanged: (v) => setState(() => _pieByAmount = v),
-                  ),
-                  const Text('금액', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          AspectRatio(
-            aspectRatio: 1.4,
-            child: PieChart(
-              PieChartData(
-                pieTouchData: PieTouchData(enabled: true),
-                sections: [
-                  for (int i = 0; i < brandEntries.length; i++)
-                    PieChartSectionData(
-                      title: brandEntries[i].key,
-                      value: brandEntries[i].value.toDouble(),
-                      color: Colors.primaries[i % Colors.primaries.length],
-                      radius: 60,
-                      titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                    )
-                ],
+          if (showAdvanced) ...[
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _pieByAmount ? '브랜드별 분포 (금액 기준)' : '브랜드별 분포 (수량 기준)',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Row(
+                  children: [
+                    const Text('수량', style: TextStyle(fontSize: 12)),
+                    Switch(
+                      value: _pieByAmount,
+                      activeColor: const Color(0xFF74512D),
+                      onChanged: (v) => setState(() => _pieByAmount = v),
+                    ),
+                    const Text('금액', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            AspectRatio(
+              aspectRatio: 1.4,
+              child: PieChart(
+                PieChartData(
+                  pieTouchData: PieTouchData(enabled: true),
+                  sections: [
+                    for (int i = 0; i < brandEntries.length; i++)
+                      PieChartSectionData(
+                        title: brandEntries[i].key,
+                        value: brandEntries[i].value.toDouble(),
+                        color: Colors.primaries[i % Colors.primaries.length],
+                        radius: 60,
+                        titleStyle: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 6,
-            children: [
-              for (int i = 0; i < brandEntries.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.black12),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 6,
+              children: [
+                for (int i = 0; i < brandEntries.length; i++)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          color: Colors.primaries[i % Colors.primaries.length],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _pieByAmount
+                              ? '${brandEntries[i].key}: ${_fmtWon(brandEntries[i].value)}'
+                              : '${brandEntries[i].key}: ${brandEntries[i].value}개',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(width: 10, height: 10, color: Colors.primaries[i % Colors.primaries.length]),
-                      const SizedBox(width: 6),
-                      Text(
-                        _pieByAmount
-                            ? '${brandEntries[i].key}: ${_fmtWon(brandEntries[i].value)}'
-                            : '${brandEntries[i].key}: ${brandEntries[i].value}개',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+              ],
+            ),
 
-          const SizedBox(height: 20),
-          const Text('카드별 평균 수익률 비교 (원/마일, 낮을수록 우수)', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          _buildCardEfficiencyBars(),
+            const SizedBox(height: 20),
+            const Text(
+              '카드별 평균 수익률 비교 (원/마일, 낮을수록 우수)',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            _buildCardEfficiencyBars(),
+          ],
 
           const SizedBox(height: 20),
           _buildInsightCards(),
 
           // 그래프 섹션 제거됨 (요청)
 
-          const SizedBox(height: 20),
-          const Text('재고 현황', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          _buildInventorySection(),
+          if (showAdvanced) ...[
+            const SizedBox(height: 20),
+            const Text('재고 현황', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            _buildInventorySection(),
+          ],
         ],
       ),
     ),
@@ -905,7 +950,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     for (final lot in _lots) {
       if ((lot['status'] as String?) == 'sold') continue;
       final brand = (lot['giftcardId'] as String?) ?? '기타';
-      m[brand] = (m[brand] ?? 0) + ((lot['qty'] ?? 0) as int);
+      m[brand] = (m[brand] ?? 0) + _asInt(lot['qty']);
     }
     final list = m.entries.toList();
     list.sort((a, b) => b.value.compareTo(a.value));
@@ -917,9 +962,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     int totalBuy = 0;
     for (final lot in _lots) {
       if ((lot['status'] as String?) == 'sold') continue;
-      final qty = (lot['qty'] ?? 0) as int;
+      final qty = _asInt(lot['qty']);
       totalQty += qty;
-      totalBuy += qty * ((lot['buyUnit'] ?? 0) as int);
+      totalBuy += qty * _asInt(lot['buyUnit']);
     }
     return totalQty == 0 ? 0 : totalBuy / totalQty;
   }
@@ -928,7 +973,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     int total = 0;
     for (final lot in _lots) {
       if ((lot['status'] as String?) == 'sold') continue;
-      total += ((lot['buyUnit'] ?? 0) as int) * ((lot['qty'] ?? 0) as int);
+      total += _asInt(lot['buyUnit']) * _asInt(lot['qty']);
     }
     return total;
   }
@@ -937,7 +982,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     int total = 0;
     for (final lot in _lots) {
       if ((lot['status'] as String?) == 'sold') continue;
-      total += ((lot['qty'] ?? 0) as int);
+      total += _asInt(lot['qty']);
     }
     return total;
   }
@@ -946,7 +991,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     int sellTotal = 0;
     for (final lot in _lots) {
       if ((lot['status'] as String?) == 'sold') continue;
-      sellTotal += sellUnit * ((lot['qty'] ?? 0) as int);
+      sellTotal += sellUnit * _asInt(lot['qty']);
     }
     return sellTotal - _remainingBuyTotal();
   }
@@ -959,8 +1004,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     double miles = 0;
     for (final lot in _lots) {
       if ((lot['status'] as String?) == 'sold') continue;
-      final qty = (lot['qty'] ?? 0) as int;
-      final buyUnit = (lot['buyUnit'] ?? 0) as int;
+      final qty = _asInt(lot['qty']);
+      final buyUnit = _asInt(lot['buyUnit']);
       final payType = (lot['payType'] as String?) ?? '신용';
       final cardId = (lot['cardId'] as String?) ?? '';
       final rule = (_cards[cardId] != null)
@@ -1278,7 +1323,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               final ts = isSale ? m['sellDate'] : m['buyDate'];
               final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
               final brand = (m['giftcardId'] as String?) ?? '';
-              final qty = (m['qty'] ?? 0) as int;
+              final qty = _asInt(m['qty']);
               final String? memo = isSale ? null : (m['memo'] as String?);
 
               return Padding(
@@ -1481,7 +1526,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
     try {
       final userData = await UserService.getUserFromFirestore(uid);
-      final currentPeanuts = (userData?['peanutCount'] as int?) ?? 0;
+      final currentPeanuts = _asInt(userData?['peanutCount']);
 
       if (currentPeanuts < cost) {
         Fluttertoast.showToast(
@@ -1565,7 +1610,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     Widget lotTile(Map m) {
       final String date = (m['buyDate'] is Timestamp) ? _yMd.format((m['buyDate'] as Timestamp).toDate()) : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
-      final int qty = (m['qty'] ?? 0) as int;
+      final int qty = _asInt(m['qty']);
       final bool sold = (m['status'] as String?) == 'sold';
       final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
       final String? memo = m['memo'] as String?;
@@ -1630,7 +1675,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     Widget saleTile(Map m) {
       final String date = (m['sellDate'] is Timestamp) ? _yMd.format((m['sellDate'] as Timestamp).toDate()) : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
-      final int qty = (m['qty'] ?? 0) as int;
+      final int qty = _asInt(m['qty']);
       
       // lotId를 통해 해당 lot의 giftcardId 찾기
       String? lotGiftcardName;
