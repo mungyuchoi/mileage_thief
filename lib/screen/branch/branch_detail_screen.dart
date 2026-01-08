@@ -48,7 +48,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen> {
   List<Map<String, dynamic>> _events = <Map<String, dynamic>>[];
   bool _isEventManager = false;
 
-  String _commentSortOrder = '등록순';
+  String _commentSortOrder = '최신순';
 
   /// 화면에 보여줄 최종 지점 이름
   String get _effectiveBranchName {
