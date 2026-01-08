@@ -1571,6 +1571,178 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
+  Future<void> _confirmAndDeleteSale(Map<String, dynamic> sale, {int cost = 20}) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final String saleId = (sale['id'] as String?) ?? '';
+    final String lotId = (sale['lotId'] as String?) ?? '';
+    if (saleId.isEmpty) {
+      Fluttertoast.showToast(msg: '삭제할 판매 정보가 올바르지 않습니다.');
+      return;
+    }
+
+    try {
+      final userData = await UserService.getUserFromFirestore(uid);
+      final currentPeanuts = _asInt(userData?['peanutCount']);
+
+      if (currentPeanuts < cost) {
+        Fluttertoast.showToast(msg: '삭제를 하기 위해서는 땅콩이 필요합니다.');
+        return;
+      }
+
+      final bool? ok = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              '삭제',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              '땅콩 $cost개가 소모됩니다.\n삭제하시겠습니까?',
+              style: const TextStyle(color: Colors.black),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  '취소',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  '삭제',
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (ok != true) return;
+
+      // 1) 땅콩 차감
+      await UserService.updatePeanutCount(uid, currentPeanuts - cost);
+
+      // 2) Firestore 업데이트: lot.status=open 복구 후 sale 삭제
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final saleRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('sales')
+            .doc(saleId);
+
+        if (lotId.isNotEmpty) {
+          final lotRef = FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('lots')
+              .doc(lotId);
+          final lotSnap = await tx.get(lotRef);
+          if (lotSnap.exists) {
+            tx.update(lotRef, <String, dynamic>{
+              'status': 'open',
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+        }
+
+        tx.delete(saleRef);
+      });
+
+      if (!mounted) return;
+      await _load();
+      Fluttertoast.showToast(msg: '판매 내역이 삭제되었습니다.');
+    } catch (e) {
+      debugPrint('판매 삭제 오류: $e');
+      Fluttertoast.showToast(msg: '삭제 중 오류가 발생했습니다.');
+    }
+  }
+
+  Future<void> _confirmAndDeleteLot(Map<String, dynamic> lot, {int cost = 20}) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final String lotId = (lot['id'] as String?) ?? '';
+    final String status = (lot['status'] as String?) ?? 'open';
+    if (lotId.isEmpty) {
+      Fluttertoast.showToast(msg: '삭제할 구매 정보가 올바르지 않습니다.');
+      return;
+    }
+    if (status != 'open') {
+      Fluttertoast.showToast(msg: '이미 판매된 구매 내역은 삭제할 수 없습니다.');
+      return;
+    }
+
+    try {
+      final userData = await UserService.getUserFromFirestore(uid);
+      final currentPeanuts = _asInt(userData?['peanutCount']);
+
+      if (currentPeanuts < cost) {
+        Fluttertoast.showToast(msg: '삭제를 하기 위해서는 땅콩이 필요합니다.');
+        return;
+      }
+
+      final bool? ok = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              '삭제',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              '땅콩 $cost개가 소모됩니다.\n삭제하시겠습니까?',
+              style: const TextStyle(color: Colors.black),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  '취소',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  '삭제',
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (ok != true) return;
+
+      // 1) 땅콩 차감
+      await UserService.updatePeanutCount(uid, currentPeanuts - cost);
+
+      // 2) lot 삭제
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .doc(lotId)
+          .delete();
+
+      if (!mounted) return;
+      await _load();
+      Fluttertoast.showToast(msg: '구매 내역이 삭제되었습니다.');
+    } catch (e) {
+      debugPrint('구매 삭제 오류: $e');
+      Fluttertoast.showToast(msg: '삭제 중 오류가 발생했습니다.');
+    }
+  }
+
   Widget _buildDaily() {
     final List<Map<String, dynamic>> lots = List<Map<String, dynamic>>.from(_lots.map((e) => {...e}));
     final List<Map<String, dynamic>> sales = List<Map<String, dynamic>>.from(_sales.map((e) => {...e}));
@@ -1611,7 +1783,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final String date = (m['buyDate'] is Timestamp) ? _yMd.format((m['buyDate'] as Timestamp).toDate()) : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
       final int qty = _asInt(m['qty']);
-      final bool sold = (m['status'] as String?) == 'sold';
+      final String status = (m['status'] as String?) ?? 'open';
+      final bool sold = status == 'sold';
+      final bool canDelete = status == 'open';
       final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
       final String? memo = m['memo'] as String?;
       return GestureDetector(
@@ -1652,6 +1826,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                     }, cost: 20);
                   },
                 ),
+                if (canDelete) ...[
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.black54),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: '삭제',
+                    onPressed: () async {
+                      await _confirmAndDeleteLot(
+                        Map<String, dynamic>.from(m as Map),
+                        cost: 20,
+                      );
+                    },
+                  ),
+                ],
               ]),
               const SizedBox(height: 8),
               Wrap(
@@ -1727,6 +1916,19 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                       );
                       if (mounted) _load();
                     }, cost: 20);
+                  },
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.black54),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: '삭제',
+                  onPressed: () async {
+                    await _confirmAndDeleteSale(
+                      Map<String, dynamic>.from(m as Map),
+                      cost: 20,
+                    );
                   },
                 ),
               ]),
