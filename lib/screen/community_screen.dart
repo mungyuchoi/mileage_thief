@@ -63,6 +63,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool _isScrolling = false;
   Timer? _scrollTimer;
 
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -83,12 +88,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Future<void> _loadBoards() async {
     try {
       final loadedBoards = await _categoryService.getBoards();
-      setState(() {
+      _safeSetState(() {
         boards = loadedBoards;
         isLoadingBoards = false;
       });
     } catch (e) {
-      setState(() {
+      _safeSetState(() {
         isLoadingBoards = false;
       });
     }
@@ -97,16 +102,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Future<void> _loadUserProfile() async {
     final user = AuthService.currentUser;
     if (user != null) {
-      setState(() {
+      _safeSetState(() {
         isProfileLoading = true;
       });
       final data = await UserService.getUserFromFirestore(user.uid);
-      setState(() {
+      _safeSetState(() {
         userProfile = data;
         isProfileLoading = false;
       });
     } else {
-      setState(() {
+      _safeSetState(() {
         userProfile = null;
         isProfileLoading = false;
       });
@@ -897,7 +902,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   void _onScroll() {
     // 스크롤 상태 추적
     if (!_isScrolling) {
-      setState(() {
+      _safeSetState(() {
         _isScrolling = true;
       });
     }
@@ -907,11 +912,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
     
     // 스크롤 멈춤 감지 (300ms 후)
     _scrollTimer = Timer(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        setState(() {
-          _isScrolling = false;
-        });
-      }
+      _safeSetState(() {
+        _isScrolling = false;
+      });
     });
     
     // 무한 스크롤 로직
@@ -928,7 +931,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     // 전체글이 아닐 때는 베스트 섹션 숨김
     if (selectedBoardId != 'all') {
       if (_bestPosts.isNotEmpty) {
-        setState(() {
+        _safeSetState(() {
           _bestPosts = [];
         });
       }
@@ -936,7 +939,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
 
     try {
-      setState(() {
+      _safeSetState(() {
         _isLoadingBestPosts = true;
       });
 
@@ -951,7 +954,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           idsDynamic.map((e) => e.toString()).toList().take(10).toList();
 
       if (postIds.isEmpty) {
-        setState(() {
+        _safeSetState(() {
           _bestPosts = [];
           _isLoadingBestPosts = false;
         });
@@ -990,13 +993,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
         return data['isHidden'] != true;
       }).toList();
 
-      setState(() {
+      _safeSetState(() {
         _bestPosts = filteredDocs;
         _isLoadingBestPosts = false;
       });
     } catch (e) {
       print('베스트 게시글 로드 오류: $e');
-      setState(() {
+      _safeSetState(() {
         _isLoadingBestPosts = false;
       });
     }
@@ -1005,7 +1008,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 초기 게시글 로드
   Future<void> _loadInitialPosts() async {
     try {
-      setState(() {
+      _safeSetState(() {
         _isInitialLoading = true;
       });
 
@@ -1036,7 +1039,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         return data['isHidden'] != true;
       }).toList();
 
-      setState(() {
+      _safeSetState(() {
         _posts = filteredDocs;
         if (allDocs.isNotEmpty) {
           _lastDocument = allDocs.last; // 마지막 문서는 필터 전 원본 기준
@@ -1046,7 +1049,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       });
     } catch (e) {
       print('초기 게시글 로드 오류: $e');
-      setState(() {
+      _safeSetState(() {
         _isInitialLoading = false; // 오류 발생 시에도 로딩 상태 해제
       });
     }
@@ -1056,7 +1059,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Future<void> _loadMorePosts() async {
     if (_lastDocument == null || _isLoadingMore || !_hasMoreData) return;
 
-    setState(() {
+    _safeSetState(() {
       _isLoadingMore = true;
     });
 
@@ -1086,7 +1089,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         return data['isHidden'] != true;
       }).toList();
 
-      setState(() {
+      _safeSetState(() {
         _posts.addAll(newPosts);
         if (allDocs.isNotEmpty) {
           _lastDocument = allDocs.last; // 마지막 문서는 필터 전 원본 기준
@@ -1096,7 +1099,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       });
     } catch (e) {
       print('추가 게시글 로드 오류: $e');
-      setState(() {
+      _safeSetState(() {
         _isLoadingMore = false;
       });
     }

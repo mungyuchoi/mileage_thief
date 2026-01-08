@@ -27,6 +27,7 @@ import '../services/notice_preference_service.dart';
 import 'giftcard_info_screen.dart';
 import 'deals/deals_screen.dart';
 import '../widgets/gift_action_pill.dart';
+import '../widgets/segment_tab_bar.dart';
 import '../branch/card_manage.dart';
 import '../branch/card_step.dart';
 import '../branch/wheretobuy_manage.dart';
@@ -551,20 +552,18 @@ class _SearchScreenState extends State<SearchScreen> {
                   );
                 }),
               ],
-              bottom: TabBar(
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.black54,
-                indicatorColor: Colors.black,
-                onTap: (idx) {
-                  if (idx != 0 && _giftFabOpen) {
-                    setState(() { _giftFabOpen = false; });
-                  }
-                },
-                tabs: const [
-                  Tab(text: '정보'),
-                  Tab(text: '지도'),
-                  Tab(text: '시세'),
-                ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(54),
+                child: Builder(
+                  builder: (innerContext) {
+                    final controller = DefaultTabController.of(innerContext);
+                    return SegmentTabBar(
+                      controller: controller!,
+                      labels: const ['정보', '지도', '시세'],
+                      margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                    );
+                  },
+                ),
               ),
             ),
             body: Stack(

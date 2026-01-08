@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mileage_thief/services/user_service.dart';
+import 'package:mileage_thief/widgets/segment_tab_bar.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 
@@ -1957,14 +1958,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     
     return Column(
       children: [
-        TabBar(
+        SegmentTabBar(
           controller: _buySellTabController,
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.black54,
-          indicatorColor: const Color(0xFF74512D),
-          tabs: const [Tab(text: '구매'), Tab(text: '판매')],
+          labels: const ['구매', '판매'],
+          margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         ),
-        const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -2089,19 +2087,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       color: Colors.white,
       child: Column(
         children: [
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.black54,
-              indicatorColor: Color(0xFF74512D),
-              tabs: const [
-                Tab(text: '대시보드'),
-                Tab(text: '캘린더'),
-                Tab(text: '일간'),
-              ],
-            ),
+          SegmentTabBar(
+            controller: _tabController,
+            labels: const ['대시보드', '캘린더', '일간'],
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           ),
           Expanded(
             child: Container(
