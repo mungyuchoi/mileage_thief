@@ -499,26 +499,39 @@ class MileageRepository {
       // 검색 기간 범위 계산
       int startDate = int.parse('${searchModel.startYear ?? '2025'}${(searchModel.startMonth ?? '1').padLeft(2, '0')}');
       int endDate = int.parse('${searchModel.endYear ?? '2025'}${(searchModel.endMonth ?? '1').padLeft(2, '0')}');
-      final docs = await firestore.collection('dan').doc(routeDoc).collection(latestCollectionId).get();
-      print('[getDanMileagesV2] $latestCollectionId 내 도큐먼트 개수: ${docs.docs.length}');
-      for (final doc in docs.docs) {
-        final data = doc.data();
-        // print('[getDanMileagesV2] doc data: $data');
-        // departureDate(yyyyMMdd)에서 yyyyMM 추출 후 기간 필터링
-        String depDate = data['departureDate']?.toString() ?? '';
-        if (depDate.length >= 6) {
-          int depMonth = int.parse(depDate.substring(0, 6));
-          if (depMonth >= startDate && depMonth <= endDate) {
-            // 좌석 존재 여부만 판단 (amount가 String/int 모두 안전하게 처리)
-            int economyAmount = int.tryParse(data['economy']?['amount']?.toString() ?? '0') ?? 0;
-            int businessAmount = int.tryParse(data['business']?['amount']?.toString() ?? '0') ?? 0;
-            int firstAmount = int.tryParse(data['first']?['amount']?.toString() ?? '0') ?? 0;
-            bool hasEconomy = economyAmount > 0;
-            bool hasBusiness = businessAmount > 0;
-            bool hasFirst = firstAmount > 0;
-            if (hasEconomy || hasBusiness || hasFirst) {
-              mileages.add(MileageV2.fromJson(data, meta));
-            }
+
+      // ✅ 최소 write 구조: {latestCollectionId}/snapshot 1문서에서 seatsByDate를 펼쳐서 사용
+      final snapDoc = await firestore.collection('dan').doc(routeDoc).collection(latestCollectionId).doc('snapshot').get();
+      if (!snapDoc.exists) {
+        print('[getDanMileagesV2] snapshot 문서 없음: $routeDoc / $latestCollectionId');
+      } else {
+        final snapData = snapDoc.data() ?? {};
+        final seatsByDate = (snapData['seatsByDate'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+        print('[getDanMileagesV2] seatsByDate count: ${seatsByDate.length}');
+
+        for (final entry in seatsByDate.entries) {
+          final depDate = entry.key;
+          if (depDate.length < 6) continue;
+          final depMonth = int.tryParse(depDate.substring(0, 6));
+          if (depMonth == null) continue;
+          if (depMonth < startDate || depMonth > endDate) continue;
+
+          final payload = (entry.value as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+          final data = <String, dynamic>{
+            'departureDate': depDate,
+            'departureAirport': snapData['departureAirport'] ?? departureAirport,
+            'arrivalAirport': snapData['arrivalAirport'] ?? arrivalAirport,
+            'economy': payload['economy'],
+            'business': payload['business'],
+            'first': payload['first'],
+          };
+
+          // 좌석 존재 여부만 판단
+          final economyAmount = int.tryParse(data['economy']?['amount']?.toString() ?? '0') ?? 0;
+          final businessAmount = int.tryParse(data['business']?['amount']?.toString() ?? '0') ?? 0;
+          final firstAmount = int.tryParse(data['first']?['amount']?.toString() ?? '0') ?? 0;
+          if (economyAmount > 0 || businessAmount > 0 || firstAmount > 0) {
+            mileages.add(MileageV2.fromJson(data, meta));
           }
         }
       }
