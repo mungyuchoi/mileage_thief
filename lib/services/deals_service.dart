@@ -9,6 +9,7 @@ class DealsService {
     String? originAirport,
     List<String>? destAirports,
     List<int>? selectedMonths,
+    DateTime? departureDate,
     List<int>? travelDurations,
     List<String>? airlines,
     List<String>? agencies,
@@ -21,6 +22,7 @@ class DealsService {
     print('originAirport: $originAirport');
     print('destAirports: $destAirports');
     print('selectedMonths: $selectedMonths');
+    print('departureDate: $departureDate');
     print('travelDurations: $travelDurations');
     print('airlines: $airlines');
     print('agencies: $agencies');
@@ -109,6 +111,7 @@ class DealsService {
       
       List<DealModel> deals = [];
       int filteredOutByDestAirport = 0;
+      int filteredOutByDepartureDate = 0;
       int filteredOutByMonth = 0;
       int filteredOutByTravelDuration = 0;
       int filteredOutByAirline = 0;
@@ -123,6 +126,67 @@ class DealsService {
           if (destAirports != null && destAirports.isNotEmpty && destAirports.length > 10) {
             if (!destAirports.contains(deal.destAirport)) {
               filteredOutByDestAirport++;
+              continue;
+            }
+          }
+
+          // 출발 날짜(특정일) 필터링
+          if (departureDate != null) {
+            final target = DateTime(departureDate.year, departureDate.month, departureDate.day);
+            bool matched = false;
+
+            // 1) available_dates의 departure_date(ISO) 우선
+            if (deal.availableDates.isNotEmpty) {
+              for (final d in deal.availableDates) {
+                final dateStr = d.departureDate;
+                if (dateStr == null || dateStr.isEmpty) continue;
+                try {
+                  final parsed = DateTime.parse(dateStr);
+                  final normalized = DateTime(parsed.year, parsed.month, parsed.day);
+                  if (normalized == target) {
+                    matched = true;
+                    break;
+                  }
+                } catch (e) {
+                  // 무시
+                }
+              }
+            }
+
+            // 2) date_ranges의 start(ISO) fallback
+            if (!matched && deal.dateRanges.isNotEmpty) {
+              for (final r in deal.dateRanges) {
+                if (r.start.isEmpty) continue;
+                try {
+                  final parsed = DateTime.parse(r.start);
+                  final normalized = DateTime(parsed.year, parsed.month, parsed.day);
+                  if (normalized == target) {
+                    matched = true;
+                    break;
+                  }
+                } catch (e) {
+                  // 무시
+                }
+              }
+            }
+
+            // 3) supply_start_date(YYYYMMDD) fallback
+            if (!matched && deal.supplyStartDate.isNotEmpty && deal.supplyStartDate.length == 8) {
+              try {
+                final year = int.parse(deal.supplyStartDate.substring(0, 4));
+                final month = int.parse(deal.supplyStartDate.substring(4, 6));
+                final day = int.parse(deal.supplyStartDate.substring(6, 8));
+                final normalized = DateTime(year, month, day);
+                if (normalized == target) {
+                  matched = true;
+                }
+              } catch (e) {
+                // 무시
+              }
+            }
+
+            if (!matched) {
+              filteredOutByDepartureDate++;
               continue;
             }
           }
@@ -170,6 +234,9 @@ class DealsService {
       print('[쿼리 결과] 필터링 후 최종 결과: ${deals.length}개');
       if (filteredOutByDestAirport > 0) {
         print('  - 도착 공항 필터로 제외: $filteredOutByDestAirport개');
+      }
+      if (filteredOutByDepartureDate > 0) {
+        print('  - 출발 날짜 필터로 제외: $filteredOutByDepartureDate개');
       }
       if (filteredOutByMonth > 0) {
         print('  - 출발 월 필터로 제외: $filteredOutByMonth개');

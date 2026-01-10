@@ -5,12 +5,14 @@ import 'travel_duration_modal.dart';
 
 class ScheduleSelectionModal extends StatelessWidget {
   final List<int> selectedMonths;
+  final DateTime? selectedDepartureDate;
   final List<int> selectedTravelDurations;
-  final Function(List<int>, List<int>) onConfirm;
+  final Function(List<int>, List<int>, DateTime?) onConfirm;
 
   const ScheduleSelectionModal({
     super.key,
     required this.selectedMonths,
+    required this.selectedDepartureDate,
     required this.selectedTravelDurations,
     required this.onConfirm,
   });
@@ -47,6 +49,76 @@ class ScheduleSelectionModal extends StatelessWidget {
               ),
             ),
           ),
+          // 출발일(특정 날짜) 선택 버튼
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: InkWell(
+              onTap: () async {
+                Navigator.pop(context);
+                final now = DateTime.now();
+                final initial = selectedDepartureDate ?? now;
+                final picked = await showDatePicker(
+                  context: context,
+                  locale: const Locale('ko', 'KR'),
+                  initialDate: initial,
+                  firstDate: DateTime(now.year - 2, 1, 1),
+                  lastDate: DateTime(now.year + 3, 12, 31),
+                  builder: (context, child) {
+                    final base = Theme.of(context);
+                    final themed = base.copyWith(
+                      dialogBackgroundColor: Colors.white,
+                      colorScheme: base.colorScheme.copyWith(
+                        surface: Colors.white,
+                        onSurface: Colors.black,
+                        primary: Colors.black,
+                        onPrimary: Colors.white,
+                      ),
+                      textButtonTheme: TextButtonThemeData(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.black,
+                        ),
+                      ),
+                      datePickerTheme: const DatePickerThemeData(
+                        backgroundColor: Colors.white,
+                      ),
+                    );
+                    return Theme(data: themed, child: child!);
+                  },
+                );
+                if (picked != null) {
+                  onConfirm(selectedMonths, selectedTravelDurations, picked);
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.event, size: 20, color: Colors.grey),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        selectedDepartureDate == null
+                            ? '출발일 선택'
+                            : '${selectedDepartureDate!.year}-${selectedDepartureDate!.month.toString().padLeft(2, '0')}-${selectedDepartureDate!.day.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           // 출발월 선택 버튼
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -60,7 +132,7 @@ class ScheduleSelectionModal extends StatelessWidget {
                   builder: (context) => DepartureMonthModal(
                     selectedMonths: selectedMonths,
                     onConfirm: (months) {
-                      onConfirm(months, selectedTravelDurations);
+                      onConfirm(months, selectedTravelDurations, selectedDepartureDate);
                     },
                   ),
                 );
@@ -110,7 +182,7 @@ class ScheduleSelectionModal extends StatelessWidget {
                   builder: (context) => TravelDurationModal(
                     selectedDurations: selectedTravelDurations,
                     onConfirm: (durations) {
-                      onConfirm(selectedMonths, durations);
+                      onConfirm(selectedMonths, durations, selectedDepartureDate);
                     },
                   ),
                 );
@@ -170,7 +242,7 @@ class ScheduleSelectionModal extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      onConfirm([], []);
+                      onConfirm([], [], null);
                       Navigator.pop(context);
                     },
                     style: OutlinedButton.styleFrom(
@@ -194,7 +266,7 @@ class ScheduleSelectionModal extends StatelessWidget {
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: () {
-                      onConfirm(selectedMonths, selectedTravelDurations);
+                      onConfirm(selectedMonths, selectedTravelDurations, selectedDepartureDate);
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(

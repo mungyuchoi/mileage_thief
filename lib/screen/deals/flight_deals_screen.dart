@@ -32,6 +32,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
   bool _isAllCitiesMode = false;
   List<String> _selectedDestAirports = []; // 선택된 도착지 공항들
   List<int> _selectedMonths = [];
+  DateTime? _selectedDepartureDate; // 특정 출발일(필터)
   List<int> _selectedTravelDurations = [];
   List<String> _selectedAirlines = []; // 선택된 항공사
   List<String> _selectedAgencies = []; // 선택된 여행사
@@ -81,6 +82,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
       originAirport: _isAllCitiesMode ? null : _selectedOriginAirport,
       destAirports: _selectedDestAirports.isEmpty ? null : _selectedDestAirports,
       selectedMonths: _selectedMonths.isEmpty ? null : _selectedMonths,
+      departureDate: _selectedDepartureDate,
       travelDurations: _selectedTravelDurations.isEmpty ? null : _selectedTravelDurations,
       airlines: _selectedAirlines.isEmpty ? null : _selectedAirlines,
       agencies: _selectedAgencies.isEmpty ? null : _selectedAgencies,
@@ -110,6 +112,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
       originAirport: _isAllCitiesMode ? null : _selectedOriginAirport,
       destAirports: _selectedDestAirports.isEmpty ? null : _selectedDestAirports,
       selectedMonths: _selectedMonths.isEmpty ? null : _selectedMonths,
+      departureDate: _selectedDepartureDate,
       travelDurations: _selectedTravelDurations.isEmpty ? null : _selectedTravelDurations,
       airlines: _selectedAirlines.isEmpty ? null : _selectedAirlines,
       agencies: _selectedAgencies.isEmpty ? null : _selectedAgencies,
@@ -340,10 +343,13 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
   }
 
   String _getScheduleLabel() {
-    if (_selectedMonths.isEmpty && _selectedTravelDurations.isEmpty) {
+    if (_selectedMonths.isEmpty && _selectedTravelDurations.isEmpty && _selectedDepartureDate == null) {
       return '일정 선택';
     }
     final parts = <String>[];
+    if (_selectedDepartureDate != null) {
+      parts.add('${_selectedDepartureDate!.month}/${_selectedDepartureDate!.day}');
+    }
     if (_selectedMonths.isNotEmpty) {
       parts.add(_getMonthFilterLabel());
     }
@@ -597,11 +603,13 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => ScheduleSelectionModal(
         selectedMonths: _selectedMonths,
+        selectedDepartureDate: _selectedDepartureDate,
         selectedTravelDurations: _selectedTravelDurations,
-        onConfirm: (months, durations) {
+        onConfirm: (months, durations, departureDate) {
           setState(() {
             _selectedMonths = months;
             _selectedTravelDurations = durations;
+            _selectedDepartureDate = departureDate;
           });
           _loadInitialDeals();
         },
