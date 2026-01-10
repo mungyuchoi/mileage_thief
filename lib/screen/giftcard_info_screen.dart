@@ -698,6 +698,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   int _sumMiles() =>
       _sales.fold(0, (p, e) => p + _asInt(e['miles']));
   String _fmtWon(num v) => '${_won.format(v)}원';
+  int _openQtyTotal() {
+    int total = 0;
+    for (final lot in _lots) {
+      final String status = (lot['status'] as String?) ?? 'open';
+      if (status != 'open') continue;
+      total += _asInt(lot['qty']);
+    }
+    return total;
+  }
 
   // 브랜드별 분포(금액 기준)
   Map<String, int> _pieByBrandAmount() {
@@ -830,7 +839,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             children: [
               Expanded(child: _KpiValue(label: '평균마일원가(원/마일)', value: avgCostPerMile.toStringAsFixed(2), icon: Icons.percent)),
               const SizedBox(width: 8),
-              Expanded(child: _KpiValue(label: '보유 잔여(미판매)', value: _fmtWon(_remainingBuyTotal()), icon: Icons.account_balance_wallet_outlined)),
+              Expanded(child: _KpiValue(label: '미교환 수량', value: '${_openQtyTotal()}장', icon: Icons.account_balance_wallet_outlined)),
             ],
           ),
 
