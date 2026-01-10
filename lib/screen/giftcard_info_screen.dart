@@ -7,16 +7,15 @@ import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mileage_thief/model/giftcard_period.dart';
+import 'package:mileage_thief/services/giftcard_service.dart';
 import 'package:mileage_thief/services/user_service.dart';
+import 'package:mileage_thief/widgets/info_pill.dart';
+import 'package:mileage_thief/widgets/press_scale.dart';
 import 'package:mileage_thief/widgets/segment_tab_bar.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
-
-/// 상품권 대시보드 기간 타입
-/// - month: 특정 월
-/// - year: 특정 연도 전체
-/// - all: 전체 기간
-enum DashboardPeriodType { month, year, all }
+import 'giftcard_kpi_detail_screen.dart';
 
 class _KpiValue extends StatelessWidget {
   final String label;
@@ -59,36 +58,6 @@ class _KpiValue extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  final String text;
-  final IconData? icon;
-  final bool filled;
-  final Color? fillColor;
-  const _InfoPill({required this.text, this.icon, this.filled = false, this.fillColor});
-  @override
-  Widget build(BuildContext context) {
-    final Color effectiveFill = fillColor ?? (filled ? const Color(0xFF74512D) : const Color(0x1174512D));
-    final Color textColor = (fillColor != null || filled) ? Colors.white : Colors.black87;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: effectiveFill,
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: textColor),
-            const SizedBox(width: 6),
-          ],
-          Text(text, style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -233,126 +202,19 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       return;
     }
     try {
-      // 선택된 기간 범위 계산 (매입월 기준)
-      DateTime? start;
-      DateTime? end;
-      switch (_periodType) {
-        case DashboardPeriodType.month:
-          start = DateTime(_selectedMonth.year, _selectedMonth.month);
-          end = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
-          break;
-        case DashboardPeriodType.year:
-          start = DateTime(_selectedYear, 1, 1);
-          end = DateTime(_selectedYear + 1, 1, 1);
-          break;
-        case DashboardPeriodType.all:
-          // 전체 기간: 날짜 필터 없이 전체 조회
-          start = null;
-          end = null;
-          break;
-      }
-
-      // lots는 항상 buyDate 기준으로 기간 필터
-      final lotsRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('lots');
-
-      Query lotsQuery = lotsRef;
-      if (start != null && end != null) {
-        lotsQuery = lotsQuery
-            .where('buyDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-            .where('buyDate', isLessThan: Timestamp.fromDate(end))
-            .orderBy('buyDate');
-      } else {
-        lotsQuery = lotsQuery.orderBy('buyDate');
-      }
-
-      final lotsSnap = await lotsQuery.get();
-
-      // 매입월 기준 대시보드를 위해:
-      // - 선택한 기간에 매입한 lot 들만 _lots 에 포함
-      // - _sales 는 "그 lotId 들과 연결된 판매" + "선택한 기간에 판매된 판매" 모두 포함
-      //   (일간 탭에서 판매일 기준으로도 표시하기 위해)
-      final salesRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('sales');
-
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> saleDocs = [];
-      final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> saleById = {};
-
-      if (_periodType == DashboardPeriodType.all) {
-        // 전체 기간: 모든 판매를 불러와서 사용 (어차피 모든 lot 이 포함됨)
-        final salesSnap = await salesRef.orderBy('sellDate').get();
-        saleDocs = salesSnap.docs;
-      } else {
-        // 1. lotId 기준으로 연결된 판매 조회 (대시보드용)
-        final lotIds = lotsSnap.docs.map((d) => d.id).toList();
-        if (lotIds.isNotEmpty) {
-          // Firestore whereIn 은 최대 10개까지만 지원하므로 10개 단위로 나누어 조회
-          for (int i = 0; i < lotIds.length; i += 10) {
-            final int endIndex = (i + 10 < lotIds.length) ? i + 10 : lotIds.length;
-            final List<String> chunk = lotIds.sublist(i, endIndex);
-            final snap = await salesRef.where('lotId', whereIn: chunk).get();
-            for (final d in snap.docs) {
-              saleById[d.id] = d;
-            }
-          }
-        }
-        
-        // 2. 판매일 기준으로도 판매 조회 (일간 탭용)
-        final salesByDateSnap = await salesRef
-            .where('sellDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start!))
-            .where('sellDate', isLessThan: Timestamp.fromDate(end!))
-            .orderBy('sellDate')
-            .get();
-        for (final d in salesByDateSnap.docs) {
-          saleById[d.id] = d;
-        }
-        
-        saleDocs = saleById.values.toList();
-      }
-
-      final cardsSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').get();
-      final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
-      final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
-      final whereToBuySnap = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('where_to_buy')
-          .get();
+      final data = await GiftcardService.loadInfoData(
+        uid: uid,
+        periodType: _periodType,
+        selectedMonth: _selectedMonth,
+        selectedYear: _selectedYear,
+      );
       setState(() {
-        _lots = lotsSnap.docs
-            .map<Map<String, dynamic>>(
-              (d) => <String, dynamic>{'id': d.id, ...d.data() as Map<String, dynamic>},
-            )
-            .toList();
-        _sales = saleDocs
-            .map<Map<String, dynamic>>(
-              (d) => <String, dynamic>{'id': d.id, ...d.data() as Map<String, dynamic>},
-            )
-            .toList();
-        _cards = {
-          for (final d in cardsSnap.docs)
-            d.id: {
-              'name': d.data()['name'],
-              'credit': ((d.data()['creditPerMileKRW'] as num?)?.toInt()) ?? 0,
-              'check': ((d.data()['checkPerMileKRW'] as num?)?.toInt()) ?? 0,
-            }
-        };
-        _giftcardNames = {
-          for (final d in giftsSnap.docs)
-            d.id: (d.data()['name'] as String?) ?? d.id
-        };
-        _branchNames = {
-          for (final d in branchesSnap.docs)
-            d.id: (d.data()['name'] as String?) ?? d.id
-        };
-        _whereToBuyNames = {
-          for (final d in whereToBuySnap.docs)
-            d.id: (d.data()['name'] as String?) ?? d.id
-        };
+        _lots = data.lots;
+        _sales = data.sales;
+        _cards = data.cards;
+        _giftcardNames = data.giftcardNames;
+        _branchNames = data.branchNames;
+        _whereToBuyNames = data.whereToBuyNames;
         _loading = false;
       });
     } catch (_) {
@@ -763,6 +625,23 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     return m;
   }
 
+  Future<void> _openKpiDetail(GiftcardKpiType kpiType) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GiftcardKpiDetailScreen(
+          kpiType: kpiType,
+          periodType: _periodType,
+          selectedMonth: _selectedMonth,
+          selectedYear: _selectedYear,
+        ),
+      ),
+    );
+    if (mounted) {
+      _load();
+    }
+  }
+
   Widget _buildDashboard() {
     final sumBuy = _sumBuy();
     final sumSell = _sumSell();
@@ -827,25 +706,61 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           // KPI
           Row(
             children: [
-              Expanded(child: _KpiValue(label: '총 매입금액', value: _fmtWon(sumBuy), icon: Icons.call_received_outlined)),
+              Expanded(
+                child: PressScale(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openKpiDetail(GiftcardKpiType.totalBuy),
+                  child: _KpiValue(label: '총 매입금액', value: _fmtWon(sumBuy), icon: Icons.call_received_outlined),
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _KpiValue(label: '총 판매금액', value: _fmtWon(sumSell), icon: Icons.call_made_outlined)),
+              Expanded(
+                child: PressScale(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openKpiDetail(GiftcardKpiType.totalSell),
+                  child: _KpiValue(label: '총 판매금액', value: _fmtWon(sumSell), icon: Icons.call_made_outlined),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _KpiValue(label: '총 손익', value: _fmtWon(sumProfit), icon: Icons.trending_up_outlined)),
+              Expanded(
+                child: PressScale(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openKpiDetail(GiftcardKpiType.totalProfit),
+                  child: _KpiValue(label: '총 손익', value: _fmtWon(sumProfit), icon: Icons.trending_up_outlined),
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _KpiValue(label: '누적 마일', value: sumMiles.toString(), icon: Icons.stars_outlined)),
+              Expanded(
+                child: PressScale(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openKpiDetail(GiftcardKpiType.totalMiles),
+                  child: _KpiValue(label: '누적 마일', value: sumMiles.toString(), icon: Icons.stars_outlined),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _KpiValue(label: '평균마일원가(원/마일)', value: avgCostPerMile.toStringAsFixed(2), icon: Icons.percent)),
+              Expanded(
+                child: PressScale(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openKpiDetail(GiftcardKpiType.avgCostPerMile),
+                  child: _KpiValue(label: '평균마일원가(원/마일)', value: avgCostPerMile.toStringAsFixed(2), icon: Icons.percent),
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _KpiValue(label: '미교환 수량', value: '${_openQtyTotal()}장', icon: Icons.account_balance_wallet_outlined)),
+              Expanded(
+                child: PressScale(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openKpiDetail(GiftcardKpiType.openQty),
+                  child: _KpiValue(label: '미교환 수량', value: '${_openQtyTotal()}장', icon: Icons.account_balance_wallet_outlined),
+                ),
+              ),
             ],
           ),
 
@@ -1360,7 +1275,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                       children: [
                         Row(
                           children: [
-                            _InfoPill(text: isSale ? '판매' : '구매', icon: isSale ? Icons.attach_money_outlined : Icons.shopping_cart_outlined, filled: true),
+                            InfoPill(text: isSale ? '판매' : '구매', icon: isSale ? Icons.attach_money_outlined : Icons.shopping_cart_outlined, filled: true),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -1377,16 +1292,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                           runSpacing: 8,
                           children: [
                             if (isSale) ...[
-                              _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
-                              _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
-                              _InfoPill(icon: Icons.today_outlined, text: date),
+                              InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                              InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                              InfoPill(icon: Icons.today_outlined, text: date),
                             ] else ...[
-                              _InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                              _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
-                              _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
-                              _InfoPill(icon: Icons.today_outlined, text: date),
+                              InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                              InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
+                              InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
+                              InfoPill(icon: Icons.today_outlined, text: date),
                               if (memo != null && memo.trim().isNotEmpty)
-                                _InfoPill(icon: Icons.note_outlined, text: memo),
+                                InfoPill(icon: Icons.note_outlined, text: memo),
                             ],
                           ],
                         ),
@@ -1817,12 +1732,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                _InfoPill(text: '구매', icon: Icons.shopping_cart_outlined, filled: true, fillColor: buyColor),
+                InfoPill(text: '구매', icon: Icons.shopping_cart_outlined, filled: true, fillColor: buyColor),
                 const SizedBox(width: 8),
                 Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
                 if ((m['whereToBuyId'] as String?) != null) ...[
                   const SizedBox(width: 8),
-                  _InfoPill(
+                  InfoPill(
                     icon: Icons.storefront_outlined,
                     text: _whereToBuyNames[(m['whereToBuyId'] as String?)!] ?? (m['whereToBuyId'] as String),
                   ),
@@ -1863,12 +1778,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                  _InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
-                  _InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
-                  _InfoPill(icon: Icons.today_outlined, text: date),
+                  InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                  InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
+                  InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
+                  InfoPill(icon: Icons.today_outlined, text: date),
                   if (memo != null && memo.trim().isNotEmpty)
-                    _InfoPill(icon: Icons.note_outlined, text: memo),
+                    InfoPill(icon: Icons.note_outlined, text: memo),
                 ],
               ),
             ],
@@ -1917,7 +1832,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                const _InfoPill(text: '판매', icon: Icons.attach_money_outlined, filled: true),
+                const InfoPill(text: '판매', icon: Icons.attach_money_outlined, filled: true),
                 const SizedBox(width: 8),
                 Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
                 IconButton(
@@ -1954,15 +1869,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                  InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
                   if (hasDiscount)
-                    _InfoPill(icon: Icons.percent, text: '할인율 ${_fmtDiscount(m['discount'])}'),
-                  _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
-                  _InfoPill(icon: Icons.today_outlined, text: date),
+                    InfoPill(icon: Icons.percent, text: '할인율 ${_fmtDiscount(m['discount'])}'),
+                  InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                  InfoPill(icon: Icons.today_outlined, text: date),
                   if (lotGiftcardName != null && lotGiftcardName.isNotEmpty)
-                    _InfoPill(icon: Icons.card_giftcard_outlined, text: lotGiftcardName),
+                    InfoPill(icon: Icons.card_giftcard_outlined, text: lotGiftcardName),
                   if (branchName != null && branchName.isNotEmpty)
-                    _InfoPill(icon: Icons.store_outlined, text: branchName),
+                    InfoPill(icon: Icons.store_outlined, text: branchName),
                 ],
               ),
             ],
