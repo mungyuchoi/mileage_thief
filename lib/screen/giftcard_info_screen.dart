@@ -698,6 +698,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   int _sumMiles() =>
       _sales.fold(0, (p, e) => p + _asInt(e['miles']));
   String _fmtWon(num v) => '${_won.format(v)}원';
+  String _fmtDiscount(dynamic v) {
+    final double d = _asDouble(v);
+    if (d == 0) return '0%';
+    final bool isInt = d == d.roundToDouble();
+    return '${isInt ? d.toStringAsFixed(0) : d.toStringAsFixed(2)}%';
+  }
   int _openQtyTotal() {
     int total = 0;
     for (final lot in _lots) {
@@ -1875,6 +1881,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final String date = (m['sellDate'] is Timestamp) ? _yMd.format((m['sellDate'] as Timestamp).toDate()) : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
       final int qty = _asInt(m['qty']);
+      final bool hasDiscount = m.containsKey('discount') && m['discount'] != null;
       
       // lotId를 통해 해당 lot의 giftcardId 찾기
       String? lotGiftcardName;
@@ -1948,6 +1955,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 runSpacing: 8,
                 children: [
                   _InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                  if (hasDiscount)
+                    _InfoPill(icon: Icons.percent, text: '할인율 ${_fmtDiscount(m['discount'])}'),
                   _InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
                   _InfoPill(icon: Icons.today_outlined, text: date),
                   if (lotGiftcardName != null && lotGiftcardName.isNotEmpty)
