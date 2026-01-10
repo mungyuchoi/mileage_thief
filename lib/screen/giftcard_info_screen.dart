@@ -10,6 +10,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mileage_thief/model/giftcard_period.dart';
 import 'package:mileage_thief/services/giftcard_service.dart';
 import 'package:mileage_thief/services/user_service.dart';
+import 'package:mileage_thief/widgets/giftcard_daily_ledger.dart';
 import 'package:mileage_thief/widgets/info_pill.dart';
 import 'package:mileage_thief/widgets/press_scale.dart';
 import 'package:mileage_thief/widgets/segment_tab_bar.dart';
@@ -125,7 +126,6 @@ class GiftcardInfoScreen extends StatefulWidget {
 
 class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProviderStateMixin {
   late final TabController _tabController;
-  late final TabController _buySellTabController;
 
   // 데이터
   bool _loading = true;
@@ -162,19 +162,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   final TextEditingController _targetCostPerMileController = TextEditingController();
   
   // 필터 관련
-  Set<String> _selectedGiftcardIdsForBuy = {}; // 구매 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
-  Set<String> _selectedGiftcardIdsForSell = {}; // 판매 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
+  Set<String> _selectedGiftcardIdsForDaily = {}; // 일간(통합) 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _buySellTabController = TabController(length: 2, vsync: this);
-    _buySellTabController.addListener(() {
-      if (!_buySellTabController.indexIsChanging) {
-        setState(() {}); // 탭 변경 완료 시 필터 버튼 업데이트
-      }
-    });
     _load();
     _loadMinDataMonth(); // 가장 오래된 데이터 월 계산
     // 초기 캘린더 월 데이터 로드 (대시보드 월과는 독립적으로 관리)
@@ -189,7 +182,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   @override
   void dispose() {
     _tabController.dispose();
-    _buySellTabController.dispose();
     _marketPriceController.dispose();
     _targetCostPerMileController.dispose();
     super.dispose();
@@ -858,8 +850,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             _buildCardEfficiencyBars(),
           ],
 
-          const SizedBox(height: 20),
-          _buildInsightCards(),
+          // NOTE: 대시보드 하단 인사이트(2개 카드) 임시 비활성화
+          // - 이번 달 평균 할인율
+          // - 가장 수익률이 높았던 브랜드
+          //
+          // const SizedBox(height: 20),
+          // _buildInsightCards(),
 
           // 그래프 섹션 제거됨 (요청)
 
@@ -1319,46 +1315,34 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     );
   }
 
-  Future<void> _showFilterDialog({required bool isBuy}) async {
-    // 구매/판매에 따라 상품권 종류 목록 가져오기
-    Set<String> giftcardIds;
-    if (isBuy) {
-      // 구매한 상품권 종류
-      giftcardIds = _lots.map((e) => (e['giftcardId'] as String?) ?? '').where((id) => id.isNotEmpty).toSet();
-    } else {
-      // 판매한 상품권 종류 (lotId를 통해 찾기)
-      giftcardIds = {};
-      for (final sale in _sales) {
-        final lotId = sale['lotId'] as String?;
-        if (lotId != null) {
-          final lot = _lots.firstWhere(
-            (lot) => lot['id'] == lotId,
-            orElse: () => <String, dynamic>{},
-          );
-          final giftcardId = lot['giftcardId'] as String?;
-          if (giftcardId != null && giftcardId.isNotEmpty) {
-            giftcardIds.add(giftcardId);
-          }
-        }
+  Future<void> _showDailyFilterDialog() async {
+    // lots + sales(역참조 포함)에서 등장하는 상품권 목록을 구성
+    final Set<String> giftcardIds = {};
+    for (final lot in _lots) {
+      final id = (lot['giftcardId'] as String?) ?? '';
+      if (id.isNotEmpty) giftcardIds.add(id);
+    }
+    for (final sale in _sales) {
+      final id = (sale['giftcardId'] as String?) ?? '';
+      if (id.isNotEmpty) {
+        giftcardIds.add(id);
+        continue;
       }
+      final lotId = sale['lotId'] as String?;
+      if (lotId == null) continue;
+      final lot = _lots.firstWhere(
+        (lot) => lot['id'] == lotId,
+        orElse: () => <String, dynamic>{},
+      );
+      final giftcardId = (lot['giftcardId'] as String?) ?? '';
+      if (giftcardId.isNotEmpty) giftcardIds.add(giftcardId);
     }
     final List<String> giftcardList = giftcardIds.toList()..sort();
-    
-    // 상품권 이름 가져오기
-    final Map<String, String> giftcardNames = {};
-    try {
-      final giftsSnap = await FirebaseFirestore.instance.collection('giftcards').get();
-      for (final doc in giftsSnap.docs) {
-        giftcardNames[doc.id] = (doc.data()['name'] as String?) ?? doc.id;
-      }
-    } catch (_) {}
-    
+
     // 현재 선택된 상품권 ID (빈 Set이면 전체)
-    final currentSelected = isBuy ? _selectedGiftcardIdsForBuy : _selectedGiftcardIdsForSell;
-    Set<String> tempSelected = currentSelected.isEmpty 
-        ? Set<String>.from(giftcardList) 
-        : Set<String>.from(currentSelected);
-    
+    final currentSelected = _selectedGiftcardIdsForDaily;
+    Set<String> tempSelected = currentSelected.isEmpty ? Set<String>.from(giftcardList) : Set<String>.from(currentSelected);
+
     final result = await showDialog<Set<String>>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -1406,7 +1390,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                giftcardNames[giftcardId] ?? giftcardId,
+                                _giftcardNames[giftcardId] ?? giftcardId,
                                 style: const TextStyle(color: Colors.black),
                                 textAlign: TextAlign.left,
                               ),
@@ -1428,7 +1412,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               ),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context, tempSelected),
+              onPressed: () {
+                // 아무것도 선택하지 않으면 전체로 처리(빈 Set)
+                if (tempSelected.isEmpty) {
+                  Navigator.pop(context, <String>{});
+                } else if (tempSelected.length == giftcardList.length) {
+                  Navigator.pop(context, <String>{});
+                } else {
+                  Navigator.pop(context, tempSelected);
+                }
+              },
               child: const Text(
                 '적용',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
@@ -1441,11 +1434,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     
     if (result != null) {
       setState(() {
-        if (isBuy) {
-          _selectedGiftcardIdsForBuy = result;
-        } else {
-          _selectedGiftcardIdsForSell = result;
-        }
+        _selectedGiftcardIdsForDaily = result;
       });
     }
   }
@@ -1684,17 +1673,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       return DateTime.fromMillisecondsSinceEpoch(0);
     }
     
-    // 구매 리스트 필터링 적용
-    if (_selectedGiftcardIdsForBuy.isNotEmpty) {
+    // 일간(통합) 필터 적용
+    if (_selectedGiftcardIdsForDaily.isNotEmpty) {
       lots.removeWhere((lot) {
         final giftcardId = (lot['giftcardId'] as String?) ?? '';
-        return !_selectedGiftcardIdsForBuy.contains(giftcardId);
+        return !_selectedGiftcardIdsForDaily.contains(giftcardId);
       });
     }
     
-    // 판매 리스트 필터링 적용
-    if (_selectedGiftcardIdsForSell.isNotEmpty) {
+    // 판매 리스트도 동일 필터 적용 (lotId 역참조 포함)
+    if (_selectedGiftcardIdsForDaily.isNotEmpty) {
       sales.removeWhere((sale) {
+        final directGiftcardId = (sale['giftcardId'] as String?) ?? '';
+        if (directGiftcardId.isNotEmpty) {
+          return !_selectedGiftcardIdsForDaily.contains(directGiftcardId);
+        }
         final lotId = sale['lotId'] as String?;
         if (lotId == null) return true;
         final lot = _lots.firstWhere(
@@ -1703,7 +1696,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         );
         final giftcardId = lot['giftcardId'] as String?;
         if (giftcardId == null) return true;
-        return !_selectedGiftcardIdsForSell.contains(giftcardId);
+        return !_selectedGiftcardIdsForDaily.contains(giftcardId);
       });
     }
     
@@ -1886,26 +1879,33 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       );
     }
 
-    final isBuy = _buySellTabController.index == 0;
-    final selectedIds = isBuy ? _selectedGiftcardIdsForBuy : _selectedGiftcardIdsForSell;
+    final lotById = <String, Map<String, dynamic>>{
+      for (final l in lots)
+        if (l['id'] is String) l['id'] as String: Map<String, dynamic>.from(l),
+    };
+    final groups = GiftcardDailyLedgerMapper.buildDayGroups(
+      lots: lots,
+      sales: sales,
+      giftcardNames: _giftcardNames,
+      lotById: lotById,
+      branchNames: _branchNames,
+      whereToBuyNames: _whereToBuyNames,
+      cards: _cards,
+      filterGiftcardIds: _selectedGiftcardIdsForDaily,
+    );
     
     return Column(
       children: [
-        SegmentTabBar(
-          controller: _buySellTabController,
-          labels: const ['구매', '판매'],
-          margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-        ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton.icon(
-                onPressed: () => _showFilterDialog(isBuy: isBuy),
+                onPressed: _showDailyFilterDialog,
                 icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
                 label: Text(
-                  selectedIds.isEmpty ? '전체 ▼' : '${selectedIds.length}개 선택 ▼',
+                  _selectedGiftcardIdsForDaily.isEmpty ? '전체 ▼' : '${_selectedGiftcardIdsForDaily.length}개 선택 ▼',
                   style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
                 ),
                 style: TextButton.styleFrom(
@@ -1919,88 +1919,52 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             ],
           ),
         ),
-        const SizedBox(height: 8),
         Expanded(
-          child: TabBarView(
-            controller: _buySellTabController,
-            children: [
-              NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification is ScrollUpdateNotification) {
-                    // 스크롤 중
-                    widget.onScrollChanged?.call(true);
-                  } else if (notification is ScrollEndNotification) {
-                    // 스크롤 멈춤
-                    widget.onScrollChanged?.call(false);
-                  }
-                  return false;
-                },
-                child: RefreshIndicator(
-                  onRefresh: _load,
-                  color: const Color(0xFF74512D),
-                  backgroundColor: Colors.white,
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    itemCount: lots.length + 1, // 광고를 위한 +1
-                    separatorBuilder: (_, index) {
-                      // 광고 다음에만 separator 추가
-                      if (index == 0) return const SizedBox(height: 8);
-                      return const SizedBox(height: 10);
-                    },
-                    itemBuilder: (context, i) {
-                    // 첫 번째 아이템은 광고
-                    if (i == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
-                      );
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollUpdateNotification) {
+                  widget.onScrollChanged?.call(true);
+                } else if (notification is ScrollEndNotification) {
+                  widget.onScrollChanged?.call(false);
+                }
+                return false;
+              },
+              child: RefreshIndicator(
+                onRefresh: _load,
+                color: const Color(0xFF74512D),
+                backgroundColor: Colors.white,
+                child: GiftcardDailyLedger(
+                  groups: groups,
+                  wonFormat: _won,
+                  dayFormat: _yMd,
+                  onEdit: (entry) async {
+                    await _confirmAndConsumePeanutsThen(() async {
+                      if (entry.type == GiftcardLedgerEntryType.buy) {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: entry.id)),
+                        );
+                      } else {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: entry.id)),
+                        );
+                      }
+                      if (mounted) _load();
+                    }, cost: 20);
+                  },
+                  onDelete: (entry) async {
+                    if (entry.type == GiftcardLedgerEntryType.buy) {
+                      await _confirmAndDeleteLot(Map<String, dynamic>.from(entry.raw), cost: 20);
+                    } else {
+                      await _confirmAndDeleteSale(Map<String, dynamic>.from(entry.raw), cost: 20);
                     }
-                    // 나머지는 구매 리스트
-                    return lotTile({...lots[i - 1], 'id': lots[i - 1]['id']});
                   },
                 ),
               ),
-              ),
-              NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification is ScrollUpdateNotification) {
-                    // 스크롤 중
-                    widget.onScrollChanged?.call(true);
-                  } else if (notification is ScrollEndNotification) {
-                    // 스크롤 멈춤
-                    widget.onScrollChanged?.call(false);
-                  }
-                  return false;
-                },
-                child: RefreshIndicator(
-                  onRefresh: _load,
-                  color: const Color(0xFF74512D),
-                  backgroundColor: Colors.white,
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    itemCount: sales.length + 1, // 광고를 위한 +1
-                    separatorBuilder: (_, index) {
-                      // 광고 다음에만 separator 추가
-                      if (index == 0) return const SizedBox(height: 8);
-                      return const SizedBox(height: 10);
-                    },
-                    itemBuilder: (context, i) {
-                    // 첫 번째 아이템은 광고
-                    if (i == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: _GiftBanner(adUnitId: AdHelper.giftDailyBannerAdUnitId),
-                      );
-                    }
-                    // 나머지는 판매 리스트
-                    return saleTile({...sales[i - 1], 'id': sales[i - 1]['id']});
-                  },
-                ),
-              ),
-              ),
-            ],
+            ),
           ),
         ),
       ],
@@ -2022,7 +1986,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         children: [
           SegmentTabBar(
             controller: _tabController,
-            labels: const ['대시보드', '캘린더', '일간'],
+            labels: const ['대시보드', '달력', '일일'],
             margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           ),
           Expanded(
