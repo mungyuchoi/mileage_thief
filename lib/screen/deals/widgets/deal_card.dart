@@ -35,6 +35,12 @@ class DealCard extends StatelessWidget {
     print('=== Deal Debug Info ===');
     print('Deal ID: ${deal.dealId}');
     print('Agency: ${deal.agency} (${deal.agencyCode})');
+    print('Airline Code: ${deal.airlineCode}');
+    print('Airline Name: ${deal.airlineName}');
+    print('Outbound Airline Code: ${deal.outbound?.airlineCode ?? "NULL"}');
+    print('Outbound Airline Name: ${deal.outbound?.airlineName ?? "NULL"}');
+    print('Inbound Airline Code: ${deal.inbound?.airlineCode ?? "NULL"}');
+    print('Inbound Airline Name: ${deal.inbound?.airlineName ?? "NULL"}');
     print('Trip Type: ${deal.tripType}');
     print('Inbound: ${deal.inbound?.toString() ?? "NULL"}');
     print('Available Dates count: ${deal.availableDates.length}');

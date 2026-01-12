@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -1446,6 +1447,90 @@ class _RecommendCard extends StatelessWidget {
   }
 }
 
+/// 상품권 지점 상세 화면용 업데이트 시간 표시 위젯
+/// 특가 항공권과 동일하게 5초마다 "표시된 가격은 상시 변동될 수 있습니다."와
+/// "최근 업데이트: ..."를 전환합니다.
+/// 업데이트 시간은 오전 6시부터 오후 10시까지 1시간 간격입니다.
+class _GiftcardUpdateTimeText extends StatefulWidget {
+  const _GiftcardUpdateTimeText();
+
+  @override
+  State<_GiftcardUpdateTimeText> createState() => _GiftcardUpdateTimeTextState();
+}
+
+class _GiftcardUpdateTimeTextState extends State<_GiftcardUpdateTimeText> {
+  bool _showUpdateTime = false;
+  Timer? _updateTimeTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startUpdateTimeTimer();
+  }
+
+  @override
+  void dispose() {
+    _updateTimeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startUpdateTimeTimer() {
+    // 5초마다 텍스트만 전환 (리스트는 리프레시되지 않음)
+    _updateTimeTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted) {
+        setState(() {
+          _showUpdateTime = !_showUpdateTime;
+        });
+      }
+    });
+  }
+
+  String _getLastUpdateTimeText() {
+    final now = DateTime.now();
+    final currentHour = now.hour;
+    
+    // 업데이트 시간 목록: 6시부터 1시간 간격으로 22시까지
+    final updateHours = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+    
+    // 현재 시간보다 작거나 같은 가장 최근 업데이트 시간 찾기
+    int? lastUpdateHour;
+    for (int hour in updateHours.reversed) {
+      if (hour <= currentHour) {
+        lastUpdateHour = hour;
+        break;
+      }
+    }
+    
+    // 현재 시간이 6시 이전이면 어제 22시로 설정
+    if (lastUpdateHour == null) {
+      final yesterday = now.subtract(const Duration(days: 1));
+      return '최근 업데이트: ${yesterday.year}년 ${yesterday.month}월 ${yesterday.day}일 22시';
+    }
+    
+    // 오늘 날짜로 표시
+    return '최근 업데이트: ${now.year}년 ${now.month}월 ${now.day}일 ${lastUpdateHour}시';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Text(
+          _showUpdateTime ? _getLastUpdateTimeText() : '표시된 가격은 상시 변동될 수 있습니다.',
+          key: ValueKey(_showUpdateTime),
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+          textAlign: TextAlign.left,
+        ),
+      ),
+    );
+  }
+}
+
 /// 3단계: 특정 지점 선택 시, 지점 정보 + 이 지점의 모든 상품권 시세
 class BranchRatesDetailPage extends StatelessWidget {
   final String branchId;
@@ -1487,27 +1572,6 @@ class BranchRatesDetailPage extends StatelessWidget {
     };
   }
 
-  Future<String?> _latestDailyId() async {
-    final today = DateTime.now();
-    final todayId =
-        '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
-
-    final dailyCol = FirebaseFirestore.instance
-        .collection('branches')
-        .doc(branchId)
-        .collection('rates_daily');
-
-    final todayDoc = await dailyCol.doc(todayId).get();
-    if (todayDoc.exists) return todayId;
-
-    final latestSnap = await dailyCol
-        .orderBy(FieldPath.documentId, descending: true)
-        .limit(1)
-        .get();
-
-    if (latestSnap.docs.isEmpty) return null;
-    return latestSnap.docs.first.id;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1593,31 +1657,13 @@ class BranchRatesDetailPage extends StatelessWidget {
           final openingHours = branch?['openingHours'] as Map<String, dynamic>?;
           final url = branch?['url'] as String?;
 
-          return FutureBuilder<String?>(
-            future: _latestDailyId(),
-            builder: (context, latestIdSnap) {
-              final String baseDateLabel;
-              if (latestIdSnap.connectionState == ConnectionState.waiting) {
-                baseDateLabel = '기준일 확인 중...';
-              } else if (latestIdSnap.data != null) {
-                final id = latestIdSnap.data!;
-                baseDateLabel =
-                    '기준일: ${id.substring(0, 4)}-${id.substring(4, 6)}-${id.substring(6, 8)}';
-              } else {
-                baseDateLabel = '기준일 정보 없음';
-              }
+          final double bottomInset = MediaQuery.of(context).padding.bottom;
 
-              final double bottomInset = MediaQuery.of(context).padding.bottom;
-
-              return ListView(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
-                children: [
-                  Text(
-                    baseDateLabel,
-                    style:
-                        const TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 8),
+          return ListView(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
+            children: [
+              const _GiftcardUpdateTimeText(),
+              const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -1835,8 +1881,6 @@ class BranchRatesDetailPage extends StatelessWidget {
                   ),
                 ],
               );
-            },
-          );
         },
       ),
     );
