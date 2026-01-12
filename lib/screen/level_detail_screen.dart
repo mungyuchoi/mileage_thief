@@ -540,23 +540,28 @@ class _LevelDetailScreenState extends State<LevelDetailScreen>
     
     if (requirements['posts']! > 0) {
       totalRequired += requirements['posts']!;
-      totalCurrent += currentPosts;
+      // 목표치를 초과한 경우 목표치만큼만 카운트
+      totalCurrent += currentPosts > requirements['posts']! ? requirements['posts']! : currentPosts;
     }
     if (requirements['comments']! > 0) {
       totalRequired += requirements['comments']!;
-      totalCurrent += currentComments;
+      // 목표치를 초과한 경우 목표치만큼만 카운트
+      totalCurrent += currentComments > requirements['comments']! ? requirements['comments']! : currentComments;
     }
     if (requirements['likes']! > 0) {
       totalRequired += requirements['likes']!;
-      totalCurrent += currentLikes;
+      // 목표치를 초과한 경우 목표치만큼만 카운트
+      totalCurrent += currentLikes > requirements['likes']! ? requirements['likes']! : currentLikes;
     }
     if (requirements['points']! > 0) {
       totalRequired += requirements['points']!;
-      totalCurrent += currentPoints;
+      // 목표치를 초과한 경우 목표치만큼만 카운트
+      totalCurrent += currentPoints > requirements['points']! ? requirements['points']! : currentPoints;
     }
     if (requirements['followers']! > 0) {
       totalRequired += requirements['followers']!;
-      totalCurrent += currentFollowers;
+      // 목표치를 초과한 경우 목표치만큼만 카운트
+      totalCurrent += currentFollowers > requirements['followers']! ? requirements['followers']! : currentFollowers;
     }
 
     // 진행률 계산 (최대 100%)
