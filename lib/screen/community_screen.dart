@@ -1627,9 +1627,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             child: Container(
                               color: Colors.grey[200],
                               alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.image_outlined,
-                                color: Colors.grey,
+                              child: FractionallySizedBox(
+                                widthFactor: 0.5,
+                                heightFactor: 0.5,
+                                child: Image.asset(
+                                  'asset/img/app_icon.png',
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                           ),
