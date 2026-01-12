@@ -20,6 +20,7 @@ class _CardStepPageState extends State<CardStepPage> {
 
   String? _error;
   bool _saving = false;
+  String? _cardType; // 'credit' 또는 'check'
   bool get _isEdit => widget.editCardId != null;
 
   @override
@@ -37,12 +38,22 @@ class _CardStepPageState extends State<CardStepPage> {
     final doc = await FirebaseFirestore.instance.collection('users').doc(uid).collection('cards').doc(id).get();
     if (!doc.exists) return;
     final data = doc.data() as Map<String, dynamic>;
+    final creditValue = (data['creditPerMileKRW'] as num?)?.toInt() ?? 0;
+    final checkValue = (data['checkPerMileKRW'] as num?)?.toInt() ?? 0;
     setState(() {
       _cardIdController.text = id;
       _nameController.text = (data['name'] as String?) ?? '';
-      _creditPerMileController.text = ((data['creditPerMileKRW'] as num?)?.toInt() ?? 0).toString();
-      _checkPerMileController.text = ((data['checkPerMileKRW'] as num?)?.toInt() ?? 0).toString();
+      _creditPerMileController.text = creditValue.toString();
+      _checkPerMileController.text = checkValue.toString();
       _memoController.text = (data['memo'] as String?) ?? '';
+      // 기존 데이터가 있으면 둘 중 값이 있는 것을 선택, 둘 다 있으면 신용카드 기본 선택
+      if (creditValue > 0 && checkValue > 0) {
+        _cardType = 'credit'; // 기본값
+      } else if (creditValue > 0) {
+        _cardType = 'credit';
+      } else if (checkValue > 0) {
+        _cardType = 'check';
+      }
     });
   }
 
@@ -87,11 +98,15 @@ class _CardStepPageState extends State<CardStepPage> {
       setState(() { _error = '카드(사) 이름을 입력하세요.'; });
       return;
     }
-    if (credit == null || credit <= 0) {
+    if (_cardType == null) {
+      setState(() { _error = '카드 타입을 선택하세요.'; });
+      return;
+    }
+    if (_cardType == 'credit' && (credit == null || credit <= 0)) {
       setState(() { _error = '신용카드 1마일당 원가를 정수로 입력하세요.'; });
       return;
     }
-    if (check == null || check <= 0) {
+    if (_cardType == 'check' && (check == null || check <= 0)) {
       setState(() { _error = '체크카드 1마일당 원가를 정수로 입력하세요.'; });
       return;
     }
@@ -106,8 +121,8 @@ class _CardStepPageState extends State<CardStepPage> {
           .doc(cardId)
           .set({
         'name': name,
-        'creditPerMileKRW': credit,
-        'checkPerMileKRW': check,
+        'creditPerMileKRW': _cardType == 'credit' ? credit : 0,
+        'checkPerMileKRW': _cardType == 'check' ? check : 0,
         'memo': _memoController.text.trim().isEmpty ? null : _memoController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -227,20 +242,86 @@ class _CardStepPageState extends State<CardStepPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: const [
-                        Text('신용카드: 1마일 원가(원)', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Row(
+                      children: [
+                        Text('카드 타입', style: TextStyle(fontWeight: FontWeight.w600)),
                         SizedBox(width: 4),
                         Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('신용카드'),
+                            value: 'credit',
+                            groupValue: _cardType,
+                            activeColor: const Color(0xFF74512D),
+                            onChanged: (String? value) {
+                              setState(() {
+                                _cardType = value;
+                                if (value == 'check') {
+                                  _creditPerMileController.clear();
+                                } else if (value == 'credit') {
+                                  _checkPerMileController.clear();
+                                }
+                              });
+                            },
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('체크카드'),
+                            value: 'check',
+                            groupValue: _cardType,
+                            activeColor: const Color(0xFF74512D),
+                            onChanged: (String? value) {
+                              setState(() {
+                                _cardType = value;
+                                if (value == 'check') {
+                                  _creditPerMileController.clear();
+                                } else if (value == 'credit') {
+                                  _checkPerMileController.clear();
+                                }
+                              });
+                            },
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Text(
+                          '신용카드: 1마일 원가(원)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: _cardType == 'credit' ? Colors.black : Colors.black54,
+                          ),
+                        ),
+                        if (_cardType == 'credit') ...[
+                          const SizedBox(width: 4),
+                          const Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        ] else if (_cardType == 'check') ...[
+                          const SizedBox(width: 4),
+                          const Text('선택', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _creditPerMileController,
+                      enabled: _cardType != 'check',
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         hintText: '예: 1000',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: _cardType == 'check' ? Colors.grey[100] : Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
@@ -248,25 +329,42 @@ class _CardStepPageState extends State<CardStepPage> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      children: const [
-                        Text('체크카드: 1마일 원가(원)', style: TextStyle(fontWeight: FontWeight.w600)),
-                        SizedBox(width: 4),
-                        Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                      children: [
+                        Text(
+                          '체크카드: 1마일 원가(원)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: _cardType == 'check' ? Colors.black : Colors.black54,
+                          ),
+                        ),
+                        if (_cardType == 'check') ...[
+                          const SizedBox(width: 4),
+                          const Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        ] else if (_cardType == 'credit') ...[
+                          const SizedBox(width: 4),
+                          const Text('선택', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _checkPerMileController,
+                      enabled: _cardType != 'credit',
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         hintText: '예: 1500',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: _cardType == 'credit' ? Colors.grey[100] : Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
@@ -274,6 +372,10 @@ class _CardStepPageState extends State<CardStepPage> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
