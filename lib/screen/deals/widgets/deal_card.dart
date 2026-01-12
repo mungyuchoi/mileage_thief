@@ -29,8 +29,47 @@ class DealCard extends StatelessWidget {
       airportCode: deal.destAirport,
       cityName: deal.destCity,
     );
-    final isRoundTrip = deal.tripType == 'VV' || deal.tripType == 'RT';
     final firstDate = deal.availableDates.isNotEmpty ? deal.availableDates.first : null;
+    
+    // 디버깅: 실제 데이터 확인
+    print('=== Deal Debug Info ===');
+    print('Deal ID: ${deal.dealId}');
+    print('Agency: ${deal.agency} (${deal.agencyCode})');
+    print('Trip Type: ${deal.tripType}');
+    print('Inbound: ${deal.inbound?.toString() ?? "NULL"}');
+    print('Available Dates count: ${deal.availableDates.length}');
+    if (deal.availableDates.isNotEmpty) {
+      print('First available date - departure: ${firstDate?.departure}, return: ${firstDate?.returnDate}');
+      print('First available date - departureDate: ${firstDate?.departureDate}, returnDateStr: ${firstDate?.returnDateStr}');
+    }
+    print('Date Ranges count: ${deal.dateRanges.length}');
+    if (deal.dateRanges.isNotEmpty) {
+      print('First date range - start: ${deal.dateRanges.first.start}, end: ${deal.dateRanges.first.end}');
+    }
+    print('Supply dates - start: ${deal.supplyStartDate}, end: ${deal.supplyEndDate}');
+    
+    // 특가 항공권 여행사 목록 (출발일만 표시해야 하는 여행사)
+    const specialDealAgencies = ['ttangdeal', 'yellowtour'];
+    final isSpecialDealAgency = specialDealAgencies.contains(deal.agencyCode);
+    
+    // 특가 항공권 처리 로직:
+    // 특가 항공권 여행사는 항상 출발일만 표시 (available_dates가 비어있을 때만 편도로 처리)
+    // 일반 여행사의 경우: inbound가 있고 available_dates에 returnDateStr이 있으면 왕복
+    final hasActualReturnDate = firstDate?.returnDateStr != null && 
+                                 firstDate?.returnDateStr?.isNotEmpty == true;
+    
+    // 특가 항공권 여행사의 경우: available_dates가 비어있으면 항상 편도로 처리
+    // 일반 여행사의 경우: inbound가 있고 returnDateStr이 있으면 왕복
+    final shouldShowRoundTrip = isSpecialDealAgency 
+        ? false  // 특가 항공권 여행사는 항상 편도로 처리
+        : ((deal.tripType == 'VV' || deal.tripType == 'RT') && deal.inbound != null && hasActualReturnDate);
+    
+    final isRoundTrip = shouldShowRoundTrip;
+    
+    print('Is Special Deal Agency: $isSpecialDealAgency');
+    print('Has Actual Return Date: $hasActualReturnDate');
+    print('Is Round Trip: $isRoundTrip');
+    print('========================');
     
     // availableDates가 비어있을 때 date_ranges나 supply_start_date/supply_end_date로 날짜 생성
     String? fallbackDepartureDate;
@@ -50,7 +89,8 @@ class DealCard extends StatelessWidget {
           fallbackDepartureDate = '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
           fallbackDepartureDateStr = dateRange.start;
           
-          if (isRoundTrip) {
+          // date_ranges의 end는 공급 종료일일 수 있으므로, inbound가 있을 때만 귀국일로 사용
+          if (isRoundTrip && deal.inbound != null) {
             fallbackReturnDate = '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
             fallbackReturnDateStr = dateRange.end;
           }
@@ -142,18 +182,29 @@ class DealCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 가는 편
-                      _buildFlightRow(
-                        origin: deal.originCity,
-                        originAirport: deal.originAirport,
-                        dest: deal.destCity,
-                        destAirport: deal.destAirport,
-                        flightInfo: deal.outbound,
-                        date: firstDate?.departure ?? fallbackDepartureDate,
-                        dateStr: firstDate?.departureDate ?? fallbackDepartureDateStr,
-                        duration: deal.flightDuration,
-                        isDirect: deal.isDirect,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildFlightRow(
+                            origin: deal.originCity,
+                            originAirport: deal.originAirport,
+                            dest: deal.destCity,
+                            destAirport: deal.destAirport,
+                            flightInfo: deal.outbound,
+                            date: firstDate?.departure ?? fallbackDepartureDate,
+                            dateStr: firstDate?.departureDate ?? fallbackDepartureDateStr,
+                            duration: deal.flightDuration,
+                            isDirect: deal.isDirect,
+                          ),
+                          // 편도인 경우 출발 가능 기간 표시
+                          if (!isRoundTrip && (deal.dateRanges.isNotEmpty || (deal.supplyStartDate.isNotEmpty && deal.supplyEndDate.isNotEmpty)))
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 0),
+                              child: _buildSupplyPeriodText(deal),
+                            ),
+                        ],
                       ),
-                      // 오는 편 (왕복인 경우)
+                      // 오는 편 (왕복인 경우, inbound 정보가 반드시 있어야 함)
                       if (isRoundTrip && deal.inbound != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 12),
@@ -173,22 +224,25 @@ class DealCard extends StatelessWidget {
                       // 여행 기간 및 직항 표시
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: ColorConstants.milecatchBrown.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${deal.travelDays}박 ${deal.travelDays + 1}일',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: ColorConstants.milecatchBrown,
+                          // 편도인 경우 여행 기간 표시하지 않음
+                          if (isRoundTrip)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: ColorConstants.milecatchBrown.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${deal.travelDays}박 ${deal.travelDays + 1}일',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorConstants.milecatchBrown,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
+                          if (isRoundTrip)
+                            const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
@@ -588,6 +642,61 @@ class DealCard extends StatelessWidget {
       Fluttertoast.showToast(msg: '처리 중 오류가 발생했습니다.');
       return false;
     }
+  }
+
+  Widget _buildSupplyPeriodText(DealModel deal) {
+    String? startDateStr;
+    String? endDateStr;
+    
+    // date_ranges 우선 사용
+    if (deal.dateRanges.isNotEmpty) {
+      final dateRange = deal.dateRanges.first;
+      startDateStr = dateRange.start;
+      endDateStr = dateRange.end;
+    } 
+    // date_ranges가 없으면 supply_start_date/supply_end_date 사용
+    else if (deal.supplyStartDate.isNotEmpty && deal.supplyEndDate.isNotEmpty) {
+      try {
+        if (deal.supplyStartDate.length == 8 && deal.supplyEndDate.length == 8) {
+          final startYear = deal.supplyStartDate.substring(0, 4);
+          final startMonth = deal.supplyStartDate.substring(4, 6);
+          final startDay = deal.supplyStartDate.substring(6, 8);
+          final endYear = deal.supplyEndDate.substring(0, 4);
+          final endMonth = deal.supplyEndDate.substring(4, 6);
+          final endDay = deal.supplyEndDate.substring(6, 8);
+          
+          startDateStr = '$startYear-$startMonth-$startDay';
+          endDateStr = '$endYear-$endMonth-$endDay';
+        }
+      } catch (e) {
+        // 파싱 실패 시 무시
+      }
+    }
+    
+    if (startDateStr == null || endDateStr == null) {
+      return const SizedBox.shrink();
+    }
+    
+    // 날짜 포맷팅 (예: "2026-01-13" -> "1/13")
+    String formatDate(String dateStr) {
+      try {
+        final dateTime = DateTime.parse(dateStr);
+        return '${dateTime.month}/${dateTime.day}';
+      } catch (e) {
+        return dateStr;
+      }
+    }
+    
+    final formattedStart = formatDate(startDateStr);
+    final formattedEnd = formatDate(endDateStr);
+    
+    return Text(
+      '출발 가능: $formattedStart ~ $formattedEnd',
+      style: const TextStyle(
+        fontSize: 11,
+        color: Colors.black45,
+      ),
+    );
   }
 
   void _handleBooking(BuildContext context) async {
