@@ -17,6 +17,7 @@ import 'package:mileage_thief/widgets/segment_tab_bar.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'giftcard_kpi_detail_screen.dart';
+import 'user_profile_screen.dart';
 
 class _KpiValue extends StatelessWidget {
   final String label;
@@ -164,14 +165,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   // 필터 관련
   Set<String> _selectedGiftcardIdsForDaily = {}; // 일간(통합) 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
 
+  // 랭킹 데이터
+  List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[];
+  bool _rankingLoading = false;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      // 랭킹 탭(인덱스 3)이 선택되었을 때 데이터 로드
+      if (_tabController.index == 3 && _periodType == DashboardPeriodType.month) {
+        _loadRanking();
+      }
+    });
     _load();
     _loadMinDataMonth(); // 가장 오래된 데이터 월 계산
     // 초기 캘린더 월 데이터 로드 (대시보드 월과는 독립적으로 관리)
     _loadCalendarMonth(_calendarMonth);
+    // 초기 랭킹 데이터 로드
+    _loadRanking();
   }
   
   // 외부에서 호출할 수 있는 새로고침 메서드
@@ -468,6 +481,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                         _loading = true;
                       });
                       await _load();
+                      await _loadRanking();
                     },
                   );
                 },
@@ -1971,6 +1985,231 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     );
   }
 
+  Future<void> _loadRanking() async {
+    if (_rankingLoading) return;
+    setState(() {
+      _rankingLoading = true;
+    });
+    try {
+      final String monthKey = DateFormat('yyyyMM').format(_selectedMonth);
+      print('[GiftcardInfoScreen] 랭킹 데이터 로드 시작 - monthKey: $monthKey');
+      
+      final docRef = FirebaseFirestore.instance
+          .collection('meta')
+          .doc('rates_monthly')
+          .collection('rates_monthly')
+          .doc(monthKey);
+      
+      final doc = await docRef.get();
+      
+      if (!doc.exists) {
+        print('[GiftcardInfoScreen] 랭킹 데이터 없음');
+        setState(() {
+          _userRankings = [];
+          _rankingLoading = false;
+        });
+        return;
+      }
+      
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data == null) {
+        setState(() {
+          _userRankings = [];
+          _rankingLoading = false;
+        });
+        return;
+      }
+      
+      final List<dynamic> users = (data['users'] is List) 
+          ? List<dynamic>.from(data['users'] as List) 
+          : <dynamic>[];
+      
+      // uid별 합산으로 랭킹 계산
+      final Map<String, Map<String, dynamic>> agg = {};
+      for (final u in users) {
+        if (u is! Map) continue;
+        final String uid = (u['uid'] as String?) ?? '';
+        if (uid.isEmpty) continue;
+        final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
+        final String dn = (u['displayName'] as String?) ?? '';
+        final String pu = (u['photoUrl'] as String?) ?? '';
+        final Map<String, dynamic> cur = agg[uid] ?? {
+          'uid': uid,
+          'displayName': dn,
+          'photoUrl': pu,
+          'sellTotal': 0
+        };
+        cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
+        cur['displayName'] = dn; // 최신 정보로 업데이트
+        cur['photoUrl'] = pu;
+        agg[uid] = cur;
+      }
+      
+      final List<Map<String, dynamic>> ranked = agg.values.toList()
+        ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
+      
+      print('[GiftcardInfoScreen] 랭킹 데이터 로드 완료 - ${ranked.length}명');
+      
+      setState(() {
+        _userRankings = ranked;
+        _rankingLoading = false;
+      });
+    } catch (e) {
+      print('[GiftcardInfoScreen] 랭킹 데이터 로드 오류: $e');
+      setState(() {
+        _userRankings = [];
+        _rankingLoading = false;
+      });
+    }
+  }
+
+  String _formatCurrency(int value) {
+    final formatter = NumberFormat('#,###');
+    return '${formatter.format(value)}원';
+  }
+
+  Widget _buildRanking() {
+    final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
+    
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(width: 8),
+              Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+              const Spacer(),
+              Text('${_userRankings.length}명', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _rankingLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                  ),
+                )
+              : _userRankings.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '랭킹 데이터가 없습니다.',
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _userRankings.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final Map<String, dynamic> u = _userRankings[index];
+                        final String uid = u['uid'] as String? ?? '';
+                        final String name = u['displayName'] as String? ?? '익명';
+                        final String? photo = u['photoUrl'] as String?;
+                        final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
+
+                        Color bg;
+                        Color fg = Colors.white;
+                        String label;
+                        switch (index) {
+                          case 0:
+                            bg = const Color(0xFFFFD700);
+                            label = '1';
+                            break;
+                          case 1:
+                            bg = const Color(0xFFB0BEC5);
+                            label = '2';
+                            break;
+                          case 2:
+                            bg = const Color(0xFFCD7F32);
+                            label = '3';
+                            break;
+                          default:
+                            bg = Colors.grey.shade200;
+                            fg = Colors.black87;
+                            label = '${index + 1}';
+                        }
+
+                        return InkWell(
+                          onTap: () {
+                            if (uid.isNotEmpty) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => UserProfileScreen(userUid: uid),
+                                ),
+                              );
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: bg,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      color: fg,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundImage: (photo != null && photo.isNotEmpty)
+                                      ? NetworkImage(photo)
+                                      : null,
+                                  child: (photo == null || photo.isEmpty)
+                                      ? const Icon(Icons.person, size: 16)
+                                      : null,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '총 ${_formatCurrency(total)}',
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _formatCurrency(total),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -1986,7 +2225,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         children: [
           SegmentTabBar(
             controller: _tabController,
-            labels: const ['대시보드', '달력', '일일'],
+            labels: const ['대시보드', '달력', '일일', '랭킹'],
             margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           ),
           Expanded(
@@ -1998,6 +2237,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   _buildDashboard(),
                   _buildCalendar(),
                   _buildDaily(),
+                  _buildRanking(),
                 ],
               ),
             ),
