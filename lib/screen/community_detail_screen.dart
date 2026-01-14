@@ -1533,6 +1533,68 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return processed;
   }
 
+  // 일반 텍스트 URL을 링크로 변환
+  String _makeUrlsClickable(String htmlContent) {
+    // 이미 <a> 태그로 감싸진 링크는 처리하지 않음
+    // 1. 먼저 기존 <a> 태그를 임시 마커로 치환
+    final Map<String, String> linkMap = {};
+    int linkCounter = 0;
+    
+    String processed = htmlContent;
+    final existingLinkPattern = RegExp(r'<a[^>]*>.*?</a>', caseSensitive: false, multiLine: true);
+    
+    processed = processed.replaceAllMapped(existingLinkPattern, (match) {
+      final marker = '__EXISTING_LINK_${linkCounter}__';
+      linkMap[marker] = match.group(0) ?? '';
+      linkCounter++;
+      return marker;
+    });
+    
+    // 2. 일반 텍스트 URL을 <a> 태그로 감싸기
+    // HTTP/HTTPS URL 패턴 (간단한 패턴 사용)
+    final urlPattern = RegExp(
+      r'https?://[^\s<>"{}|\\^`\[\]]+[^\s<>"{}|\\^`\[\].,;:!?]',
+      caseSensitive: false,
+    );
+    
+    // 역순으로 매칭하여 인덱스 문제 방지
+    final matches = urlPattern.allMatches(processed).toList();
+    matches.sort((a, b) => b.start.compareTo(a.start));
+    
+    for (final match in matches) {
+      final url = match.group(0) ?? '';
+      if (url.isEmpty) continue;
+      
+      // 이미 마커로 치환된 부분이면 건너뛰기
+      if (url.contains('__EXISTING_LINK_') || url.contains('__LINK_IMAGE_')) {
+        continue;
+      }
+      
+      // 이미 <a> 태그 안에 있는지 확인
+      final beforeMatch = processed.substring(0, match.start);
+      // <a 태그나 href=가 바로 앞에 있으면 건너뛰기
+      if (beforeMatch.contains('<a') || beforeMatch.contains('href=')) {
+        final lastATag = beforeMatch.lastIndexOf('<a');
+        final lastHref = beforeMatch.lastIndexOf('href=');
+        final lastCloseTag = beforeMatch.lastIndexOf('>');
+        
+        // <a> 태그가 열려있고 닫히지 않았으면 건너뛰기
+        if (lastATag > lastCloseTag || lastHref > lastCloseTag) {
+          continue;
+        }
+      }
+      
+      processed = processed.substring(0, match.start) + '<a href="$url">$url</a>' + processed.substring(match.end);
+    }
+    
+    // 3. 임시 마커를 원래 내용으로 복원
+    linkMap.forEach((marker, original) {
+      processed = processed.replaceAll(marker, original);
+    });
+    
+    return processed;
+  }
+
   // HTML 전처리: 불필요한 div 태그 정리 및 공백 최소화
   String _cleanupHtmlContent(String htmlContent) {
     String cleaned = htmlContent;
@@ -2994,8 +3056,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
     );
 
+    // URL을 링크로 변환하고 이미지를 클릭 가능하게 만들기
+    final htmlWithLinks = _makeUrlsClickable(processedHtml);
+    final finalHtml = _makeImagesClickable(htmlWithLinks);
+
     return Html(
-      data: _makeImagesClickable(processedHtml),
+      data: finalHtml,
       style: {
         "body": Style(
           fontSize: FontSize(14),
@@ -3026,6 +3092,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         "a": Style(
           color: Colors.blue,
           textDecoration: TextDecoration.underline,
+          fontWeight: FontWeight.normal,
         ),
         // 멘션 스타일링
         "span[data-mention]": Style(
