@@ -565,19 +565,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ),
                         ),
                       ),
-                    // 뷰 모드 토글 버튼
-                    IconButton(
-                      icon: Icon(
-                        isCompactView ? Icons.view_module : Icons.view_list,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          isCompactView = !isCompactView;
-                        });
-                      },
-                      tooltip: isCompactView ? '카드뷰로 보기' : '간단뷰로 보기',
-                    ),
                     // 알림 버튼 + 뱃지
                     _buildCommunityNotificationButton(),
                     // 콘테스트 버튼
@@ -604,6 +591,35 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ),
                         );
                       },
+                    ),
+                    // 더보기 메뉴 (뷰 모드 토글 포함)
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                      iconSize: 20,
+                      constraints: const BoxConstraints(minWidth: 40),
+                      padding: EdgeInsets.zero,
+                      onSelected: (value) {
+                        if (value == 'view_toggle') {
+                          setState(() {
+                            isCompactView = !isCompactView;
+                          });
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'view_toggle',
+                          child: Row(
+                            children: [
+                              Icon(
+                                isCompactView ? Icons.view_module : Icons.view_list,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(isCompactView ? '카드뷰로 보기' : '간단뷰로 보기'),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'contest_detail_screen.dart';
 
 /// 콘테스트 목록을 보여주는 화면
 class ContestListScreen extends StatefulWidget {
@@ -92,110 +93,115 @@ class _ContestListScreenState extends State<ContestListScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // TODO: 콘테스트 상세 화면으로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ContestDetailScreen(contestId: docId),
+            ),
+          );
         },
         child: Opacity(
           opacity: isFinished ? 0.6 : 1.0, // 종료된 것은 약간 투명하게
-          child: Padding(
+            child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 상단: 제목과 상태 버튼
-                Row(
+                // 상단: 제목
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isFinished ? Colors.grey[600] : Colors.black,
-                            ),
-                          ),
-                          if (description.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              description.replaceAll(RegExp(r'<[^>]*>'), ''),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isFinished ? Colors.grey[500] : Colors.black87,
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isFinished ? Colors.grey[600] : Colors.black,
                       ),
                     ),
-                    if (isFinished)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isFinished ? Colors.grey[500] : Colors.black87,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '종료됨',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: status == 'PRE_ACTIVE'
-                              ? Colors.grey[300]
-                              : Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                          border: status == 'ACTIVE'
-                              ? Border.all(color: Colors.blue, width: 1)
-                              : null,
-                        ),
-                        child: Text(
-                          _getStatusText(status),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: status == 'PRE_ACTIVE'
-                                ? Colors.black87
-                                : Colors.blue,
-                          ),
-                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 12),
-                // 날짜 정보
+                // 날짜 정보와 상태 버튼 (같은 줄에 배치)
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: isFinished ? Colors.grey[500] : Colors.grey[700],
+                    // 날짜 정보 (왼쪽)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: isFinished ? Colors.grey[500] : Colors.grey[700],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDateRange(postingDateStart, postingDateEnd),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isFinished ? Colors.grey[500] : Colors.grey[700],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatDateRange(postingDateStart, postingDateEnd),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isFinished ? Colors.grey[500] : Colors.grey[700],
-                      ),
-                    ),
+                    // 상태 버튼 (오른쪽)
+                    isFinished
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '종료됨',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: status == 'PRE_ACTIVE'
+                                  ? Colors.grey[300]
+                                  : Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: status == 'ACTIVE'
+                                  ? Border.all(color: Colors.blue, width: 1)
+                                  : null,
+                            ),
+                            child: Text(
+                              _getStatusText(status),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: status == 'PRE_ACTIVE'
+                                    ? Colors.black87
+                                    : Colors.blue,
+                              ),
+                            ),
+                          ),
                   ],
                 ),
                 // 이미지가 있는 경우 (진행 중 콘테스트)
