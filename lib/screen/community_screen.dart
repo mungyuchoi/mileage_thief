@@ -14,6 +14,7 @@ import 'community_post_create_screen.dart';
 import 'community_search_screen.dart';
 import 'community_notification_history_screen.dart';
 import 'my_page_screen.dart';
+import 'contest_list_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({Key? key}) : super(key: key);
@@ -579,6 +580,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                     // 알림 버튼 + 뱃지
                     _buildCommunityNotificationButton(),
+                    // 콘테스트 버튼
+                    IconButton(
+                      icon: const Icon(Icons.emoji_events, color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ContestListScreen(),
+                          ),
+                        );
+                      },
+                      tooltip: '콘테스트',
+                    ),
                     // 검색 버튼
                     IconButton(
                       icon: const Icon(Icons.search, color: Colors.white),

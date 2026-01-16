@@ -37,6 +37,7 @@ import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
 import 'branch/branch_detail_screen.dart';
 import 'ad_manage_screen.dart';
+import 'contest_manage_screen.dart';
 
 // AdBottomSheetContent
 class _AdBottomSheetContent extends StatefulWidget {
@@ -1269,6 +1270,22 @@ class _SearchScreenState extends State<SearchScreen> {
                             '앱 진입 BottomSheet 광고를 설정합니다.',
                           ),
                           leading: const Icon(Icons.campaign_outlined),
+                        ),
+                      if (isAdmin)
+                        SettingsTile(
+                          onPressed: (context) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ContestManageScreen(),
+                              ),
+                            );
+                          },
+                          title: const Text('콘테스트'),
+                          description: const Text(
+                            '콘테스트를 생성하고 관리합니다.',
+                          ),
+                          leading: const Icon(Icons.emoji_events_outlined),
                         ),
                       SettingsTile(
                         onPressed: (context) => {
