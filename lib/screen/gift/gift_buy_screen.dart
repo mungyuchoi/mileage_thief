@@ -211,6 +211,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     try {
       final lotsRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('lots');
       final targetId = widget.editLotId ?? 'lot_${DateTime.now().millisecondsSinceEpoch}';
+      final String status = _existingLot?['status'] ?? 'open';
       final data = {
         'faceValue': faceValue,
         'buyDate': Timestamp.fromDate(_buyDate),
@@ -219,19 +220,25 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         'discount': double.parse(discount.toStringAsFixed(2)),
         'qty': qty,
         'cardId': _selectedCardId,
-        'status': _existingLot?['status'] ?? 'open',
+        'status': status,
         'giftcardId': _selectedGiftcardId,
         'whereToBuyId': _selectedWhereToBuyId,
         'memo': _memoController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
+      // status가 'sold'면 trade는 true, 아니면 기존 trade 값 유지 (없으면 false)
+      if (status == 'sold') {
+        data['trade'] = true;
+      } else if (widget.editLotId != null && _existingLot?.containsKey('trade') == true) {
+        // 편집 시 기존 trade 값 유지
+        data['trade'] = _existingLot!['trade'];
+      }
       if (widget.editLotId == null) {
         data['createdAt'] = FieldValue.serverTimestamp();
       }
       await lotsRef.doc(targetId).set(data, SetOptions(merge: true));
       
       // status가 sold인 경우, 연결된 sales의 buyTotal도 업데이트
-      final status = data['status'] as String?;
       if (status == 'sold' && widget.editLotId != null) {
         final salesRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('sales');
         final salesQuery = await salesRef.where('lotId', isEqualTo: targetId).get();

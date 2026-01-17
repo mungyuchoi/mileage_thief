@@ -909,34 +909,6 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
               ),
             ),
           ),
-        if (_userRankings.isNotEmpty)
-          Positioned(
-            left: 12,
-            bottom: 24,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => _requirePeanutsAndThen(_showUserRankingsSheet),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.emoji_events_outlined, size: 16, color: Colors.black87),
-                      SizedBox(width: 6),
-                      Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }

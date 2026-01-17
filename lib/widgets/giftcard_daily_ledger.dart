@@ -21,6 +21,7 @@ class GiftcardLedgerEntry {
   final String? whereToBuyName; // buy only
   final String? memo; // buy only
   final bool deletable; // buy: open only, sell: always true in current UX
+  final bool? trade; // buy only: 교환 완료 여부 (null이면 false로 간주)
   final Map<String, dynamic> raw;
 
   const GiftcardLedgerEntry({
@@ -40,6 +41,7 @@ class GiftcardLedgerEntry {
     required this.whereToBuyName,
     required this.memo,
     required this.deletable,
+    this.trade,
     required this.raw,
   });
 }
@@ -115,6 +117,8 @@ class GiftcardDailyLedgerMapper {
       final String? memo = (lot['memo'] as String?)?.trim();
       final String status = (lot['status'] as String?) ?? 'open';
       final bool deletable = status == 'open';
+      // status가 'sold'면 trade는 true, 아니면 lot의 trade 값 (기본값 false)
+      final bool? trade = status == 'sold' ? true : (lot['trade'] as bool?);
       final String name = giftcardNames[giftcardId] ?? giftcardId;
       entries.add(
         GiftcardLedgerEntry(
@@ -134,6 +138,7 @@ class GiftcardDailyLedgerMapper {
           whereToBuyName: whereToBuyName,
           memo: (memo != null && memo.isNotEmpty) ? memo : null,
           deletable: deletable,
+          trade: trade,
           raw: Map<String, dynamic>.from(lot),
         ),
       );
@@ -227,6 +232,7 @@ class GiftcardDailyLedger extends StatelessWidget {
   final DateFormat dayFormat;
   final void Function(GiftcardLedgerEntry entry) onEdit;
   final void Function(GiftcardLedgerEntry entry) onDelete;
+  final void Function(GiftcardLedgerEntry entry, bool trade)? onTradeToggle;
 
   const GiftcardDailyLedger({
     super.key,
@@ -235,6 +241,7 @@ class GiftcardDailyLedger extends StatelessWidget {
     required this.dayFormat,
     required this.onEdit,
     required this.onDelete,
+    this.onTradeToggle,
   });
 
   @override
@@ -263,6 +270,7 @@ class GiftcardDailyLedger extends StatelessWidget {
             won: wonFormat,
             onEdit: onEdit,
             onDelete: onDelete,
+            onTradeToggle: onTradeToggle,
           );
         }
         return const SizedBox.shrink();
@@ -358,12 +366,14 @@ class _LedgerEntryRow extends StatelessWidget {
   final NumberFormat won;
   final void Function(GiftcardLedgerEntry entry) onEdit;
   final void Function(GiftcardLedgerEntry entry) onDelete;
+  final void Function(GiftcardLedgerEntry entry, bool trade)? onTradeToggle;
 
   const _LedgerEntryRow({
     required this.entry,
     required this.won,
     required this.onEdit,
     required this.onDelete,
+    this.onTradeToggle,
   });
 
   @override
@@ -409,6 +419,29 @@ class _LedgerEntryRow extends StatelessWidget {
       }
       if (entry.memo != null && entry.memo!.isNotEmpty) {
         pills.add(pill(entry.memo!, icon: Icons.note_outlined));
+      }
+      // status가 'open'인 구매 건에는 미교환/교환완료 버튼 추가 (클릭 가능)
+      // status가 'sold'인 구매 건에는 교환완료 아이콘만 표시 (클릭 불가)
+      final String status = (entry.raw['status'] as String?) ?? 'open';
+      if (status == 'open' && onTradeToggle != null) {
+        final bool isTraded = entry.trade == true;
+        pills.add(
+          GestureDetector(
+            onTap: () => onTradeToggle!(entry, !isTraded),
+            child: _MiniPill(
+              text: isTraded ? '교환완료' : '미교환',
+              icon: Icons.swap_horiz_outlined,
+            ),
+          ),
+        );
+      } else if (status == 'sold') {
+        // sold 상태인 경우 교환완료 아이콘만 표시 (클릭 불가)
+        pills.add(
+          _MiniPill(
+            text: '교환완료',
+            icon: Icons.swap_horiz_outlined,
+          ),
+        );
       }
     }
 

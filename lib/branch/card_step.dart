@@ -136,6 +136,7 @@ class _CardStepPageState extends State<CardStepPage> {
         if (!hasField) {
           await userRef.set({
             'hasGift': true,
+            'ranking_agree': true,
           }, SetOptions(merge: true));
         }
       } catch (_) {}

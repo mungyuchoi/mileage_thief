@@ -292,6 +292,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           await originalLotRef.update({
             'qty': qty,
             'status': 'sold',
+            'trade': true, // 판매 완료 시 교환 완료로 처리
             'updatedAt': FieldValue.serverTimestamp(),
           });
           
@@ -317,6 +318,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           // 전체 판매: 원본 lot의 status만 sold로 변경
           await originalLotRef.update({
             'status': 'sold',
+            'trade': true, // 판매 완료 시 교환 완료로 처리
             'updatedAt': FieldValue.serverTimestamp(),
           });
         }

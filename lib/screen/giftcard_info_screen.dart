@@ -272,11 +272,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '땅콩 50개가 소모됩니다. 변경하시겠습니까?',
-                  style: const TextStyle(color: Colors.black),
+                const Text(
+                  '랭킹 동의를 해제하시겠습니까?',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                const Text(
+                  '• 땅콩 50개가 소모됩니다.',
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '• 동의하지 않음으로 변경하게 되면 다음번 랭킹 집계할 때 제외됩니다.',
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                ),
+                const SizedBox(height: 12),
                 Text(
                   '현재 보유 땅콩: ${currentPeanuts}개',
                   style: TextStyle(
@@ -1736,6 +1746,29 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
+  Future<void> _updateTradeStatus(String lotId, bool trade) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .doc(lotId)
+          .update({
+        'trade': trade,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      await _load();
+    } catch (e) {
+      debugPrint('교환 상태 업데이트 오류: $e');
+      Fluttertoast.showToast(msg: '교환 상태 업데이트 중 오류가 발생했습니다.');
+    }
+  }
+
   Future<void> _confirmAndDeleteLot(Map<String, dynamic> lot, {int cost = 20}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -1864,6 +1897,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final bool canDelete = status == 'open';
       final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
       final String? memo = m['memo'] as String?;
+      final bool isTraded = sold ? true : ((m['trade'] as bool?) ?? false);
       return GestureDetector(
         child: Container(
           padding: const EdgeInsets.all(12),
@@ -1929,6 +1963,17 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   InfoPill(icon: Icons.today_outlined, text: date),
                   if (memo != null && memo.trim().isNotEmpty)
                     InfoPill(icon: Icons.note_outlined, text: memo),
+                  // status가 'open'인 구매 건에만 미교환/교환완료 버튼 추가
+                  if (status == 'open')
+                    GestureDetector(
+                      onTap: () async {
+                        await _updateTradeStatus(m['id'] as String, !isTraded);
+                      },
+                      child: InfoPill(
+                        icon: Icons.swap_horiz_outlined,
+                        text: isTraded ? '교환완료' : '미교환',
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -2114,6 +2159,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                       await _confirmAndDeleteSale(Map<String, dynamic>.from(entry.raw), cost: 20);
                     }
                   },
+                  onTradeToggle: (entry, trade) async {
+                    await _updateTradeStatus(entry.id, trade);
+                  },
                 ),
               ),
             ),
@@ -2218,7 +2266,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   Widget _buildRanking() {
-    final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
     final String updateTimeText = _rankingUpdatedAt != null
         ? DateFormat('yyyy.MM.dd HH:mm').format(_rankingUpdatedAt!)
         : '';
@@ -2233,10 +2280,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               Row(
                 children: [
                   const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(width: 8),
-                  Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   if (updateTimeText.isNotEmpty) ...[
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 8),
                     Text(
                       updateTimeText,
                       style: const TextStyle(color: Colors.black54, fontSize: 12),
