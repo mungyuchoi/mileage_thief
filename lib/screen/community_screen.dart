@@ -580,32 +580,41 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       },
                       tooltip: '콘테스트',
                     ),
-                    // 검색 버튼
-                    IconButton(
-                      icon: const Icon(Icons.search, color: Colors.white),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CommunitySearchScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    // 더보기 메뉴 (뷰 모드 토글 포함)
+                    // 더보기 메뉴 (검색, 뷰 모드 토글 포함)
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert, color: Colors.white),
                       iconSize: 20,
                       constraints: const BoxConstraints(minWidth: 40),
                       padding: EdgeInsets.zero,
+                      color: Colors.white,
                       onSelected: (value) {
-                        if (value == 'view_toggle') {
+                        if (value == 'search') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CommunitySearchScreen(),
+                            ),
+                          );
+                        } else if (value == 'view_toggle') {
                           setState(() {
                             isCompactView = !isCompactView;
                           });
                         }
                       },
                       itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'search',
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.search,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text('검색'),
+                            ],
+                          ),
+                        ),
                         PopupMenuItem<String>(
                           value: 'view_toggle',
                           child: Row(

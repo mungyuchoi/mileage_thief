@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'community_post_create_screen_v3.dart';
 import 'community_detail_screen.dart';
+import 'contest_post_create_screen.dart';
+import 'contest_post_detail_screen.dart';
 
 /// 콘테스트 상세 화면
 class ContestDetailScreen extends StatefulWidget {
@@ -52,6 +55,17 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
     final startStr = DateFormat('yyyy. MM. dd.').format(start.toDate());
     final endStr = DateFormat('yyyy. MM. dd.').format(end.toDate());
     return '$startStr ~ $endStr';
+  }
+
+  // HTML에서 이미지 URL 목록 추출
+  List<String> _extractImageUrlsFromHtml(String htmlContent) {
+    final RegExp imgTagRegex = RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false);
+    final Iterable<RegExpMatch> matches = imgTagRegex.allMatches(htmlContent);
+    final List<String> urls = matches
+        .map((m) => m.group(2))
+        .whereType<String>()
+        .toList();
+    return urls;
   }
 
   @override
@@ -140,12 +154,13 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
     }
 
     // 게시글 작성 화면으로 이동 (contestId 전달)
+    final contestTitle = (_contest!['title'] as String?) ?? '콘테스트';
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CommunityPostCreateScreenV3(
-          initialBoardId: 'contest',
-          initialBoardName: '콘테스트',
+        builder: (context) => ContestPostCreateScreen(
+          contestId: widget.contestId,
+          contestTitle: contestTitle,
         ),
       ),
     );
@@ -238,14 +253,63 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // 설명 (HTML 파싱)
+                        // 제목과 내용 사이 구분선
+                        Divider(
+                          color: Colors.grey[300],
+                          thickness: 1,
+                        ),
+                        const SizedBox(height: 16),
+                        // 설명 (HTML 뷰어)
                         if (description.isNotEmpty)
-                          Text(
-                            description.replaceAll(RegExp(r'<[^>]*>'), ''),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              height: 1.5,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Html(
+                              data: description,
+                              style: {
+                                "body": Style(
+                                  fontSize: FontSize(14),
+                                  color: Colors.black87,
+                                  lineHeight: LineHeight(1.5),
+                                  margin: Margins.zero,
+                                ),
+                                "h2": Style(
+                                  fontSize: FontSize(18),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                  margin: Margins.only(bottom: 12, top: 8),
+                                ),
+                                "h3": Style(
+                                  fontSize: FontSize(16),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                  margin: Margins.only(bottom: 10, top: 8),
+                                ),
+                                "p": Style(
+                                  margin: Margins.only(bottom: 8),
+                                  padding: HtmlPaddings.zero,
+                                ),
+                                "ul": Style(
+                                  margin: Margins.only(bottom: 8, left: 20),
+                                  padding: HtmlPaddings.zero,
+                                ),
+                                "li": Style(
+                                  margin: Margins.only(bottom: 4),
+                                  padding: HtmlPaddings.zero,
+                                ),
+                                "hr": Style(
+                                  margin: Margins.symmetric(vertical: 16),
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+                                  ),
+                                ),
+                                "strong": Style(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              },
                             ),
                           ),
                         const SizedBox(height: 16),
@@ -390,6 +454,7 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
                         DropdownButton<String>(
                           value: _sortOrder,
                           underline: Container(),
+                          dropdownColor: Colors.white,
                           items: const [
                             DropdownMenuItem(value: '최신순', child: Text('최신순')),
                             DropdownMenuItem(value: '인기순', child: Text('인기순')),
@@ -436,26 +501,58 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
                           return const SizedBox.shrink();
                         }
 
+                        // 이미지 URL 추출
+                        final contentHtml = submission['contentHtml'] as String? ?? '';
+                        final imageUrls = _extractImageUrlsFromHtml(contentHtml);
+                        final firstImageUrl = imageUrls.isNotEmpty ? imageUrls[0] : null;
+                        final submissionId = submission['id'] as String? ?? postId;
+
                         return InkWell(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CommunityDetailScreen(
-                                  postId: postId,
-                                  boardId: 'contest',
-                                  boardName: '콘테스트',
-                                  dateString: dateString,
+                                builder: (context) => ContestPostDetailScreen(
+                                  contestId: widget.contestId,
+                                  submissionId: submissionId,
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              // 돌아왔을 때 새로고침
+                              _loadSubmissions();
+                            });
                           },
                           child: Container(
                             color: Colors.white,
                             padding: const EdgeInsets.all(16),
                             margin: const EdgeInsets.only(bottom: 1),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // 이미지 썸네일
+                                if (firstImageUrl != null)
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[200],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        firstImageUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.grey[200],
+                                            child: const Icon(Icons.broken_image, size: 32, color: Colors.grey),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,7 +571,7 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
                                       Row(
                                         children: [
                                           Text(
-                                            submission['authorName'] as String? ?? '익명',
+                                            submission['displayName'] as String? ?? submission['authorName'] as String? ?? '익명',
                                             style: const TextStyle(
                                               fontSize: 12,
                                               color: Colors.black54,
@@ -528,7 +625,7 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
                         );
                       },
                     ),
-                  const SizedBox(height: 50), // 하단 마진 (소프트 키 방지)
+                  const SizedBox(height: 100), // 하단 마진 (소프트 키 방지)
                 ],
               ),
             ),
@@ -538,7 +635,7 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
       floatingActionButton: status == 'ACTIVE'
           ? FloatingActionButton(
               onPressed: _createPost,
-              backgroundColor: Colors.blue,
+              backgroundColor: const Color(0xFF74512D),
               child: const Icon(Icons.edit, color: Colors.white),
             )
           : null,
