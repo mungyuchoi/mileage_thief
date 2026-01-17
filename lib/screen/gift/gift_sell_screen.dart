@@ -28,7 +28,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   List<Map<String, dynamic>> _branches = [];
   bool _branchesLoading = false;
   String? _selectedBranchId;
-  bool _includeInRanking = true; // 랭킹 반영 토글 (기본값: true)
 
   @override
   void initState() {
@@ -66,7 +65,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         _selectedLot = lot;
       }
       _selectedBranchId = sale['branchId'] as String?;
-      _includeInRanking = (sale['includeInRanking'] as bool?) ?? true;
       _sellUnitController.text = ((sale['sellUnit'] as num?)?.toInt() ?? 0).toString();
       _discountController.text = ((sale['discount'] as num?)?.toDouble() ?? 0).toString();
       _qtyController.text = ((sale['qty'] as num?)?.toInt() ?? 0).toString();
@@ -278,7 +276,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       if (_selectedBranchId != null && _selectedBranchId!.isNotEmpty) {
         payload['branchId'] = _selectedBranchId;
       }
-      payload['includeInRanking'] = _includeInRanking;
       if (widget.editSaleId == null) {
         payload['createdAt'] = FieldValue.serverTimestamp();
       }
@@ -326,7 +323,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       }
 
       // 지점 선택 시 월간 랭킹 반영
-      print('[GiftSellScreen] 랭킹 업데이트 시작 - 지점: $_selectedBranchId, 토글: $_includeInRanking');
+      print('[GiftSellScreen] 랭킹 업데이트 시작 - 지점: $_selectedBranchId');
       try {
         final monthKey = '${_sellDate.year}${_sellDate.month.toString().padLeft(2, '0')}';
         print('[GiftSellScreen] monthKey: $monthKey');
@@ -351,22 +348,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           print('[GiftSellScreen] 지점 랭킹 업데이트 완료');
         } else {
           print('[GiftSellScreen] 지점이 선택되지 않아 지점 랭킹 업데이트 건너뜀');
-        }
-        
-        // 랭킹 반영 토글이 켜져있으면 meta에도 저장 (지점 선택 여부와 관계없이)
-        if (_includeInRanking) {
-          print('[GiftSellScreen] Meta 랭킹 업데이트 시작');
-          await _updateMetaMonthlyRanking(
-            monthKey: monthKey,
-            uid: uid,
-            displayName: displayName,
-            photoUrl: photoUrl,
-            saleId: saleId,
-            saleTotal: sellTotal,
-          );
-          print('[GiftSellScreen] Meta 랭킹 업데이트 완료');
-        } else {
-          print('[GiftSellScreen] 랭킹 반영 토글이 꺼져있어 Meta 저장 건너뜀');
         }
       } catch (e, stackTrace) {
         print('[GiftSellScreen] 랭킹 업데이트 오류: $e');
@@ -463,119 +444,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     });
   }
 
-  Future<void> _updateMetaMonthlyRanking({
-    required String monthKey,
-    required String uid,
-    required String displayName,
-    required String photoUrl,
-    required String saleId,
-    required int saleTotal,
-  }) async {
-    print('[GiftSellScreen] _updateMetaMonthlyRanking 시작');
-    print('[GiftSellScreen] 파라미터 - monthKey: $monthKey, uid: $uid, saleId: $saleId, saleTotal: $saleTotal');
-    
-    final docRef = FirebaseFirestore.instance
-        .collection('meta')
-        .doc('rates_monthly')
-        .collection('rates_monthly')
-        .doc(monthKey);
-    
-    print('[GiftSellScreen] Firestore 경로: meta/rates_monthly/rates_monthly/$monthKey');
-
-    try {
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        print('[GiftSellScreen] 트랜잭션 시작');
-        final snap = await tx.get(docRef);
-        print('[GiftSellScreen] 문서 존재 여부: ${snap.exists}');
-        
-        List<dynamic> users = [];
-        if (snap.exists) {
-          final data = snap.data() as Map<String, dynamic>;
-          final raw = data['users'];
-          if (raw is List) {
-            users = List<dynamic>.from(raw);
-            print('[GiftSellScreen] 기존 users 개수: ${users.length}');
-          }
-        } else {
-          print('[GiftSellScreen] 문서가 존재하지 않음 - 새로 생성');
-        }
-
-        // sale 단위 행 삽입/수정 (중복 방지: uid + saleId)
-        int index = -1;
-        for (int i = 0; i < users.length; i++) {
-          final e = users[i];
-          if (e is Map && (e['uid'] as String?) == uid && (e['saleId'] as String?) == saleId) { 
-            index = i; 
-            print('[GiftSellScreen] 기존 항목 발견 - 인덱스: $index');
-            break; 
-          }
-        }
-        final entry = {
-          'uid': uid,
-          'displayName': displayName,
-          'photoUrl': photoUrl,
-          'saleId': saleId,
-          'sellTotal': saleTotal,
-        };
-        if (index >= 0) {
-          users[index] = entry;
-          print('[GiftSellScreen] 기존 항목 업데이트');
-        } else {
-          users.add(entry);
-          print('[GiftSellScreen] 새 항목 추가 - 현재 users 개수: ${users.length}');
-        }
-
-        // uid별 합산하여 Top3 산출
-        final Map<String, Map<String, dynamic>> agg = {};
-        for (final u in users) {
-          if (u is! Map) continue;
-          final String uid0 = (u['uid'] as String?) ?? '';
-          if (uid0.isEmpty) continue;
-          final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
-          final String dn = (u['displayName'] as String?) ?? '';
-          final String pu = (u['photoUrl'] as String?) ?? '';
-          final Map<String, dynamic> cur = agg[uid0] ?? {'uid': uid0, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
-          cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
-          cur['displayName'] = dn; // 최신 정보로 업데이트
-          cur['photoUrl'] = pu;
-          agg[uid0] = cur;
-        }
-        final List<Map<String, dynamic>> ranked = agg.values.toList()
-          ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
-        
-        print('[GiftSellScreen] 집계된 사용자 수: ${agg.length}');
-        print('[GiftSellScreen] 랭킹 Top3:');
-        for (int i = 0; i < ranked.length && i < 3; i++) {
-          print('[GiftSellScreen]   ${i + 1}위: ${ranked[i]['displayName']} - ${ranked[i]['sellTotal']}원');
-        }
-
-        Map<String, dynamic>? toTop(int i) => (i < ranked.length) ? ranked[i] : null;
-
-        final update = <String, dynamic>{
-          'users': users,
-          'firstUser': toTop(0),
-          'secondUser': toTop(1),
-          'thirdUser': toTop(2),
-          'updatedAt': FieldValue.serverTimestamp(),
-        };
-
-        if (snap.exists) {
-          print('[GiftSellScreen] 문서 업데이트 실행');
-          tx.update(docRef, update);
-        } else {
-          print('[GiftSellScreen] 문서 생성 실행');
-          update['createdAt'] = FieldValue.serverTimestamp();
-          tx.set(docRef, update);
-        }
-        print('[GiftSellScreen] 트랜잭션 커밋 준비 완료');
-      });
-      print('[GiftSellScreen] _updateMetaMonthlyRanking 성공');
-    } catch (e, stackTrace) {
-      print('[GiftSellScreen] _updateMetaMonthlyRanking 오류: $e');
-      print('[GiftSellScreen] 스택 트레이스: $stackTrace');
-      rethrow;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -743,22 +611,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            '랭킹 반영',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black),
-                          ),
-                        ),
-                        Switch(
-                          value: _includeInRanking,
-                          onChanged: (value) => setState(() => _includeInRanking = value),
-                          activeColor: const Color(0xFF74512D),
-                        ),
-                      ],
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),

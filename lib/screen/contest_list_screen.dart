@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'contest_detail_screen.dart';
+import 'my_contest_list_screen.dart';
 
 /// 콘테스트 목록을 보여주는 화면
 class ContestListScreen extends StatefulWidget {
@@ -13,7 +14,6 @@ class ContestListScreen extends StatefulWidget {
 }
 
 class _ContestListScreenState extends State<ContestListScreen> {
-  int _selectedTab = 0; // 0: 전체 콘테스트, 1: 내 콘테스트
 
   /// 날짜 기반으로 콘테스트 상태를 계산
   String _calculateStatus(Timestamp? start, Timestamp? end) {
@@ -280,164 +280,6 @@ class _ContestListScreenState extends State<ContestListScreen> {
     );
   }
 
-  Widget _buildMyContestsTab() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const Center(
-        child: Text(
-          '로그인이 필요합니다.',
-          style: TextStyle(color: Colors.black54),
-        ),
-      );
-    }
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('contests')
-          .orderBy('participatedAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              '내 콘테스트를 불러오는 중 오류가 발생했습니다.\n${snapshot.error}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        final userContestDocs = snapshot.data?.docs ?? [];
-        if (userContestDocs.isEmpty) {
-          return const Center(
-            child: Text(
-              '참여한 콘테스트가 없습니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        // 참여한 콘테스트 ID 목록 가져오기
-        final contestIds = userContestDocs
-            .map((doc) => doc.data()['contestId'] as String? ?? '')
-            .where((id) => id.isNotEmpty)
-            .toList();
-
-        if (contestIds.isEmpty) {
-          return const Center(
-            child: Text(
-              '참여한 콘테스트가 없습니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        // 콘테스트 정보 가져오기 (whereIn 제한 10개를 고려하여 배치로 처리)
-        final contestIdBatches = <List<String>>[];
-        for (int i = 0; i < contestIds.length; i += 10) {
-          contestIdBatches.add(
-            contestIds.sublist(i, i + 10 > contestIds.length ? contestIds.length : i + 10),
-          );
-        }
-
-        // 첫 번째 배치만 실시간 스트림으로 가져오고, 나머지는 Future로 처리
-        if (contestIdBatches.isEmpty) {
-          return const Center(
-            child: Text(
-              '참여한 콘테스트가 없습니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('contests')
-              .where(FieldPath.documentId, whereIn: contestIdBatches.first)
-              .snapshots(),
-          builder: (context, contestSnapshot) {
-            if (contestSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
-                ),
-              );
-            }
-
-            if (contestSnapshot.hasError) {
-              return Center(
-                child: Text(
-                  '콘테스트 정보를 불러오는 중 오류가 발생했습니다.\n${contestSnapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54),
-                ),
-              );
-            }
-
-            final contestDocs = contestSnapshot.data?.docs ?? [];
-            
-            // 참여한 콘테스트만 필터링하고 정렬
-            final contestMap = <String, Map<String, dynamic>>{};
-            for (final doc in contestDocs) {
-              contestMap[doc.id] = doc.data();
-            }
-
-            final myContests = <Map<String, dynamic>>[];
-            for (final userContestDoc in userContestDocs) {
-              final contestId = userContestDoc.data()['contestId'] as String?;
-              if (contestId != null && contestMap.containsKey(contestId)) {
-                myContests.add({
-                  'id': contestId,
-                  'data': contestMap[contestId]!,
-                  'participatedAt': userContestDoc.data()['participatedAt'] as Timestamp?,
-                });
-              }
-            }
-
-            // participatedAt 기준으로 정렬
-            myContests.sort((a, b) {
-              final aTime = a['participatedAt'] as Timestamp?;
-              final bTime = b['participatedAt'] as Timestamp?;
-              if (aTime == null && bTime == null) return 0;
-              if (aTime == null) return 1;
-              if (bTime == null) return -1;
-              return bTime.compareTo(aTime);
-            });
-
-            if (myContests.isEmpty) {
-              return const Center(
-                child: Text(
-                  '참여한 콘테스트가 없습니다.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54),
-                ),
-              );
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: myContests.map((item) {
-                return _buildContestCard(item['data'] as Map<String, dynamic>, item['id'] as String);
-              }).toList(),
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -455,37 +297,20 @@ class _ContestListScreenState extends State<ContestListScreen> {
         foregroundColor: Colors.black,
         elevation: 0.5,
         actions: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedTab = 0;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Text(
-                '콘테스트',
-                style: TextStyle(
-                  color: _selectedTab == 0 ? Colors.black : Colors.grey,
-                  fontWeight: _selectedTab == 0 ? FontWeight.bold : FontWeight.normal,
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyContestListScreen(),
                 ),
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedTab = 1;
-              });
+              );
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Text(
-                '내 콘테스트',
-                style: TextStyle(
-                  color: _selectedTab == 1 ? Colors.black : Colors.grey,
-                  fontWeight: _selectedTab == 1 ? FontWeight.bold : FontWeight.normal,
-                ),
+            child: const Text(
+              '내 콘테스트',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -493,7 +318,7 @@ class _ContestListScreenState extends State<ContestListScreen> {
         ],
       ),
       backgroundColor: const Color(0xFFF7F7FA),
-      body: _selectedTab == 0 ? _buildAllContestsTab() : _buildMyContestsTab(),
+      body: _buildAllContestsTab(),
     );
   }
 }

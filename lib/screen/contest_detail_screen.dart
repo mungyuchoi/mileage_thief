@@ -8,6 +8,7 @@ import 'community_post_create_screen_v3.dart';
 import 'community_detail_screen.dart';
 import 'contest_post_create_screen.dart';
 import 'contest_post_detail_screen.dart';
+import '../services/branch_service.dart';
 
 /// 콘테스트 상세 화면
 class ContestDetailScreen extends StatefulWidget {
@@ -171,6 +172,37 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
     }
   }
 
+  Future<void> _shareContest() async {
+    if (_contest == null) return;
+
+    final title = (_contest!['title'] as String?) ?? '콘테스트';
+    final description = (_contest!['description'] as String?) ?? '';
+    
+    // HTML 태그 제거하여 간단한 텍스트로 변환
+    final plainDescription = description
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    
+    final shareDescription = plainDescription.length > 100 
+        ? '${plainDescription.substring(0, 100)}...' 
+        : plainDescription;
+
+    try {
+      // Branch.io 딥링크 생성 및 공유 시트 표시
+      await BranchService().showContestShareSheet(
+        contestId: widget.contestId,
+        title: title,
+        description: shareDescription.isNotEmpty ? shareDescription : '마일리지 커뮤니티의 콘테스트에 참여해보세요!',
+      );
+    } catch (e) {
+      print('콘테스트 공유 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('공유 중 오류가 발생했습니다.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -223,9 +255,7 @@ class _ContestDetailScreenState extends State<ContestDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined, color: Colors.black),
-            onPressed: () {
-              // TODO: 공유 기능 구현
-            },
+            onPressed: _shareContest,
           ),
         ],
       ),

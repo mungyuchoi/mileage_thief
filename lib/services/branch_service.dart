@@ -2,6 +2,7 @@ import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../screen/community_detail_screen.dart';
+import '../screen/contest_detail_screen.dart';
 
 class BranchService {
   static final BranchService _instance = BranchService._internal();
@@ -81,6 +82,15 @@ class BranchService {
       return;
     }
     
+    // 콘테스트 딥링크 처리
+    final contestId = data['contestId']?.toString();
+    if (contestId != null) {
+      print('실제 딥링크 클릭 감지 - 콘테스트로 이동: $contestId');
+      _navigateToContest(contestId);
+      return;
+    }
+    
+    // 게시글 딥링크 처리
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
     final boardId = data['boardId']?.toString() ?? 'free';
@@ -106,6 +116,19 @@ class BranchService {
             boardId: boardId,
             boardName: boardName,
             scrollToCommentId: scrollToCommentId,
+          ),
+        ),
+      );
+    }
+  }
+
+  /// 콘테스트로 이동
+  void _navigateToContest(String contestId) {
+    if (navigatorKey.currentState != null) {
+      navigatorKey.currentState!.push(
+        MaterialPageRoute(
+          builder: (context) => ContestDetailScreen(
+            contestId: contestId,
           ),
         ),
       );
@@ -205,6 +228,80 @@ class BranchService {
       print('공유 시트 결과: $response');
     } catch (e) {
       print('공유 시트 오류: $e');
+    }
+  }
+
+  /// 콘테스트 공유 링크 생성
+  Future<String?> createContestShareLink({
+    required String contestId,
+    String? title,
+    String? description,
+  }) async {
+    try {
+      final buo = BranchUniversalObject(
+        canonicalIdentifier: 'contest_$contestId',
+        title: title ?? '마일캐치 콘테스트',
+        contentDescription: description ?? '마일리지 커뮤니티의 콘테스트에 참여해보세요!',
+        contentMetadata: BranchContentMetaData()
+          ..addCustomMetadata('contestId', contestId),
+      );
+
+      final lp = BranchLinkProperties(
+        channel: 'contest',
+        feature: 'sharing',
+        campaign: 'contest_share',
+      );
+
+      final response = await FlutterBranchSdk.getShortUrl(
+        buo: buo,
+        linkProperties: lp,
+      );
+
+      if (response.success) {
+        print('Branch 콘테스트 링크 생성 성공: ${response.result}');
+        return response.result;
+      } else {
+        print('Branch 콘테스트 링크 생성 실패: ${response.errorMessage}');
+        return null;
+      }
+    } catch (e) {
+      print('Branch 콘테스트 링크 생성 오류: $e');
+      return null;
+    }
+  }
+
+  /// 콘테스트 공유 시트 표시
+  Future<void> showContestShareSheet({
+    required String contestId,
+    String? title,
+    String? description,
+  }) async {
+    try {
+      final buo = BranchUniversalObject(
+        canonicalIdentifier: 'contest_$contestId',
+        title: title ?? '마일캐치 콘테스트',
+        contentDescription: description ?? '마일리지 커뮤니티의 콘테스트에 참여해보세요!',
+        contentMetadata: BranchContentMetaData()
+          ..addCustomMetadata('contestId', contestId),
+      );
+
+      final lp = BranchLinkProperties(
+        channel: 'contest',
+        feature: 'sharing',
+        campaign: 'contest_share',
+      );
+
+      final response = await FlutterBranchSdk.showShareSheet(
+        buo: buo,
+        linkProperties: lp,
+        messageText: '마일캐치에서 흥미로운 콘테스트를 발견했어요!',
+        androidMessageTitle: '콘테스트 공유',
+        androidSharingTitle: '공유하기',
+      );
+
+      print('콘테스트 공유 시트 결과: $response');
+    } catch (e) {
+      print('콘테스트 공유 시트 오류: $e');
     }
   }
 } 

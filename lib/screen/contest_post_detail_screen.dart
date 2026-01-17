@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import '../widgets/image_viewer.dart';
+import 'contest_post_edit_screen.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ContestPostDetailScreen extends StatefulWidget {
   final String contestId;
@@ -221,6 +223,174 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
     );
   }
 
+  void _navigateToEdit() {
+    if (_submission == null) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ContestPostEditScreen(
+          contestId: widget.contestId,
+          submissionId: widget.submissionId,
+          initialSubmission: _submission!,
+        ),
+      ),
+    ).then((result) {
+      if (result == true) {
+        // 수정 완료 후 데이터 새로고침
+        _loadSubmission();
+      }
+    });
+  }
+
+  Future<void> _showDeleteConfirmDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('게시글 삭제'),
+          content: const Text('정말로 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _deleteSubmission();
+    }
+  }
+
+  Future<void> _deleteSubmission() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(
+        msg: '로그인이 필요합니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. contests/{contestId}/submissions/{submissionId} 삭제
+      final submissionRef = FirebaseFirestore.instance
+          .collection('contests')
+          .doc(widget.contestId)
+          .collection('submissions')
+          .doc(widget.submissionId);
+      batch.delete(submissionRef);
+
+      // 2. 좋아요 서브컬렉션 삭제 (모든 좋아요 문서 삭제)
+      final likesSnapshot = await FirebaseFirestore.instance
+          .collection('contests')
+          .doc(widget.contestId)
+          .collection('submissions')
+          .doc(widget.submissionId)
+          .collection('likes')
+          .get();
+      
+      for (final likeDoc in likesSnapshot.docs) {
+        batch.delete(likeDoc.reference);
+      }
+
+      // 3. users/{uid}/contests/{contestId} 삭제
+      final userContestRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('contests')
+          .doc(widget.contestId);
+      batch.delete(userContestRef);
+
+      // 4. contests/{contestId}의 participantCount 감소
+      final contestRef = FirebaseFirestore.instance
+          .collection('contests')
+          .doc(widget.contestId);
+      batch.update(contestRef, {
+        'participantCount': FieldValue.increment(-1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 배치 실행
+      await batch.commit();
+
+      Fluttertoast.showToast(
+        msg: '게시글이 삭제되었습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+
+      // 삭제 완료 후 이전 화면으로 돌아가기
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      print('제출물 삭제 오류: $e');
+      Fluttertoast.showToast(
+        msg: '게시글 삭제 중 오류가 발생했습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
+  }
+
+  Widget _buildMoreOptionsMenu() {
+    final user = FirebaseAuth.instance.currentUser;
+    final submissionUid = _submission?['uid'] as String?;
+    
+    // 본인 작성 글인지 확인
+    if (user == null || submissionUid != user.uid) {
+      return const SizedBox.shrink();
+    }
+
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.black),
+      color: Colors.white,
+      onSelected: (value) {
+        if (value == 'edit') {
+          _navigateToEdit();
+        } else if (value == 'delete') {
+          _showDeleteConfirmDialog();
+        }
+      },
+      itemBuilder: (BuildContext context) => [
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit, color: Colors.black87, size: 20),
+              SizedBox(width: 8),
+              Text('수정', style: TextStyle(color: Colors.black87)),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, color: Colors.red, size: 20),
+              SizedBox(width: 8),
+              Text('삭제', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -272,6 +442,9 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
+        actions: [
+          _buildMoreOptionsMenu(),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(

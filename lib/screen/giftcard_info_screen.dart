@@ -168,6 +168,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   // 랭킹 데이터
   List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[];
   bool _rankingLoading = false;
+  bool _rankingAgreement = true; // 랭킹 동의 상태 (기본값 true)
+  DateTime? _rankingUpdatedAt; // 랭킹 데이터 업데이트 시간
 
   @override
   void initState() {
@@ -185,6 +187,142 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     _loadCalendarMonth(_calendarMonth);
     // 초기 랭킹 데이터 로드
     _loadRanking();
+    // 랭킹 동의 상태 로드
+    _loadRankingAgreement();
+  }
+
+  // 랭킹 동의 상태 로드
+  Future<void> _loadRankingAgreement() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final data = userDoc.data();
+      if (data != null && data.containsKey('ranking_agree')) {
+        setState(() {
+          _rankingAgreement = data['ranking_agree'] as bool? ?? true;
+        });
+      }
+    } catch (e) {
+      // 오류 시 기본값 유지
+    }
+  }
+
+  // 랭킹 동의 상태 저장
+  Future<void> _saveRankingAgreement(bool value) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update({'ranking_agree': value});
+      setState(() {
+        _rankingAgreement = value;
+      });
+    } catch (e) {
+      debugPrint('랭킹 동의 상태 저장 오류: $e');
+    }
+  }
+
+  // 랭킹 동의 토글 변경 처리
+  Future<void> _handleRankingAgreementToggle(bool newValue) async {
+    // true로 변경하는 경우 그냥 허용
+    if (newValue) {
+      await _saveRankingAgreement(true);
+      return;
+    }
+
+    // false로 변경하려는 경우 땅콩 50개 차감 확인
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final userData = await UserService.getUserFromFirestore(uid);
+      final currentPeanuts = _asInt(userData?['peanutCount']);
+
+      if (currentPeanuts < 50) {
+        Fluttertoast.showToast(
+          msg: '땅콩이 모자랍니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        return;
+      }
+
+      final bool? ok = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              '확인',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '땅콩 50개가 소모됩니다. 변경하시겠습니까?',
+                  style: const TextStyle(color: Colors.black),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '현재 보유 땅콩: ${currentPeanuts}개',
+                  style: TextStyle(
+                    color: currentPeanuts >= 50 ? Colors.green : Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  '취소',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  '변경',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (ok == true) {
+        await UserService.updatePeanutCount(uid, currentPeanuts - 50);
+        await _saveRankingAgreement(false);
+        Fluttertoast.showToast(
+          msg: '땅콩 50개가 사용되었습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    } catch (e) {
+      debugPrint('랭킹 동의 토글 처리 오류: $e');
+    }
   }
   
   // 외부에서 호출할 수 있는 새로고침 메서드
@@ -1996,29 +2134,31 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       
       final docRef = FirebaseFirestore.instance
           .collection('meta')
-          .doc('rates_monthly')
-          .collection('rates_monthly')
+          .doc('rates_monthly_v2')
+          .collection('rates_monthly_v2')
           .doc(monthKey);
       
       final doc = await docRef.get();
       
       if (!doc.exists) {
         print('[GiftcardInfoScreen] 랭킹 데이터 없음');
-        setState(() {
-          _userRankings = [];
-          _rankingLoading = false;
-        });
-        return;
-      }
-      
-      final data = doc.data() as Map<String, dynamic>?;
-      if (data == null) {
-        setState(() {
-          _userRankings = [];
-          _rankingLoading = false;
-        });
-        return;
-      }
+      setState(() {
+        _userRankings = [];
+        _rankingUpdatedAt = null;
+        _rankingLoading = false;
+      });
+      return;
+    }
+    
+    final data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      setState(() {
+        _userRankings = [];
+        _rankingUpdatedAt = null;
+        _rankingLoading = false;
+      });
+      return;
+    }
       
       final List<dynamic> users = (data['users'] is List) 
           ? List<dynamic>.from(data['users'] as List) 
@@ -2048,16 +2188,25 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final List<Map<String, dynamic>> ranked = agg.values.toList()
         ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
       
+      // updatedAt 시간 가져오기
+      DateTime? updatedAt;
+      final updatedAtField = data['updatedAt'];
+      if (updatedAtField is Timestamp) {
+        updatedAt = updatedAtField.toDate();
+      }
+      
       print('[GiftcardInfoScreen] 랭킹 데이터 로드 완료 - ${ranked.length}명');
       
       setState(() {
         _userRankings = ranked;
+        _rankingUpdatedAt = updatedAt;
         _rankingLoading = false;
       });
     } catch (e) {
       print('[GiftcardInfoScreen] 랭킹 데이터 로드 오류: $e');
       setState(() {
         _userRankings = [];
+        _rankingUpdatedAt = null;
         _rankingLoading = false;
       });
     }
@@ -2070,18 +2219,41 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
   Widget _buildRanking() {
     final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
+    final String updateTimeText = _rankingUpdatedAt != null
+        ? DateFormat('yyyy.MM.dd HH:mm').format(_rankingUpdatedAt!)
+        : '';
     
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(width: 8),
-              Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
-              const Spacer(),
-              Text('${_userRankings.length}명', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+              Row(
+                children: [
+                  const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(width: 8),
+                  Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  if (updateTimeText.isNotEmpty) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      updateTimeText,
+                      style: const TextStyle(color: Colors.black54, fontSize: 12),
+                    ),
+                  ],
+                  const Spacer(),
+                  Text('${_userRankings.length}명', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  const SizedBox(width: 12),
+                  const Text('동의', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                  const SizedBox(width: 8),
+                  Switch(
+                    value: _rankingAgreement,
+                    activeColor: const Color(0xFF74512D),
+                    onChanged: _handleRankingAgreementToggle,
+                  ),
+                ],
+              ),
             ],
           ),
         ),

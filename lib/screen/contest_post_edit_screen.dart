@@ -10,25 +10,53 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../widgets/image_viewer.dart';
 import '../utils/image_compressor.dart';
 
-class ContestPostCreateScreen extends StatefulWidget {
+class ContestPostEditScreen extends StatefulWidget {
   final String contestId;
-  final String contestTitle;
+  final String submissionId;
+  final Map<String, dynamic> initialSubmission;
 
-  const ContestPostCreateScreen({
+  const ContestPostEditScreen({
     Key? key,
     required this.contestId,
-    required this.contestTitle,
+    required this.submissionId,
+    required this.initialSubmission,
   }) : super(key: key);
 
   @override
-  State<ContestPostCreateScreen> createState() => _ContestPostCreateScreenState();
+  State<ContestPostEditScreen> createState() => _ContestPostEditScreenState();
 }
 
-class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
+class _ContestPostEditScreenState extends State<ContestPostEditScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedImageFile;
-  bool _isPosting = false;
+  String? _existingImageUrl;
+  bool _isUpdating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  void _loadInitialData() {
+    // 기존 데이터 로드
+    final contentHtml = widget.initialSubmission['contentHtml'] as String? ?? '';
+    
+    // HTML에서 텍스트 추출
+    final textContent = contentHtml
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .trim();
+    
+    _descriptionController.text = textContent;
+    
+    // 기존 이미지 URL 추출
+    final RegExp imgTagRegex = RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false);
+    final match = imgTagRegex.firstMatch(contentHtml);
+    if (match != null) {
+      _existingImageUrl = match.group(2);
+    }
+  }
 
   @override
   void dispose() {
@@ -46,6 +74,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
       if (image != null) {
         setState(() {
           _selectedImageFile = File(image.path);
+          _existingImageUrl = null; // 새 이미지 선택 시 기존 이미지 URL 초기화
         });
       }
     } catch (e) {
@@ -57,36 +86,66 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
     }
   }
 
+  void _removeImage() {
+    setState(() {
+      _selectedImageFile = null;
+      _existingImageUrl = null;
+    });
+  }
+
   void _showImagePreview() {
-    if (_selectedImageFile == null) return;
-    
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
+    if (_selectedImageFile != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
             backgroundColor: Colors.black,
-            leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              leading: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+              elevation: 0,
             ),
-            elevation: 0,
-          ),
-          body: Center(
-            child: Image.file(
-              _selectedImageFile!,
-              fit: BoxFit.contain,
+            body: Center(
+              child: Image.file(
+                _selectedImageFile!,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    } else if (_existingImageUrl != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              leading: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+              elevation: 0,
+            ),
+            body: Center(
+              child: Image.network(
+                _existingImageUrl!,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   // 게시 시 이미지를 Storage에 업로드하고 다운로드 URL 반환
-  Future<String?> _uploadImageToStorage(String submissionId) async {
-    if (_selectedImageFile == null) return null;
+  Future<String?> _uploadImageToStorage() async {
+    if (_selectedImageFile == null) return _existingImageUrl;
 
     try {
       // 이미지 압축
@@ -113,7 +172,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
           .child('contests')
           .child(widget.contestId)
           .child('submissions')
-          .child(submissionId)
+          .child(widget.submissionId)
           .child('images')
           .child(fileName);
 
@@ -131,7 +190,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
     }
   }
 
-  Future<void> _submitPost() async {
+  Future<void> _updatePost() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       Fluttertoast.showToast(
@@ -143,7 +202,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
     }
 
     final description = _descriptionController.text.trim();
-    if (description.isEmpty && _selectedImageFile == null) {
+    if (description.isEmpty && _selectedImageFile == null && _existingImageUrl == null) {
       Fluttertoast.showToast(
         msg: '설명 또는 이미지를 입력해주세요.',
         toastLength: Toast.LENGTH_SHORT,
@@ -153,7 +212,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
     }
 
     setState(() {
-      _isPosting = true;
+      _isUpdating = true;
     });
 
     try {
@@ -167,18 +226,13 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
       final displayName = userData['displayName'] ?? '익명';
       final photoURL = userData['photoURL'] ?? '';
 
-      // submissionId 생성
-      final submissionId = const Uuid().v4();
-      final now = FieldValue.serverTimestamp();
-      final dateString = DateFormat('yyyyMMdd').format(DateTime.now());
-
-      // 게시 시 이미지 업로드
+      // 이미지 업로드
       String? imageUrl;
-      if (_selectedImageFile != null) {
-        imageUrl = await _uploadImageToStorage(submissionId);
+      if (_selectedImageFile != null || _existingImageUrl != null) {
+        imageUrl = await _uploadImageToStorage();
       }
 
-      // contentHtml 생성 (이미지가 있으면 포함)
+      // contentHtml 생성
       String contentHtml = description;
       if (imageUrl != null) {
         contentHtml = '<p>$description</p><img src="$imageUrl" />';
@@ -191,64 +245,39 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
           ? (description.length > 30 ? '${description.substring(0, 30)}...' : description)
           : '콘테스트 참여';
 
-      // Firestore에 데이터 추가
+      // Firestore 업데이트
       final batch = FirebaseFirestore.instance.batch();
 
-      // 1. contests/{contestId}/submissions/{submissionId} 생성
+      // 1. contests/{contestId}/submissions/{submissionId} 업데이트
       final submissionRef = FirebaseFirestore.instance
           .collection('contests')
           .doc(widget.contestId)
           .collection('submissions')
-          .doc(submissionId);
+          .doc(widget.submissionId);
 
-      batch.set(submissionRef, {
-        'submissionId': submissionId,
-        'uid': user.uid,
-        'displayName': displayName,
-        'photoURL': photoURL,
+      batch.update(submissionRef, {
         'title': title,
         'contentHtml': contentHtml,
-        'likeCount': 0,
-        'viewCount': 0,
-        'commentCount': 0,
-        'createdAt': now,
-        'submittedAt': now,
-        'dateString': dateString,
-        'postId': submissionId, // 참고용
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // 2. users/{uid}/contests/{contestId} 생성
+      // 2. users/{uid}/contests/{contestId} 업데이트
       final userContestRef = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('contests')
           .doc(widget.contestId);
 
-      batch.set(userContestRef, {
-        'contestId': widget.contestId,
-        'contestTitle': widget.contestTitle,
-        'submissionId': submissionId,
+      batch.update(userContestRef, {
         'submissionTitle': title,
-        'status': 'submitted',
-        'participatedAt': now,
-        'updatedAt': now,
-      });
-
-      // 3. contests/{contestId}의 participantCount 증가
-      final contestRef = FirebaseFirestore.instance
-          .collection('contests')
-          .doc(widget.contestId);
-
-      batch.update(contestRef, {
-        'participantCount': FieldValue.increment(1),
-        'updatedAt': now,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // 배치 실행
       await batch.commit();
 
       Fluttertoast.showToast(
-        msg: '게시글이 등록되었습니다.',
+        msg: '게시글이 수정되었습니다.',
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
       );
@@ -257,10 +286,10 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       setState(() {
-        _isPosting = false;
+        _isUpdating = false;
       });
       Fluttertoast.showToast(
-        msg: '게시글 등록 실패: $e',
+        msg: '게시글 수정 실패: $e',
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
       );
@@ -276,7 +305,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          '콘테스트',
+          '콘테스트 수정',
           style: TextStyle(color: Colors.black),
         ),
         backgroundColor: Colors.white,
@@ -284,11 +313,11 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
         elevation: 0.5,
         actions: [
           TextButton(
-            onPressed: _isPosting ? null : _submitPost,
+            onPressed: _isUpdating ? null : _updatePost,
             child: Text(
-              '게시',
+              '수정',
               style: TextStyle(
-                color: _isPosting ? Colors.grey : const Color(0xFF74512D),
+                color: _isUpdating ? Colors.grey : const Color(0xFF74512D),
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -304,7 +333,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
             children: [
               // 이미지 업로드/미리보기 영역
               GestureDetector(
-                onTap: _selectedImageFile != null ? _showImagePreview : null,
+                onTap: (_selectedImageFile != null || _existingImageUrl != null) ? _showImagePreview : null,
                 child: Container(
                   width: double.infinity,
                   height: 300,
@@ -313,57 +342,105 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey[300]!),
                   ),
-                          child: _selectedImageFile != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.file(
-                                    _selectedImageFile!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_photo_alternate,
-                                        size: 64,
-                                        color: Colors.grey[400],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        '이미지 업로드',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey[600],
+                  child: _selectedImageFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImageFile!,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : _existingImageUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                _existingImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          size: 64,
+                                          color: Colors.grey[400],
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          '이미지를 불러올 수 없습니다',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate,
+                                    size: 64,
+                                    color: Colors.grey[400],
                                   ),
-                                ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    '이미지 업로드',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                 ),
               ),
               const SizedBox(height: 16),
-              // 이미지 선택/변경 버튼
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: Icon(
-                    _selectedImageFile == null ? Icons.add_photo_alternate : Icons.edit,
-                    color: const Color(0xFF74512D),
+              // 이미지 선택/변경/삭제 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: Icon(
+                        (_selectedImageFile != null || _existingImageUrl != null) ? Icons.edit : Icons.add_photo_alternate,
+                        color: const Color(0xFF74512D),
+                      ),
+                      label: Text(
+                        (_selectedImageFile != null || _existingImageUrl != null) ? '이미지 변경' : '이미지 선택',
+                        style: const TextStyle(color: Color(0xFF74512D)),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF74512D)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
                   ),
-                  label: Text(
-                    _selectedImageFile == null ? '이미지 선택' : '이미지 변경하기',
-                    style: const TextStyle(color: Color(0xFF74512D)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF74512D)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
+                  if (_selectedImageFile != null || _existingImageUrl != null) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: _removeImage,
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text(
+                        '삭제',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              if (_selectedImageFile != null) ...[
+              if (_selectedImageFile != null || _existingImageUrl != null) ...[
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: _showImagePreview,
@@ -427,7 +504,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: _isPosting ? null : _submitPost,
+            onPressed: _isUpdating ? null : _updatePost,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF74512D),
               disabledBackgroundColor: Colors.grey[300],
@@ -435,7 +512,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: _isPosting
+            child: _isUpdating
                 ? const SizedBox(
                     width: 20,
                     height: 20,
@@ -445,7 +522,7 @@ class _ContestPostCreateScreenState extends State<ContestPostCreateScreen> {
                     ),
                   )
                 : const Text(
-                    '게시',
+                    '수정',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
