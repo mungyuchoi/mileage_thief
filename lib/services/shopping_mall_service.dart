@@ -38,6 +38,7 @@ class ShoppingMallService {
   }
 
   /// 남은 시간을 Duration으로 반환
+  /// 카운트다운이 완료되었으면 null 반환
   static Future<Duration?> getRemainingTime(String mallId) async {
     final startTime = await getCountdownStartTime(mallId);
     if (startTime == null) return null;
@@ -46,7 +47,8 @@ class ShoppingMallService {
     final elapsed = now.difference(startTime);
     final remaining = Duration(hours: _countdownDurationHours) - elapsed;
 
-    if (remaining.isNegative) return Duration.zero;
+    // 카운트다운이 완료되었으면 null 반환
+    if (remaining.isNegative || remaining.inSeconds <= 0) return null;
     return remaining;
   }
 
