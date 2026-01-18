@@ -2475,6 +2475,30 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       }
                                     },
                                     extensions: [
+                                      // 이미지 태그 렌더링 지원 - 전체 화면에 꽉 차게 표시
+                                      TagExtension(
+                                        tagsToExtend: {'img'},
+                                        builder: (ctx) {
+                                          final src = ctx.attributes['src'];
+                                          if (src == null || src.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return LayoutBuilder(
+                                            builder: (context, constraints) {
+                                              return SizedBox(
+                                                width: double.infinity,
+                                                child: Image.network(
+                                                  src,
+                                                  fit: BoxFit.fitWidth,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return const SizedBox.shrink();
+                                                  },
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
                                       TagExtension(
                                         tagsToExtend: {'link-preview'},
                                         builder: (ctx) {
