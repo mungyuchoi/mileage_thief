@@ -166,7 +166,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         common
           ..writeln('')
           ..writeln('미판매 수량은 이렇게 계산돼요')
-          ..writeln('- 대상: 위 기준의 “구매 내역” 중 아직 교환/판매하지 않은 건')
+          ..writeln('- 대상: 위 기준의 “구매 내역” 중 아직 판매하지 않은 건')
           ..writeln('- 계산: 해당 구매들의 “수량(장)”을 모두 더한 값');
         return common.toString();
     }
@@ -287,6 +287,33 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     }
   }
 
+  Future<void> _updateTradeStatus(String lotId, bool trade) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .doc(lotId)
+          .update({
+        'trade': trade,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      await _load();
+    } catch (e) {
+      debugPrint('교환 상태 업데이트 오류: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('교환 상태 업데이트 중 오류가 발생했습니다.')),
+        );
+      }
+    }
+  }
+
   Widget _buildLotTile(Map<String, dynamic> m) {
     final ts = m['buyDate'];
     final date = ts is Timestamp ? giftcardYmd(ts.toDate()) : '';
@@ -299,6 +326,8 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     final cardId = (m['cardId'] as String?) ?? '';
     final status = (m['status'] as String?) ?? 'open';
     final memo = (m['memo'] as String?) ?? '';
+    final trade = m['trade'] == true;
+    final lotId = (m['id'] as String?) ?? '';
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -314,7 +343,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
           Row(
             children: [
               InfoPill(
-                text: status == 'open' ? '미교환' : '판매완료',
+                text: status == 'open' ? '미판매' : '판매완료',
                 icon: status == 'open' ? Icons.inventory_2_outlined : Icons.check_circle_outline,
                 filled: true,
                 fillColor: status == 'open' ? const Color(0xFF74512D) : Colors.green.shade600,
@@ -340,6 +369,17 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
               if (payType.isNotEmpty) InfoPill(icon: Icons.account_balance_wallet_outlined, text: payType),
               if (cardId.isNotEmpty) InfoPill(icon: Icons.credit_card_outlined, text: '카드 $cardId'),
               if (memo.trim().isNotEmpty) InfoPill(icon: Icons.note_outlined, text: memo),
+              // status가 'open'인 구매 건에만 미교환/교환완료 버튼 추가
+              if (status == 'open' && lotId.isNotEmpty)
+                GestureDetector(
+                  onTap: () async {
+                    await _updateTradeStatus(lotId, !trade);
+                  },
+                  child: InfoPill(
+                    icon: Icons.swap_horiz_outlined,
+                    text: trade ? '교환완료' : '미교환',
+                  ),
+                ),
             ],
           ),
         ],
