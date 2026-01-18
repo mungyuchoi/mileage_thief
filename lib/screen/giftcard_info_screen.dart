@@ -912,7 +912,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 child: PressScale(
                   borderRadius: BorderRadius.circular(12),
                   onTap: () => _openKpiDetail(GiftcardKpiType.openQty),
-                  child: _KpiValue(label: '미교환 수량', value: '${_openQtyTotal()}장', icon: Icons.account_balance_wallet_outlined),
+                  child: _KpiValue(label: '미판매 수량', value: '${_openQtyTotal()}장', icon: Icons.account_balance_wallet_outlined),
                 ),
               ),
             ],

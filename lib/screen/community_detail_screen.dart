@@ -1497,6 +1497,46 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return imageExtensions.any((ext) => lowerUrl.contains(ext));
   }
 
+  // Firebase Storage URL을 이미지 태그로 변환
+  String _convertFirebaseStorageUrlsToImages(String htmlContent) {
+    String processed = htmlContent;
+    
+    // Firebase Storage URL 패턴 (텍스트로 있는 경우)
+    final firebaseStoragePattern = RegExp(
+      r'https?://(?:firebasestorage|storage)\.googleapis\.com/[^\s<>"{}|\\^`\[\]]+',
+      caseSensitive: false,
+    );
+    
+    // 역순으로 매칭하여 인덱스 문제 방지
+    final matches = firebaseStoragePattern.allMatches(processed).toList();
+    matches.sort((a, b) => b.start.compareTo(a.start));
+    
+    for (final match in matches) {
+      final url = match.group(0) ?? '';
+      if (url.isEmpty) continue;
+      
+      // 이미 <img> 태그나 <a> 태그 안에 있으면 건너뛰기
+      final beforeMatch = processed.substring(0, match.start);
+      if (beforeMatch.contains('<img') || beforeMatch.contains('<a')) {
+        final lastImgTag = beforeMatch.lastIndexOf('<img');
+        final lastATag = beforeMatch.lastIndexOf('<a');
+        final lastCloseTag = beforeMatch.lastIndexOf('>');
+        
+        // <img> 또는 <a> 태그가 열려있고 닫히지 않았으면 건너뛰기
+        if ((lastImgTag > lastCloseTag) || (lastATag > lastCloseTag)) {
+          continue;
+        }
+      }
+      
+      // Firebase Storage URL을 이미지 태그로 변환
+      processed = processed.substring(0, match.start) + 
+                  '<img src="$url" alt="첨부이미지" style="max-width: 100%; border-radius: 8px;" />' + 
+                  processed.substring(match.end);
+    }
+    
+    return processed;
+  }
+
   // HTML의 이미지를 클릭 가능한 링크로 변환
   String _makeImagesClickable(String htmlContent) {
     // 이미 <a> 태그로 감싸진 이미지는 처리하지 않음
@@ -1551,18 +1591,24 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     });
     
     // 2. 일반 텍스트 URL을 <a> 태그로 감싸기
-    // HTTP/HTTPS URL 패턴 (간단한 패턴 사용)
-    final urlPattern = RegExp(
+    // HTTP/HTTPS URL 패턴 (먼저 처리)
+    final httpUrlPattern = RegExp(
       r'https?://[^\s<>"{}|\\^`\[\]]+[^\s<>"{}|\\^`\[\].,;:!?]',
       caseSensitive: false,
     );
     
-    // 역순으로 매칭하여 인덱스 문제 방지
-    final matches = urlPattern.allMatches(processed).toList();
-    matches.sort((a, b) => b.start.compareTo(a.start));
+    // www.로 시작하는 URL 패턴
+    final wwwUrlPattern = RegExp(
+      r'www\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*[^\s<>"{}|\\^`\[\].,;:!?]',
+      caseSensitive: false,
+    );
     
-    for (final match in matches) {
-      final url = match.group(0) ?? '';
+    // HTTP/HTTPS URL 먼저 처리
+    final httpMatches = httpUrlPattern.allMatches(processed).toList();
+    httpMatches.sort((a, b) => b.start.compareTo(a.start));
+    
+    for (final match in httpMatches) {
+      String url = match.group(0) ?? '';
       if (url.isEmpty) continue;
       
       // 이미 마커로 치환된 부분이면 건너뛰기
@@ -1570,21 +1616,65 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         continue;
       }
       
+      // Firebase Storage URL은 이미지로 처리하므로 링크로 변환하지 않음
+      final lowerUrl = url.toLowerCase();
+      if (lowerUrl.contains('firebasestorage.googleapis.com') ||
+          lowerUrl.contains('storage.googleapis.com')) {
+        continue;
+      }
+      
       // 이미 <a> 태그 안에 있는지 확인
       final beforeMatch = processed.substring(0, match.start);
-      // <a 태그나 href=가 바로 앞에 있으면 건너뛰기
       if (beforeMatch.contains('<a') || beforeMatch.contains('href=')) {
         final lastATag = beforeMatch.lastIndexOf('<a');
         final lastHref = beforeMatch.lastIndexOf('href=');
         final lastCloseTag = beforeMatch.lastIndexOf('>');
         
-        // <a> 태그가 열려있고 닫히지 않았으면 건너뛰기
         if (lastATag > lastCloseTag || lastHref > lastCloseTag) {
           continue;
         }
       }
       
       processed = processed.substring(0, match.start) + '<a href="$url">$url</a>' + processed.substring(match.end);
+    }
+    
+    // www.로 시작하는 URL 처리 (http:// 또는 https://로 시작하지 않는 경우만)
+    final wwwMatches = wwwUrlPattern.allMatches(processed).toList();
+    wwwMatches.sort((a, b) => b.start.compareTo(a.start));
+    
+    for (final match in wwwMatches) {
+      String url = match.group(0) ?? '';
+      if (url.isEmpty) continue;
+      
+      // 이미 마커로 치환된 부분이면 건너뛰기
+      if (url.contains('__EXISTING_LINK_') || url.contains('__LINK_IMAGE_')) {
+        continue;
+      }
+      
+      // 앞에 http:// 또는 https://가 바로 앞에 있는지 확인
+      final beforeMatch = processed.substring(0, match.start);
+      
+      // 바로 앞에 https:// 또는 http://가 있는지 확인 (최대 8글자 앞까지 확인)
+      final checkStart = (match.start > 8) ? match.start - 8 : 0;
+      final checkText = processed.substring(checkStart, match.start).toLowerCase();
+      if (checkText.endsWith('https://') || checkText.endsWith('http://')) {
+        continue; // 이미 http:// 또는 https://로 시작하는 URL 안에 포함된 www.이므로 건너뛰기
+      }
+      
+      // 이미 <a> 태그 안에 있는지 확인
+      if (beforeMatch.contains('<a') || beforeMatch.contains('href=')) {
+        final lastATag = beforeMatch.lastIndexOf('<a');
+        final lastHref = beforeMatch.lastIndexOf('href=');
+        final lastCloseTag = beforeMatch.lastIndexOf('>');
+        
+        if (lastATag > lastCloseTag || lastHref > lastCloseTag) {
+          continue;
+        }
+      }
+      
+      // www.로 시작하는 URL은 https://를 앞에 붙이기
+      final hrefUrl = 'https://$url';
+      processed = processed.substring(0, match.start) + '<a href="$hrefUrl">$url</a>' + processed.substring(match.end);
     }
     
     // 3. 임시 마커를 원래 내용으로 복원
@@ -3056,8 +3146,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           (match) => '<span style="color: #1976D2; font-weight: 600;">${match.group(0)}</span>',
     );
 
+    // Firebase Storage URL을 이미지 태그로 변환 (먼저 처리)
+    final htmlWithFirebaseImages = _convertFirebaseStorageUrlsToImages(processedHtml);
+    
     // URL을 링크로 변환하고 이미지를 클릭 가능하게 만들기
-    final htmlWithLinks = _makeUrlsClickable(processedHtml);
+    final htmlWithLinks = _makeUrlsClickable(htmlWithFirebaseImages);
     final finalHtml = _makeImagesClickable(htmlWithLinks);
 
     return Html(

@@ -82,7 +82,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
       case GiftcardKpiType.avgCostPerMile:
         return '평균마일원가(원/마일)';
       case GiftcardKpiType.openQty:
-        return '미교환 수량';
+        return '미판매 수량';
     }
   }
 
@@ -137,7 +137,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         common
           ..writeln('')
           ..writeln('총 판매금액(판매 총액)은 이렇게 계산돼요')
-          ..writeln('- 대상: 위 기준의 “판매 내역”')
+          ..writeln('- 대상: 위 기준의 “구매 내역”')
           ..writeln('- 계산: 각 판매의 “판매총액”을 모두 더한 값');
         return common.toString();
       case GiftcardKpiType.totalProfit:
@@ -151,7 +151,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         common
           ..writeln('')
           ..writeln('누적 마일은 이렇게 계산돼요')
-          ..writeln('- 대상: 위 기준의 “판매 내역”')
+          ..writeln('- 대상: 위 기준의 “구매 내역”')
           ..writeln('- 계산: 각 판매에서 적립된 “마일”을 모두 더한 값');
         return common.toString();
       case GiftcardKpiType.avgCostPerMile:
@@ -165,7 +165,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
       case GiftcardKpiType.openQty:
         common
           ..writeln('')
-          ..writeln('미교환 수량은 이렇게 계산돼요')
+          ..writeln('미판매 수량은 이렇게 계산돼요')
           ..writeln('- 대상: 위 기준의 “구매 내역” 중 아직 교환/판매하지 않은 건')
           ..writeln('- 계산: 해당 구매들의 “수량(장)”을 모두 더한 값');
         return common.toString();
