@@ -167,12 +167,26 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
 
   // HTML에서 이미지 URL 목록 추출
   List<String> _extractImageUrlsFromHtml(String htmlContent) {
+    print('=== 이미지 URL 추출 시작 ===');
+    print('HTML 내용 길이: ${htmlContent.length}');
+    
     final RegExp imgTagRegex = RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false);
     final Iterable<RegExpMatch> matches = imgTagRegex.allMatches(htmlContent);
+    
+    print('정규식 매칭 결과 개수: ${matches.length}');
+    
     final List<String> urls = matches
-        .map((m) => m.group(2))
+        .map((m) {
+          final url = m.group(2);
+          print('추출된 URL: $url');
+          return url;
+        })
         .whereType<String>()
         .toList();
+    
+    print('최종 추출된 URL 개수: ${urls.length}');
+    print('=== 이미지 URL 추출 완료 ===');
+    
     return urls;
   }
 
@@ -187,17 +201,82 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
     return imageExtensions.any((ext) => lowerUrl.contains(ext));
   }
 
-  // HTML의 이미지를 클릭 가능한 링크로 변환
+  // HTML의 이미지를 클릭 가능한 링크로 변환하고 전체 너비로 설정
   String _makeImagesClickable(String htmlContent) {
-    return htmlContent.replaceAllMapped(
-      RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false),
-      (match) {
-        final beforeSrc = match.group(1) ?? '';
-        final srcUrl = match.group(2) ?? '';
-        final afterSrc = match.group(3) ?? '';
-        return '<a href="$srcUrl"><img${beforeSrc}src="$srcUrl"${afterSrc}/></a>';
-      },
-    );
+    try {
+      print('=== 이미지 클릭 가능 변환 시작 ===');
+      print('원본 HTML 길이: ${htmlContent.length}');
+      print('원본 HTML (처음 500자): ${htmlContent.substring(0, htmlContent.length > 500 ? 500 : htmlContent.length)}');
+      
+      final imgRegex = RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false);
+      final matches = imgRegex.allMatches(htmlContent);
+      print('이미지 태그 발견 개수: ${matches.length}');
+      
+      if (matches.isEmpty) {
+        print('이미지 태그가 없습니다. 원본 HTML 반환');
+        return htmlContent;
+      }
+      
+      String result = htmlContent.replaceAllMapped(
+        imgRegex,
+        (match) {
+          try {
+            final beforeSrc = match.group(1) ?? '';
+            final srcUrl = match.group(2) ?? '';
+            final afterSrc = match.group(3) ?? '';
+            
+            print('--- 이미지 처리 ---');
+            print('beforeSrc: $beforeSrc');
+            print('srcUrl: $srcUrl');
+            print('afterSrc: $afterSrc');
+            
+            if (srcUrl.isEmpty) {
+              print('경고: srcUrl이 비어있습니다. 원본 태그 반환');
+              return match.group(0) ?? '';
+            }
+            
+            // 기존 style 속성 제거하고 새로운 스타일 추가
+            String imgAttributes = beforeSrc.replaceAll(
+              RegExp(r'style="[^"]*"', caseSensitive: false),
+              '',
+            ).trim();
+            
+            print('정리된 imgAttributes: $imgAttributes');
+            
+            // 공백 정리 - imgAttributes가 비어있어도 style 앞에 공백이 필요
+            if (imgAttributes.isEmpty) {
+              imgAttributes = ' ';
+            } else if (!imgAttributes.endsWith(' ')) {
+              imgAttributes = '$imgAttributes ';
+            }
+            
+            // 이미지를 감싸는 구조 없이 이미지만 반환 (TagExtension에서 처리)
+            // div와 a 태그를 제거하고 이미지만 반환하여 TagExtension이 직접 처리하도록 함
+            final imgWithStyle = '<img${imgAttributes}style="width: 100%; max-width: 100%; display: block; margin: 8px 0; padding: 0; box-sizing: border-box;" src="$srcUrl"${afterSrc}/>';
+            
+            print('변환된 이미지 태그: $imgWithStyle');
+            
+            // 이미지만 반환 (링크는 TagExtension에서 GestureDetector로 처리)
+            return imgWithStyle;
+          } catch (e) {
+            print('이미지 변환 중 오류 발생: $e');
+            print('스택 트레이스: ${StackTrace.current}');
+            return match.group(0) ?? '';
+          }
+        },
+      );
+      
+      print('변환된 HTML 길이: ${result.length}');
+      print('변환된 HTML (처음 500자): ${result.substring(0, result.length > 500 ? 500 : result.length)}');
+      print('=== 이미지 클릭 가능 변환 완료 ===');
+      
+      return result;
+    } catch (e) {
+      print('_makeImagesClickable 함수에서 오류 발생: $e');
+      print('스택 트레이스: ${StackTrace.current}');
+      print('원본 HTML 반환');
+      return htmlContent;
+    }
   }
 
   // p 태그 내부의 줄바꿈 문자를 <br> 태그로 변환
@@ -525,40 +604,160 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
             const Divider(height: 1),
             // 본문 내용
             if (contentHtml.isNotEmpty)
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(16),
-                child: Html(
-                  data: _convertNewlinesInPTags(contentHtml),
-                  style: {
-                    "body": Style(
-                      fontSize: FontSize(15),
-                      color: Colors.black87,
-                      lineHeight: LineHeight(1.4),
-                      margin: Margins.zero,
+              Builder(
+                builder: (context) {
+                  String processedHtml;
+                  try {
+                    processedHtml = _makeImagesClickable(_convertNewlinesInPTags(contentHtml));
+                  } catch (e) {
+                    print('HTML 처리 중 오류 발생: $e');
+                    print('원본 HTML 사용');
+                    processedHtml = contentHtml;
+                  }
+                  
+                  final extractedUrls = _extractImageUrlsFromHtml(contentHtml);
+                  
+                  print('=== HTML 렌더링 디버깅 ===');
+                  print('원본 contentHtml 길이: ${contentHtml.length}');
+                  print('처리된 HTML 길이: ${processedHtml.length}');
+                  print('추출된 이미지 URL 개수: ${extractedUrls.length}');
+                  for (int i = 0; i < extractedUrls.length; i++) {
+                    print('이미지 URL $i: ${extractedUrls[i]}');
+                  }
+                  print('처리된 HTML에 이미지 태그 포함 여부: ${processedHtml.contains("<img")}');
+                  print('처리된 HTML에 링크 태그 포함 여부: ${processedHtml.contains("<a")}');
+                  if (processedHtml.length > 1000) {
+                    print('처리된 HTML (처음 1000자): ${processedHtml.substring(0, 1000)}');
+                  } else {
+                    print('처리된 HTML (전체): $processedHtml');
+                  }
+                  print('=== HTML 렌더링 디버깅 완료 ===');
+                  
+                  return Container(
+                    color: Colors.white,
+                    padding: const EdgeInsets.all(16),
+                    child: Html(
+                      data: processedHtml,
+                      style: {
+                        "body": Style(
+                          fontSize: FontSize(15),
+                          color: Colors.black87,
+                          lineHeight: LineHeight(1.4),
+                          margin: Margins.zero,
+                        ),
+                        "p": Style(
+                          margin: Margins.only(bottom: 8),
+                          padding: HtmlPaddings.zero,
+                        ),
+                        "div": Style(
+                          margin: Margins.only(
+                            left: -16,
+                            right: -16,
+                          ),
+                          padding: HtmlPaddings.zero,
+                          width: Width(100, Unit.percent),
+                          display: Display.block,
+                        ),
+                        "img": Style(
+                          margin: Margins.only(
+                            top: 8,
+                            bottom: 8,
+                            left: 0,
+                            right: 0,
+                          ),
+                          width: Width(100, Unit.percent),
+                          display: Display.block,
+                        ),
+                        "a": Style(
+                          color: Colors.blue,
+                          textDecoration: TextDecoration.none,
+                          display: Display.block,
+                          width: Width(100, Unit.percent),
+                          margin: Margins.zero,
+                          padding: HtmlPaddings.zero,
+                        ),
+                      },
+                      onLinkTap: (url, _, __) {
+                        if (url != null) {
+                          if (_isImageUrl(url)) {
+                            _openImageViewerFromHtml(url, contentHtml);
+                          }
+                        }
+                      },
+                      extensions: [
+                        // 이미지 태그를 커스텀 렌더링하여 전체 너비로 표시
+                        TagExtension(
+                          tagsToExtend: {'img'},
+                          builder: (extensionContext) {
+                            final src = extensionContext.attributes['src'];
+                            print('=== TagExtension 이미지 렌더링 ===');
+                            print('이미지 src: $src');
+                            print('이미지 attributes: ${extensionContext.attributes}');
+                            
+                            if (src == null || src.isEmpty) {
+                              print('이미지 src가 비어있습니다.');
+                              return const SizedBox.shrink();
+                            }
+                            
+                            return Builder(
+                              builder: (context) {
+                                final screenWidth = MediaQuery.of(context).size.width;
+                                // Container의 padding(16px 양쪽)을 상쇄하기 위해 width를 늘리고 왼쪽으로 이동
+                                return Transform.translate(
+                                  offset: const Offset(-16, 0),
+                                  child: SizedBox(
+                                    width: screenWidth + 32, // 화면 너비 + 양쪽 padding(16px * 2)
+                                    child: Container(
+                                      margin: const EdgeInsets.only(
+                                        top: 8,
+                                        bottom: 8,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          _openImageViewerFromHtml(src, contentHtml);
+                                        },
+                                        child: Image.network(
+                                          src,
+                                          fit: BoxFit.cover,
+                                          width: screenWidth + 32,
+                                          height: null, // 비율 유지
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              width: screenWidth + 32,
+                                              height: 200,
+                                              alignment: Alignment.center,
+                                              color: Colors.grey[200],
+                                              child: const CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: screenWidth + 32,
+                                              height: 200,
+                                              alignment: Alignment.center,
+                                              color: Colors.grey[200],
+                                              child: const Icon(
+                                                Icons.error_outline,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    "p": Style(
-                      margin: Margins.only(bottom: 8),
-                      padding: HtmlPaddings.zero,
-                    ),
-                    "img": Style(
-                      margin: Margins.symmetric(vertical: 8),
-                      width: Width(100, Unit.percent),
-                      display: Display.block,
-                    ),
-                    "a": Style(
-                      color: Colors.blue,
-                      textDecoration: TextDecoration.underline,
-                    ),
-                  },
-                  onLinkTap: (url, _, __) {
-                    if (url != null) {
-                      if (_isImageUrl(url)) {
-                        _openImageViewerFromHtml(url, contentHtml);
-                      }
-                    }
-                  },
-                ),
+                  );
+                },
               ),
             // 통계 정보
             Container(
