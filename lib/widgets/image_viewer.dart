@@ -41,9 +41,17 @@ class _ImageViewerState extends State<ImageViewer> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 24),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+          ),
         ),
         title: widget.imageUrls.length > 1
             ? Text(
@@ -151,9 +159,17 @@ class SingleImageViewer extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 24),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+          ),
         ),
         elevation: 0,
       ),

@@ -303,7 +303,16 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
       });
 
       if (!mounted) return;
-      await _load();
+      
+      // 전체 리프레시 대신 해당 아이템만 업데이트
+      if (_data != null) {
+        final lotIndex = _data!.lots.indexWhere((lot) => (lot['id'] as String?) == lotId);
+        if (lotIndex != -1) {
+          // 해당 lot의 trade 값만 업데이트
+          _data!.lots[lotIndex]['trade'] = trade;
+          setState(() {});
+        }
+      }
     } catch (e) {
       debugPrint('교환 상태 업데이트 오류: $e');
       if (mounted) {

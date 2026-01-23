@@ -200,6 +200,22 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
     );
   }
 
+  // p 태그 내부의 줄바꿈 문자를 <br> 태그로 변환
+  String _convertNewlinesInPTags(String htmlContent) {
+    return htmlContent.replaceAllMapped(
+      RegExp(r'<p([^>]*?)>(.*?)</p>', caseSensitive: false, dotAll: true),
+      (match) {
+        final pAttributes = match.group(1) ?? '';
+        final pContent = match.group(2) ?? '';
+        // 줄바꿈 문자를 <br> 태그로 변환
+        final convertedContent = pContent
+            .replaceAll('\n\n', '<br><br>') // 연속된 줄바꿈은 두 개의 <br>로
+            .replaceAll('\n', '<br>'); // 단일 줄바꿈은 <br>로
+        return '<p$pAttributes>$convertedContent</p>';
+      },
+    );
+  }
+
   void _openImageViewerFromHtml(String imageUrl, String htmlContent) {
     final List<String> imageUrls = _extractImageUrlsFromHtml(htmlContent);
     if (imageUrls.isEmpty) {
@@ -513,7 +529,7 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
                 color: Colors.white,
                 padding: const EdgeInsets.all(16),
                 child: Html(
-                  data: contentHtml,
+                  data: _convertNewlinesInPTags(contentHtml),
                   style: {
                     "body": Style(
                       fontSize: FontSize(15),
@@ -526,8 +542,9 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
                       padding: HtmlPaddings.zero,
                     ),
                     "img": Style(
-                      margin: Margins.only(bottom: 8),
+                      margin: Margins.symmetric(vertical: 8),
                       width: Width(100, Unit.percent),
+                      display: Display.block,
                     ),
                     "a": Style(
                       color: Colors.blue,
