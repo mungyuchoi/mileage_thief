@@ -606,156 +606,92 @@ class _ContestPostDetailScreenState extends State<ContestPostDetailScreen> {
             if (contentHtml.isNotEmpty)
               Builder(
                 builder: (context) {
-                  String processedHtml;
-                  try {
-                    processedHtml = _makeImagesClickable(_convertNewlinesInPTags(contentHtml));
-                  } catch (e) {
-                    print('HTML 처리 중 오류 발생: $e');
-                    print('원본 HTML 사용');
-                    processedHtml = contentHtml;
-                  }
-                  
+                  // 이미지 URL 추출
                   final extractedUrls = _extractImageUrlsFromHtml(contentHtml);
                   
-                  print('=== HTML 렌더링 디버깅 ===');
-                  print('원본 contentHtml 길이: ${contentHtml.length}');
-                  print('처리된 HTML 길이: ${processedHtml.length}');
-                  print('추출된 이미지 URL 개수: ${extractedUrls.length}');
-                  for (int i = 0; i < extractedUrls.length; i++) {
-                    print('이미지 URL $i: ${extractedUrls[i]}');
-                  }
-                  print('처리된 HTML에 이미지 태그 포함 여부: ${processedHtml.contains("<img")}');
-                  print('처리된 HTML에 링크 태그 포함 여부: ${processedHtml.contains("<a")}');
-                  if (processedHtml.length > 1000) {
-                    print('처리된 HTML (처음 1000자): ${processedHtml.substring(0, 1000)}');
-                  } else {
-                    print('처리된 HTML (전체): $processedHtml');
-                  }
-                  print('=== HTML 렌더링 디버깅 완료 ===');
+                  // HTML에서 이미지 태그 제거 (텍스트만 남김)
+                  String textOnlyHtml = contentHtml.replaceAll(
+                    RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false),
+                    '',
+                  );
+                  textOnlyHtml = _convertNewlinesInPTags(textOnlyHtml);
                   
-                  return Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                    child: Html(
-                      data: processedHtml,
-                      style: {
-                        "body": Style(
-                          fontSize: FontSize(15),
-                          color: Colors.black87,
-                          lineHeight: LineHeight(1.4),
-                          margin: Margins.zero,
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  
+                  // 텍스트와 이미지를 분리하여 렌더링
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 텍스트 내용 (padding 있음)
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Html(
+                          data: textOnlyHtml,
+                          style: {
+                            "body": Style(
+                              fontSize: FontSize(15),
+                              color: Colors.black87,
+                              lineHeight: LineHeight(1.4),
+                              margin: Margins.zero,
+                            ),
+                            "p": Style(
+                              margin: Margins.only(bottom: 8),
+                              padding: HtmlPaddings.zero,
+                            ),
+                            "a": Style(
+                              color: Colors.blue,
+                              textDecoration: TextDecoration.none,
+                            ),
+                          },
                         ),
-                        "p": Style(
-                          margin: Margins.only(bottom: 8),
-                          padding: HtmlPaddings.zero,
-                        ),
-                        "div": Style(
-                          margin: Margins.only(
-                            left: -16,
-                            right: -16,
-                          ),
-                          padding: HtmlPaddings.zero,
-                          width: Width(100, Unit.percent),
-                          display: Display.block,
-                        ),
-                        "img": Style(
-                          margin: Margins.only(
+                      ),
+                      // 이미지들 (padding 없음, 전체 너비)
+                      ...extractedUrls.map((imageUrl) {
+                        return Container(
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(
                             top: 8,
                             bottom: 8,
-                            left: 0,
-                            right: 0,
                           ),
-                          width: Width(100, Unit.percent),
-                          display: Display.block,
-                        ),
-                        "a": Style(
-                          color: Colors.blue,
-                          textDecoration: TextDecoration.none,
-                          display: Display.block,
-                          width: Width(100, Unit.percent),
-                          margin: Margins.zero,
-                          padding: HtmlPaddings.zero,
-                        ),
-                      },
-                      onLinkTap: (url, _, __) {
-                        if (url != null) {
-                          if (_isImageUrl(url)) {
-                            _openImageViewerFromHtml(url, contentHtml);
-                          }
-                        }
-                      },
-                      extensions: [
-                        // 이미지 태그를 커스텀 렌더링하여 전체 너비로 표시
-                        TagExtension(
-                          tagsToExtend: {'img'},
-                          builder: (extensionContext) {
-                            final src = extensionContext.attributes['src'];
-                            print('=== TagExtension 이미지 렌더링 ===');
-                            print('이미지 src: $src');
-                            print('이미지 attributes: ${extensionContext.attributes}');
-                            
-                            if (src == null || src.isEmpty) {
-                              print('이미지 src가 비어있습니다.');
-                              return const SizedBox.shrink();
-                            }
-                            
-                            return Builder(
-                              builder: (context) {
-                                final screenWidth = MediaQuery.of(context).size.width;
-                                // Container의 padding(16px 양쪽)을 상쇄하기 위해 width를 늘리고 왼쪽으로 이동
-                                return Transform.translate(
-                                  offset: const Offset(-16, 0),
-                                  child: SizedBox(
-                                    width: screenWidth + 32, // 화면 너비 + 양쪽 padding(16px * 2)
-                                    child: Container(
-                                      margin: const EdgeInsets.only(
-                                        top: 8,
-                                        bottom: 8,
-                                      ),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _openImageViewerFromHtml(src, contentHtml);
-                                        },
-                                        child: Image.network(
-                                          src,
-                                          fit: BoxFit.cover,
-                                          width: screenWidth + 32,
-                                          height: null, // 비율 유지
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            if (loadingProgress == null) return child;
-                                            return Container(
-                                              width: screenWidth + 32,
-                                              height: 200,
-                                              alignment: Alignment.center,
-                                              color: Colors.grey[200],
-                                              child: const CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            );
-                                          },
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              width: screenWidth + 32,
-                                              height: 200,
-                                              alignment: Alignment.center,
-                                              color: Colors.grey[200],
-                                              child: const Icon(
-                                                Icons.error_outline,
-                                                color: Colors.grey,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
+                          child: GestureDetector(
+                            onTap: () {
+                              _openImageViewerFromHtml(imageUrl, contentHtml);
+                            },
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              width: screenWidth,
+                              height: null, // 비율 유지
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: screenWidth,
+                                  height: 200,
+                                  alignment: Alignment.center,
+                                  color: Colors.grey[200],
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
                                 );
                               },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: screenWidth,
+                                  height: 200,
+                                  alignment: Alignment.center,
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.error_outline,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   );
                 },
               ),
