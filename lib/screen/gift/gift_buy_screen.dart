@@ -182,6 +182,21 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     if (picked != null) setState(() => _buyDate = picked);
   }
 
+  Future<int> _loadRulePerMile(String uid, String cardId, String payType) async {
+    final cardDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('cards')
+        .doc(cardId)
+        .get();
+    if (!cardDoc.exists) return 0;
+    final data = cardDoc.data() as Map<String, dynamic>;
+    final int val = (payType == '신용')
+        ? (data['creditPerMileKRW'] as num?)?.toInt() ?? 0
+        : (data['checkPerMileKRW'] as num?)?.toInt() ?? 0;
+    return val;
+  }
+
   Future<void> _save() async {
     setState(() { _error = null; });
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -212,6 +227,13 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       final lotsRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('lots');
       final targetId = widget.editLotId ?? 'lot_${DateTime.now().millisecondsSinceEpoch}';
       final String status = _existingLot?['status'] ?? 'open';
+
+      // 구매 시점 스냅샷: 카드 적립 단가(신용/체크)에 따라 miles 계산 후 lots에도 저장
+      final String cardId = _selectedCardId as String;
+      final int milePerKRW = await _loadRulePerMile(uid, cardId, _payType);
+      final int buyTotal = buyUnit * qty;
+      final int miles = milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round();
+
       final data = {
         'faceValue': faceValue,
         'buyDate': Timestamp.fromDate(_buyDate),
@@ -220,6 +242,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         'discount': double.parse(discount.toStringAsFixed(2)),
         'qty': qty,
         'cardId': _selectedCardId,
+        'mileRuleUsedPerMileKRW': milePerKRW,
+        'miles': miles,
         'status': status,
         'giftcardId': _selectedGiftcardId,
         'whereToBuyId': _selectedWhereToBuyId,
