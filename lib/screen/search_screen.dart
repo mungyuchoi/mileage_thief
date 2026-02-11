@@ -36,6 +36,7 @@ import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
 import 'branch/branch_detail_screen.dart';
+import 'branch/branch_list_tab.dart';
 import 'ad_manage_screen.dart';
 import 'contest_manage_screen.dart';
 
@@ -473,7 +474,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return WillPopScope(
         onWillPop: _onWillPop,
         child: DefaultTabController(
-          length: 3,
+          length: 4,
           child: Scaffold(
             backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
             appBar: AppBar(
@@ -596,7 +597,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     final controller = DefaultTabController.of(innerContext);
                     return SegmentTabBar(
                       controller: controller!,
-                      labels: const ['정보', '지도', '시세'],
+                      labels: const ['정보', '지도', '시세', '지점'],
                       margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                     );
                   },
@@ -618,6 +619,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                     GiftcardMapScreen(),
                     const GiftcardRatesTab(),
+                    const BranchListTab(),
                   ],
                 ),
                 if (_giftFabOpen)
