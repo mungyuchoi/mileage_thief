@@ -120,10 +120,8 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
       ..writeln('')
       ..writeln('이 화면에 포함되는 내역 기준')
       ..writeln('- 구매 내역: “구매일”이 선택한 기간 안에 들어가는 건만 포함합니다.')
-      ..writeln('- 판매 내역: 아래 2가지를 모두 포함합니다.')
-      ..writeln('  1) 선택한 기간에 “구매한 건”이 나중에 판매된 내역')
-      ..writeln('  2) 선택한 기간에 “판매일”이 들어가는 판매 내역')
-      ..writeln('  (같은 판매가 중복으로 잡히면 1번만 포함됩니다.)');
+      ..writeln('- 판매 내역: “구매일”이 선택한 기간 안에 들어가는 lot과 연결된 판매(lotId)만 포함합니다.')
+      ..writeln('  (판매일이 다음 달/다음 해여도 포함될 수 있어요.)');
 
     switch (widget.kpiType) {
       case GiftcardKpiType.totalBuy:
@@ -137,7 +135,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         common
           ..writeln('')
           ..writeln('총 판매금액(판매 총액)은 이렇게 계산돼요')
-          ..writeln('- 대상: 위 기준의 “구매 내역”')
+          ..writeln('- 대상: 위 기준의 “판매 내역”')
           ..writeln('- 계산: 각 판매의 “판매총액”을 모두 더한 값');
         return common.toString();
       case GiftcardKpiType.totalProfit:
@@ -151,7 +149,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         common
           ..writeln('')
           ..writeln('누적 마일은 이렇게 계산돼요')
-          ..writeln('- 대상: 위 기준의 “구매 내역”')
+          ..writeln('- 대상: 위 기준의 “판매 내역”')
           ..writeln('- 계산: 각 판매에서 적립된 “마일”을 모두 더한 값');
         return common.toString();
       case GiftcardKpiType.avgCostPerMile:
@@ -170,6 +168,20 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
           ..writeln('- 계산: 해당 구매들의 “수량(장)”을 모두 더한 값');
         return common.toString();
     }
+  }
+
+  List<Map<String, dynamic>> _salesForKpi(GiftcardInfoData data) {
+    // KPI(판매 관련)는 "구매일(기간) 기준"으로: 선택 기간 lot에 연결된 판매만 포함
+    final lotIds = data.lots
+        .map((e) => e['id'])
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    if (lotIds.isEmpty) return <Map<String, dynamic>>[];
+    return data.sales.where((s) {
+      final lotId = s['lotId'] as String?;
+      return lotId != null && lotIds.contains(lotId);
+    }).toList();
   }
 
   Widget _buildDescriptionCard() {
@@ -543,7 +555,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                     );
                   }
 
-                  final sales = List<Map<String, dynamic>>.from(data.sales);
+                  final sales = List<Map<String, dynamic>>.from(_salesForKpi(data));
                   sales.sort((a, b) => _tsOf(b, sale: true).compareTo(_tsOf(a, sale: true)));
                   return ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),

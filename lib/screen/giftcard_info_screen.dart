@@ -696,6 +696,29 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     return int.tryParse(v.toString()) ?? 0;
   }
 
+  /// 대시보드 KPI(평균마일원가 등)는 "구매일(기간) 기준"으로 집계한다.
+  /// - lots: 선택 기간에 구매한 lot만 들어있음 (GiftcardService에서 buyDate 기준 필터)
+  /// - sales: 일간/내역 탭을 위해 sellDate 기준 판매도 섞여 들어올 수 있음
+  /// 따라서 KPI 집계는 "선택 기간 lots에 연결된 판매(lotId)"만 사용한다.
+  Set<String> _currentLotIdSet() {
+    return _lots
+        .map((e) => e['id'])
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  List<Map<String, dynamic>> _dashboardSales() {
+    // 전체 기간은 lots도 전체라서 _sales 그대로 사용해도 동일하지만,
+    // 안전하게 lotId 연결이 있는 판매만 KPI에 반영한다.
+    final lotIds = _currentLotIdSet();
+    if (lotIds.isEmpty) return const <Map<String, dynamic>>[];
+    return _sales.where((s) {
+      final lotId = s['lotId'] as String?;
+      return lotId != null && lotIds.contains(lotId);
+    }).toList();
+  }
+
   double _asDouble(dynamic v) {
     if (v == null) return 0;
     if (v is double) return v;
@@ -707,12 +730,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         0,
         (p, e) => p + _asInt(e['buyUnit']) * _asInt(e['qty']),
       );
-  int _sumSell() =>
-      _sales.fold(0, (p, e) => p + _asInt(e['sellTotal']));
-  int _sumProfit() =>
-      _sales.fold(0, (p, e) => p + _asInt(e['profit']));
-  int _sumMiles() =>
-      _sales.fold(0, (p, e) => p + _asInt(e['miles']));
+  int _sumSell() => _dashboardSales().fold(0, (p, e) => p + _asInt(e['sellTotal']));
+  int _sumProfit() => _dashboardSales().fold(0, (p, e) => p + _asInt(e['profit']));
+  int _sumMiles() => _dashboardSales().fold(0, (p, e) => p + _asInt(e['miles']));
   String _fmtWon(num v) => '${_won.format(v)}원';
   String _fmtDiscount(dynamic v) {
     final double d = _asDouble(v);
@@ -752,7 +772,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   // 월별 손익/마일
   Map<String, Map<String, int>> _monthlyStats() {
     final Map<String, Map<String, int>> m = {};
-    for (final s in _sales) {
+    for (final s in _dashboardSales()) {
       final ts = s['sellDate'];
       if (ts is Timestamp) {
         final d = ts.toDate();
@@ -770,7 +790,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   // 할인율 히스토그램(2.0~3.5, 0.1단위)
   Map<double, int> _discountBuckets() {
     final Map<double, int> m = { for (double v = 2.0; v <= 3.5; v = double.parse((v + 0.1).toStringAsFixed(1))) v: 0 };
-    for (final s in _sales) {
+    for (final s in _dashboardSales()) {
       final d = (s['discount'] as num?)?.toDouble();
       if (d == null) continue;
       final key = (d * 10).round() / 10.0; // 0.1단위 반올림
