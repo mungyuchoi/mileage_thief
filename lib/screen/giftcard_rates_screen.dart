@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'branch/branch_detail_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -1558,6 +1559,25 @@ class BranchRatesDetailPage extends StatelessWidget {
         .doc(branchId)
         .collection('giftcardRates_current')
         .get();
+
+    // 최근 60일(오늘 포함) 일별 시세 (약 2달)
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 59));
+    // rates_daily는 문서 id가 yyyyMMdd 형태(예: 20260207)이므로,
+    // 과거 문서에 date 필드가 없거나 타입이 달라도 안정적으로 2달치를 가져오기 위해
+    // documentId 기반으로 범위를 조회한다.
+    final String startKey = DateFormat('yyyyMMdd').format(start);
+    final String endKey = DateFormat('yyyyMMdd').format(now);
+    final dailySnap = await FirebaseFirestore.instance
+        .collection('branches')
+        .doc(branchId)
+        .collection('rates_daily')
+        .orderBy(FieldPath.documentId)
+        .startAt([startKey])
+        .endAt([endKey])
+        .get();
+
     final giftcardsSnap =
         await FirebaseFirestore.instance.collection('giftcards').get();
 
@@ -1568,6 +1588,7 @@ class BranchRatesDetailPage extends StatelessWidget {
     return {
       'branch': branchDoc.data(),
       'rates': ratesSnap.docs,
+      'daily': dailySnap.docs,
       'giftcards': giftcards,
     };
   }
@@ -1648,6 +1669,10 @@ class BranchRatesDetailPage extends StatelessWidget {
           final List<QueryDocumentSnapshot<Map<String, dynamic>>> rateDocs =
               List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
                   snapshot.data!['rates'] as List);
+          final List<QueryDocumentSnapshot<Map<String, dynamic>>> dailyDocs =
+              List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+            snapshot.data!['daily'] as List? ?? const [],
+          );
           final giftcards =
               snapshot.data!['giftcards'] as Map<String, Map<String, dynamic>>;
 
@@ -1821,7 +1846,14 @@ class BranchRatesDetailPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  if (rateDocs.isNotEmpty)
+                    _BranchDailyRatesChartCard(
+                      dailyDocs: dailyDocs,
+                      rateDocs: rateDocs,
+                      giftcards: giftcards,
+                    ),
+                  if (rateDocs.isNotEmpty) const SizedBox(height: 16),
                   const Text(
                     '이 지점에서 취급하는 상품권',
                     style:
@@ -1930,6 +1962,584 @@ class BranchRatesDetailPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BranchDailyRatesChartCard extends StatelessWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> dailyDocs;
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> rateDocs;
+  final Map<String, Map<String, dynamic>> giftcards;
+
+  const _BranchDailyRatesChartCard({
+    required this.dailyDocs,
+    required this.rateDocs,
+    required this.giftcards,
+  });
+
+  List<String> _handledGiftcardIds() {
+    final Set<String> ids = <String>{};
+    for (final doc in rateDocs) {
+      final data = doc.data();
+      final id = (data['giftcardId'] as String?) ?? doc.id;
+      if (id.trim().isNotEmpty) ids.add(id);
+    }
+    final list = ids.toList();
+    list.sort((a, b) {
+      final an = (giftcards[a]?['name'] as String?) ?? a;
+      final bn = (giftcards[b]?['name'] as String?) ?? b;
+      return an.compareTo(bn);
+    });
+    return list;
+  }
+
+  String _giftcardName(String id) => (giftcards[id]?['name'] as String?) ?? id;
+
+  Color _seriesColor(int i) {
+    const palette = <Color>[
+      Color(0xFF1E88E5), // blue
+      Color(0xFFD81B60), // pink
+      Color(0xFF43A047), // green
+      Color(0xFFF4511E), // orange
+      Color(0xFF8E24AA), // purple
+      Color(0xFF00897B), // teal
+      Color(0xFF6D4C41), // brown
+      Color(0xFF546E7A), // blueGrey
+      Color(0xFF3949AB), // indigo
+      Color(0xFFC0CA33), // lime
+      Color(0xFF5E35B1), // deepPurple
+      Color(0xFF00ACC1), // cyan
+    ];
+    return palette[i % palette.length];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = _handledGiftcardIds();
+    if (ids.isEmpty) return const SizedBox.shrink();
+
+    final chart = _BranchDailyMultiRatesChartData.fromDailyDocs(
+      dailyDocs: dailyDocs,
+      giftcardIds: ids,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '최근 2달 시세 추이 (전체 상품권)',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+          ),
+          const SizedBox(height: 10),
+          _GiftcardLegendWrap(
+            giftcardIds: ids,
+            giftcardName: _giftcardName,
+            colorForIndex: _seriesColor,
+          ),
+          const SizedBox(height: 10),
+          if (chart.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Center(
+                child: Text(
+                  '최근 1달 차트 데이터가 없습니다.',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, c) {
+                final bool sideBySide = c.maxWidth >= 720;
+                final childA = _SingleMetricChart(
+                  title: '팔 때',
+                  metric: _DailyMetric.sell,
+                  chart: chart,
+                  giftcardIds: ids,
+                  colorForIndex: _seriesColor,
+                  giftcardName: _giftcardName,
+                );
+                final childB = _SingleMetricChart(
+                  title: '살 때',
+                  metric: _DailyMetric.buy,
+                  chart: chart,
+                  giftcardIds: ids,
+                  colorForIndex: _seriesColor,
+                  giftcardName: _giftcardName,
+                );
+                if (sideBySide) {
+                  return Row(
+                    children: [
+                      Expanded(child: childA),
+                      const SizedBox(width: 12),
+                      Expanded(child: childB),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    childA,
+                    const SizedBox(height: 12),
+                    childB,
+                  ],
+                );
+              },
+            ),
+          if (!chart.isEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              '기간: ${chart.startLabel} ~ ${chart.endLabel}',
+              style: const TextStyle(fontSize: 11, color: Colors.black54),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.black87),
+        ),
+      ],
+    );
+  }
+}
+
+enum _DailyMetric { sell, buy }
+
+class _BranchDailyMultiRatesChartData {
+  final List<DateTime> days;
+  final Map<String, List<double?>> sellByGiftcard;
+  final Map<String, List<double?>> buyByGiftcard;
+
+  _BranchDailyMultiRatesChartData({
+    required this.days,
+    required this.sellByGiftcard,
+    required this.buyByGiftcard,
+  });
+
+  factory _BranchDailyMultiRatesChartData.fromDailyDocs({
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> dailyDocs,
+    required List<String> giftcardIds,
+  }) {
+    final List<DateTime> days = <DateTime>[];
+    final Map<String, List<double?>> sell = {
+      for (final id in giftcardIds) id: <double?>[],
+    };
+    final Map<String, List<double?>> buy = {
+      for (final id in giftcardIds) id: <double?>[],
+    };
+
+    DateTime? docDay(QueryDocumentSnapshot<Map<String, dynamic>> d) {
+      final data = d.data();
+      final ts = data['date'];
+      if (ts is Timestamp) {
+        final x = ts.toDate();
+        return DateTime(x.year, x.month, x.day);
+      }
+      // date 필드가 없으면 문서 id(yyyyMMdd)로 파싱
+      final id = d.id;
+      if (RegExp(r'^\d{8}$').hasMatch(id)) {
+        final y = int.tryParse(id.substring(0, 4));
+        final m = int.tryParse(id.substring(4, 6));
+        final day = int.tryParse(id.substring(6, 8));
+        if (y != null && m != null && day != null) {
+          return DateTime(y, m, day);
+        }
+      }
+      return null;
+    }
+
+    final docs = dailyDocs.toList()
+      ..sort((a, b) {
+        final da = docDay(a) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final db = docDay(b) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return da.compareTo(db);
+      });
+
+    for (final doc in docs) {
+      final data = doc.data();
+      final DateTime? day = docDay(doc);
+      if (day == null) continue;
+      days.add(day);
+
+      final Map<String, dynamic>? rates = (data['giftcardRates'] is Map)
+          ? Map<String, dynamic>.from(data['giftcardRates'] as Map)
+          : null;
+
+      for (final id in giftcardIds) {
+        final dynamic rawRate = rates != null ? rates[id] : null;
+        final Map<String, dynamic>? r =
+            (rawRate is Map) ? Map<String, dynamic>.from(rawRate) : null;
+
+        sell[id]!.add((r?['sellPrice_general'] as num?)?.toDouble());
+        buy[id]!.add((r?['buyPrice_general'] as num?)?.toDouble());
+      }
+    }
+
+    return _BranchDailyMultiRatesChartData(
+      days: days,
+      sellByGiftcard: sell,
+      buyByGiftcard: buy,
+    );
+  }
+
+  bool get isEmpty {
+    if (days.isEmpty) return true;
+    final hasAny = sellByGiftcard.values
+            .any((series) => series.any((v) => v != null)) ||
+        buyByGiftcard.values.any((series) => series.any((v) => v != null));
+    return !hasAny;
+  }
+
+  String get startLabel =>
+      days.isEmpty ? '-' : DateFormat('MM/dd').format(days.first);
+  String get endLabel =>
+      days.isEmpty ? '-' : DateFormat('MM/dd').format(days.last);
+
+  Set<int> bottomLabelIndices({
+    required double maxWidth,
+  }) {
+    if (days.isEmpty) return <int>{};
+
+    final int len = days.length;
+    // 요청: "겹치지 않게 4등분" → 0/25/50/75/100% 지점 라벨을 기본으로 사용
+    final int last = len - 1;
+    final Set<int> base = <int>{
+      0,
+      last,
+      (last * 0.25).round(),
+      (last * 0.50).round(),
+      (last * 0.75).round(),
+    };
+
+    // 월 경계(매월 1일)도 넣되, 겹치지 않을 때만 추가
+    final List<int> monthBoundaries = <int>[];
+    for (int i = 0; i < len; i++) {
+      if (days[i].day == 1) monthBoundaries.add(i);
+    }
+
+    final sortedBase = base.toList()..sort();
+
+    bool farFromBase(int idx) {
+      // 모바일에서도 겹치지 않도록 최소 4일 간격 확보
+      const int minGap = 4;
+      for (final b in sortedBase) {
+        if ((idx - b).abs() < minGap) return false;
+      }
+      return true;
+    }
+
+    final Set<int> indices = {...base};
+    for (final i in monthBoundaries) {
+      if (farFromBase(i)) indices.add(i);
+    }
+
+    // 폭이 매우 좁으면(라벨 겹침 우려) base만 남긴다.
+    if (maxWidth < 330) {
+      return base;
+    }
+
+    return indices;
+  }
+
+  String dayLabel(double x) {
+    if (days.isEmpty) return '-';
+    final idx = x.round().clamp(0, days.length - 1);
+    return DateFormat('MM/dd').format(days[idx]);
+  }
+
+  List<FlSpot> spotsFor({
+    required _DailyMetric metric,
+    required String giftcardId,
+  }) {
+    final series = metric == _DailyMetric.sell
+        ? sellByGiftcard[giftcardId]
+        : buyByGiftcard[giftcardId];
+    if (series == null) return const <FlSpot>[];
+    final List<FlSpot> out = <FlSpot>[];
+    for (int i = 0; i < series.length; i++) {
+      final v = series[i];
+      if (v == null) continue;
+      out.add(FlSpot(i.toDouble(), v));
+    }
+    return out;
+  }
+}
+
+class _GiftcardLegendWrap extends StatelessWidget {
+  final List<String> giftcardIds;
+  final String Function(String) giftcardName;
+  final Color Function(int) colorForIndex;
+
+  const _GiftcardLegendWrap({
+    required this.giftcardIds,
+    required this.giftcardName,
+    required this.colorForIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        for (int i = 0; i < giftcardIds.length; i++)
+          _LegendDot(
+            color: colorForIndex(i),
+            label: giftcardName(giftcardIds[i]),
+          ),
+      ],
+    );
+  }
+}
+
+class _SingleMetricChart extends StatelessWidget {
+  final String title;
+  final _DailyMetric metric;
+  final _BranchDailyMultiRatesChartData chart;
+  final List<String> giftcardIds;
+  final Color Function(int) colorForIndex;
+  final String Function(String) giftcardName;
+
+  const _SingleMetricChart({
+    required this.title,
+    required this.metric,
+    required this.chart,
+    required this.giftcardIds,
+    required this.colorForIndex,
+    required this.giftcardName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final allSpots = <FlSpot>[
+      for (final id in giftcardIds) ...chart.spotsFor(metric: metric, giftcardId: id),
+    ];
+    if (allSpots.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 18),
+                child: Text(
+                  '데이터가 없습니다.',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    double minY = allSpots.first.y;
+    double maxY = allSpots.first.y;
+    for (final s in allSpots) {
+      if (s.y < minY) minY = s.y;
+      if (s.y > maxY) maxY = s.y;
+    }
+    final pad = ((maxY - minY) * 0.12).clamp(500.0, 5000.0);
+    minY -= pad;
+    maxY += pad;
+
+    final seriesIds = giftcardIds.toList();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final indices = chart.bottomLabelIndices(
+                maxWidth: constraints.maxWidth,
+              );
+              return SizedBox(
+                height: 180,
+                child: LineChart(
+                  LineChartData(
+                    minY: minY,
+                    maxY: maxY,
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval:
+                          ((maxY - minY) / 4).clamp(500.0, 10000.0),
+                      getDrawingHorizontalLine: (v) => FlLine(
+                        color: Colors.black.withOpacity(0.06),
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 44,
+                          interval:
+                              ((maxY - minY) / 4).clamp(500.0, 10000.0),
+                          getTitlesWidget: (value, meta) {
+                            final String t = _fmtWonShort(value);
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Text(
+                                t,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            final idx = value.round();
+                            if (!indices.contains(idx)) {
+                              return const SizedBox.shrink();
+                            }
+                            if (idx < 0 || idx >= chart.days.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final label = DateFormat('MM/dd').format(
+                              chart.days[idx],
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                label,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    lineBarsData: [
+                      for (int i = 0; i < seriesIds.length; i++)
+                        LineChartBarData(
+                          spots: chart.spotsFor(
+                            metric: metric,
+                            giftcardId: seriesIds[i],
+                          ),
+                          isCurved: false,
+                          isStepLineChart: true,
+                          barWidth: 2,
+                          color: colorForIndex(i),
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(show: false),
+                        ),
+                    ],
+                    lineTouchData: LineTouchData(
+                      enabled: true,
+                      touchTooltipData: LineTouchTooltipData(
+                        fitInsideHorizontally: true,
+                        fitInsideVertically: true,
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((s) {
+                            final String day = chart.dayLabel(s.x);
+                            final String price =
+                                NumberFormat('#,###').format(s.y);
+                            final String giftName =
+                                giftcardName(seriesIds[s.barIndex]);
+                            return LineTooltipItem(
+                              '$day\n$giftName: ${price}원',
+                              const TextStyle(
+                                color: Colors.black,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _fmtWonShort(double v) {
+  if (v >= 10000) {
+    final x = v / 10000.0;
+    // 9.5만 정도로 표시
+    return '${x.toStringAsFixed(x >= 10 ? 0 : 1)}만';
+  }
+  return v.toStringAsFixed(0);
 }
 
 
