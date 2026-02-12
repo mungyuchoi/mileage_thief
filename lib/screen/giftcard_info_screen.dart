@@ -286,6 +286,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   '• 동의하지 않음으로 변경하게 되면 다음번 랭킹 집계할 때 제외됩니다.',
                   style: TextStyle(color: Colors.black, fontSize: 14),
                 ),
+                const SizedBox(height: 6),
+                const Text(
+                  '• 동의하지 않음으로 변경하게 되면 지도, 시세, 지점탭을 이용할 수 없습니다.',
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                ),
                 const SizedBox(height: 12),
                 Text(
                   '현재 보유 땅콩: ${currentPeanuts}개',

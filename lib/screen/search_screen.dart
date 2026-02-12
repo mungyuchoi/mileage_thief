@@ -331,7 +331,7 @@ class SearchScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMixin {
   // GlobalKey for old AirportScreen removed
   int _currentIndex = 0;
   final DatabaseReference _versionReference =
@@ -340,6 +340,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isScrolling = false; // 스크롤 중인지 여부
   final GlobalKey<State<GiftcardInfoScreen>> _giftcardInfoKey =
       GlobalKey<State<GiftcardInfoScreen>>();
+  late TabController _giftcardTabController; // 상품권 탭 전용 TabController
 
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
@@ -354,12 +355,67 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _giftcardTabController = TabController(length: 4, vsync: this);
+    _giftcardTabController.addListener(_handleGiftcardTabChange);
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
     _loadNotificationSettings();
     _checkForceUpdateAndNotice();
     _checkAndShowStartupAdBottomSheet();
+  }
+
+  @override
+  void dispose() {
+    _giftcardTabController.removeListener(_handleGiftcardTabChange);
+    _giftcardTabController.dispose();
+    super.dispose();
+  }
+
+  // 상품권 탭 전환 핸들러
+  void _handleGiftcardTabChange() {
+    if (!_giftcardTabController.indexIsChanging) {
+      // 탭 전환이 완료되었을 때만 체크
+      final int targetIndex = _giftcardTabController.index;
+      // 정보 탭(0)이 아닌 경우에만 체크
+      if (targetIndex != 0) {
+        _checkRankingAgreementAndBlockTab(targetIndex);
+      }
+    }
+  }
+
+  // 랭킹 동의 상태 확인 및 탭 차단
+  Future<void> _checkRankingAgreementAndBlockTab(int targetIndex) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final data = userDoc.data();
+      final rankingAgreement = data?['ranking_agree'] as bool? ?? true;
+
+      // 랭킹 미동의인 경우
+      if (!rankingAgreement) {
+        // 정보 탭으로 강제 이동
+        _giftcardTabController.animateTo(0);
+        
+        // 토스트 메시지 표시
+        Fluttertoast.showToast(
+          msg: '랭킹 동의를 해야 진입할 수 있습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    } catch (e) {
+      debugPrint('랭킹 동의 상태 확인 오류: $e');
+    }
   }
 
   Future<void> _checkForceUpdateAndNotice() async {
@@ -473,9 +529,7 @@ class _SearchScreenState extends State<SearchScreen> {
       // 상품권 탭 전용: 상단 TabBar(지도/정보) + FAB
       return WillPopScope(
         onWillPop: _onWillPop,
-        child: DefaultTabController(
-          length: 4,
-          child: Scaffold(
+        child: Scaffold(
             backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
             appBar: AppBar(
               automaticallyImplyLeading: false,
@@ -592,21 +646,17 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(54),
-                child: Builder(
-                  builder: (innerContext) {
-                    final controller = DefaultTabController.of(innerContext);
-                    return SegmentTabBar(
-                      controller: controller!,
-                      labels: const ['정보', '지도', '시세', '지점'],
-                      margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                    );
-                  },
+                child: SegmentTabBar(
+                  controller: _giftcardTabController,
+                  labels: const ['정보', '지도', '시세', '지점'],
+                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                 ),
               ),
             ),
             body: Stack(
               children: [
                 TabBarView(
+                  controller: _giftcardTabController,
                   physics: NeverScrollableScrollPhysics(),
                   children: [
                     GiftcardInfoScreen(
@@ -725,14 +775,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
               ],
             ),
-            floatingActionButton: Builder(
-              builder: (context) {
-                final controller = DefaultTabController.of(context);
-                if (controller == null) return const SizedBox.shrink();
-                return AnimatedBuilder(
-                  animation: controller,
-                  builder: (context, _) {
-                    final showFab = controller.index == 0;
+            floatingActionButton: AnimatedBuilder(
+              animation: _giftcardTabController,
+              builder: (context, _) {
+                final showFab = _giftcardTabController.index == 0;
                     if (!showFab) return const SizedBox.shrink();
 
                     // 스크롤 중이면 FAB 숨김
@@ -775,9 +821,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       },
                     );
                   },
-                );
-              },
-            ),
+                ),
             bottomNavigationBar: BottomNavigationBar(
               backgroundColor: Colors.grey[200],
               currentIndex: _currentIndex,
@@ -851,7 +895,6 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
           ),
-        ),
       );
     }
 
