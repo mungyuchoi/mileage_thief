@@ -1,2 +1,7 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+#include? "../Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// Ensure Swift can find the Flutter module (used by `import Flutter`) when archiving.
+OTHER_SWIFT_FLAGS[sdk=iphoneos*] = $(inherited) -F"$(FLUTTER_ROOT)/bin/cache/artifacts/engine/ios-release/Flutter.xcframework/ios-arm64"
+OTHER_SWIFT_FLAGS[sdk=iphonesimulator*] = $(inherited) -F"$(FLUTTER_ROOT)/bin/cache/artifacts/engine/ios-release/Flutter.xcframework/ios-arm64_x86_64-simulator"
