@@ -18,6 +18,8 @@ class AuthService {
   static const String _functionsRegion = 'asia-northeast3';
   static const String _naverClientId =
       String.fromEnvironment('NAVER_CLIENT_ID');
+  static const String _kakaoRestApiKey =
+      String.fromEnvironment('KAKAO_REST_API_KEY');
 
   // 현재 사용자 가져오기
   static User? get currentUser => _auth.currentUser;
@@ -217,6 +219,141 @@ class AuthService {
           // displayName 업데이트 실패는 로그인 전체 실패로 취급하지 않음.
         }
       }
+    }
+
+    return credential;
+  }
+
+  // Kakao 로그인 (OAuth code + Firebase Custom Token)
+  static Future<UserCredential?> signInWithKakao() async {
+    print('[카카오 로그인] 시작');
+    if (_kakaoRestApiKey.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'missing-kakao-rest-api-key',
+        message: 'KAKAO_REST_API_KEY dart-define 값이 비어 있습니다.',
+      );
+    }
+
+    final state = _generateNonce(24);
+    final projectId = Firebase.app().options.projectId;
+    final redirectUri =
+        'https://$_functionsRegion-$projectId.cloudfunctions.net/kakaoOauthBridge';
+    print('[카카오 로그인] redirectUri: $redirectUri');
+
+    final authorizeUri = Uri.https('kauth.kakao.com', '/oauth/authorize', {
+      'response_type': 'code',
+      'client_id': _kakaoRestApiKey,
+      'redirect_uri': redirectUri,
+      'state': state,
+      'scope': 'profile_nickname,profile_image',
+    });
+    print('[카카오 로그인] authorizeUri 생성 완료');
+
+    String callbackResult;
+    try {
+      print('[카카오 로그인] FlutterWebAuth2.authenticate 호출');
+      callbackResult = await FlutterWebAuth2.authenticate(
+        url: authorizeUri.toString(),
+        callbackUrlScheme: _appScheme,
+      );
+      print('[카카오 로그인] callbackResult 수신: $callbackResult');
+    } on PlatformException catch (e) {
+      final lowerCode = e.code.toLowerCase();
+      final lowerMessage = (e.message ?? '').toLowerCase();
+      if (lowerCode == 'canceled' ||
+          lowerCode == 'cancelled' ||
+          lowerMessage.contains('canceled') ||
+          lowerMessage.contains('cancelled')) {
+        print('[카카오 로그인] 사용자 취소 처리: code=${e.code}, message=${e.message}');
+        return null;
+      }
+      print(
+          '[카카오 로그인] PlatformException: code=${e.code}, message=${e.message}, details=${e.details}');
+      rethrow;
+    }
+    final callbackUri = Uri.parse(callbackResult);
+    print('[카카오 로그인] callbackUri: $callbackUri');
+
+    final authError = callbackUri.queryParameters['error'];
+    if (authError != null && authError.isNotEmpty) {
+      final authErrorDescription =
+          callbackUri.queryParameters['error_description'] ?? '카카오 인증 실패';
+      throw FirebaseAuthException(
+        code: 'kakao-auth-failed',
+        message: '$authError: $authErrorDescription',
+      );
+    }
+
+    final code = callbackUri.queryParameters['code'];
+    final returnedState = callbackUri.queryParameters['state'];
+    print(
+        '[카카오 로그인] callback params: code=${code != null}, state=${returnedState != null}');
+
+    if (code == null || returnedState == null) {
+      throw FirebaseAuthException(
+        code: 'kakao-callback-invalid',
+        message: '카카오 콜백에서 code/state를 찾을 수 없습니다.',
+      );
+    }
+
+    if (returnedState != state) {
+      print('[카카오 로그인] state mismatch: expected=$state, actual=$returnedState');
+      throw FirebaseAuthException(
+        code: 'kakao-state-mismatch',
+        message: '카카오 state 검증에 실패했습니다.',
+      );
+    }
+
+    print('[카카오 로그인] createKakaoCustomToken 호출 시작');
+    final callable = FirebaseFunctions.instanceFor(region: _functionsRegion)
+        .httpsCallable('createKakaoCustomToken');
+    final callableResult = await callable.call({
+      'code': code,
+      'state': returnedState,
+      'redirectUri': redirectUri,
+    });
+    print('[카카오 로그인] createKakaoCustomToken 호출 완료');
+
+    final data = Map<String, dynamic>.from(callableResult.data as Map);
+    final firebaseToken = (data['firebaseToken'] ?? '').toString();
+    if (firebaseToken.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'kakao-custom-token-missing',
+        message: 'Firebase custom token 응답이 비어 있습니다.',
+      );
+    }
+
+    final credential = await _auth.signInWithCustomToken(firebaseToken);
+    print('[카카오 로그인] signInWithCustomToken 완료: uid=${credential.user?.uid}');
+    final user = credential.user;
+
+    if (user != null) {
+      final profile = Map<String, dynamic>.from(
+          (data['providerProfile'] as Map?) ?? const {});
+      final nickname = (profile['nickname'] ?? '').toString().trim();
+      final profileImage = (profile['profileImage'] ?? '').toString().trim();
+      final displayName = nickname.isNotEmpty
+          ? nickname
+          : UserService.generateTravelDisplayName();
+
+      if ((user.displayName ?? '').trim().isEmpty ||
+          (user.displayName ?? '').trim() == '카카오사용자') {
+        try {
+          await user.updateDisplayName(displayName);
+        } catch (_) {
+          // displayName 업데이트 실패는 로그인 전체 실패로 취급하지 않음.
+        }
+      }
+
+      if (profileImage.isNotEmpty) {
+        try {
+          await user.updatePhotoURL(profileImage);
+        } catch (_) {
+          // photoURL 업데이트 실패는 로그인 전체 실패로 취급하지 않음.
+        }
+      }
+
+      await user.reload();
     }
 
     return credential;

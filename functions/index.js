@@ -21,6 +21,8 @@ const APP_SCHEME = "milecatchoauth";
 const OAUTH_REGION = "asia-northeast3";
 const NAVER_CLIENT_ID = defineSecret("NAVER_CLIENT_ID");
 const NAVER_CLIENT_SECRET = defineSecret("NAVER_CLIENT_SECRET");
+const KAKAO_REST_API_KEY = defineSecret("KAKAO_REST_API_KEY");
+const KAKAO_CLIENT_SECRET = defineSecret("KAKAO_CLIENT_SECRET");
 
 /**
  * unknown 값을 안전한 문자열 ID로 변환
@@ -73,12 +75,71 @@ function normalizeNaverProfile(payload) {
 }
 
 /**
+ * 카카오 프로필 payload를 앱에서 쓰기 쉬운 형태로 정규화
+ * @param {Record<string, unknown>} payload
+ * @return {{id: string, email: string|null, nickname: string|null, name: string|null, profileImage: string|null}}
+ */
+function normalizeKakaoProfile(payload) {
+  const kakaoAccount =
+    payload && typeof payload.kakao_account === "object" &&
+    payload.kakao_account !== null ?
+      payload.kakao_account :
+      {};
+  const profile =
+    kakaoAccount && typeof kakaoAccount.profile === "object" &&
+    kakaoAccount.profile !== null ?
+      kakaoAccount.profile :
+      {};
+
+  return {
+    id: asIdString(payload.id),
+    email: asOptionalString(kakaoAccount.email),
+    nickname: asOptionalString(profile.nickname),
+    name: asOptionalString(profile.nickname),
+    profileImage: asOptionalString(profile.profile_image_url),
+  };
+}
+
+/**
  * OAuth bridge query를 앱 callback URI로 변환
  * @param {Record<string, unknown>} query
  * @return {string}
  */
 function buildNaverAppCallback(query) {
   const callbackUrl = new URL(`${APP_SCHEME}://oauth/naver`);
+
+  const code = asOptionalString(query.code);
+  const state = asOptionalString(query.state);
+  const error = asOptionalString(query.error);
+  const errorDescription = asOptionalString(query.error_description);
+
+  if (code) {
+    callbackUrl.searchParams.set("code", code);
+  }
+
+  if (state) {
+    callbackUrl.searchParams.set("state", state);
+  }
+
+  if (error) {
+    callbackUrl.searchParams.set("error", error);
+  }
+
+  if (errorDescription) {
+    callbackUrl.searchParams.set("error_description", errorDescription);
+  }
+
+  return callbackUrl.toString();
+}
+
+/**
+ * OAuth bridge query를 앱 callback URI로 변환
+ * @param {string} provider
+ * @param {Record<string, unknown>} query
+ * @return {string}
+ */
+function buildOauthAppCallback(provider, query) {
+  const callbackUrl = new URL(`${APP_SCHEME}://oauth/${provider}`);
 
   const code = asOptionalString(query.code);
   const state = asOptionalString(query.state);
@@ -823,6 +884,25 @@ exports.naverOauthBridge = onRequest({region: OAUTH_REGION}, (request, response)
 });
 
 /**
+ * 카카오 OAuth 콜백을 앱 딥링크로 전달하는 브리지
+ * Kakao Console Redirect URI에 이 함수 URL을 등록한다.
+ */
+exports.kakaoOauthBridge = onRequest({region: OAUTH_REGION}, (request, response) => {
+  const hasCode = Boolean(asOptionalString(request.query?.code));
+  const hasState = Boolean(asOptionalString(request.query?.state));
+  const error = asOptionalString(request.query?.error);
+  logger.info("kakaoOauthBridge callback received", {
+    hasCode,
+    hasState,
+    error: error || null,
+  });
+
+  const redirectUrl = buildOauthAppCallback("kakao", request.query || {});
+  response.set("Cache-Control", "no-store");
+  response.redirect(302, redirectUrl);
+});
+
+/**
  * 네이버 OAuth code를 Firebase Custom Token으로 교환
  */
 exports.createNaverCustomToken = onCall({
@@ -910,6 +990,95 @@ exports.createNaverCustomToken = onCall({
 
     logger.error("createNaverCustomToken unexpected error", error);
     throw new HttpsError("internal", "네이버 로그인 처리 중 오류가 발생했습니다.");
+  }
+});
+
+/**
+ * 카카오 OAuth code를 Firebase Custom Token으로 교환
+ */
+exports.createKakaoCustomToken = onCall({
+  region: OAUTH_REGION,
+  secrets: [KAKAO_REST_API_KEY, KAKAO_CLIENT_SECRET],
+}, async (request) => {
+  const data = request.data || {};
+  const code = asOptionalString(data.code) || "";
+  const state = asOptionalString(data.state) || "";
+  const redirectUri = asOptionalString(data.redirectUri) || "";
+
+  if (!code || !state || !redirectUri) {
+    throw new HttpsError(
+        "invalid-argument",
+        "code/state/redirectUri는 필수입니다.",
+    );
+  }
+
+  try {
+    const tokenBody = new URLSearchParams();
+    tokenBody.set("grant_type", "authorization_code");
+    tokenBody.set("client_id", KAKAO_REST_API_KEY.value());
+    tokenBody.set("client_secret", KAKAO_CLIENT_SECRET.value());
+    tokenBody.set("redirect_uri", redirectUri);
+    tokenBody.set("code", code);
+
+    const tokenResponse = await globalThis.fetch("https://kauth.kakao.com/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        "Accept": "application/json",
+      },
+      body: tokenBody.toString(),
+    });
+
+    const tokenPayload = await tokenResponse.json();
+    const accessToken = asOptionalString(tokenPayload.access_token) || "";
+
+    if (!tokenResponse.ok || !accessToken) {
+      logger.error("Kakao token exchange failed", {
+        status: tokenResponse.status,
+        tokenPayload,
+      });
+      throw new HttpsError("internal", "카카오 토큰 발급에 실패했습니다.");
+    }
+
+    const profileResponse = await globalThis.fetch("https://kapi.kakao.com/v2/user/me", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Accept": "application/json",
+      },
+    });
+
+    const profilePayload = await profileResponse.json();
+    const normalizedProfile = normalizeKakaoProfile(profilePayload || {});
+    const providerUid = normalizedProfile.id;
+
+    if (!profileResponse.ok || !providerUid) {
+      logger.error("Kakao profile lookup failed", {
+        status: profileResponse.status,
+        profilePayload,
+      });
+      throw new HttpsError("internal", "카카오 프로필 조회에 실패했습니다.");
+    }
+
+    const firebaseUid = `kakao:${providerUid}`;
+    const firebaseToken = await admin.auth().createCustomToken(firebaseUid, {
+      provider: "kakao",
+      providerUid,
+    });
+
+    return {
+      firebaseToken,
+      provider: "kakao",
+      providerUid,
+      providerProfile: normalizedProfile,
+    };
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    logger.error("createKakaoCustomToken unexpected error", error);
+    throw new HttpsError("internal", "카카오 로그인 처리 중 오류가 발생했습니다.");
   }
 });
 

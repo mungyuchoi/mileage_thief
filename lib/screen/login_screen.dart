@@ -408,15 +408,74 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleKakaoLogin() async {
-    Fluttertoast.showToast(
-      msg: "Kakao 로그인은 다음 단계에서 연동합니다.",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.black87,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await AuthService.signInWithKakao();
+
+      if (userCredential?.user != null) {
+        final user = userCredential!.user!;
+        await user.reload();
+        final updatedUser = AuthService.currentUser;
+        setState(() {
+          _currentUser = updatedUser;
+        });
+
+        final shouldSave = await _showConfirmDialog();
+
+        if (shouldSave) {
+          final fcmToken = await FCMService.getCurrentToken();
+          await UserService.saveUserToFirestore(user, _currentPeanutCount,
+              fcmToken: fcmToken);
+
+          Fluttertoast.showToast(
+            msg: "Kakao 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        } else {
+          final fcmToken = await FCMService.getCurrentToken();
+          await UserService.saveUserToFirestore(user, 0, fcmToken: fcmToken);
+
+          Fluttertoast.showToast(
+            msg: "Kakao 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        }
+
+        _getCurrentUser();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyPageScreen()),
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Kakao 로그인 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<bool> _showConfirmDialog() async {
