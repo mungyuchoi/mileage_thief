@@ -5,3 +5,4 @@
 // Ensure Swift can find the Flutter module (used by `import Flutter`).
 OTHER_SWIFT_FLAGS[sdk=iphoneos*] = $(inherited) -F"$(FLUTTER_ROOT)/bin/cache/artifacts/engine/ios/Flutter.xcframework/ios-arm64"
 OTHER_SWIFT_FLAGS[sdk=iphonesimulator*] = $(inherited) -F"$(FLUTTER_ROOT)/bin/cache/artifacts/engine/ios/Flutter.xcframework/ios-arm64_x86_64-simulator"
+SWIFT_ENABLE_EXPLICIT_MODULES = NO

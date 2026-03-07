@@ -3,6 +3,7 @@ platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+require 'fileutils'
 
 project 'Runner', {
   'Debug' => :debug,
@@ -28,7 +29,6 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks!
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
@@ -44,6 +44,44 @@ post_install do |installer|
     # Add photo library permission
     target.build_configurations.each do |config|
       config.build_settings['PERMISSION_PHOTOS'] = '1'
+      # Xcode 16 + CocoaPods(use_frameworks)에서 모듈 해석 실패 방지
+      config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
+
+      # gRPC modulemap 경로가 일부 환경에서 잘못 주입되는 문제 보정
+      broken_map = '${PODS_ROOT}/Headers/Private/grpc/gRPC-Core.modulemap'
+      fixed_map = '${PODS_ROOT}/gRPC-Core/include/grpc/module.modulemap'
+      ['OTHER_CFLAGS', 'OTHER_SWIFT_FLAGS'].each do |key|
+        value = config.build_settings[key]
+        next if value.nil?
+        if value.is_a?(Array)
+          config.build_settings[key] = value.map { |v| v.to_s.gsub(broken_map, fixed_map) }
+        else
+          config.build_settings[key] = value.to_s.gsub(broken_map, fixed_map)
+        end
+      end
+
+      # 일부 환경에서 CocoaPods가 잘못 넣는 weak_framework 링크 플래그 제거
+      ldflags = config.build_settings['OTHER_LDFLAGS']
+      next if ldflags.nil?
+      if ldflags.is_a?(Array)
+        joined = ldflags.join(' ')
+        joined = joined.gsub(/-weak_framework\s+"FirebaseFirestoreInternal"/, '')
+        config.build_settings['OTHER_LDFLAGS'] = joined.split(/\s+/).reject(&:empty?)
+      else
+        config.build_settings['OTHER_LDFLAGS'] =
+          ldflags.to_s.gsub(/-weak_framework\s+"FirebaseFirestoreInternal"/, '').strip
+      end
     end
   end
+
+  # Pods가 생성한 xcconfig 파일에도 동일 보정 적용
+  xcconfigs = Dir.glob(File.join(__dir__, 'Pods', 'Target Support Files', '**', '*.xcconfig'))
+  xcconfigs.each do |path|
+    content = File.read(path)
+    updated = content.gsub('${PODS_ROOT}/Headers/Private/grpc/gRPC-Core.modulemap',
+                           '${PODS_ROOT}/gRPC-Core/include/grpc/module.modulemap')
+    updated = updated.gsub(/-weak_framework \"FirebaseFirestoreInternal\"/, '')
+    File.write(path, updated) unless updated == content
+  end
+
 end
