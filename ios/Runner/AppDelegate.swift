@@ -67,10 +67,11 @@ import GoogleMaps
     // Google Sign-In에서 처리되지 않은 경우 Branch.io로 전달
 #if canImport(BranchSDK)
     print("Branch.io URL 처리")
-    return Branch.getInstance().application(app, open: url, options: options)
-#else
-    return super.application(app, open: url, options: options)
+    if Branch.getInstance().application(app, open: url, options: options) {
+      return true
+    }
 #endif
+    return super.application(app, open: url, options: options)
   }
   
   override func application(_ application: UIApplication,
@@ -78,9 +79,10 @@ import GoogleMaps
                            restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
     // Universal Links 처리 (Branch.io)
 #if canImport(BranchSDK)
-    return Branch.getInstance().continue(userActivity)
-#else
-    return super.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    if Branch.getInstance().continue(userActivity) {
+      return true
+    }
 #endif
+    return super.application(application, continue: userActivity, restorationHandler: restorationHandler)
   }
 }

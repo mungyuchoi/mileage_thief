@@ -35,8 +35,10 @@ dependencies:
   cloud_firestore: ^5.6.8
   month_picker_dialog: ^6.0.3
   firebase_auth: ^5.1.0
+  cloud_functions: ^5.6.1
   google_sign_in: ^6.1.4
   sign_in_with_apple: ^6.1.1
+  flutter_web_auth_2: ^4.1.0
   crypto: ^3.0.3
   uuid: ^4.0.0
   html_editor_enhanced: ^2.7.0
@@ -69,6 +71,10 @@ flutter:
   uses-material-design: true
   assets:
     - asset/img/
+    - asset/img/google_login/
+    - asset/img/apple_login/
+    - asset/img/naver_login/
+    - asset/img/kakao_login/
     - asset/icon/
 
   fonts:

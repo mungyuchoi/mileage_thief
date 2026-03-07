@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../helper/AdHelper.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
@@ -20,6 +19,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const double _socialLoginButtonWidth = 265;
   bool _isLoading = false;
   bool _isUpdatingName = false;
   bool _isAdLoading = false;
@@ -64,11 +64,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadPeanutCount() async {
     final currentUser = AuthService.currentUser;
-    
+
     if (currentUser != null) {
       // 로그인한 사용자: Firestore에서 peanutCount 가져오기
       try {
-        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
+        final userData =
+            await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
         setState(() {
           _currentPeanutCount = userData?['peanutCount'] ?? 0;
         });
@@ -96,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userCredential = await AuthService.signInWithPlatform();
-      
+
       if (userCredential?.user != null) {
         final user = userCredential!.user!;
         await user.reload();
@@ -104,17 +105,18 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _currentUser = updatedUser;
         });
-        
+
         // 사용자 확인 다이얼로그 표시
         final shouldSave = await _showConfirmDialog();
-        
+
         if (shouldSave) {
           // FCM 토큰 가져오기
           final fcmToken = await FCMService.getCurrentToken();
-          
+
           // Firestore에 사용자 정보와 FCM 토큰 저장
-          await UserService.saveUserToFirestore(user, _currentPeanutCount, fcmToken: fcmToken);
-          
+          await UserService.saveUserToFirestore(user, _currentPeanutCount,
+              fcmToken: fcmToken);
+
           Fluttertoast.showToast(
             msg: "로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
             toastLength: Toast.LENGTH_SHORT,
@@ -125,12 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 16.0,
           );
         } else {
-          // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
+          // 최소 사용자 프로필만 보장 (땅콩은 클라우드 동기화하지 않음)
           final fcmToken = await FCMService.getCurrentToken();
-          if (fcmToken != null) {
-            await UserService.updateFcmToken(user.uid, fcmToken);
-          }
-          
+          await UserService.saveUserToFirestore(user, 0, fcmToken: fcmToken);
+
           Fluttertoast.showToast(
             msg: "로그인 성공! (땅콩은 로컬에만 저장됩니다)",
             toastLength: Toast.LENGTH_SHORT,
@@ -141,15 +141,15 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 16.0,
           );
         }
-        
+
         _getCurrentUser();
-        
+
         // MyPageScreen으로 이동
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MyPageScreen()),
         );
-        
+
         // 로그인 성공 시 MyPageScreen으로 이동
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userCredential = await AuthService.signInWithApple();
-      
+
       if (userCredential?.user != null) {
         final user = userCredential!.user!;
         await user.reload();
@@ -189,17 +189,18 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _currentUser = updatedUser;
         });
-        
+
         // 사용자 확인 다이얼로그 표시
         final shouldSave = await _showConfirmDialog();
-        
+
         if (shouldSave) {
           // FCM 토큰 가져오기
           final fcmToken = await FCMService.getCurrentToken();
-          
+
           // Firestore에 사용자 정보와 FCM 토큰 저장
-          await UserService.saveUserToFirestore(user, _currentPeanutCount, fcmToken: fcmToken);
-          
+          await UserService.saveUserToFirestore(user, _currentPeanutCount,
+              fcmToken: fcmToken);
+
           Fluttertoast.showToast(
             msg: "Apple 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
             toastLength: Toast.LENGTH_SHORT,
@@ -210,12 +211,10 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 16.0,
           );
         } else {
-          // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
+          // 최소 사용자 프로필만 보장 (땅콩은 클라우드 동기화하지 않음)
           final fcmToken = await FCMService.getCurrentToken();
-          if (fcmToken != null) {
-            await UserService.updateFcmToken(user.uid, fcmToken);
-          }
-          
+          await UserService.saveUserToFirestore(user, 0, fcmToken: fcmToken);
+
           Fluttertoast.showToast(
             msg: "Apple 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
             toastLength: Toast.LENGTH_SHORT,
@@ -226,9 +225,9 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 16.0,
           );
         }
-        
+
         _getCurrentUser();
-        
+
         // MyPageScreen으로 이동
         Navigator.pushReplacement(
           context,
@@ -259,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final userCredential = await AuthService.signInWithGoogle();
-      
+
       if (userCredential?.user != null) {
         final user = userCredential!.user!;
         await user.reload();
@@ -267,17 +266,18 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _currentUser = updatedUser;
         });
-        
+
         // 사용자 확인 다이얼로그 표시
         final shouldSave = await _showConfirmDialog();
-        
+
         if (shouldSave) {
           // FCM 토큰 가져오기
           final fcmToken = await FCMService.getCurrentToken();
-          
+
           // Firestore에 사용자 정보와 FCM 토큰 저장
-          await UserService.saveUserToFirestore(user, _currentPeanutCount, fcmToken: fcmToken);
-          
+          await UserService.saveUserToFirestore(user, _currentPeanutCount,
+              fcmToken: fcmToken);
+
           Fluttertoast.showToast(
             msg: "Google 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
             toastLength: Toast.LENGTH_SHORT,
@@ -288,12 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 16.0,
           );
         } else {
-          // FCM 토큰만 업데이트 (로그인은 했지만 땅콩은 저장 안함)
+          // 최소 사용자 프로필만 보장 (땅콩은 클라우드 동기화하지 않음)
           final fcmToken = await FCMService.getCurrentToken();
-          if (fcmToken != null) {
-            await UserService.updateFcmToken(user.uid, fcmToken);
-          }
-          
+          await UserService.saveUserToFirestore(user, 0, fcmToken: fcmToken);
+
           Fluttertoast.showToast(
             msg: "Google 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
             toastLength: Toast.LENGTH_SHORT,
@@ -304,9 +302,9 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 16.0,
           );
         }
-        
+
         _getCurrentUser();
-        
+
         // MyPageScreen으로 이동
         Navigator.pushReplacement(
           context,
@@ -330,49 +328,142 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleNaverLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await AuthService.signInWithNaver();
+
+      if (userCredential?.user != null) {
+        final user = userCredential!.user!;
+        await user.reload();
+        final updatedUser = AuthService.currentUser;
+        setState(() {
+          _currentUser = updatedUser;
+        });
+
+        // 사용자 확인 다이얼로그 표시
+        final shouldSave = await _showConfirmDialog();
+
+        if (shouldSave) {
+          // FCM 토큰 가져오기
+          final fcmToken = await FCMService.getCurrentToken();
+
+          // Firestore에 사용자 정보와 FCM 토큰 저장
+          await UserService.saveUserToFirestore(user, _currentPeanutCount,
+              fcmToken: fcmToken);
+
+          Fluttertoast.showToast(
+            msg: "Naver 로그인 성공! 땅콩이 클라우드에 저장되었습니다.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        } else {
+          // 최소 사용자 프로필만 보장 (땅콩은 클라우드 동기화하지 않음)
+          final fcmToken = await FCMService.getCurrentToken();
+          await UserService.saveUserToFirestore(user, 0, fcmToken: fcmToken);
+
+          Fluttertoast.showToast(
+            msg: "Naver 로그인 성공! (땅콩은 로컬에만 저장됩니다)",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.grey[800],
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        }
+
+        _getCurrentUser();
+
+        // MyPageScreen으로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyPageScreen()),
+        );
+      }
+    } catch (e, st) {
+      print('[네이버 로그인] UI catch error: $e');
+      print('[네이버 로그인] UI catch stack: $st');
+      Fluttertoast.showToast(
+        msg: "Naver 로그인 실패: ${e.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleKakaoLogin() async {
+    Fluttertoast.showToast(
+      msg: "Kakao 로그인은 다음 단계에서 연동합니다.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black87,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
   Future<bool> _showConfirmDialog() async {
     return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text(
-          '땅콩 클라우드 저장',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          '현재 보유한 땅콩 $_currentPeanutCount개를 클라우드에 저장하시겠습니까?\n\n'
-          '저장하면 다른 기기에서도 땅콩을 사용할 수 있습니다.',
-          style: const TextStyle(color: Colors.black),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              '아니오',
-              style: TextStyle(color: Colors.black),
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              '땅콩 클라우드 저장',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              '예',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            content: Text(
+              '현재 보유한 땅콩 $_currentPeanutCount개를 클라우드에 저장하시겠습니까?\n\n'
+              '저장하면 다른 기기에서도 땅콩을 사용할 수 있습니다.',
+              style: const TextStyle(color: Colors.black),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text(
+                  '아니오',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text(
+                  '예',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   Future<void> _handleLogout() async {
     try {
       await AuthService.signOut();
       _getCurrentUser();
-      
+
       Fluttertoast.showToast(
         msg: "로그아웃 되었습니다.",
         toastLength: Toast.LENGTH_SHORT,
@@ -440,7 +531,8 @@ class _LoginScreenState extends State<LoginScreen> {
             },
             child: const Text(
               '저장',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -463,15 +555,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Firebase Auth에서 displayName 업데이트
       await user.updateDisplayName(newName);
-      
+
       // Firestore에서 displayName만 업데이트
       await UserService.updateDisplayName(user.uid, newName);
-      
+
       // 로컬 상태 업데이트
       setState(() {
         _getCurrentUser();
       });
-      
+
       Fluttertoast.showToast(
         msg: "이름이 '$newName'으로 변경되었습니다.",
         toastLength: Toast.LENGTH_SHORT,
@@ -578,25 +670,26 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _incrementPeanutCount(int peanuts) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final currentUser = AuthService.currentUser;
-    
+
     setState(() {
       _currentPeanutCount = (_currentPeanutCount) + peanuts;
     });
-    
+
     await prefs.setInt('counter', _currentPeanutCount);
-    
+
     // 로그인 상태 확인 후 Firestore 업데이트
     if (currentUser != null) {
       try {
-        await UserService.updatePeanutCount(currentUser.uid, _currentPeanutCount);
+        await UserService.updatePeanutCount(
+            currentUser.uid, _currentPeanutCount);
       } catch (error) {
         print('Firestore 업데이트 오류: $error');
       }
     }
-    
+
     // 땅콩 수 다시 로드하여 동기화
     await _loadPeanutCount();
-    
+
     Fluttertoast.showToast(
       msg: "땅콩 $peanuts개를 얻었습니다.",
       toastLength: Toast.LENGTH_SHORT,
@@ -608,24 +701,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  String _getLoginButtonText() {
-    if (Platform.isAndroid) {
-      return 'Google로 로그인';
-    } else if (Platform.isIOS) {
-      return 'Apple로 로그인';
-    }
-    return '로그인';
-  }
-
-  Widget _getLoginIcon() {
-    if (Platform.isAndroid) {
-      return const FaIcon(FontAwesomeIcons.google, size: 20);
-    } else if (Platform.isIOS) {
-      return const FaIcon(FontAwesomeIcons.apple, size: 20);
-    }
-    return const Icon(Icons.login);
-  }
-
   Future<void> _handleDeleteAccount() async {
     final user = _currentUser;
     if (user == null) return;
@@ -633,8 +708,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('회원탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        content: const Text('정말로 회원탈퇴 하시겠습니까?\n\n모든 정보가 삭제되며 복구할 수 없습니다.', style: TextStyle(color: Colors.black)),
+        title: const Text('회원탈퇴',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        content: const Text('정말로 회원탈퇴 하시겠습니까?\n\n모든 정보가 삭제되며 복구할 수 없습니다.',
+            style: TextStyle(color: Colors.black)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -642,7 +719,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('탈퇴', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text('탈퇴',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -674,7 +753,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // 로그인 화면으로 이동(필요시)
     } catch (e) {
       Fluttertoast.showToast(
-        msg: "회원탈퇴 실패: "+e.toString(),
+        msg: "회원탈퇴 실패: " + e.toString(),
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -699,7 +778,8 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: Colors.white,
               title: Text(
                 '$loginType 로그인 - 서비스 이용 동의',
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -709,7 +789,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onChanged: (val) => setState(() => agreeNoAbuse = val!),
                     title: const Text(
                       '본인은 불쾌한 콘텐츠 또는 악의적 사용자에 대한 무관용 정책에 동의합니다. (필수)',
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.w500),
                     ),
                     subtitle: const Text(
                       '불쾌한 콘텐츠, 욕설, 혐오, 차별, 악의적 사용자는 허용되지 않으며, 위반 시 이용이 제한될 수 있습니다.',
@@ -723,18 +804,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     onChanged: (val) => setState(() => agreePolicy = val!),
                     title: const Text(
                       '개인정보처리방침 동의 (필수)',
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.w500),
                     ),
                     subtitle: GestureDetector(
                       onTap: () async {
-                        const url = 'https://moonque.tistory.com/entry/%EB%A7%88%EC%9D%BC%EB%A6%AC%EC%A7%80%EB%8F%84%EB%91%91-%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%EC%B2%98%EB%A6%AC%EB%B0%A9%EC%B9%A8';
+                        const url =
+                            'https://moonque.tistory.com/entry/%EB%A7%88%EC%9D%BC%EB%A6%AC%EC%A7%80%EB%8F%84%EB%91%91-%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%EC%B2%98%EB%A6%AC%EB%B0%A9%EC%B9%A8';
                         if (await canLaunchUrl(Uri.parse(url))) {
-                          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                          await launchUrl(Uri.parse(url),
+                              mode: LaunchMode.externalApplication);
                         }
                       },
                       child: const Text(
                         '개인정보처리방침 보기',
-                        style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline, fontSize: 13),
+                        style: TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                            fontSize: 13),
                       ),
                     ),
                     controlAffinity: ListTileControlAffinity.leading,
@@ -751,17 +838,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             _handleAppleLogin();
                           } else if (loginType == 'Google') {
                             _handleGoogleLogin();
+                          } else if (loginType == 'Naver') {
+                            _handleNaverLogin();
+                          } else if (loginType == 'Kakao') {
+                            _handleKakaoLogin();
                           } else {
                             _handleLogin();
                           }
                         }
                       : null,
                   style: TextButton.styleFrom(
-                    backgroundColor: (agreeNoAbuse && agreePolicy) ? Colors.black : Colors.grey[300],
+                    backgroundColor: (agreeNoAbuse && agreePolicy)
+                        ? Colors.black
+                        : Colors.grey[300],
                   ),
                   child: const Text(
                     '로그인',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -799,7 +893,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
               ],
-              
               if (_currentUser == null) ...[
                 const Text(
                   '로그인하여 땅콩을 클라우드에 저장하세요!',
@@ -819,91 +912,112 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // iOS는 Apple+Google, Android는 Google만 노출
+                // iOS: Google -> Apple -> Naver -> Kakao
+                // Android: Google -> Naver -> Kakao
                 if (Platform.isIOS) ...[
-                  SizedBox(
-                    width: double.infinity,
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Google'),
+                    assetPath: 'asset/img/google_login/google_login_light.png',
+                    darkAssetPath:
+                        'asset/img/google_login/google_login_dark.png',
+                    width: _socialLoginButtonWidth,
                     height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : () => _showAgreementDialog(loginType: 'Apple'),
-                      icon: const FaIcon(FontAwesomeIcons.apple, size: 20),
-                      label: Text(
-                        _isLoading ? '로그인 중...' : 'Apple로 로그인',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    borderRadius: 22,
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Apple'),
+                    assetPath: 'asset/img/apple_login/apple_login_light.png',
+                    darkAssetPath: 'asset/img/apple_login/apple_login_dark.png',
+                    width: _socialLoginButtonWidth,
                     height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : () => _showAgreementDialog(loginType: 'Google'),
-                      icon: const FaIcon(FontAwesomeIcons.google, size: 20),
-                      label: Text(
-                        _isLoading ? '로그인 중...' : 'Google로 로그인',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4285F4),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    borderRadius: 22,
+                  ),
+                  const SizedBox(height: 12),
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Naver'),
+                    assetPath:
+                        'asset/img/naver_login/NAVER_login_Light_EN_green_narrow_H56.png',
+                    darkAssetPath:
+                        'asset/img/naver_login/NAVER_login_Dark_EN_white_narrow_H56.png',
+                    width: _socialLoginButtonWidth,
+                    height: 56,
+                    borderRadius: 22,
+                    imageFit: BoxFit.cover,
+                  ),
+                  const SizedBox(height: 12),
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Kakao'),
+                    assetPath: 'asset/img/kakao_login/kakao_login.png',
+                    width: _socialLoginButtonWidth,
+                    height: 56,
+                    borderRadius: 22,
+                    imageFit: BoxFit.cover,
                   ),
                 ] else ...[
-                  SizedBox(
-                    width: double.infinity,
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Google'),
+                    assetPath: 'asset/img/google_login/google_login_light.png',
+                    darkAssetPath:
+                        'asset/img/google_login/google_login_dark.png',
+                    width: _socialLoginButtonWidth,
                     height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : () => _showAgreementDialog(loginType: 'Google'),
-                      icon: _isLoading 
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const FaIcon(FontAwesomeIcons.google, size: 20),
-                      label: Text(
-                        _isLoading ? '로그인 중...' : 'Google로 로그인',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4285F4),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    borderRadius: 22,
                   ),
+                  const SizedBox(height: 12),
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Naver'),
+                    assetPath:
+                        'asset/img/naver_login/NAVER_login_Light_EN_green_narrow_H56.png',
+                    darkAssetPath:
+                        'asset/img/naver_login/NAVER_login_Dark_EN_white_narrow_H56.png',
+                    width: _socialLoginButtonWidth,
+                    height: 56,
+                    borderRadius: 22,
+                    imageFit: BoxFit.cover,
+                  ),
+                  const SizedBox(height: 12),
+                  _LoginImageButton(
+                    onTap: _isLoading
+                        ? null
+                        : () => _showAgreementDialog(loginType: 'Kakao'),
+                    assetPath: 'asset/img/kakao_login/kakao_login.png',
+                    width: _socialLoginButtonWidth,
+                    height: 56,
+                    borderRadius: 22,
+                    imageFit: BoxFit.cover,
+                  ),
+                ],
+                if (_isLoading) ...[
+                  const SizedBox(height: 16),
+                  const CircularProgressIndicator(),
                 ],
               ] else ...[
                 // 사용자 프로필 이미지
                 CircleAvatar(
                   radius: 50,
-                  backgroundImage: _currentUser!.photoURL != null 
-                    ? NetworkImage(_currentUser!.photoURL!)
-                    : null,
+                  backgroundImage: _currentUser!.photoURL != null
+                      ? NetworkImage(_currentUser!.photoURL!)
+                      : null,
                   backgroundColor: Colors.grey[300],
-                  child: _currentUser!.photoURL == null 
-                    ? Icon(Icons.person, size: 50, color: Colors.grey[600])
-                    : null,
+                  child: _currentUser!.photoURL == null
+                      ? Icon(Icons.person, size: 50, color: Colors.grey[600])
+                      : null,
                 ),
                 const SizedBox(height: 20),
-                
+
                 Text(
                   '안녕하세요!',
                   style: const TextStyle(
@@ -913,7 +1027,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                
+
                 // 사용자 이름과 편집 버튼
                 Stack(
                   children: [
@@ -922,7 +1036,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       alignment: Alignment.center,
                       child: Text(
-                        _currentUser!.displayName ?? _currentUser!.email ?? '사용자',
+                        _currentUser!.displayName ??
+                            _currentUser!.email ??
+                            '사용자',
                         style: const TextStyle(
                           fontSize: 22,
                           color: Colors.black87,
@@ -937,7 +1053,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _currentUser!.displayName ?? _currentUser!.email ?? '사용자',
+                            _currentUser!.displayName ??
+                                _currentUser!.email ??
+                                '사용자',
                             style: const TextStyle(
                               fontSize: 22,
                               color: Colors.transparent, // 투명하게 해서 위치만 잡음
@@ -964,16 +1082,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   backgroundColor: Colors.white,
-                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
-                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  title: const Text('알림',
+                                      style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?',
+                                      style: TextStyle(color: Colors.black)),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
-                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('아니오',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('예',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                   ],
                                 ),
@@ -993,8 +1119,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 }
                               }
                             },
-                      label: const Text("+ 10", style: TextStyle(color: Colors.black87)),
-                      backgroundColor: _interstitialAd == null ? Colors.grey[300] : Colors.white,
+                      label: const Text("+ 10",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: _interstitialAd == null
+                          ? Colors.grey[300]
+                          : Colors.white,
                       elevation: 3,
                       icon: Image.asset('asset/img/peanut.png', scale: 19),
                     ),
@@ -1006,16 +1135,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   backgroundColor: Colors.white,
-                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
-                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  title: const Text('알림',
+                                      style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?',
+                                      style: TextStyle(color: Colors.black)),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
-                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('아니오',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('예',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                   ],
                                 ),
@@ -1026,7 +1163,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                       label: const Text("+ 30",
                           style: TextStyle(color: Colors.black87)),
-                      backgroundColor: _rewardedAd == null ? Colors.grey[300] : Colors.white,
+                      backgroundColor:
+                          _rewardedAd == null ? Colors.grey[300] : Colors.white,
                       elevation: 3,
                       icon: Image.asset(
                         'asset/img/peanuts.png',
@@ -1036,7 +1174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // 사용자 정보 카드
                 Container(
                   width: double.infinity,
@@ -1057,14 +1195,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.account_circle, color: Colors.blue, size: 24),
+                          Icon(Icons.account_circle,
+                              color: Colors.blue, size: 24),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('로그인된 계정', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                Text(_currentUser!.email ?? '이메일 없음', style: const TextStyle(fontSize: 14)),
+                                const Text('로그인된 계정',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey)),
+                                Text(_currentUser!.email ?? '이메일 없음',
+                                    style: const TextStyle(fontSize: 14)),
                               ],
                             ),
                           ),
@@ -1083,8 +1225,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('보유 땅콩', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                Text('$_currentPeanutCount개', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                                const Text('보유 땅콩',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey)),
+                                Text('$_currentPeanutCount개',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -1094,7 +1241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                
+
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -1156,4 +1303,64 @@ class _LoginScreenState extends State<LoginScreen> {
           : null,
     );
   }
-} 
+}
+
+class _LoginImageButton extends StatelessWidget {
+  const _LoginImageButton({
+    required this.onTap,
+    required this.assetPath,
+    this.darkAssetPath,
+    this.width = 280,
+    this.height = 56,
+    this.borderRadius = 22,
+    this.imageFit = BoxFit.contain,
+  });
+
+  final VoidCallback? onTap;
+  final String assetPath;
+  final String? darkAssetPath;
+  final double width;
+  final double height;
+  final double borderRadius;
+  final BoxFit imageFit;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final resolvedAssetPath =
+        isDark && darkAssetPath != null ? darkAssetPath! : assetPath;
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Opacity(
+        opacity: onTap == null ? 0.6 : 1,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: Image.asset(
+              resolvedAssetPath,
+              fit: imageFit,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFE6E9EF),
+                  alignment: Alignment.center,
+                  child: Text(
+                    resolvedAssetPath.split('/').last,
+                    style: const TextStyle(
+                      color: Color(0xFF656B79),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

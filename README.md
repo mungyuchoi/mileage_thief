@@ -1,5 +1,26 @@
 # 마일리지도둑 (mileage_thief)
 
+## 0) 실행/배포
+
+### 0.1 로컬 실행
+```bash
+flutter run --dart-define-from-file=env/prod.json
+```
+
+### 0.2 Android 배포 (Play Console)
+```bash
+flutter build appbundle --release --dart-define-from-file=env/prod.json
+```
+출력된 `build/app/outputs/bundle/release/app-release.aab`를 Play Console에 업로드합니다.
+
+### 0.3 iOS 배포 (App Store Connect)
+권장 플로우:
+```bash
+flutter build ipa --release --dart-define-from-file=env/prod.json
+open -a Xcode build/ios/archive/Runner.xcarchive
+```
+생성된 IPA를 Xcode Organizer 또는 Transporter로 업로드합니다.
+
 ## 개요 및 목적
 
 마일리지도둑은 항공권 마일리지 좌석을 쉽고 빠르게 검색할 수 있도록 도와주는 Flutter 기반의 앱/웹 서비스입니다. 다양한 항공사와 노선의 마일리지 좌석 정보를 한눈에 확인하고, 상세 정보를 제공하여 사용자들의 마일리지 활용을 극대화하는 것이 목적입니다.
@@ -288,5 +309,4 @@ trade_date,type,ticket_name,qty,unit_price,total_amount,card_name,branch_name,me
 2. **엑셀 업로드 + 검증 + 실패행 재처리**
 
 이 두 축만 제대로 구현해도 라이언님 같은 고빈도 사용자에게 즉시 체감 가치를 줄 수 있습니다.
-
 

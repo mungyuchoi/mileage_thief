@@ -53,9 +53,21 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="milecatch" />
             </intent-filter>
-            
+
             <!-- Flutter 기본 딥링크 비활성화 -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+        </activity>
+
+        <!-- flutter_web_auth_2 OAuth callback receiver -->
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true">
+            <intent-filter android:label="flutter_web_auth_2">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="milecatchoauth" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

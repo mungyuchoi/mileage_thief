@@ -1,16 +1,68 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class UserService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _usersCollection = 'users';
+  static final Random _random = Random();
+  static const List<String> _displayNameAdjectives = [
+    '멋진',
+    '아름다운',
+    '빛나는',
+    '든든한',
+    '유쾌한',
+    '상쾌한',
+    '용감한',
+    '행복한',
+    '찬란한',
+    '설레는',
+    '따뜻한',
+    '재빠른',
+    '반짝이는',
+    '활기찬',
+    '즐거운',
+    '유능한',
+    '환한',
+    '당당한',
+    '기분좋은',
+    '눈부신',
+  ];
+  static const List<String> _displayNameTravelNouns = [
+    '여행객',
+    '파일럿',
+    '승무원',
+    '탐험가',
+    '항공인',
+    '마일러',
+    '탑승객',
+    '길잡이',
+    '세계인',
+    '여정러',
+    '트래블러',
+    '윈드러너',
+    '구름러',
+    '모험가',
+    '비행가',
+    '로밍러',
+    '패스파인더',
+    '캐빈메이트',
+    '여행메이트',
+    '마일메이트',
+  ];
 
   // 사용자 데이터 모델
-  static Map<String, dynamic> _createUserData(User user, int peanutCount, {String? fcmToken}) {
+  static Map<String, dynamic> _createUserData(
+    User user,
+    int peanutCount, {
+    String? fcmToken,
+    required String displayName,
+  }) {
     return {
       'uid': user.uid,
       'email': user.email,
-      'displayName': user.displayName,
+      'displayName': displayName,
       'photoURL': user.photoURL,
       'joinedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
@@ -39,35 +91,95 @@ class UserService {
     };
   }
 
+  static bool _isPlaceholderDisplayName(String? name) {
+    if (name == null) return true;
+
+    final normalized = name.trim().toLowerCase();
+    if (normalized.isEmpty) return true;
+
+    const placeholders = {
+      '익명',
+      'anonymous',
+      'anonymous user',
+      'user',
+      '네이버사용자',
+      '카카오사용자',
+      'naver user',
+      'kakao user',
+    };
+
+    return placeholders.contains(normalized);
+  }
+
+  static String generateTravelDisplayName() {
+    final adjective =
+        _displayNameAdjectives[_random.nextInt(_displayNameAdjectives.length)];
+    final noun = _displayNameTravelNouns[
+        _random.nextInt(_displayNameTravelNouns.length)];
+    return '$adjective$noun';
+  }
+
   // 사용자 정보 Firestore에 저장
-  static Future<void> saveUserToFirestore(User user, int peanutCount, {String? fcmToken}) async {
+  static Future<void> saveUserToFirestore(User user, int peanutCount,
+      {String? fcmToken}) async {
     try {
       // 기존 사용자 데이터 확인
-      final existingDoc = await _firestore.collection(_usersCollection).doc(user.uid).get();
-      
+      final existingDoc =
+          await _firestore.collection(_usersCollection).doc(user.uid).get();
+
       Map<String, dynamic> userData;
-      
+      final authDisplayName = user.displayName?.trim();
+
       if (existingDoc.exists) {
         // 기존 사용자: 필수 필드만 업데이트, 기존 값 유지
         final existingData = existingDoc.data()!;
+        final existingDisplayName =
+            (existingData['displayName'] as String?)?.trim();
+        final resolvedDisplayName =
+            _isPlaceholderDisplayName(existingDisplayName)
+                ? (_isPlaceholderDisplayName(authDisplayName)
+                    ? generateTravelDisplayName()
+                    : authDisplayName!)
+                : existingDisplayName!;
+
         userData = {
           'uid': user.uid,
           'email': user.email,
-          'displayName': user.displayName,
+          'displayName': resolvedDisplayName,
           'photoURL': user.photoURL,
           'lastLoginAt': FieldValue.serverTimestamp(),
           'fcmToken': fcmToken ?? existingData['fcmToken'] ?? '',
         };
-        
+
         // 기존값이 없는 경우에만 로컬 peanutCount 적용
         if (!existingData.containsKey('peanutCount')) {
           userData['peanutCount'] = peanutCount;
         }
-        
+
+        if (_isPlaceholderDisplayName(authDisplayName) ||
+            (authDisplayName != null &&
+                authDisplayName != resolvedDisplayName)) {
+          await user.updateDisplayName(resolvedDisplayName);
+          await user.reload();
+        }
+
         print('기존 사용자 로그인 - 기존 값 유지: ${user.uid}');
       } else {
         // 신규 사용자: 모든 기본값 설정
-        userData = _createUserData(user, peanutCount, fcmToken: fcmToken);
+        final resolvedDisplayName = _isPlaceholderDisplayName(authDisplayName)
+            ? generateTravelDisplayName()
+            : authDisplayName!;
+        userData = _createUserData(
+          user,
+          peanutCount,
+          fcmToken: fcmToken,
+          displayName: resolvedDisplayName,
+        );
+
+        if (resolvedDisplayName != authDisplayName) {
+          await user.updateDisplayName(resolvedDisplayName);
+          await user.reload();
+        }
         print('신규 사용자 등록: ${user.uid}');
       }
 
@@ -101,10 +213,7 @@ class UserService {
   // 땅콩 개수 업데이트
   static Future<void> updatePeanutCount(String uid, int newCount) async {
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .update({
+      await _firestore.collection(_usersCollection).doc(uid).update({
         'peanutCount': newCount,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
@@ -119,10 +228,7 @@ class UserService {
   // 마지막 로그인 시간 업데이트
   static Future<void> updateLastLogin(String uid) async {
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .update({
+      await _firestore.collection(_usersCollection).doc(uid).update({
         'lastLoginAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -156,14 +262,11 @@ class UserService {
   // DisplayName만 업데이트
   static Future<void> updateDisplayName(String uid, String displayName) async {
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .update({
+      await _firestore.collection(_usersCollection).doc(uid).update({
         'displayName': displayName,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
-      
+
       print('DisplayName 업데이트 완료: $displayName');
     } catch (e) {
       print('DisplayName 업데이트 오류: $e');
@@ -174,14 +277,12 @@ class UserService {
   // FCM 토큰 업데이트
   static Future<void> updateFcmToken(String uid, String token) async {
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .update({
+      await _firestore.collection(_usersCollection).doc(uid).set({
+        'uid': uid,
         'fcmToken': token,
         'lastFcmUpdate': FieldValue.serverTimestamp(),
-      });
-      
+      }, SetOptions(merge: true));
+
       print('FCM 토큰 업데이트 완료: $token');
     } catch (e) {
       print('FCM 토큰 업데이트 오류: $e');
@@ -192,14 +293,11 @@ class UserService {
   // peanutCountLimit 필드 추가/업데이트 (기존 사용자용)
   static Future<void> ensurePeanutCountLimit(String uid) async {
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .update({
+      await _firestore.collection(_usersCollection).doc(uid).update({
         'peanutCountLimit': 3,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
-      
+
       print('peanutCountLimit 필드 추가 완료: $uid');
     } catch (e) {
       print('peanutCountLimit 필드 추가 오류: $e');
@@ -208,21 +306,23 @@ class UserService {
   }
 
   // 사용자 정보 가져오기 + peanutCountLimit 자동 추가
-  static Future<Map<String, dynamic>?> getUserFromFirestoreWithLimit(String uid) async {
+  static Future<Map<String, dynamic>?> getUserFromFirestoreWithLimit(
+      String uid) async {
     try {
       final doc = await _firestore.collection(_usersCollection).doc(uid).get();
 
       if (doc.exists) {
         final data = doc.data()!;
-        
+
         // peanutCountLimit 필드가 없으면 추가
         if (!data.containsKey('peanutCountLimit')) {
           await ensurePeanutCountLimit(uid);
           // 업데이트된 데이터 다시 가져오기
-          final updatedDoc = await _firestore.collection(_usersCollection).doc(uid).get();
+          final updatedDoc =
+              await _firestore.collection(_usersCollection).doc(uid).get();
           return updatedDoc.data();
         }
-        
+
         return data;
       }
       return null;
@@ -239,7 +339,11 @@ class UserService {
     batch.delete(_firestore.collection(_usersCollection).doc(uid));
 
     // 2. cancel_subscriptions/{uid}/items 전체 삭제
-    final cancelSubsItems = await _firestore.collection('cancel_subscriptions').doc(uid).collection('items').get();
+    final cancelSubsItems = await _firestore
+        .collection('cancel_subscriptions')
+        .doc(uid)
+        .collection('items')
+        .get();
     for (final doc in cancelSubsItems.docs) {
       batch.delete(doc.reference);
     }
@@ -247,7 +351,11 @@ class UserService {
     batch.delete(_firestore.collection('cancel_subscriptions').doc(uid));
 
     // 3. notification_history/{uid}/items 전체 삭제
-    final notifHistoryItems = await _firestore.collection('notification_history').doc(uid).collection('items').get();
+    final notifHistoryItems = await _firestore
+        .collection('notification_history')
+        .doc(uid)
+        .collection('items')
+        .get();
     for (final doc in notifHistoryItems.docs) {
       batch.delete(doc.reference);
     }
@@ -265,10 +373,10 @@ class UserService {
     try {
       final userData = await getUserFromFirestore(uid);
       if (userData == null) return false;
-      
+
       final changeCount = userData['photoURLChangeCount'] ?? 0;
       final peanutCount = userData['peanutCount'] ?? 0;
-      
+
       // 1회 무료 변경 가능하거나 땅콩이 50개 이상 있으면 변경 가능
       return changeCount < 1 || peanutCount >= 50;
     } catch (e) {
@@ -282,10 +390,10 @@ class UserService {
     try {
       final userData = await getUserFromFirestore(uid);
       if (userData == null) return false;
-      
+
       final changeCount = userData['displayNameChangeCount'] ?? 0;
       final peanutCount = userData['peanutCount'] ?? 0;
-      
+
       // 1회 무료 변경 가능하거나 땅콩이 30개 이상 있으면 변경 가능
       return changeCount < 1 || peanutCount >= 30;
     } catch (e) {
@@ -299,13 +407,13 @@ class UserService {
     try {
       final userData = await getUserFromFirestore(uid);
       if (userData == null) throw Exception('사용자 정보를 찾을 수 없습니다.');
-      
+
       final changeCount = userData['photoURLChangeCount'] ?? 0;
       final currentPeanutCount = userData['peanutCount'] ?? 0;
-      
+
       // 변경 횟수 증가
       final newChangeCount = changeCount + 1;
-      
+
       // 땅콩 차감 (무료 변경이 아닌 경우)
       int newPeanutCount = currentPeanutCount;
       if (changeCount >= 1) {
@@ -314,7 +422,7 @@ class UserService {
         }
         newPeanutCount = currentPeanutCount - 50;
       }
-      
+
       // Firestore 업데이트
       await _firestore.collection(_usersCollection).doc(uid).update({
         'photoURL': newPhotoURL,
@@ -323,8 +431,9 @@ class UserService {
         'peanutCount': newPeanutCount,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
-      
-      print('프로필 이미지 변경 완료: $uid, 변경 횟수: $newChangeCount, 땅콩 차감: ${changeCount >= 1 ? 50 : 0}');
+
+      print(
+          '프로필 이미지 변경 완료: $uid, 변경 횟수: $newChangeCount, 땅콩 차감: ${changeCount >= 1 ? 50 : 0}');
     } catch (e) {
       print('프로필 이미지 변경 오류: $e');
       rethrow;
@@ -332,17 +441,18 @@ class UserService {
   }
 
   // 닉네임 변경 처리 (땅콩 차감 포함)
-  static Future<void> changeDisplayName(String uid, String newDisplayName) async {
+  static Future<void> changeDisplayName(
+      String uid, String newDisplayName) async {
     try {
       final userData = await getUserFromFirestore(uid);
       if (userData == null) throw Exception('사용자 정보를 찾을 수 없습니다.');
-      
+
       final changeCount = userData['displayNameChangeCount'] ?? 0;
       final currentPeanutCount = userData['peanutCount'] ?? 0;
-      
+
       // 변경 횟수 증가
       final newChangeCount = changeCount + 1;
-      
+
       // 땅콩 차감 (무료 변경이 아닌 경우)
       int newPeanutCount = currentPeanutCount;
       if (changeCount >= 1) {
@@ -351,7 +461,7 @@ class UserService {
         }
         newPeanutCount = currentPeanutCount - 30;
       }
-      
+
       // Firestore 업데이트
       await _firestore.collection(_usersCollection).doc(uid).update({
         'displayName': newDisplayName,
@@ -360,8 +470,9 @@ class UserService {
         'peanutCount': newPeanutCount,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
-      
-      print('닉네임 변경 완료: $uid, 변경 횟수: $newChangeCount, 땅콩 차감: ${changeCount >= 1 ? 30 : 0}');
+
+      print(
+          '닉네임 변경 완료: $uid, 변경 횟수: $newChangeCount, 땅콩 차감: ${changeCount >= 1 ? 30 : 0}');
     } catch (e) {
       print('닉네임 변경 오류: $e');
       rethrow;
@@ -378,7 +489,8 @@ class UserService {
 
   // 북마크 관련 메서드들
   // 게시글 북마크 추가
-  static Future<void> addBookmark(String uid, String postId, String dateString, String title) async {
+  static Future<void> addBookmark(
+      String uid, String postId, String dateString, String title) async {
     try {
       final bookmarkRef = _firestore
           .collection(_usersCollection)
@@ -434,7 +546,8 @@ class UserService {
   }
 
   // 사용자의 북마크 목록 조회 (페이징 지원)
-  static Future<QuerySnapshot> getUserBookmarks(String uid, {DocumentSnapshot? startAfter, int limit = 50}) async {
+  static Future<QuerySnapshot> getUserBookmarks(String uid,
+      {DocumentSnapshot? startAfter, int limit = 50}) async {
     try {
       Query query = _firestore
           .collection(_usersCollection)
@@ -457,54 +570,54 @@ class UserService {
   /// 사용자 데이터 정리 마이그레이션 (title, postCount 삭제, commentCount/postsCount 추가)
   static Future<void> migrateUserDataCleanup() async {
     print('사용자 데이터 정리 마이그레이션 시작...');
-    
+
     final users = await _firestore.collection(_usersCollection).get();
     int processedCount = 0;
     int updatedCount = 0;
-    
+
     for (final doc in users.docs) {
       final data = doc.data();
       final updates = <String, dynamic>{};
-      
+
       // title 필드 삭제
       if (data.containsKey('title')) {
         updates['title'] = FieldValue.delete();
         print('사용자 ${doc.id}: title 필드 삭제');
       }
-      
+
       // postCount 필드 삭제 (postsCount와 중복)
       if (data.containsKey('postCount')) {
         updates['postCount'] = FieldValue.delete();
         print('사용자 ${doc.id}: postCount 필드 삭제');
       }
-      
+
       // commentCount 필드 추가 (없는 경우)
       if (!data.containsKey('commentCount')) {
         updates['commentCount'] = 0;
         print('사용자 ${doc.id}: commentCount 필드 추가');
       }
-      
+
       // postsCount 필드 추가 (없는 경우)
       if (!data.containsKey('postsCount')) {
         updates['postsCount'] = 0;
         print('사용자 ${doc.id}: postsCount 필드 추가');
       }
-      
+
       // 업데이트가 필요한 경우만 실행
       if (updates.isNotEmpty) {
         await doc.reference.update(updates);
         updatedCount++;
         print('사용자 ${doc.id} 업데이트 완료');
       }
-      
+
       processedCount++;
-      
+
       // 진행상황 출력 (100명마다)
       if (processedCount % 100 == 0) {
         print('진행상황: $processedCount/${users.docs.length} 처리됨');
       }
     }
-    
+
     print('사용자 데이터 정리 마이그레이션 완료!');
     print('전체 사용자: ${users.docs.length}명');
     print('업데이트된 사용자: $updatedCount명');
@@ -518,16 +631,20 @@ Future<void> migrateAllUsersToCommunitySchema() async {
     final updates = <String, dynamic>{};
 
     // md 기준 누락 필드 모두 추가
-    if (!data.containsKey('joinedAt')) updates['joinedAt'] = FieldValue.serverTimestamp();
+    if (!data.containsKey('joinedAt'))
+      updates['joinedAt'] = FieldValue.serverTimestamp();
     if (!data.containsKey('commentCount')) updates['commentCount'] = 0;
     if (!data.containsKey('likesReceived')) updates['likesReceived'] = 0;
     if (!data.containsKey('reportedCount')) updates['reportedCount'] = 0;
-    if (!data.containsKey('reportSubmittedCount')) updates['reportSubmittedCount'] = 0;
+    if (!data.containsKey('reportSubmittedCount'))
+      updates['reportSubmittedCount'] = 0;
     if (!data.containsKey('grade')) updates['grade'] = '이코노미';
     if (!data.containsKey('gradeLevel')) updates['gradeLevel'] = 1;
-    if (!data.containsKey('displayGrade')) updates['displayGrade'] = '이코노미 Lv.1';
+    if (!data.containsKey('displayGrade'))
+      updates['displayGrade'] = '이코노미 Lv.1';
 
-    if (!data.containsKey('gradeUpdatedAt')) updates['gradeUpdatedAt'] = FieldValue.serverTimestamp();
+    if (!data.containsKey('gradeUpdatedAt'))
+      updates['gradeUpdatedAt'] = FieldValue.serverTimestamp();
     if (!data.containsKey('adBonusPercent')) updates['adBonusPercent'] = 0;
     if (!data.containsKey('badgeVisible')) updates['badgeVisible'] = true;
     if (!data.containsKey('roles')) updates['roles'] = ['user'];
@@ -552,10 +669,13 @@ Future<void> migrateUsersToChangeSystem() async {
     final updates = <String, dynamic>{};
 
     // 변경권 시스템 필드 추가
-    if (!data.containsKey('photoURLChangeCount')) updates['photoURLChangeCount'] = 0;
-    if (!data.containsKey('displayNameChangeCount')) updates['displayNameChangeCount'] = 0;
+    if (!data.containsKey('photoURLChangeCount'))
+      updates['photoURLChangeCount'] = 0;
+    if (!data.containsKey('displayNameChangeCount'))
+      updates['displayNameChangeCount'] = 0;
     if (!data.containsKey('photoURLEnable')) updates['photoURLEnable'] = true;
-    if (!data.containsKey('displayNameEnable')) updates['displayNameEnable'] = true;
+    if (!data.containsKey('displayNameEnable'))
+      updates['displayNameEnable'] = true;
 
     // 이미 있는 필드는 건드리지 않음
     if (updates.isNotEmpty) {
@@ -575,7 +695,8 @@ Future<void> migrateUsersToSkyEffectSystem() async {
 
     // 스카이 이펙트 시스템 필드 추가
     if (!data.containsKey('ownedEffects')) updates['ownedEffects'] = [];
-    if (!data.containsKey('currentSkyEffect')) updates['currentSkyEffect'] = null;
+    if (!data.containsKey('currentSkyEffect'))
+      updates['currentSkyEffect'] = null;
 
     // 업데이트가 필요한 경우만 실행
     if (updates.isNotEmpty) {

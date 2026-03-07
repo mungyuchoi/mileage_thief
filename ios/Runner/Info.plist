@@ -102,6 +102,14 @@
 		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
+			<string>milecatchoauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>milecatchoauth</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
 			<string>GoogleSignIn</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
