@@ -232,6 +232,7 @@ class GiftcardDailyLedger extends StatelessWidget {
   final DateFormat dayFormat;
   final void Function(GiftcardLedgerEntry entry) onEdit;
   final void Function(GiftcardLedgerEntry entry) onDelete;
+  final void Function(GiftcardLedgerEntry entry)? onSaveTemplate;
   final void Function(GiftcardLedgerEntry entry, bool trade)? onTradeToggle;
 
   const GiftcardDailyLedger({
@@ -241,6 +242,7 @@ class GiftcardDailyLedger extends StatelessWidget {
     required this.dayFormat,
     required this.onEdit,
     required this.onDelete,
+    this.onSaveTemplate,
     this.onTradeToggle,
   });
 
@@ -270,6 +272,7 @@ class GiftcardDailyLedger extends StatelessWidget {
             won: wonFormat,
             onEdit: onEdit,
             onDelete: onDelete,
+            onSaveTemplate: onSaveTemplate,
             onTradeToggle: onTradeToggle,
           );
         }
@@ -366,6 +369,7 @@ class _LedgerEntryRow extends StatelessWidget {
   final NumberFormat won;
   final void Function(GiftcardLedgerEntry entry) onEdit;
   final void Function(GiftcardLedgerEntry entry) onDelete;
+  final void Function(GiftcardLedgerEntry entry)? onSaveTemplate;
   final void Function(GiftcardLedgerEntry entry, bool trade)? onTradeToggle;
 
   const _LedgerEntryRow({
@@ -373,6 +377,7 @@ class _LedgerEntryRow extends StatelessWidget {
     required this.won,
     required this.onEdit,
     required this.onDelete,
+    this.onSaveTemplate,
     this.onTradeToggle,
   });
 
@@ -480,8 +485,13 @@ class _LedgerEntryRow extends StatelessWidget {
                 ),
                 elevation: 6,
                 onSelected: (v) {
-                  if (v == 'edit') onEdit(entry);
-                  if (v == 'delete') onDelete(entry);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (v == 'edit') onEdit(entry);
+                    if (v == 'delete') onDelete(entry);
+                    if (v == 'save_template' && onSaveTemplate != null) {
+                      onSaveTemplate!(entry);
+                    }
+                  });
                 },
                 itemBuilder: (context) => [
                   const PopupMenuItem(
@@ -494,6 +504,14 @@ class _LedgerEntryRow extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (entry.type == GiftcardLedgerEntryType.buy && onSaveTemplate != null)
+                    const PopupMenuItem(
+                      value: 'save_template',
+                      child: Text(
+                        '템플릿으로 저장',
+                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   PopupMenuItem(
                     value: 'delete',
                     enabled: entry.deletable,
@@ -555,5 +573,4 @@ class _MiniPill extends StatelessWidget {
     );
   }
 }
-
 

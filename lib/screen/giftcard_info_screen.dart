@@ -380,6 +380,85 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
+  Future<String?> _askTemplateName(String initialName) async {
+    final nameController = TextEditingController(text: initialName);
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('템플릿 이름 입력', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: '템플릿명',
+            labelStyle: TextStyle(color: Colors.black54),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, nameController.text.trim()),
+            child: const Text('저장', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveBuyEntryAsTemplate(GiftcardLedgerEntry entry) async {
+    if (entry.type != GiftcardLedgerEntryType.buy) return;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final String defaultName = '${DateFormat('yyyyMMdd').format(entry.dateTime)} 구매건';
+    final String? name = await _askTemplateName(defaultName);
+    if (name == null || name.isEmpty) return;
+
+    final payload = {
+      'giftcardId': entry.raw['giftcardId'],
+      'cardId': entry.raw['cardId'],
+      'whereToBuyId': entry.raw['whereToBuyId'],
+      'payType': entry.raw['payType'],
+      'faceValue': _asInt(entry.raw['faceValue']),
+      'qty': _asInt(entry.raw['qty']),
+      'priceInputMode': 'buyUnit',
+      'buyUnit': _asInt(entry.raw['buyUnit']),
+      'discount': _asDouble(entry.raw['discount']),
+      'memo': (entry.raw['memo'] as String?)?.trim() ?? '',
+      'buyDate': entry.raw['buyDate'] is Timestamp
+          ? entry.raw['buyDate']
+          : Timestamp.fromDate(entry.dateTime),
+    };
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('gift_templates')
+          .add({
+            'name': name,
+            'nameLower': name.toLowerCase(),
+            'pinned': false,
+            'useCount': 0,
+            'lastUsedAt': null,
+            'dateMode': 'manual',
+            'payload': payload,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'version': 1,
+          });
+      Fluttertoast.showToast(msg: '템플릿으로 저장되었습니다.');
+      if (mounted) _load();
+    } catch (e) {
+      Fluttertoast.showToast(msg: '템플릿 저장 실패: $e');
+    }
+  }
+
   /// lots/sales 전체에서 가장 오래된 매입/판매 일자를 찾아
   /// 해당 연/월을 _minDataMonth에 저장한다.
   Future<void> _loadMinDataMonth() async {
@@ -2184,6 +2263,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                       await _confirmAndDeleteSale(Map<String, dynamic>.from(entry.raw), cost: 20);
                     }
                   },
+                  onSaveTemplate: (entry) => _saveBuyEntryAsTemplate(entry),
                   onTradeToggle: (entry, trade) async {
                     await _updateTradeStatus(entry.id, trade);
                   },
@@ -2489,5 +2569,3 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     );
   }
 }
-
-
