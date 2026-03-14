@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -412,52 +412,187 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                     const SizedBox(height: 12),
                     const Text('상품권', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: _selectedGiftcardId,
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(color: Colors.black),
-                      iconEnabledColor: Colors.black54,
-                      items: _giftcards
-                          .map((g) => DropdownMenuItem<String>(
-                                value: g['giftcardId'] as String,
-                                child: Text(
-                                  (g['name'] as String?) ?? g['giftcardId'] as String,
-                                  style: const TextStyle(color: Colors.black),
+                    InkWell(
+                      onTap: _giftcards.isEmpty
+                          ? null
+                          : () async {
+                              FocusScope.of(context).unfocus();
+                              final selectedId = await showModalBottomSheet<String>(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.white,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                                 ),
-                              ))
-                          .toList(),
-                      onChanged: (v) => setState(() => _selectedGiftcardId = v),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black87, width: 1.5)),
-                        border: const OutlineInputBorder(),
+                                builder: (context) {
+                                  return SafeArea(
+                                    top: false,
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Center(
+                                            child: Container(
+                                              width: 40,
+                                              height: 4,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE1E4EC),
+                                                borderRadius: BorderRadius.circular(99),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          const Text(
+                                            '상품권 선택',
+                                            style: TextStyle(
+                                              color: Color(0xFF1F1F28),
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Flexible(
+                                            child: GridView.builder(
+                                              itemCount: _giftcards.length,
+                                              shrinkWrap: true,
+                                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                crossAxisSpacing: 8,
+                                                mainAxisSpacing: 8,
+                                                childAspectRatio: 2.45,
+                                              ),
+                                              itemBuilder: (context, index) {
+                                                final gift = _giftcards[index];
+                                                final giftcardId = gift['giftcardId'] as String;
+                                                final giftcardName = (gift['name'] as String?) ?? giftcardId;
+                                                final isSelected = giftcardId == _selectedGiftcardId;
+                                                return InkWell(
+                                                  onTap: () => Navigator.pop(context, giftcardId),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFF7F8FC),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                      border: Border.all(
+                                                        color: isSelected ? const Color(0xFF74512D) : const Color(0xFFE8ECF4),
+                                                        width: isSelected ? 1.5 : 1,
+                                                      ),
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Text(
+                                                          giftcardName,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: TextStyle(
+                                                            color: isSelected ? const Color(0xFF74512D) : const Color(0xFF1F1F28),
+                                                            fontSize: 14,
+                                                            fontWeight: FontWeight.w800,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                              if (selectedId != null && mounted) {
+                                setState(() => _selectedGiftcardId = selectedId);
+                              }
+                            },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFCFD3DD)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _giftcards.isEmpty
+                                    ? '등록된 상품권이 없습니다.'
+                                    : ((_giftcards.firstWhere(
+                                          (g) => g['giftcardId'] == _selectedGiftcardId,
+                                          orElse: () => _giftcards.first,
+                                        )['name'] as String?) ??
+                                        _selectedGiftcardId ??
+                                        '상품권 선택'),
+                                style: TextStyle(
+                                  color: _giftcards.isEmpty ? const Color(0xFF9AA0AF) : const Color(0xFF1F1F28),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF757B88)),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     const Text('카드', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: _selectedCardId,
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(color: Colors.black),
-                      iconEnabledColor: Colors.black54,
-                      items: _cards
-                          .map((c) => DropdownMenuItem<String>(
-                                value: c['cardId'] as String,
-                                child: Text('${c['name'] ?? c['cardId']}', style: const TextStyle(color: Colors.black)),
-                              ))
-                          .toList(),
-                      onChanged: hasCards ? (v) => setState(() => _selectedCardId = v) : null,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black87, width: 1.5)),
-                        border: const OutlineInputBorder(),
+                    if (!hasCards)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F8FC),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Text(
+                          '등록된 카드가 없습니다.',
+                          style: TextStyle(
+                            color: Color(0xFF6E7483),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _cards.map((c) {
+                          final cardId = c['cardId'] as String;
+                          final cardName = (((c['name'] as String?) ?? '').trim().isNotEmpty ? (c['name'] as String).trim() : (((c['cardId'] as String?) ?? '').trim().isNotEmpty ? (c['cardId'] as String).trim() : '카드')); 
+                          final isSelected = cardId == _selectedCardId;
+                          return ChoiceChip(
+                            label: Text(cardName),
+                            selected: isSelected,
+                            showCheckmark: false,
+                            selectedColor: const Color(0xFF74512D),
+                            backgroundColor: const Color(0xFFF7F8FC),
+                            side: BorderSide(
+                              color: isSelected ? const Color(0xFF74512D) : const Color(0xFFE8ECF4),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : const Color(0xFF1F1F28),
+                              fontWeight: FontWeight.w700,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            onSelected: (_) => setState(() => _selectedCardId = cardId),
+                          );
+                        }).toList(),
                       ),
-                    ),
                     const SizedBox(height: 16),
                     const Text('구매처 (선택)', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
                     const SizedBox(height: 6),
@@ -719,5 +854,6 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     );
   }
 }
+
 
 

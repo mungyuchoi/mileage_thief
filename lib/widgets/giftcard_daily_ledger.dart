@@ -472,13 +472,39 @@ class _LedgerEntryRow extends StatelessWidget {
               const SizedBox(width: 2),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 18, color: Colors.black54),
+                color: Colors.white,
+                surfaceTintColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0x14000000)),
+                ),
+                elevation: 6,
                 onSelected: (v) {
                   if (v == 'edit') onEdit(entry);
                   if (v == 'delete') onDelete(entry);
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('편집')),
-                  PopupMenuItem(value: 'delete', enabled: entry.deletable, child: Text(entry.deletable ? '삭제' : '삭제 불가')),
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text(
+                      '편집',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    enabled: entry.deletable,
+                    child: Text(
+                      entry.deletable ? '삭제' : '삭제 불가',
+                      style: TextStyle(
+                        color: entry.deletable ? Colors.black : Colors.black45,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
