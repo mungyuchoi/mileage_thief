@@ -151,16 +151,34 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  // 대시보드 하단(고급) 섹션들 임시 비활성화 플래그
-  // - 브랜드별 분포
-  // - 카드별 평균 수익률 비교
-  // - 재고 현황
-  bool _showDashboardAdvancedSections = false;
+  // 대시보드 하단 고급 섹션 토글
+  bool _showDashboardAdvancedSections = true;
+
+  bool _isDashboardScrolling = false;
+  bool _isCalendarScrolling = false;
+  bool _isDailyListScrolling = false;
 
   bool _pieByAmount = true; // true: 금액, false: 수량
   Map<String, Map<String, dynamic>> _cards = {}; // cardId -> {credit, check, name}
   final TextEditingController _marketPriceController = TextEditingController();
   final TextEditingController _targetCostPerMileController = TextEditingController();
+
+  // 대시보드 전용 캐시
+  List<Map<String, dynamic>> _dashboardSalesForKpi = <Map<String, dynamic>>[];
+  int _cachedSumBuy = 0;
+  int _cachedSumSell = 0;
+  int _cachedSumProfit = 0;
+  int _cachedSumMiles = 0;
+  int _cachedOpenQty = 0;
+  double _cachedAvgCostPerMile = 0;
+  Map<String, int> _brandAmountByGiftcard = <String, int>{};
+  Map<String, int> _brandCountByGiftcard = <String, int>{};
+  List<MapEntry<String, int>> _brandAmountEntries = <MapEntry<String, int>>[];
+  List<MapEntry<String, int>> _brandCountEntries = <MapEntry<String, int>>[];
+  List<MapEntry<String, int>> _brandRemainEntries = <MapEntry<String, int>>[];
+  double _cachedWeightedAvgBuy = 0;
+  int _cachedRemainingQty = 0;
+  List<Map<String, dynamic>> _cachedCardEfficiencyRows = <Map<String, dynamic>>[];
   
   // 필터 관련
   Set<String> _selectedGiftcardIdsForDaily = {}; // 일간(통합) 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
@@ -176,6 +194,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _isDashboardScrolling = false;
+        _isCalendarScrolling = false;
+        _isDailyListScrolling = false;
+      }
       // 랭킹 탭(인덱스 3)이 선택되었을 때 데이터 로드
       if (_tabController.index == 3 && _periodType == DashboardPeriodType.month) {
         _loadRanking();
@@ -374,6 +397,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         _branchNames = data.branchNames;
         _whereToBuyNames = data.whereToBuyNames;
         _loading = false;
+        _rebuildDashboardCaches();
       });
     } catch (_) {
       setState(() { _loading = false; });
@@ -780,27 +804,114 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     return int.tryParse(v.toString()) ?? 0;
   }
 
-  /// 대시보드 KPI(평균마일원가 등)는 "구매일(기간) 기준"으로 집계한다.
-  /// - lots: 선택 기간에 구매한 lot만 들어있음 (GiftcardService에서 buyDate 기준 필터)
-  /// - sales: 일간/내역 탭을 위해 sellDate 기준 판매도 섞여 들어올 수 있음
-  /// 따라서 KPI 집계는 "선택 기간 lots에 연결된 판매(lotId)"만 사용한다.
-  Set<String> _currentLotIdSet() {
-    return _lots
+  void _rebuildDashboardCaches() {
+    final lotIds = _lots
         .map((e) => e['id'])
         .whereType<String>()
         .where((id) => id.isNotEmpty)
         .toSet();
+
+    final dashboardSales = <Map<String, dynamic>>[];
+    int sumSell = 0;
+    int sumProfit = 0;
+    int sumMiles = 0;
+
+    for (final s in _sales) {
+      final lotId = s['lotId'] as String?;
+      if (lotId != null && lotIds.contains(lotId)) {
+        dashboardSales.add(s);
+        sumSell += _asInt(s['sellTotal']);
+        sumProfit += _asInt(s['profit']);
+        sumMiles += _asInt(s['miles']);
+      }
+    }
+
+    int sumBuy = 0;
+    int openQty = 0;
+    int remainingQty = 0;
+    int weightedBuyTotal = 0;
+    int weightedQtyTotal = 0;
+    final Map<String, int> brandAmount = {};
+    final Map<String, int> brandCount = {};
+    final Map<String, int> remainByBrand = {};
+
+    for (final lot in _lots) {
+      final qty = _asInt(lot['qty']);
+      final buyUnit = _asInt(lot['buyUnit']);
+      final brand = (lot['giftcardId'] as String?) ?? '기타';
+      final status = (lot['status'] as String?) ?? 'open';
+
+      sumBuy += buyUnit * qty;
+      brandAmount[brand] = (brandAmount[brand] ?? 0) + (buyUnit * qty);
+      brandCount[brand] = (brandCount[brand] ?? 0) + qty;
+
+      if (status == 'open') {
+        openQty += qty;
+      }
+
+      if (status != 'sold') {
+        remainByBrand[brand] = (remainByBrand[brand] ?? 0) + qty;
+        remainingQty += qty;
+        weightedBuyTotal += buyUnit * qty;
+        weightedQtyTotal += qty;
+      }
+    }
+
+    final Map<String, String> lotToCard = {
+      for (final l in _lots) l['id'] as String: (l['cardId'] as String? ?? ''),
+    };
+    final Map<String, double> sumT = {};
+    final Map<String, int> cnt = {};
+    for (final s in _sales) {
+      final lotId = s['lotId'] as String?;
+      if (lotId == null) continue;
+      final cardId = lotToCard[lotId];
+      if (cardId == null || cardId.isEmpty) continue;
+      final t = (s['costPerMile'] as num?)?.toDouble();
+      if (t == null) continue;
+      sumT[cardId] = (sumT[cardId] ?? 0) + t;
+      cnt[cardId] = (cnt[cardId] ?? 0) + 1;
+    }
+
+    final List<Map<String, dynamic>> cardEfficiencyRows = [];
+    sumT.forEach((cardId, total) {
+      final c = cnt[cardId] ?? 1;
+      final avg = total / c;
+      final name = _cards[cardId]?['name'] as String? ?? cardId;
+      cardEfficiencyRows.add({'cardId': cardId, 'name': name, 'avgT': avg});
+    });
+    cardEfficiencyRows.sort((a, b) => (a['avgT'] as double).compareTo(b['avgT'] as double));
+
+    final List<MapEntry<String, int>> brandAmountEntries = brandAmount.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final List<MapEntry<String, int>> brandCountEntries = brandCount.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final List<MapEntry<String, int>> remainEntries = remainByBrand.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    _dashboardSalesForKpi = dashboardSales;
+    _cachedSumBuy = sumBuy;
+    _cachedSumSell = sumSell;
+    _cachedSumProfit = sumProfit;
+    _cachedSumMiles = sumMiles;
+    _cachedOpenQty = openQty;
+    _cachedAvgCostPerMile = sumMiles == 0 ? 0 : (-sumProfit / sumMiles);
+    _brandAmountByGiftcard = brandAmount;
+    _brandCountByGiftcard = brandCount;
+    _brandAmountEntries = brandAmountEntries;
+    _brandCountEntries = brandCountEntries;
+    _brandRemainEntries = remainEntries;
+    _cachedWeightedAvgBuy = weightedQtyTotal == 0 ? 0 : (weightedBuyTotal / weightedQtyTotal);
+    _cachedRemainingQty = remainingQty;
+    _cachedCardEfficiencyRows = cardEfficiencyRows;
   }
 
+  /// 대시보드 KPI(평균마일원가 등)는 "구매일(기간) 기준"으로 집계한다.
+  /// - lots: 선택 기간에 구매한 lot만 들어있음 (GiftcardService에서 buyDate 기준 필터)
+  /// - sales: 일간/내역 탭을 위해 sellDate 기준 판매도 섞여 들어올 수 있음
+  /// 따라서 KPI 집계는 "선택 기간 lots에 연결된 판매(lotId)"만 사용한다.
   List<Map<String, dynamic>> _dashboardSales() {
-    // 전체 기간은 lots도 전체라서 _sales 그대로 사용해도 동일하지만,
-    // 안전하게 lotId 연결이 있는 판매만 KPI에 반영한다.
-    final lotIds = _currentLotIdSet();
-    if (lotIds.isEmpty) return const <Map<String, dynamic>>[];
-    return _sales.where((s) {
-      final lotId = s['lotId'] as String?;
-      return lotId != null && lotIds.contains(lotId);
-    }).toList();
+    return _dashboardSalesForKpi;
   }
 
   double _asDouble(dynamic v) {
@@ -810,13 +921,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     return double.tryParse(v.toString()) ?? 0;
   }
 
-  int _sumBuy() => _lots.fold(
-        0,
-        (p, e) => p + _asInt(e['buyUnit']) * _asInt(e['qty']),
-      );
-  int _sumSell() => _dashboardSales().fold(0, (p, e) => p + _asInt(e['sellTotal']));
-  int _sumProfit() => _dashboardSales().fold(0, (p, e) => p + _asInt(e['profit']));
-  int _sumMiles() => _dashboardSales().fold(0, (p, e) => p + _asInt(e['miles']));
+  int _sumBuy() => _cachedSumBuy;
+  int _sumSell() => _cachedSumSell;
+  int _sumProfit() => _cachedSumProfit;
+  int _sumMiles() => _cachedSumMiles;
   String _fmtWon(num v) => '${_won.format(v)}원';
   String _fmtDiscount(dynamic v) {
     final double d = _asDouble(v);
@@ -824,34 +932,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final bool isInt = d == d.roundToDouble();
     return '${isInt ? d.toStringAsFixed(0) : d.toStringAsFixed(2)}%';
   }
-  int _openQtyTotal() {
-    int total = 0;
-    for (final lot in _lots) {
-      final String status = (lot['status'] as String?) ?? 'open';
-      if (status != 'open') continue;
-      total += _asInt(lot['qty']);
-    }
-    return total;
-  }
+  int _openQtyTotal() => _cachedOpenQty;
 
   // 브랜드별 분포(금액 기준)
-  Map<String, int> _pieByBrandAmount() {
-    final Map<String, int> m = {};
-    for (final lot in _lots) {
-      final brand = (lot['giftcardId'] as String?) ?? '기타';
-      m[brand] = (m[brand] ?? 0) + _asInt(lot['buyUnit']) * _asInt(lot['qty']);
-    }
-    return m;
-  }
+  Map<String, int> _pieByBrandAmount() => _brandAmountByGiftcard;
 
-  Map<String, int> _pieByBrandCount() {
-    final Map<String, int> m = {};
-    for (final lot in _lots) {
-      final brand = (lot['giftcardId'] as String?) ?? '기타';
-      m[brand] = (m[brand] ?? 0) + _asInt(lot['qty']);
-    }
-    return m;
-  }
+  Map<String, int> _pieByBrandCount() => _brandCountByGiftcard;
 
   // 월별 손익/마일
   Map<String, Map<String, int>> _monthlyStats() {
@@ -905,21 +991,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final sumSell = _sumSell();
     final sumProfit = _sumProfit();
     final sumMiles = _sumMiles();
-    final avgCostPerMile = sumMiles == 0 ? 0 : (-sumProfit / sumMiles);
+    final avgCostPerMile = _cachedAvgCostPerMile;
 
     final bool showAdvanced = _showDashboardAdvancedSections;
-    final Map<String, int> brandMap =
-        showAdvanced ? (_pieByAmount ? _pieByBrandAmount() : _pieByBrandCount()) : const <String, int>{};
-    final List<MapEntry<String, int>> brandEntries = brandMap.entries.toList();
+    final List<MapEntry<String, int>> brandEntries =
+        showAdvanced
+            ? (_pieByAmount ? _brandAmountEntries : _brandCountEntries)
+            : const <MapEntry<String, int>>[];
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is ScrollUpdateNotification) {
-          // 스크롤 중
-          widget.onScrollChanged?.call(true);
+          if (!_isDashboardScrolling) {
+            _isDashboardScrolling = true;
+            widget.onScrollChanged?.call(true);
+          }
         } else if (notification is ScrollEndNotification) {
-          // 스크롤 멈춤
-          widget.onScrollChanged?.call(false);
+          if (_isDashboardScrolling) {
+            _isDashboardScrolling = false;
+            widget.onScrollChanged?.call(false);
+          }
         }
         return false;
       },
@@ -1139,27 +1230,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   List<MapEntry<String, int>> _brandRemainQty() {
-    final Map<String, int> m = {};
-    for (final lot in _lots) {
-      if ((lot['status'] as String?) == 'sold') continue;
-      final brand = (lot['giftcardId'] as String?) ?? '기타';
-      m[brand] = (m[brand] ?? 0) + _asInt(lot['qty']);
-    }
-    final list = m.entries.toList();
-    list.sort((a, b) => b.value.compareTo(a.value));
-    return list;
+    return _brandRemainEntries;
   }
 
   double _weightedAvgBuy() {
-    int totalQty = 0;
-    int totalBuy = 0;
-    for (final lot in _lots) {
-      if ((lot['status'] as String?) == 'sold') continue;
-      final qty = _asInt(lot['qty']);
-      totalQty += qty;
-      totalBuy += qty * _asInt(lot['buyUnit']);
-    }
-    return totalQty == 0 ? 0 : totalBuy / totalQty;
+    return _cachedWeightedAvgBuy;
   }
 
   int _remainingBuyTotal() {
@@ -1172,12 +1247,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   int _remainingQtyTotal() {
-    int total = 0;
-    for (final lot in _lots) {
-      if ((lot['status'] as String?) == 'sold') continue;
-      total += _asInt(lot['qty']);
-    }
-    return total;
+    return _cachedRemainingQty;
   }
 
   int _remainingExpectedProfit(int sellUnit) {
@@ -1214,31 +1284,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   List<Map<String, dynamic>> _avgTByCard() {
-    // lotId -> cardId
-    final Map<String, String> lotToCard = {
-      for (final l in _lots) l['id'] as String: (l['cardId'] as String? ?? '')
-    };
-    final Map<String, double> sumT = {};
-    final Map<String, int> count = {};
-    for (final s in _sales) {
-      final lotId = s['lotId'] as String?;
-      if (lotId == null) continue;
-      final cardId = lotToCard[lotId];
-      if (cardId == null || cardId.isEmpty) continue;
-      final t = (s['costPerMile'] as num?)?.toDouble();
-      if (t == null) continue;
-      sumT[cardId] = (sumT[cardId] ?? 0) + t;
-      count[cardId] = (count[cardId] ?? 0) + 1;
-    }
-    final List<Map<String, dynamic>> rows = [];
-    sumT.forEach((cardId, total) {
-      final c = count[cardId] ?? 1;
-      final avg = total / c;
-      final name = _cards[cardId]?['name'] as String? ?? cardId;
-      rows.add({'cardId': cardId, 'name': name, 'avgT': avg});
-    });
-    rows.sort((a, b) => (a['avgT'] as double).compareTo(b['avgT'] as double));
-    return rows;
+    return _cachedCardEfficiencyRows;
   }
 
   Widget _buildCardEfficiencyBars() {
@@ -1270,8 +1316,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                     height: 10,
                     decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(6)),
                   ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                  Container(
                     width: width * ratio,
                     height: 10,
                     decoration: BoxDecoration(color: const Color(0xFF74512D), borderRadius: BorderRadius.circular(6)),
@@ -1485,11 +1530,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
               if (notification is ScrollUpdateNotification) {
-                // 스크롤 중
-                widget.onScrollChanged?.call(true);
+                if (!_isCalendarScrolling) {
+                  _isCalendarScrolling = true;
+                  widget.onScrollChanged?.call(true);
+                }
               } else if (notification is ScrollEndNotification) {
-                // 스크롤 멈춤
-                widget.onScrollChanged?.call(false);
+                if (_isCalendarScrolling) {
+                  _isCalendarScrolling = false;
+                  widget.onScrollChanged?.call(false);
+                }
               }
               return false;
             },
@@ -2226,9 +2275,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification is ScrollUpdateNotification) {
-                  widget.onScrollChanged?.call(true);
+                  if (!_isDailyListScrolling) {
+                    _isDailyListScrolling = true;
+                    widget.onScrollChanged?.call(true);
+                  }
                 } else if (notification is ScrollEndNotification) {
-                  widget.onScrollChanged?.call(false);
+                  if (_isDailyListScrolling) {
+                    _isDailyListScrolling = false;
+                    widget.onScrollChanged?.call(false);
+                  }
                 }
                 return false;
               },
