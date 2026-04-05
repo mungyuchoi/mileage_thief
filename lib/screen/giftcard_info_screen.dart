@@ -33,7 +33,12 @@ class _KpiValue extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.black12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -54,9 +59,15 @@ class _KpiValue extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                Text(label,
+                    style:
+                        const TextStyle(color: Colors.black54, fontSize: 12)),
                 const SizedBox(height: 6),
-                Text(value, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(value,
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700)),
               ],
             ),
           ),
@@ -125,7 +136,8 @@ class GiftcardInfoScreen extends StatefulWidget {
   State<GiftcardInfoScreen> createState() => _GiftcardInfoScreenState();
 }
 
-class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProviderStateMixin {
+class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
+    with TickerProviderStateMixin {
   late final TabController _tabController;
 
   // 데이터
@@ -159,9 +171,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   bool _isDailyListScrolling = false;
 
   bool _pieByAmount = true; // true: 금액, false: 수량
-  Map<String, Map<String, dynamic>> _cards = {}; // cardId -> {credit, check, name}
+  Map<String, Map<String, dynamic>> _cards =
+      {}; // cardId -> {credit, check, name}
   final TextEditingController _marketPriceController = TextEditingController();
-  final TextEditingController _targetCostPerMileController = TextEditingController();
+  final TextEditingController _targetCostPerMileController =
+      TextEditingController();
 
   // 대시보드 전용 캐시
   List<Map<String, dynamic>> _dashboardSalesForKpi = <Map<String, dynamic>>[];
@@ -178,10 +192,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   List<MapEntry<String, int>> _brandRemainEntries = <MapEntry<String, int>>[];
   double _cachedWeightedAvgBuy = 0;
   int _cachedRemainingQty = 0;
-  List<Map<String, dynamic>> _cachedCardEfficiencyRows = <Map<String, dynamic>>[];
-  
+  List<Map<String, dynamic>> _cachedCardEfficiencyRows =
+      <Map<String, dynamic>>[];
+
+  List<Map<String, dynamic>> _cachedMonthlyTrendRows = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _cachedDailyTrendRows = <Map<String, dynamic>>[];
+  List<MapEntry<String, double>> _cachedBrandTurnoverRateEntries =
+      <MapEntry<String, double>>[];
+  List<MapEntry<String, double>> _cachedBrandRoiEntries =
+      <MapEntry<String, double>>[];
+  Map<double, int> _cachedDiscountBuckets = <double, int>{};
+  List<Map<String, dynamic>> _cachedBrandRoiDetailed = <Map<String, dynamic>>[];
+  double? _cachedCurrentPeriodAvgDiscount;
+  double? _cachedPreviousPeriodAvgDiscount;
+  MapEntry<String, double>? _cachedBestBrandByProfitRate;
+
+  static const int _maxDailyTrendPointsAll = 120;
+
   // 필터 관련
-  Set<String> _selectedGiftcardIdsForDaily = {}; // 일간(통합) 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
+  Set<String> _selectedGiftcardIdsForDaily =
+      {}; // 일간(통합) 탭 선택된 상품권 ID 목록 (빈 Set이면 전체)
 
   // 랭킹 데이터
   List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[];
@@ -200,7 +230,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         _isDailyListScrolling = false;
       }
       // 랭킹 탭(인덱스 3)이 선택되었을 때 데이터 로드
-      if (_tabController.index == 3 && _periodType == DashboardPeriodType.month) {
+      if (_tabController.index == 3 &&
+          _periodType == DashboardPeriodType.month) {
         _loadRanking();
       }
     });
@@ -218,12 +249,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   Future<void> _loadRankingAgreement() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    
+
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final data = userDoc.data();
       if (data != null && data.containsKey('ranking_agree')) {
         setState(() {
@@ -239,7 +268,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   Future<void> _saveRankingAgreement(bool value) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    
+
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -289,7 +318,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             backgroundColor: Colors.white,
             title: const Text(
               '확인',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -297,7 +327,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               children: [
                 const Text(
                   '랭킹 동의를 해제하시겠습니까?',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -330,14 +363,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text(
                   '취소',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text(
                   '변경',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -362,12 +397,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       debugPrint('랭킹 동의 토글 처리 오류: $e');
     }
   }
-  
+
   // 외부에서 호출할 수 있는 새로고침 메서드
   void refresh() {
     _load();
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -379,7 +414,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   Future<void> _load() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      setState(() { _loading = false; });
+      setState(() {
+        _loading = false;
+      });
       return;
     }
     try {
@@ -400,7 +437,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         _rebuildDashboardCaches();
       });
     } catch (_) {
-      setState(() { _loading = false; });
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
@@ -410,7 +449,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Text('템플릿 이름 입력', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+        title: const Text('템플릿 이름 입력',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
         content: TextField(
           controller: nameController,
           autofocus: true,
@@ -423,11 +463,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+            child: const Text('취소',
+                style: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.w700)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, nameController.text.trim()),
-            child: const Text('저장', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+            child: const Text('저장',
+                style: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -439,7 +483,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final String defaultName = '${DateFormat('yyyyMMdd').format(entry.dateTime)} 구매건';
+    final String defaultName =
+        '${DateFormat('yyyyMMdd').format(entry.dateTime)} 구매건';
     final String? name = await _askTemplateName(defaultName);
     if (name == null || name.isEmpty) return;
 
@@ -465,17 +510,17 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           .doc(uid)
           .collection('gift_templates')
           .add({
-            'name': name,
-            'nameLower': name.toLowerCase(),
-            'pinned': false,
-            'useCount': 0,
-            'lastUsedAt': null,
-            'dateMode': 'manual',
-            'payload': payload,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-            'version': 1,
-          });
+        'name': name,
+        'nameLower': name.toLowerCase(),
+        'pinned': false,
+        'useCount': 0,
+        'lastUsedAt': null,
+        'dateMode': 'manual',
+        'payload': payload,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'version': 1,
+      });
       Fluttertoast.showToast(msg: '템플릿으로 저장되었습니다.');
       if (mounted) _load();
     } catch (e) {
@@ -569,8 +614,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       if (!mounted) return;
       setState(() {
         _calendarMonth = DateTime(month.year, month.month);
-        _calendarLots = lotsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
-        _calendarSales = salesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+        _calendarLots =
+            lotsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+        _calendarSales =
+            salesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
       });
     } catch (_) {
       // 캘린더 데이터 로드 실패 시 기존 값 유지 (조용히 무시)
@@ -607,8 +654,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   Future<void> _showMonthPicker() async {
     final DateTime now = DateTime.now();
     // lots/sales에서 가장 오래된 월 기준, 없으면 현재 월 기준
-    final DateTime effectiveMinMonth = _minDataMonth ?? DateTime(now.year, now.month);
-    final DateTime minMonth = DateTime(effectiveMinMonth.year, effectiveMinMonth.month);
+    final DateTime effectiveMinMonth =
+        _minDataMonth ?? DateTime(now.year, now.month);
+    final DateTime minMonth =
+        DateTime(effectiveMinMonth.year, effectiveMinMonth.month);
     final int minYear = minMonth.year;
 
     // 월 리스트: 현재 월부터 거슬러 올라가되, 가장 오래된 월 이전은 제외
@@ -648,7 +697,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                       color: selected ? const Color(0xFF74512D) : Colors.white,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: selected ? const Color(0xFF74512D) : Colors.black26,
+                        color:
+                            selected ? const Color(0xFF74512D) : Colors.black26,
                       ),
                     ),
                     alignment: Alignment.center,
@@ -687,16 +737,20 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             } else if (mode == DashboardPeriodType.year) {
               body = ListView.separated(
                 itemCount: years.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, color: Color(0xFFE0E0E0)),
                 itemBuilder: (context, index) {
                   final int y = years[index];
-                  final bool isCurrent = _periodType == DashboardPeriodType.year && _selectedYear == y;
+                  final bool isCurrent =
+                      _periodType == DashboardPeriodType.year &&
+                          _selectedYear == y;
                   return ListTile(
                     title: Text(
                       '$y년도 전체',
                       style: TextStyle(
                         color: Colors.black,
-                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight:
+                            isCurrent ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                     onTap: () async {
@@ -714,18 +768,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             } else {
               body = ListView.separated(
                 itemCount: months.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, color: Color(0xFFE0E0E0)),
                 itemBuilder: (context, index) {
                   final d = months[index];
-                  final bool isCurrent = _periodType == DashboardPeriodType.month &&
-                      d.year == _selectedMonth.year &&
-                      d.month == _selectedMonth.month;
+                  final bool isCurrent =
+                      _periodType == DashboardPeriodType.month &&
+                          d.year == _selectedMonth.year &&
+                          d.month == _selectedMonth.month;
                   return ListTile(
                     title: Text(
                       _formatYearMonth(d),
                       style: TextStyle(
                         color: Colors.black,
-                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight:
+                            isCurrent ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                     onTap: () async {
@@ -811,10 +868,76 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         .where((id) => id.isNotEmpty)
         .toSet();
 
+    final Map<String, int> brandAmount = {};
+    final Map<String, int> brandCount = {};
+    final Map<String, int> brandTotalQty = {};
+    final Map<String, int> brandSoldQty = {};
+    final Map<String, int> remainByBrand = {};
+    final Map<String, int> brandBuyTotal = {};
+    final Map<String, int> brandSellTotal = {};
+    final Map<String, String> lotToBrand = {
+      for (final l in _lots)
+        if ((l['id'] as String?)?.isNotEmpty ?? false)
+          l['id'] as String: (l['giftcardId'] as String?) ?? '기타',
+    };
+    final Map<String, String> lotToCard = {
+      for (final l in _lots)
+        if ((l['id'] as String?)?.isNotEmpty ?? false)
+          l['id'] as String: (l['cardId'] as String? ?? ''),
+    };
+
+    final Map<String, Map<String, int>> monthlyStats = {};
+    final Map<DateTime, Map<String, int>> dailyStats = {};
+    final Map<double, int> discountBuckets = {
+      for (double v = 2.0;
+          v <= 3.5;
+          v = double.parse((v + 0.1).toStringAsFixed(1)))
+        v: 0,
+    };
+
     final dashboardSales = <Map<String, dynamic>>[];
     int sumSell = 0;
     int sumProfit = 0;
     int sumMiles = 0;
+    int sumBuy = 0;
+    int openQty = 0;
+    int remainingQty = 0;
+    int weightedBuyTotal = 0;
+    int weightedQtyTotal = 0;
+
+    for (final lot in _lots) {
+      final qty = _asInt(lot['qty']);
+      final buyUnit = _asInt(lot['buyUnit']);
+      final brand = (lot['giftcardId'] as String?) ?? '기타';
+      final status = (lot['status'] as String?) ?? 'open';
+      final buyTs = lot['buyDate'];
+
+      sumBuy += buyUnit * qty;
+      brandAmount[brand] = (brandAmount[brand] ?? 0) + (buyUnit * qty);
+      brandCount[brand] = (brandCount[brand] ?? 0) + qty;
+      brandTotalQty[brand] = (brandTotalQty[brand] ?? 0) + qty;
+      brandBuyTotal[brand] = (brandBuyTotal[brand] ?? 0) + buyUnit * qty;
+
+      if (status == 'open') {
+        openQty += qty;
+      }
+      if (status == 'sold') {
+        brandSoldQty[brand] = (brandSoldQty[brand] ?? 0) + qty;
+      } else {
+        remainByBrand[brand] = (remainByBrand[brand] ?? 0) + qty;
+        remainingQty += qty;
+        weightedBuyTotal += buyUnit * qty;
+        weightedQtyTotal += qty;
+      }
+
+      if (buyTs is Timestamp) {
+        final d = buyTs.toDate();
+        final day = DateTime(d.year, d.month, d.day);
+        final dayEntry = dailyStats.putIfAbsent(
+            day, () => {'buy': 0, 'sell': 0, 'miles': 0});
+        dayEntry['buy'] = (dayEntry['buy'] ?? 0) + buyUnit * qty;
+      }
+    }
 
     for (final s in _sales) {
       final lotId = s['lotId'] as String?;
@@ -823,70 +946,144 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         sumSell += _asInt(s['sellTotal']);
         sumProfit += _asInt(s['profit']);
         sumMiles += _asInt(s['miles']);
+
+        final d = s['sellDate'];
+        if (d is Timestamp) {
+          final dt = d.toDate();
+          final month = '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+          final monthEntry = monthlyStats.putIfAbsent(
+              month, () => {'profit': 0, 'sell': 0, 'miles': 0});
+          monthEntry['profit'] =
+              (monthEntry['profit'] ?? 0) + _asInt(s['profit']);
+          monthEntry['sell'] =
+              (monthEntry['sell'] ?? 0) + _asInt(s['sellTotal']);
+          monthEntry['miles'] = (monthEntry['miles'] ?? 0) + _asInt(s['miles']);
+
+          final day = DateTime(dt.year, dt.month, dt.day);
+          final dayEntry = dailyStats.putIfAbsent(
+              day, () => {'buy': 0, 'sell': 0, 'miles': 0});
+          dayEntry['sell'] = (dayEntry['sell'] ?? 0) + _asInt(s['sellTotal']);
+          dayEntry['miles'] = (dayEntry['miles'] ?? 0) + _asInt(s['miles']);
+        }
+
+        final discount = (s['discount'] as num?)?.toDouble();
+        if (discount != null) {
+          final bucket = (discount * 10).round() / 10.0;
+          if (discountBuckets.containsKey(bucket)) {
+            discountBuckets[bucket] = (discountBuckets[bucket] ?? 0) + 1;
+          }
+        }
+
+        final brand = lotToBrand[lotId];
+        if (brand != null) {
+          brandSellTotal[brand] =
+              (brandSellTotal[brand] ?? 0) + _asInt(s['sellTotal']);
+        }
       }
     }
 
-    int sumBuy = 0;
-    int openQty = 0;
-    int remainingQty = 0;
-    int weightedBuyTotal = 0;
-    int weightedQtyTotal = 0;
-    final Map<String, int> brandAmount = {};
-    final Map<String, int> brandCount = {};
-    final Map<String, int> remainByBrand = {};
-
-    for (final lot in _lots) {
-      final qty = _asInt(lot['qty']);
-      final buyUnit = _asInt(lot['buyUnit']);
-      final brand = (lot['giftcardId'] as String?) ?? '기타';
-      final status = (lot['status'] as String?) ?? 'open';
-
-      sumBuy += buyUnit * qty;
-      brandAmount[brand] = (brandAmount[brand] ?? 0) + (buyUnit * qty);
-      brandCount[brand] = (brandCount[brand] ?? 0) + qty;
-
-      if (status == 'open') {
-        openQty += qty;
-      }
-
-      if (status != 'sold') {
-        remainByBrand[brand] = (remainByBrand[brand] ?? 0) + qty;
-        remainingQty += qty;
-        weightedBuyTotal += buyUnit * qty;
-        weightedQtyTotal += qty;
-      }
-    }
-
-    final Map<String, String> lotToCard = {
-      for (final l in _lots) l['id'] as String: (l['cardId'] as String? ?? ''),
-    };
-    final Map<String, double> sumT = {};
-    final Map<String, int> cnt = {};
-    for (final s in _sales) {
+    final Map<String, double> cardEfficiencySum = {};
+    final Map<String, int> cardEfficiencyCnt = {};
+    for (final s in dashboardSales) {
       final lotId = s['lotId'] as String?;
       if (lotId == null) continue;
-      final cardId = lotToCard[lotId];
-      if (cardId == null || cardId.isEmpty) continue;
+      final cardId = lotToCard[lotId] ?? '';
+      if (cardId.isEmpty) continue;
       final t = (s['costPerMile'] as num?)?.toDouble();
       if (t == null) continue;
-      sumT[cardId] = (sumT[cardId] ?? 0) + t;
-      cnt[cardId] = (cnt[cardId] ?? 0) + 1;
+      cardEfficiencySum[cardId] = (cardEfficiencySum[cardId] ?? 0) + t;
+      cardEfficiencyCnt[cardId] = (cardEfficiencyCnt[cardId] ?? 0) + 1;
+    }
+
+    final monthKeys = monthlyStats.keys.toList()..sort();
+    final List<Map<String, dynamic>> monthlyRows =
+        monthKeys.map((key) => {'key': key, ...monthlyStats[key]!}).toList();
+
+    final List<DateTime> dailyKeys = dailyStats.keys.toList()..sort();
+    final List<Map<String, dynamic>> allDailyRows = dailyKeys.map((date) {
+      final entry = dailyStats[date]!;
+      return {
+        'date': date,
+        'label': DateFormat('MM/dd').format(date),
+        'buy': entry['buy'] ?? 0,
+        'sell': entry['sell'] ?? 0,
+        'miles': entry['miles'] ?? 0,
+      };
+    }).toList();
+    final int maxDailyPoints = _maxDailyTrendPoints();
+    final List<Map<String, dynamic>> dailyRows =
+        (allDailyRows.length > maxDailyPoints)
+            ? allDailyRows.sublist(allDailyRows.length - maxDailyPoints)
+            : allDailyRows;
+
+    final List<MapEntry<String, double>> brandTurnoverEntries = [];
+    for (final e in brandTotalQty.entries) {
+      final total = e.value;
+      if (total <= 0) continue;
+      final sold = brandSoldQty[e.key] ?? 0;
+      brandTurnoverEntries.add(MapEntry(e.key, sold / total * 100));
+    }
+    brandTurnoverEntries.sort((a, b) => b.value.compareTo(a.value));
+
+    final List<MapEntry<String, double>> brandRoiEntries = [];
+    final List<Map<String, dynamic>> brandRoiDetailed = [];
+    brandBuyTotal.forEach((brand, buyTotal) {
+      if (buyTotal == 0) return;
+      final sellTotal = brandSellTotal[brand] ?? 0;
+      final roi = ((sellTotal - buyTotal) / buyTotal) * 100;
+      brandRoiEntries.add(MapEntry(brand, roi));
+      brandRoiDetailed.add({
+        'brand': brand,
+        'sell': sellTotal.toDouble(),
+        'roi': roi,
+        'buy': buyTotal.toDouble()
+      });
+    });
+    brandRoiEntries.sort((a, b) => b.value.compareTo(a.value));
+
+    final range = getGiftcardPeriodRange(
+      periodType: _periodType,
+      selectedMonth: _selectedMonth,
+      selectedYear: _selectedYear,
+    );
+    double? currentDiscountAvg;
+    double? previousDiscountAvg;
+    if (range.start != null && range.end != null && dashboardSales.isNotEmpty) {
+      currentDiscountAvg =
+          _averageDiscountInRange(dashboardSales, range.start!, range.end!);
+      if (_periodType == DashboardPeriodType.month) {
+        final prev = DateTime(range.start!.year, range.start!.month - 1);
+        previousDiscountAvg = _averageDiscountInRange(
+          dashboardSales,
+          DateTime(prev.year, prev.month),
+          DateTime(range.start!.year, range.start!.month),
+        );
+      } else if (_periodType == DashboardPeriodType.year) {
+        previousDiscountAvg = _averageDiscountInRange(
+          dashboardSales,
+          DateTime(_selectedYear - 1, 1, 1),
+          DateTime(_selectedYear, 1, 1),
+        );
+      }
     }
 
     final List<Map<String, dynamic>> cardEfficiencyRows = [];
-    sumT.forEach((cardId, total) {
-      final c = cnt[cardId] ?? 1;
+    cardEfficiencySum.forEach((cardId, total) {
+      final c = cardEfficiencyCnt[cardId] ?? 1;
       final avg = total / c;
       final name = _cards[cardId]?['name'] as String? ?? cardId;
       cardEfficiencyRows.add({'cardId': cardId, 'name': name, 'avgT': avg});
     });
-    cardEfficiencyRows.sort((a, b) => (a['avgT'] as double).compareTo(b['avgT'] as double));
+    cardEfficiencyRows
+        .sort((a, b) => (a['avgT'] as double).compareTo(b['avgT'] as double));
 
-    final List<MapEntry<String, int>> brandAmountEntries = brandAmount.entries.toList()
+    final List<MapEntry<String, int>> brandAmountEntries = brandAmount.entries
+        .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final List<MapEntry<String, int>> brandCountEntries = brandCount.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final List<MapEntry<String, int>> remainEntries = remainByBrand.entries.toList()
+    final List<MapEntry<String, int>> brandCountEntries =
+        brandCount.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final List<MapEntry<String, int>> remainEntries = remainByBrand.entries
+        .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     _dashboardSalesForKpi = dashboardSales;
@@ -901,9 +1098,20 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     _brandAmountEntries = brandAmountEntries;
     _brandCountEntries = brandCountEntries;
     _brandRemainEntries = remainEntries;
-    _cachedWeightedAvgBuy = weightedQtyTotal == 0 ? 0 : (weightedBuyTotal / weightedQtyTotal);
+    _cachedWeightedAvgBuy =
+        weightedQtyTotal == 0 ? 0 : (weightedBuyTotal / weightedQtyTotal);
     _cachedRemainingQty = remainingQty;
     _cachedCardEfficiencyRows = cardEfficiencyRows;
+    _cachedMonthlyTrendRows = monthlyRows;
+    _cachedDailyTrendRows = dailyRows;
+    _cachedBrandTurnoverRateEntries = brandTurnoverEntries;
+    _cachedBrandRoiEntries = brandRoiEntries;
+    _cachedDiscountBuckets = discountBuckets;
+    _cachedBrandRoiDetailed = brandRoiDetailed;
+    _cachedCurrentPeriodAvgDiscount = currentDiscountAvg;
+    _cachedPreviousPeriodAvgDiscount = previousDiscountAvg;
+    _cachedBestBrandByProfitRate =
+        _cachedBrandRoiEntries.isNotEmpty ? _cachedBrandRoiEntries.first : null;
   }
 
   /// 대시보드 KPI(평균마일원가 등)는 "구매일(기간) 기준"으로 집계한다.
@@ -932,6 +1140,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final bool isInt = d == d.roundToDouble();
     return '${isInt ? d.toStringAsFixed(0) : d.toStringAsFixed(2)}%';
   }
+
   int _openQtyTotal() => _cachedOpenQty;
 
   // 브랜드별 분포(금액 기준)
@@ -939,34 +1148,41 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
   Map<String, int> _pieByBrandCount() => _brandCountByGiftcard;
 
-  // 월별 손익/마일
-  Map<String, Map<String, int>> _monthlyStats() {
-    final Map<String, Map<String, int>> m = {};
-    for (final s in _dashboardSales()) {
-      final ts = s['sellDate'];
-      if (ts is Timestamp) {
-        final d = ts.toDate();
-        final key = '${d.year}-${d.month.toString().padLeft(2, '0')}';
-        final profit = _asInt(s['profit']);
-        final miles = _asInt(s['miles']);
-        m.putIfAbsent(key, () => {'profit': 0, 'miles': 0});
-        m[key]!['profit'] = (m[key]!['profit'] ?? 0) + profit;
-        m[key]!['miles'] = (m[key]!['miles'] ?? 0) + miles;
-      }
+  List<Map<String, dynamic>> _monthlyTrendRows() => _cachedMonthlyTrendRows;
+  List<Map<String, dynamic>> _dailyTrendRows() => _cachedDailyTrendRows;
+  List<MapEntry<String, double>> _brandTurnoverRows() =>
+      _cachedBrandTurnoverRateEntries;
+  List<MapEntry<String, double>> _brandRoiRows() => _cachedBrandRoiEntries;
+  Map<double, int> _discountBuckets() => _cachedDiscountBuckets;
+
+  int _maxDailyTrendPoints() {
+    switch (_periodType) {
+      case DashboardPeriodType.month:
+        return 31;
+      case DashboardPeriodType.year:
+        return 180;
+      case DashboardPeriodType.all:
+        return _maxDailyTrendPointsAll;
     }
-    return m;
   }
 
-  // 할인율 히스토그램(2.0~3.5, 0.1단위)
-  Map<double, int> _discountBuckets() {
-    final Map<double, int> m = { for (double v = 2.0; v <= 3.5; v = double.parse((v + 0.1).toStringAsFixed(1))) v: 0 };
-    for (final s in _dashboardSales()) {
-      final d = (s['discount'] as num?)?.toDouble();
-      if (d == null) continue;
-      final key = (d * 10).round() / 10.0; // 0.1단위 반올림
-      if (m.containsKey(key)) m[key] = (m[key] ?? 0) + 1;
+  double? _averageDiscountInRange(
+    List<Map<String, dynamic>> sales,
+    DateTime start,
+    DateTime end,
+  ) {
+    final List<double> values = [];
+    for (final s in sales) {
+      final ts = s['sellDate'];
+      if (ts is! Timestamp) continue;
+      final d = ts.toDate();
+      if (d.isBefore(start) || !d.isBefore(end)) continue;
+      final discount = (s['discount'] as num?)?.toDouble();
+      if (discount == null) continue;
+      values.add(discount);
     }
-    return m;
+    if (values.isEmpty) return null;
+    return values.reduce((a, b) => a + b) / values.length;
   }
 
   Future<void> _openKpiDetail(GiftcardKpiType kpiType) async {
@@ -986,6 +1202,84 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
+  Future<void> _showSectionInfoDialog({
+    required String title,
+    required String description,
+  }) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          description,
+          style: const TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(
+              '확인',
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String description,
+    Widget? trailing,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 2),
+              GestureDetector(
+                onTap: () => _showSectionInfoDialog(
+                  title: title,
+                  description: description,
+                ),
+                child: const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child:
+                      Icon(Icons.info_outline, size: 18, color: Colors.black54),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 4),
+        if (trailing != null) ...[
+          const SizedBox(width: 4),
+          trailing,
+        ],
+      ],
+    );
+  }
+
   Widget _buildDashboard() {
     final sumBuy = _sumBuy();
     final sumSell = _sumSell();
@@ -994,10 +1288,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final avgCostPerMile = _cachedAvgCostPerMile;
 
     final bool showAdvanced = _showDashboardAdvancedSections;
-    final List<MapEntry<String, int>> brandEntries =
-        showAdvanced
-            ? (_pieByAmount ? _brandAmountEntries : _brandCountEntries)
-            : const <MapEntry<String, int>>[];
+    final List<MapEntry<String, int>> brandEntries = showAdvanced
+        ? (_pieByAmount ? _brandAmountEntries : _brandCountEntries)
+        : const <MapEntry<String, int>>[];
+    final String brandDistLabel =
+        _pieByAmount ? '브랜드별 분포 (금액 기준)' : '브랜드별 분포 (수량 기준)';
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -1018,117 +1313,146 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         onRefresh: _load,
         color: const Color(0xFF74512D),
         backgroundColor: Colors.white,
-        child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 월 헤더: "YYYY년도 MM월"  |  "MM월 ▼" 필터 버튼
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _dashboardTitleText(),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
-                ),
-                TextButton.icon(
-                  onPressed: _showMonthPicker,
-                  icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
-                  label: Text(
-                    _dashboardFilterLabel(),
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
+            // 월 헤더: "YYYY년도 MM월"  |  "MM월 ▼" 필터 버튼
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _dashboardTitleText(),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black),
                   ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.black26),
+                  TextButton.icon(
+                    onPressed: _showMonthPicker,
+                    icon: const Icon(Icons.filter_list,
+                        color: Colors.black, size: 18),
+                    label: Text(
+                      _dashboardFilterLabel(),
+                      style: const TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.w600),
                     ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: const BorderSide(color: Colors.black26),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // KPI
+            Row(
+              children: [
+                Expanded(
+                  child: PressScale(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _openKpiDetail(GiftcardKpiType.totalBuy),
+                    child: _KpiValue(
+                        label: '총 매입금액',
+                        value: _fmtWon(sumBuy),
+                        icon: Icons.call_received_outlined),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PressScale(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _openKpiDetail(GiftcardKpiType.totalSell),
+                    child: _KpiValue(
+                        label: '총 판매금액',
+                        value: _fmtWon(sumSell),
+                        icon: Icons.call_made_outlined),
                   ),
                 ),
               ],
             ),
-          ),
-          // KPI
-          Row(
-            children: [
-              Expanded(
-                child: PressScale(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openKpiDetail(GiftcardKpiType.totalBuy),
-                  child: _KpiValue(label: '총 매입금액', value: _fmtWon(sumBuy), icon: Icons.call_received_outlined),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: PressScale(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openKpiDetail(GiftcardKpiType.totalSell),
-                  child: _KpiValue(label: '총 판매금액', value: _fmtWon(sumSell), icon: Icons.call_made_outlined),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: PressScale(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openKpiDetail(GiftcardKpiType.totalProfit),
-                  child: _KpiValue(label: '총 손익', value: _fmtWon(sumProfit), icon: Icons.trending_up_outlined),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: PressScale(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openKpiDetail(GiftcardKpiType.totalMiles),
-                  child: _KpiValue(label: '누적 마일', value: sumMiles.toString(), icon: Icons.stars_outlined),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: PressScale(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openKpiDetail(GiftcardKpiType.avgCostPerMile),
-                  child: _KpiValue(label: '평균마일원가(원/마일)', value: avgCostPerMile.toStringAsFixed(2), icon: Icons.percent),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: PressScale(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openKpiDetail(GiftcardKpiType.openQty),
-                  child: _KpiValue(label: '미판매 수량', value: '${_openQtyTotal()}장', icon: Icons.account_balance_wallet_outlined),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _GiftBanner(adUnitId: AdHelper.giftDashboardBannerAdUnitId),
-          ),
-
-          if (showAdvanced) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _pieByAmount ? '브랜드별 분포 (금액 기준)' : '브랜드별 분포 (수량 기준)',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                Expanded(
+                  child: PressScale(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _openKpiDetail(GiftcardKpiType.totalProfit),
+                    child: _KpiValue(
+                        label: '총 손익',
+                        value: _fmtWon(sumProfit),
+                        icon: Icons.trending_up_outlined),
+                  ),
                 ),
-                Row(
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PressScale(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _openKpiDetail(GiftcardKpiType.totalMiles),
+                    child: _KpiValue(
+                        label: '누적 마일',
+                        value: sumMiles.toString(),
+                        icon: Icons.stars_outlined),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: PressScale(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _openKpiDetail(GiftcardKpiType.avgCostPerMile),
+                    child: _KpiValue(
+                        label: '평균마일원가(원/마일)',
+                        value: avgCostPerMile.toStringAsFixed(2),
+                        icon: Icons.percent),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PressScale(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _openKpiDetail(GiftcardKpiType.openQty),
+                    child: _KpiValue(
+                        label: '미판매 수량',
+                        value: '${_openQtyTotal()}장',
+                        icon: Icons.account_balance_wallet_outlined),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child:
+                  _GiftBanner(adUnitId: AdHelper.giftDashboardBannerAdUnitId),
+            ),
+
+            if (showAdvanced) ...[
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '월별 손익/판매/마일 추세',
+                description:
+                    '월 단위로 매입 대비 판매 추세를 손익, 판매금액, 획득 마일로 보여줘요. 기간별 흐름을 한눈에 확인해요.',
+              ),
+              const SizedBox(height: 8),
+              _buildMonthlyTrendChart(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: brandDistLabel,
+                description:
+                    '브랜드별로 현재 기간의 보유량을 수량 또는 금액으로 분포를 확인해요. 토글로 기준을 바꿔 확인 가능합니다.',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text('수량', style: TextStyle(fontSize: 12)),
                     Switch(
@@ -1139,93 +1463,129 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                     const Text('금액', style: TextStyle(fontSize: 12)),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            AspectRatio(
-              aspectRatio: 1.4,
-              child: PieChart(
-                PieChartData(
-                  pieTouchData: PieTouchData(enabled: true),
-                  sections: [
-                    for (int i = 0; i < brandEntries.length; i++)
-                      PieChartSectionData(
-                        title: brandEntries[i].key,
-                        value: brandEntries[i].value.toDouble(),
-                        color: Colors.primaries[i % Colors.primaries.length],
-                        radius: 60,
-                        titleStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                  ],
-                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              runSpacing: 6,
-              children: [
-                for (int i = 0; i < brandEntries.length; i++)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          color: Colors.primaries[i % Colors.primaries.length],
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _pieByAmount
-                              ? '${brandEntries[i].key}: ${_fmtWon(brandEntries[i].value)}'
-                              : '${brandEntries[i].key}: ${brandEntries[i].value}개',
-                          style: const TextStyle(fontSize: 12),
-                        ),
+              const SizedBox(height: 8),
+              if (brandEntries.isEmpty)
+                const Text('데이터가 부족합니다.',
+                    style: TextStyle(color: Colors.black54))
+              else
+                SizedBox(
+                  width: double.infinity,
+                  height: 220,
+                  child: PieChart(
+                    PieChartData(
+                      pieTouchData: PieTouchData(enabled: true),
+                      sections: [
+                        for (int i = 0; i < brandEntries.length; i++)
+                          PieChartSectionData(
+                            title: brandEntries[i].key,
+                            value: brandEntries[i].value.toDouble(),
+                            color:
+                                Colors.primaries[i % Colors.primaries.length],
+                            radius: 60,
+                            titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
                       ],
                     ),
                   ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-            const Text(
-              '카드별 평균 수익률 비교 (원/마일, 낮을수록 우수)',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            _buildCardEfficiencyBars(),
+                ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 6,
+                children: [
+                  for (int i = 0; i < brandEntries.length; i++)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            color:
+                                Colors.primaries[i % Colors.primaries.length],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _pieByAmount
+                                ? '${brandEntries[i].key}: ${_fmtWon(brandEntries[i].value)}'
+                                : '${brandEntries[i].key}: ${brandEntries[i].value}개',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '브랜드별 잔여 소진율',
+                description:
+                    '브랜드별 잔여 수량 대비 이미 판매된 수량 비율을 보여줘요. 소진율이 높을수록 회전이 빠른 브랜드에요.',
+              ),
+              const SizedBox(height: 8),
+              _buildBrandTurnoverBars(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '일별 매입/판매/마일 추세',
+                description:
+                    '일자별 매입금액, 판매금액, 누적 마일 변화를 보여줘요. 매출 변동 타이밍을 쉽게 파악할 수 있어요.',
+              ),
+              const SizedBox(height: 8),
+              _buildDailyTrendChart(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '브랜드별 매입 대비 매출 ROI',
+                description:
+                    '브랜드별로 매입총액 대비 매출차익률을 계산해 보여줘요. 투자 효율을 비교할 때 사용해요.',
+              ),
+              const SizedBox(height: 8),
+              _buildBrandRoiBars(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '카드별 평균 수익률 비교 (원/마일, 낮을수록 우수)',
+                description:
+                    '카드별 처리 건의 평균 원/마일 원가를 계산해 보여줘요. 값이 낮을수록 매입비 대비 수익성이 좋아요.',
+              ),
+              const SizedBox(height: 8),
+              _buildCardEfficiencyBars(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '할인율 히스토그램',
+                description:
+                    '판매 내역의 할인율 구간별 빈도를 막대 형태로 보여줘요. 할인율 분포를 파악해 운영 전략에 반영할 수 있어요.',
+              ),
+              const SizedBox(height: 8),
+              _buildDiscountHistogram(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '인사이트',
+                description: '선택 기간 기준 요약 지표와 전 기간 비교 포인트를 보여줘요.',
+              ),
+              const SizedBox(height: 8),
+              _buildInsightCards(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: '재고 현황',
+                description: '현재 기간 기준 브랜드별 잔여 수량을 보여줘요.',
+              ),
+              const SizedBox(height: 8),
+              _buildInventorySection(),
+            ],
           ],
-
-          // NOTE: 대시보드 하단 인사이트(2개 카드) 임시 비활성화
-          // - 이번 달 평균 할인율
-          // - 가장 수익률이 높았던 브랜드
-          //
-          // const SizedBox(height: 20),
-          // _buildInsightCards(),
-
-          // 그래프 섹션 제거됨 (요청)
-
-          if (showAdvanced) ...[
-            const SizedBox(height: 20),
-            const Text('재고 현황', style: TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            _buildInventorySection(),
-          ],
-        ],
+        ),
       ),
-    ),
-    ),
     );
   }
 
@@ -1272,7 +1632,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       final payType = (lot['payType'] as String?) ?? '신용';
       final cardId = (lot['cardId'] as String?) ?? '';
       final rule = (_cards[cardId] != null)
-          ? (payType == '신용' ? (_cards[cardId]!['credit'] ?? 0) : (_cards[cardId]!['check'] ?? 0))
+          ? (payType == '신용'
+              ? (_cards[cardId]!['credit'] ?? 0)
+              : (_cards[cardId]!['check'] ?? 0))
           : 0;
       buyTotal += qty * buyUnit;
       qtyTotal += qty;
@@ -1292,16 +1654,20 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     if (rows.isEmpty) {
       return const Text('데이터가 부족합니다.', style: TextStyle(color: Colors.black54));
     }
-    final double maxVal = rows.map<double>((e) => (e['avgT'] as double)).fold(0, (p, e) => e > p ? e : p);
+    final double maxVal = rows
+        .map<double>((e) => (e['avgT'] as double))
+        .fold(0, (p, e) => e > p ? e : p);
     return Column(
       children: [
         for (final r in rows) ...[
           Row(
             children: [
               Expanded(
-                child: Text('${r['name']}', style: const TextStyle(color: Colors.black87)),
+                child: Text('${r['name']}',
+                    style: const TextStyle(color: Colors.black87)),
               ),
-              Text((r['avgT'] as double).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text((r['avgT'] as double).toStringAsFixed(2),
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 6),
@@ -1314,12 +1680,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   Container(
                     width: width,
                     height: 10,
-                    decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(6)),
                   ),
                   Container(
                     width: width * ratio,
                     height: 10,
-                    decoration: BoxDecoration(color: const Color(0xFF74512D), borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF74512D),
+                        borderRadius: BorderRadius.circular(6)),
                   ),
                 ],
               );
@@ -1331,59 +1701,555 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     );
   }
 
-  double? _avgDiscountFor(int year, int month) {
-    final List<double> vals = [];
-    for (final s in _sales) {
-      final ts = s['sellDate'];
-      if (ts is Timestamp) {
-        final d = ts.toDate();
-        if (d.year == year && d.month == month) {
-          final v = (s['discount'] as num?)?.toDouble();
-          if (v != null) vals.add(v);
-        }
-      }
+  Widget _buildMonthlyTrendChart() {
+    final rows = _monthlyTrendRows();
+    if (rows.isEmpty) {
+      return const Text('데이터가 부족합니다.', style: TextStyle(color: Colors.black54));
     }
-    if (vals.isEmpty) return null;
-    return vals.reduce((a, b) => a + b) / vals.length;
+
+    final List<FlSpot> profitSpots = [];
+    final List<FlSpot> sellSpots = [];
+    final List<FlSpot> milesSpots = [];
+    double minY = 0;
+    double maxY = 0;
+
+    for (int i = 0; i < rows.length; i++) {
+      final r = rows[i];
+      final x = i.toDouble();
+      final double profit = (r['profit'] as int).toDouble();
+      final double sell = (r['sell'] as int).toDouble();
+      final double miles = (r['miles'] as int).toDouble();
+      for (final v in <double>[profit, sell, miles]) {
+        if (v < minY) minY = v;
+        if (v > maxY) maxY = v;
+      }
+      profitSpots.add(FlSpot(x, profit));
+      sellSpots.add(FlSpot(x, sell));
+      milesSpots.add(FlSpot(x, miles));
+    }
+
+    final firstMonth = rows.first['key'] as String? ?? '';
+    final lastMonth = rows.last['key'] as String? ?? '';
+
+    final axisMin = minY;
+    final axisMax = (maxY == 0 ? 1 : maxY) * 1.1;
+    final yRange = (axisMax - axisMin).abs();
+    final yInterval = (yRange / 4).clamp(1.0, double.infinity);
+
+    String axisLabel(double value) {
+      final double abs = value.abs();
+      final String prefix = value < 0 ? '-' : '';
+      if (abs >= 100000000) {
+        return '$prefix${(abs / 100000000).toStringAsFixed(1)}억';
+      }
+      if (abs >= 10000) {
+        return '$prefix${(abs / 10000).toStringAsFixed(1)}만';
+      }
+      if (abs >= 1000) {
+        return '$prefix${abs.round()}';
+      }
+      return '$prefix${value.toStringAsFixed(0)}';
+    }
+
+    Widget legendItem(String title, String desc, Color color) {
+      return Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$title: $desc',
+            style: const TextStyle(fontSize: 12, color: Colors.black87),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RepaintBoundary(
+          child: SizedBox(
+            width: double.infinity,
+            height: 220,
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 48,
+                      interval: yInterval,
+                      getTitlesWidget: (value, meta) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            axisLabel(value),
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.black54),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineTouchData: const LineTouchData(enabled: false),
+                minY: axisMin,
+                maxY: axisMax,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: sellSpots,
+                    isCurved: false,
+                    color: const Color(0xFF5E9EFF),
+                    barWidth: 2,
+                    dotData: FlDotData(show: false),
+                  ),
+                  LineChartBarData(
+                    spots: profitSpots,
+                    isCurved: false,
+                    color: const Color(0xFFFFA000),
+                    barWidth: 2,
+                    dotData: FlDotData(show: false),
+                  ),
+                  LineChartBarData(
+                    spots: milesSpots,
+                    isCurved: false,
+                    color: const Color(0xFF4CAF50),
+                    barWidth: 2,
+                    dotData: FlDotData(show: false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'X축: 월 (${firstMonth.isEmpty ? '월' : firstMonth} ~ '
+          '${lastMonth.isEmpty ? '월' : lastMonth}), Y축: 값(상대 비교용 스케일)',
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          '세로축 단위: 파란선·주황선 = 원(₩), 초록선 = 마일',
+          style: TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 16,
+          runSpacing: 6,
+          children: [
+            legendItem('파란선', '매출액(판매금액)', const Color(0xFF5E9EFF)),
+            legendItem('주황선', '손익', const Color(0xFFFFA000)),
+            legendItem('초록선', '마일(누적마일)', const Color(0xFF4CAF50)),
+          ],
+        ),
+      ],
+    );
   }
 
-  MapEntry<String, double>? _bestBrandByProfitRate() {
-    final Map<String, String> lotToBrand = {for (final l in _lots) l['id'] as String: (l['giftcardId'] as String? ?? '기타')};
-    final Map<String, double> sumRate = {};
-    final Map<String, int> cnt = {};
-    for (final s in _sales) {
-      final lotId = s['lotId'] as String?;
-      if (lotId == null) continue;
-      final brand = lotToBrand[lotId] ?? '기타';
-      final buyTotal = (s['buyTotal'] as num?)?.toDouble() ?? 0;
-      final profit = (s['profit'] as num?)?.toDouble() ?? 0;
-      if (buyTotal == 0) continue;
-      final rate = (profit / buyTotal) * 100.0;
-      sumRate[brand] = (sumRate[brand] ?? 0) + rate;
-      cnt[brand] = (cnt[brand] ?? 0) + 1;
+  Widget _buildDailyTrendChart() {
+    final rows = _dailyTrendRows();
+    if (rows.isEmpty) {
+      return const Text('데이터가 부족합니다.', style: TextStyle(color: Colors.black54));
     }
-    if (sumRate.isEmpty) return null;
-    final entries = sumRate.entries
-        .map((e) => MapEntry(e.key, e.value / (cnt[e.key] ?? 1)))
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return entries.first;
+
+    double minY = 0;
+    double maxY = 0;
+    final List<FlSpot> buySpots = [];
+    final List<FlSpot> sellSpots = [];
+    final List<FlSpot> milesSpots = [];
+    for (int i = 0; i < rows.length; i++) {
+      final r = rows[i];
+      final x = i.toDouble();
+      final double buy = (r['buy'] as int? ?? 0).toDouble();
+      final double sell = (r['sell'] as int? ?? 0).toDouble();
+      final double miles = (r['miles'] as int? ?? 0).toDouble();
+      for (final v in <double>[buy, sell, miles]) {
+        if (v < minY) minY = v;
+        if (v > maxY) maxY = v;
+      }
+      buySpots.add(FlSpot(x, buy));
+      sellSpots.add(FlSpot(x, sell));
+      milesSpots.add(FlSpot(x, miles));
+    }
+
+    final firstDay = rows.first['label'] as String? ??
+        (rows.first['date'] is DateTime
+            ? DateFormat('MM/dd').format(rows.first['date'] as DateTime)
+            : '');
+    final lastDay = rows.last['label'] as String? ??
+        (rows.last['date'] is DateTime
+            ? DateFormat('MM/dd').format(rows.last['date'] as DateTime)
+            : '');
+
+    final axisMin = minY;
+    final axisMax = (maxY == 0 ? 1 : maxY) * 1.1;
+    final yRange = (axisMax - axisMin).abs();
+    final yInterval = (yRange / 4).clamp(1.0, double.infinity);
+
+    String axisLabel(double value) {
+      final double abs = value.abs();
+      final String prefix = value < 0 ? '-' : '';
+      if (abs >= 100000000) {
+        return '$prefix${(abs / 100000000).toStringAsFixed(1)}억';
+      }
+      if (abs >= 10000) {
+        return '$prefix${(abs / 10000).toStringAsFixed(1)}만';
+      }
+      if (abs >= 1000) {
+        return '$prefix${abs.round()}';
+      }
+      return '$prefix${value.toStringAsFixed(0)}';
+    }
+
+    Widget legendItem(String title, String desc, Color color) {
+      return Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$title: $desc',
+            style: const TextStyle(fontSize: 12, color: Colors.black87),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RepaintBoundary(
+          child: SizedBox(
+            width: double.infinity,
+            height: 220,
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 48,
+                      interval: yInterval,
+                      getTitlesWidget: (value, meta) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            axisLabel(value),
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.black54),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineTouchData: const LineTouchData(enabled: false),
+                minY: axisMin,
+                maxY: axisMax,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: buySpots,
+                    isCurved: false,
+                    color: const Color(0xFF4CAF50),
+                    barWidth: 2,
+                    dotData: FlDotData(show: false),
+                  ),
+                  LineChartBarData(
+                    spots: sellSpots,
+                    isCurved: false,
+                    color: const Color(0xFF5E9EFF),
+                    barWidth: 2,
+                    dotData: FlDotData(show: false),
+                  ),
+                  LineChartBarData(
+                    spots: milesSpots,
+                    isCurved: false,
+                    color: const Color(0xFFFFA000),
+                    barWidth: 2,
+                    dotData: FlDotData(show: false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'X축: 일 (${firstDay.isEmpty ? '일' : firstDay} ~ '
+          '${lastDay.isEmpty ? '일' : lastDay}), Y축: 값(상대 비교용 스케일)',
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          '세로축 단위: 초록선 = 원(₩), 파란선 = 원(₩), 주황선 = 마일',
+          style: TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 16,
+          runSpacing: 6,
+          children: [
+            legendItem('초록선', '매입금액', const Color(0xFF4CAF50)),
+            legendItem('파란선', '판매금액', const Color(0xFF5E9EFF)),
+            legendItem('주황선', '마일(획득마일)', const Color(0xFFFFA000)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrandTurnoverBars() {
+    final rows = _brandTurnoverRows();
+    if (rows.isEmpty) {
+      return const Text('데이터가 부족합니다.', style: TextStyle(color: Colors.black54));
+    }
+    final takeCount = rows.length > 12 ? 12 : rows.length;
+    final maxVal = rows.take(takeCount).first.value == 0
+        ? 1
+        : rows.take(takeCount).first.value;
+
+    return Column(
+      children: [
+        for (final row in rows.take(takeCount)) ...[
+          Row(
+            children: [
+              Expanded(
+                child: Text(row.key,
+                    style:
+                        const TextStyle(fontSize: 13, color: Colors.black87)),
+              ),
+              Text(
+                '${row.value.toStringAsFixed(1)}%',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LayoutBuilder(
+            builder: (_, constraints) {
+              final width = constraints.maxWidth;
+              final ratio = (row.value / maxVal).clamp(0.0, 1.0);
+              return Container(
+                height: 9,
+                decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(6)),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: width * ratio,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF74512D),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBrandRoiBars() {
+    final rows = _cachedBrandRoiDetailed;
+    if (rows.isEmpty) {
+      return const Text('데이터가 부족합니다.', style: TextStyle(color: Colors.black54));
+    }
+    final takeCount = rows.length > 12 ? 12 : rows.length;
+    final maxAbs = rows
+        .take(takeCount)
+        .map((e) => (e['roi'] as double).abs())
+        .fold<double>(0, (p, v) => v > p ? v : p);
+    final base = (maxAbs == 0 ? 1 : maxAbs);
+    return Column(
+      children: [
+        for (final row in rows.take(takeCount)) ...[
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  row['brand'] as String,
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+              ),
+              Text(
+                '${(row['roi'] as double).toStringAsFixed(1)}%',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LayoutBuilder(
+            builder: (_, constraints) {
+              final width = constraints.maxWidth;
+              final ratio = ((row['roi'] as double).abs() / base);
+              final positive = (row['roi'] as double) >= 0;
+              return Container(
+                height: 9,
+                decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(6)),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: width * ratio,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: positive
+                          ? const Color(0xFF74512D)
+                          : const Color(0xFFE53935),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDiscountHistogram() {
+    final buckets = _discountBuckets();
+    final entries = buckets.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final maxCount =
+        entries.map((e) => e.value).fold<int>(0, (p, v) => v > p ? v : p);
+    if (maxCount == 0) {
+      return const Text('할인율 데이터가 부족합니다.',
+          style: TextStyle(color: Colors.black54));
+    }
+
+    final first = entries.first.key;
+    final last = entries.last.key;
+    final descItem = entries.length == 1
+        ? '${first.toStringAsFixed(1)}%'
+        : '${first.toStringAsFixed(1)}% ~ ${last.toStringAsFixed(1)}%';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 180,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (final entry in entries) ...[
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (_, constraints) {
+                            final ratio = entry.value / maxCount;
+                            return Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                width: double.infinity,
+                                height: constraints.maxHeight * ratio * 0.88,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF74512D),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.key.toStringAsFixed(1),
+                        style: const TextStyle(
+                            fontSize: 10, color: Colors.black54),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'X축: 할인율 구간($descItem), Y축: 건수(판매 건 수)',
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '해석: 각 막대는 해당 할인율 구간의 판매 빈도를 의미하며, 막대가 클수록 그 구간에서의 판매가 많다는 뜻입니다.',
+          style: TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+      ],
+    );
   }
 
   Widget _buildInsightCards() {
-    final now = DateTime.now();
-    final cur = _avgDiscountFor(now.year, now.month);
-    final prevMonthDate = DateTime(now.year, now.month - 1, 1);
-    final prev = _avgDiscountFor(prevMonthDate.year, prevMonthDate.month);
+    final cur = _cachedCurrentPeriodAvgDiscount;
+    final prev = _cachedPreviousPeriodAvgDiscount;
+    final best = _cachedBestBrandByProfitRate;
     final delta = (cur != null && prev != null) ? (cur - prev) : null;
-    final best = _bestBrandByProfitRate();
 
     String discountText() {
-      if (cur == null) return '이번 달 평균 할인율: 데이터 없음';
+      if (cur == null) return '선택 기간 평균 할인율: 데이터 없음';
       final curStr = cur.toStringAsFixed(2);
-      if (delta == null) return '이번 달 평균 할인율: $curStr%';
+      final scope = switch (_periodType) {
+        DashboardPeriodType.month =>
+          '${_selectedMonth.year}.${_selectedMonth.month.toString().padLeft(2, '0')}',
+        DashboardPeriodType.year => '$_selectedYear년도',
+        DashboardPeriodType.all => '전체 기간',
+      };
+      if (delta == null) {
+        return '선택 기간 평균 할인율($scope): $curStr%';
+      }
       final sign = delta >= 0 ? '+' : '';
-      return '이번 달 평균 할인율: $curStr% (전월 대비 $sign${delta.toStringAsFixed(2)}%)';
+      return '선택 기간 평균 할인율($scope): $curStr% (비교 기간 대비 $sign${delta.toStringAsFixed(2)}%)';
     }
 
     String bestBrandText() {
@@ -1407,7 +2273,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         child: Row(
           children: [
             const Text('💡 '),
-            Expanded(child: Text(text, style: const TextStyle(color: Colors.black87))),
+            Expanded(
+                child:
+                    Text(text, style: const TextStyle(color: Colors.black87))),
           ],
         ),
       );
@@ -1426,8 +2294,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final remainList = _brandRemainQty();
     final avgBuy = _weightedAvgBuy();
     final remainQty = _remainingQtyTotal();
-    final controller = _marketPriceController;
-    final targetController = _targetCostPerMileController;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1438,18 +2304,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           children: [
             for (final e in remainList)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.black12),
                   color: Colors.white,
                 ),
-                child: Text('${e.key}: ${e.value}장', style: const TextStyle(color: Colors.black)),
+                child: Text('${e.key}: ${e.value}장',
+                    style: const TextStyle(color: Colors.black)),
               ),
           ],
         ),
         const SizedBox(height: 10),
-        Text('가중평균 매입가: ${_won.format(avgBuy.round())}원 / 장, 잔여 ${remainQty}장', style: const TextStyle(color: Colors.black87)),
+        Text('가중평균 매입가: ${_won.format(avgBuy.round())}원 / 장, 잔여 ${remainQty}장',
+            style: const TextStyle(color: Colors.black87)),
       ],
     );
   }
@@ -1462,19 +2331,23 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     for (final s in _calendarSales) {
       final ts = s['sellDate'];
       if (ts is Timestamp) {
-        final d = DateTime(ts.toDate().year, ts.toDate().month, ts.toDate().day);
+        final d =
+            DateTime(ts.toDate().year, ts.toDate().month, ts.toDate().day);
         byDay.putIfAbsent(d, () => []).add({...s, 'type': 'sale'});
       }
     }
     for (final l in _calendarLots) {
       final ts = l['buyDate'];
       if (ts is Timestamp) {
-        final d = DateTime(ts.toDate().year, ts.toDate().month, ts.toDate().day);
+        final d =
+            DateTime(ts.toDate().year, ts.toDate().month, ts.toDate().day);
         byDay.putIfAbsent(d, () => []).add({...l, 'type': 'lot'});
       }
     }
 
-    final selectedItems = (_selectedDay != null) ? (byDay[_selectedDay!] ?? []) : const <Map<String, dynamic>>[];
+    final selectedItems = (_selectedDay != null)
+        ? (byDay[_selectedDay!] ?? [])
+        : const <Map<String, dynamic>>[];
 
     return Column(
       children: [
@@ -1483,9 +2356,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           lastDay: DateTime(2100),
           focusedDay: _focusedDay,
           locale: 'ko_KR',
-          selectedDayPredicate: (day) => _selectedDay != null && day.year == _selectedDay!.year && day.month == _selectedDay!.month && day.day == _selectedDay!.day,
-          calendarStyle: const CalendarStyle(todayDecoration: BoxDecoration(color: Color(0x2074512D), shape: BoxShape.circle)),
-          headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+          selectedDayPredicate: (day) =>
+              _selectedDay != null &&
+              day.year == _selectedDay!.year &&
+              day.month == _selectedDay!.month &&
+              day.day == _selectedDay!.day,
+          calendarStyle: const CalendarStyle(
+              todayDecoration: BoxDecoration(
+                  color: Color(0x2074512D), shape: BoxShape.circle)),
+          headerStyle: const HeaderStyle(
+              formatButtonVisible: false, titleCentered: true),
           // 달(페이지)이 변경될 때마다 해당 월 기준으로 캘린더 전용 데이터를 다시 로드
           onPageChanged: (focused) {
             setState(() {
@@ -1495,23 +2375,27 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           },
           onDaySelected: (selected, focused) {
             setState(() {
-              _selectedDay = DateTime(selected.year, selected.month, selected.day);
+              _selectedDay =
+                  DateTime(selected.year, selected.month, selected.day);
               _focusedDay = focused;
             });
           },
-          eventLoader: (day) => byDay[DateTime(day.year, day.month, day.day)] ?? [],
+          eventLoader: (day) =>
+              byDay[DateTime(day.year, day.month, day.day)] ?? [],
           calendarBuilders: CalendarBuilders(
             markerBuilder: (context, date, events) {
               if (events.isEmpty) return const SizedBox.shrink();
               final widgets = <Widget>[];
               final list = events.take(3).toList();
               for (final e in list) {
-                final Map<String, dynamic>? m = e is Map<String, dynamic> ? e : null;
+                final Map<String, dynamic>? m =
+                    e is Map<String, dynamic> ? e : null;
                 final bool isSale = (m?['type'] == 'sale');
                 widgets.add(Container(
                   width: 6,
                   height: 6,
-                  margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
                   decoration: BoxDecoration(
                     color: isSale ? Colors.blueAccent : Colors.redAccent,
                     shape: BoxShape.circle,
@@ -1552,80 +2436,107 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                 itemCount: selectedItems.length + 1, // 광고를 위한 +1
                 itemBuilder: (context, index) {
-              // 첫 번째 아이템은 광고
-              if (index == 0) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: _GiftBanner(adUnitId: AdHelper.giftCalendarBannerAdUnitId),
-                );
-              }
-              // 나머지는 선택된 날짜의 아이템들
-              final m = selectedItems[index - 1];
-              final isSale = m['type'] == 'sale';
-              final ts = isSale ? m['sellDate'] : m['buyDate'];
-              final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
-              final brand = (m['giftcardId'] as String?) ?? '';
-              final qty = _asInt(m['qty']);
-              final String? memo = isSale ? null : (m['memo'] as String?);
+                  // 첫 번째 아이템은 광고
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: _GiftBanner(
+                          adUnitId: AdHelper.giftCalendarBannerAdUnitId),
+                    );
+                  }
+                  // 나머지는 선택된 날짜의 아이템들
+                  final m = selectedItems[index - 1];
+                  final isSale = m['type'] == 'sale';
+                  final ts = isSale ? m['sellDate'] : m['buyDate'];
+                  final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
+                  final brand = (m['giftcardId'] as String?) ?? '';
+                  final qty = _asInt(m['qty']);
+                  final String? memo = isSale ? null : (m['memo'] as String?);
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: GestureDetector(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: GestureDetector(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            InfoPill(text: isSale ? '판매' : '구매', icon: isSale ? Icons.attach_money_outlined : Icons.shopping_cart_outlined, filled: true),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '$brand $qty장',
-                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            Row(
+                              children: [
+                                InfoPill(
+                                    text: isSale ? '판매' : '구매',
+                                    icon: isSale
+                                        ? Icons.attach_money_outlined
+                                        : Icons.shopping_cart_outlined,
+                                    filled: true),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '$brand $qty장',
+                                    style: const TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w700),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                if (isSale) ...[
+                                  InfoPill(
+                                      icon: Icons.sell_outlined,
+                                      text:
+                                          '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                                  InfoPill(
+                                      icon: Icons.trending_up_outlined,
+                                      text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                                  InfoPill(
+                                      icon: Icons.today_outlined, text: date),
+                                ] else ...[
+                                  InfoPill(
+                                      icon: Icons.payments_outlined,
+                                      text:
+                                          '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                                  InfoPill(
+                                      icon: Icons.credit_card_outlined,
+                                      text: '카드 ${m['cardId'] ?? ''}'),
+                                  InfoPill(
+                                      icon:
+                                          Icons.account_balance_wallet_outlined,
+                                      text: '${m['payType'] ?? ''}'),
+                                  InfoPill(
+                                      icon: Icons.today_outlined, text: date),
+                                  if (memo != null && memo.trim().isNotEmpty)
+                                    InfoPill(
+                                        icon: Icons.note_outlined, text: memo),
+                                ],
+                              ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (isSale) ...[
-                              InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
-                              InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
-                              InfoPill(icon: Icons.today_outlined, text: date),
-                            ] else ...[
-                              InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                              InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
-                              InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
-                              InfoPill(icon: Icons.today_outlined, text: date),
-                              if (memo != null && memo.trim().isNotEmpty)
-                                InfoPill(icon: Icons.note_outlined, text: memo),
-                            ],
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
       ],
     );
   }
@@ -1656,7 +2567,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
 
     // 현재 선택된 상품권 ID (빈 Set이면 전체)
     final currentSelected = _selectedGiftcardIdsForDaily;
-    Set<String> tempSelected = currentSelected.isEmpty ? Set<String>.from(giftcardList) : Set<String>.from(currentSelected);
+    Set<String> tempSelected = currentSelected.isEmpty
+        ? Set<String>.from(giftcardList)
+        : Set<String>.from(currentSelected);
 
     final result = await showDialog<Set<String>>(
       context: context,
@@ -1723,7 +2636,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               onPressed: () => Navigator.pop(context, null),
               child: const Text(
                 '취소',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
             ),
             TextButton(
@@ -1739,14 +2653,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
               },
               child: const Text(
                 '적용',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
       ),
     );
-    
+
     if (result != null) {
       setState(() {
         _selectedGiftcardIdsForDaily = result;
@@ -1755,7 +2670,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   // 편집 진입 전 땅콩 확인 및 차감 처리
-  Future<void> _confirmAndConsumePeanutsThen(Function() onConfirmed, {int cost = 20}) async {
+  Future<void> _confirmAndConsumePeanutsThen(Function() onConfirmed,
+      {int cost = 20}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -1781,16 +2697,23 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         builder: (context) {
           return AlertDialog(
             backgroundColor: Colors.white,
-            title: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            content: const Text('땅콩 20개가 소모됩니다.', style: TextStyle(color: Colors.black)),
+            title: const Text('확인',
+                style: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold)),
+            content: const Text('땅콩 20개가 소모됩니다.',
+                style: TextStyle(color: Colors.black)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('취소', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: const Text('취소',
+                    style: TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('확인', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: const Text('확인',
+                    style: TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -1806,7 +2729,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
-  Future<void> _confirmAndDeleteSale(Map<String, dynamic> sale, {int cost = 20}) async {
+  Future<void> _confirmAndDeleteSale(Map<String, dynamic> sale,
+      {int cost = 20}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -1833,7 +2757,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             backgroundColor: Colors.white,
             title: const Text(
               '삭제',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             ),
             content: Text(
               '땅콩 $cost개가 소모됩니다.\n삭제하시겠습니까?',
@@ -1844,14 +2769,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text(
                   '취소',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text(
                   '삭제',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -1922,7 +2849,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
   }
 
-  Future<void> _confirmAndDeleteLot(Map<String, dynamic> lot, {int cost = 20}) async {
+  Future<void> _confirmAndDeleteLot(Map<String, dynamic> lot,
+      {int cost = 20}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -1953,7 +2881,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             backgroundColor: Colors.white,
             title: const Text(
               '삭제',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             ),
             content: Text(
               '땅콩 $cost개가 소모됩니다.\n삭제하시겠습니까?',
@@ -1964,14 +2893,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text(
                   '취소',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text(
                   '삭제',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -2002,15 +2933,17 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
   }
 
   Widget _buildDaily() {
-    final List<Map<String, dynamic>> lots = List<Map<String, dynamic>>.from(_lots.map((e) => {...e}));
-    final List<Map<String, dynamic>> sales = List<Map<String, dynamic>>.from(_sales.map((e) => {...e}));
+    final List<Map<String, dynamic>> lots =
+        List<Map<String, dynamic>>.from(_lots.map((e) => {...e}));
+    final List<Map<String, dynamic>> sales =
+        List<Map<String, dynamic>>.from(_sales.map((e) => {...e}));
 
     DateTime tsOf(Map<String, dynamic> x, {required bool sale}) {
       final ts = sale ? x['sellDate'] : x['buyDate'];
       if (ts is Timestamp) return ts.toDate();
       return DateTime.fromMillisecondsSinceEpoch(0);
     }
-    
+
     // 일간(통합) 필터 적용
     if (_selectedGiftcardIdsForDaily.isNotEmpty) {
       lots.removeWhere((lot) {
@@ -2018,7 +2951,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         return !_selectedGiftcardIdsForDaily.contains(giftcardId);
       });
     }
-    
+
     // 판매 리스트도 동일 필터 적용 (lotId 역참조 포함)
     if (_selectedGiftcardIdsForDaily.isNotEmpty) {
       sales.removeWhere((sale) {
@@ -2037,18 +2970,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         return !_selectedGiftcardIdsForDaily.contains(giftcardId);
       });
     }
-    
+
     lots.sort((a, b) => tsOf(b, sale: false).compareTo(tsOf(a, sale: false)));
     sales.sort((a, b) => tsOf(b, sale: true).compareTo(tsOf(a, sale: true)));
 
     Widget lotTile(Map m) {
-      final String date = (m['buyDate'] is Timestamp) ? _yMd.format((m['buyDate'] as Timestamp).toDate()) : '';
+      final String date = (m['buyDate'] is Timestamp)
+          ? _yMd.format((m['buyDate'] as Timestamp).toDate())
+          : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
       final int qty = _asInt(m['qty']);
       final String status = (m['status'] as String?) ?? 'open';
       final bool sold = status == 'sold';
       final bool canDelete = status == 'open';
-      final Color? buyColor = sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
+      final Color? buyColor =
+          sold ? const Color(0xFF1E88E5) : const Color(0xFF74512D);
       final String? memo = m['memo'] as String?;
       final bool isTraded = sold ? true : ((m['trade'] as bool?) ?? false);
       return GestureDetector(
@@ -2058,24 +2994,37 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.black12),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2))
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                InfoPill(text: '구매', icon: Icons.shopping_cart_outlined, filled: true, fillColor: buyColor),
+                InfoPill(
+                    text: '구매',
+                    icon: Icons.shopping_cart_outlined,
+                    filled: true,
+                    fillColor: buyColor),
                 const SizedBox(width: 8),
-                Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+                Expanded(
+                    child: Text('$brand $qty장',
+                        style: const TextStyle(fontWeight: FontWeight.w700))),
                 if ((m['whereToBuyId'] as String?) != null) ...[
                   const SizedBox(width: 8),
                   InfoPill(
                     icon: Icons.storefront_outlined,
-                    text: _whereToBuyNames[(m['whereToBuyId'] as String?)!] ?? (m['whereToBuyId'] as String),
+                    text: _whereToBuyNames[(m['whereToBuyId'] as String?)!] ??
+                        (m['whereToBuyId'] as String),
                   ),
                 ],
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black54),
+                  icon: const Icon(Icons.edit_outlined,
+                      size: 18, color: Colors.black54),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: '편집',
@@ -2083,7 +3032,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                     await _confirmAndConsumePeanutsThen(() async {
                       await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: m['id'] as String?)),
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                GiftBuyScreen(editLotId: m['id'] as String?)),
                       );
                       if (mounted) _load();
                     }, cost: 20);
@@ -2092,7 +3043,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 if (canDelete) ...[
                   const SizedBox(width: 6),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.black54),
+                    icon: const Icon(Icons.delete_outline,
+                        size: 18, color: Colors.black54),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     tooltip: '삭제',
@@ -2110,9 +3062,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                  InfoPill(icon: Icons.credit_card_outlined, text: '카드 ${m['cardId'] ?? ''}'),
-                  InfoPill(icon: Icons.account_balance_wallet_outlined, text: '${m['payType'] ?? ''}'),
+                  InfoPill(
+                      icon: Icons.payments_outlined,
+                      text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                  InfoPill(
+                      icon: Icons.credit_card_outlined,
+                      text: '카드 ${m['cardId'] ?? ''}'),
+                  InfoPill(
+                      icon: Icons.account_balance_wallet_outlined,
+                      text: '${m['payType'] ?? ''}'),
                   InfoPill(icon: Icons.today_outlined, text: date),
                   if (memo != null && memo.trim().isNotEmpty)
                     InfoPill(icon: Icons.note_outlined, text: memo),
@@ -2136,11 +3094,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     }
 
     Widget saleTile(Map m) {
-      final String date = (m['sellDate'] is Timestamp) ? _yMd.format((m['sellDate'] as Timestamp).toDate()) : '';
+      final String date = (m['sellDate'] is Timestamp)
+          ? _yMd.format((m['sellDate'] as Timestamp).toDate())
+          : '';
       final String brand = (m['giftcardId'] as String?) ?? '';
       final int qty = _asInt(m['qty']);
-      final bool hasDiscount = m.containsKey('discount') && m['discount'] != null;
-      
+      final bool hasDiscount =
+          m.containsKey('discount') && m['discount'] != null;
+
       // lotId를 통해 해당 lot의 giftcardId 찾기
       String? lotGiftcardName;
       final lotId = m['lotId'] as String?;
@@ -2154,14 +3115,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           lotGiftcardName = _giftcardNames[lotGiftcardId] ?? lotGiftcardId;
         }
       }
-      
+
       // branchId를 통해 지점 이름 찾기
       String? branchName;
       final branchId = m['branchId'] as String?;
       if (branchId != null && _branchNames.containsKey(branchId)) {
         branchName = _branchNames[branchId];
       }
-      
+
       return GestureDetector(
         child: Container(
           padding: const EdgeInsets.all(12),
@@ -2169,17 +3130,28 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.black12),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2))
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                const InfoPill(text: '판매', icon: Icons.attach_money_outlined, filled: true),
+                const InfoPill(
+                    text: '판매',
+                    icon: Icons.attach_money_outlined,
+                    filled: true),
                 const SizedBox(width: 8),
-                Expanded(child: Text('$brand $qty장', style: const TextStyle(fontWeight: FontWeight.w700))),
+                Expanded(
+                    child: Text('$brand $qty장',
+                        style: const TextStyle(fontWeight: FontWeight.w700))),
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.black54),
+                  icon: const Icon(Icons.edit_outlined,
+                      size: 18, color: Colors.black54),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: '편집',
@@ -2187,7 +3159,9 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                     await _confirmAndConsumePeanutsThen(() async {
                       await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: m['id'] as String?)),
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                GiftSellScreen(editSaleId: m['id'] as String?)),
                       );
                       if (mounted) _load();
                     }, cost: 20);
@@ -2195,7 +3169,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 ),
                 const SizedBox(width: 6),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.black54),
+                  icon: const Icon(Icons.delete_outline,
+                      size: 18, color: Colors.black54),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: '삭제',
@@ -2212,13 +3187,21 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                  InfoPill(
+                      icon: Icons.sell_outlined,
+                      text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
                   if (hasDiscount)
-                    InfoPill(icon: Icons.percent, text: '할인율 ${_fmtDiscount(m['discount'])}'),
-                  InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                    InfoPill(
+                        icon: Icons.percent,
+                        text: '할인율 ${_fmtDiscount(m['discount'])}'),
+                  InfoPill(
+                      icon: Icons.trending_up_outlined,
+                      text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
                   InfoPill(icon: Icons.today_outlined, text: date),
                   if (lotGiftcardName != null && lotGiftcardName.isNotEmpty)
-                    InfoPill(icon: Icons.card_giftcard_outlined, text: lotGiftcardName),
+                    InfoPill(
+                        icon: Icons.card_giftcard_outlined,
+                        text: lotGiftcardName),
                   if (branchName != null && branchName.isNotEmpty)
                     InfoPill(icon: Icons.store_outlined, text: branchName),
                 ],
@@ -2243,7 +3226,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
       cards: _cards,
       filterGiftcardIds: _selectedGiftcardIdsForDaily,
     );
-    
+
     return Column(
       children: [
         Padding(
@@ -2253,13 +3236,18 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             children: [
               TextButton.icon(
                 onPressed: _showDailyFilterDialog,
-                icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
+                icon: const Icon(Icons.filter_list,
+                    color: Colors.black, size: 18),
                 label: Text(
-                  _selectedGiftcardIdsForDaily.isEmpty ? '전체 ▼' : '${_selectedGiftcardIdsForDaily.length}개 선택 ▼',
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                  _selectedGiftcardIdsForDaily.isEmpty
+                      ? '전체 ▼'
+                      : '${_selectedGiftcardIdsForDaily.length}개 선택 ▼',
+                  style: const TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.w600),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: const BorderSide(color: Colors.black26),
@@ -2300,12 +3288,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                       if (entry.type == GiftcardLedgerEntryType.buy) {
                         await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => GiftBuyScreen(editLotId: entry.id)),
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  GiftBuyScreen(editLotId: entry.id)),
                         );
                       } else {
                         await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => GiftSellScreen(editSaleId: entry.id)),
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  GiftSellScreen(editSaleId: entry.id)),
                         );
                       }
                       if (mounted) _load();
@@ -2313,9 +3305,13 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                   },
                   onDelete: (entry) async {
                     if (entry.type == GiftcardLedgerEntryType.buy) {
-                      await _confirmAndDeleteLot(Map<String, dynamic>.from(entry.raw), cost: 20);
+                      await _confirmAndDeleteLot(
+                          Map<String, dynamic>.from(entry.raw),
+                          cost: 20);
                     } else {
-                      await _confirmAndDeleteSale(Map<String, dynamic>.from(entry.raw), cost: 20);
+                      await _confirmAndDeleteSale(
+                          Map<String, dynamic>.from(entry.raw),
+                          cost: 20);
                     }
                   },
                   onSaveTemplate: (entry) => _saveBuyEntryAsTemplate(entry),
@@ -2339,39 +3335,39 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     try {
       final String monthKey = DateFormat('yyyyMM').format(_selectedMonth);
       print('[GiftcardInfoScreen] 랭킹 데이터 로드 시작 - monthKey: $monthKey');
-      
+
       final docRef = FirebaseFirestore.instance
           .collection('meta')
           .doc('rates_monthly_v2')
           .collection('rates_monthly_v2')
           .doc(monthKey);
-      
+
       final doc = await docRef.get();
-      
+
       if (!doc.exists) {
         print('[GiftcardInfoScreen] 랭킹 데이터 없음');
-      setState(() {
-        _userRankings = [];
-        _rankingUpdatedAt = null;
-        _rankingLoading = false;
-      });
-      return;
-    }
-    
-    final data = doc.data() as Map<String, dynamic>?;
-    if (data == null) {
-      setState(() {
-        _userRankings = [];
-        _rankingUpdatedAt = null;
-        _rankingLoading = false;
-      });
-      return;
-    }
-      
-      final List<dynamic> users = (data['users'] is List) 
-          ? List<dynamic>.from(data['users'] as List) 
+        setState(() {
+          _userRankings = [];
+          _rankingUpdatedAt = null;
+          _rankingLoading = false;
+        });
+        return;
+      }
+
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data == null) {
+        setState(() {
+          _userRankings = [];
+          _rankingUpdatedAt = null;
+          _rankingLoading = false;
+        });
+        return;
+      }
+
+      final List<dynamic> users = (data['users'] is List)
+          ? List<dynamic>.from(data['users'] as List)
           : <dynamic>[];
-      
+
       // uid별 합산으로 랭킹 계산
       final Map<String, Map<String, dynamic>> agg = {};
       for (final u in users) {
@@ -2381,30 +3377,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
         final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
         final String dn = (u['displayName'] as String?) ?? '';
         final String pu = (u['photoUrl'] as String?) ?? '';
-        final Map<String, dynamic> cur = agg[uid] ?? {
-          'uid': uid,
-          'displayName': dn,
-          'photoUrl': pu,
-          'sellTotal': 0
-        };
+        final Map<String, dynamic> cur = agg[uid] ??
+            {'uid': uid, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
         cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
         cur['displayName'] = dn; // 최신 정보로 업데이트
         cur['photoUrl'] = pu;
         agg[uid] = cur;
       }
-      
+
       final List<Map<String, dynamic>> ranked = agg.values.toList()
         ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
-      
+
       // updatedAt 시간 가져오기
       DateTime? updatedAt;
       final updatedAtField = data['updatedAt'];
       if (updatedAtField is Timestamp) {
         updatedAt = updatedAtField.toDate();
       }
-      
+
       print('[GiftcardInfoScreen] 랭킹 데이터 로드 완료 - ${ranked.length}명');
-      
+
       setState(() {
         _userRankings = ranked;
         _rankingUpdatedAt = updatedAt;
@@ -2429,7 +3421,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
     final String updateTimeText = _rankingUpdatedAt != null
         ? DateFormat('yyyy.MM.dd HH:mm').format(_rankingUpdatedAt!)
         : '';
-    
+
     return Column(
       children: [
         Padding(
@@ -2439,18 +3431,24 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
             children: [
               Row(
                 children: [
-                  const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('사용자 랭킹',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   if (updateTimeText.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Text(
                       updateTimeText,
-                      style: const TextStyle(color: Colors.black54, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.black54, fontSize: 12),
                     ),
                   ],
                   const Spacer(),
-                  Text('${_userRankings.length}명', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  Text('${_userRankings.length}명',
+                      style:
+                          const TextStyle(color: Colors.black54, fontSize: 12)),
                   const SizedBox(width: 12),
-                  const Text('동의', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                  const Text('동의',
+                      style: TextStyle(color: Colors.black87, fontSize: 12)),
                   const SizedBox(width: 8),
                   Switch(
                     value: _rankingAgreement,
@@ -2466,7 +3464,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
           child: _rankingLoading
               ? const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
                   ),
                 )
               : _userRankings.isEmpty
@@ -2485,7 +3484,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                         final String uid = u['uid'] as String? ?? '';
                         final String name = u['displayName'] as String? ?? '익명';
                         final String? photo = u['photoUrl'] as String?;
-                        final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
+                        final int total =
+                            (u['sellTotal'] as num?)?.toInt() ?? 0;
 
                         Color bg;
                         Color fg = Colors.white;
@@ -2514,13 +3514,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                             if (uid.isNotEmpty) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => UserProfileScreen(userUid: uid),
+                                  builder: (_) =>
+                                      UserProfileScreen(userUid: uid),
                                 ),
                               );
                             }
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
                             child: Row(
                               children: [
                                 Container(
@@ -2542,9 +3544,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                                 const SizedBox(width: 12),
                                 CircleAvatar(
                                   radius: 14,
-                                  backgroundImage: (photo != null && photo.isNotEmpty)
-                                      ? NetworkImage(photo)
-                                      : null,
+                                  backgroundImage:
+                                      (photo != null && photo.isNotEmpty)
+                                          ? NetworkImage(photo)
+                                          : null,
                                   child: (photo == null || photo.isEmpty)
                                       ? const Icon(Icons.person, size: 16)
                                       : null,
@@ -2552,13 +3555,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
@@ -2574,7 +3579,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen> with TickerProv
                                 const SizedBox(width: 12),
                                 Text(
                                   _formatCurrency(total),
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700),
                                 ),
                               ],
                             ),
