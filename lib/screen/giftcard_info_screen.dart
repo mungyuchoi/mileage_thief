@@ -206,8 +206,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   double? _cachedCurrentPeriodAvgDiscount;
   double? _cachedPreviousPeriodAvgDiscount;
   MapEntry<String, double>? _cachedBestBrandByProfitRate;
+  bool _monthlyTrendExpanded = false;
+  int? _monthlyTrendExpandedYear;
+  List<Map<String, dynamic>> _cachedMonthlyTrendExpandedRows =
+      <Map<String, dynamic>>[];
+  bool _monthlyTrendExpansionLoading = false;
 
   static const int _maxDailyTrendPointsAll = 120;
+  static const int _monthlyTrendExpansionPeanutCost = 5;
 
   // 필터 관련
   Set<String> _selectedGiftcardIdsForDaily =
@@ -419,6 +425,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       });
       return;
     }
+    setState(() {
+      _monthlyTrendExpanded = false;
+      _monthlyTrendExpandedYear = null;
+      _cachedMonthlyTrendExpandedRows = <Map<String, dynamic>>[];
+    });
     try {
       final data = await GiftcardService.loadInfoData(
         uid: uid,
@@ -441,6 +452,219 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         _loading = false;
       });
     }
+  }
+
+  void _resetMonthlyTrendExpansion() {
+    _monthlyTrendExpanded = false;
+    _monthlyTrendExpandedYear = null;
+    _cachedMonthlyTrendExpandedRows = <Map<String, dynamic>>[];
+  }
+
+  List<Map<String, dynamic>> _monthlyTrendRowsFromSales(
+    List<Map<String, dynamic>> sales,
+  ) {
+    final Map<String, Map<String, int>> monthlyStats = {};
+    for (final s in sales) {
+      final d = s['sellDate'];
+      if (d is! Timestamp) continue;
+      final dt = d.toDate();
+      final month = '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+      final monthEntry = monthlyStats.putIfAbsent(
+          month, () => {'profit': 0, 'sell': 0, 'miles': 0});
+      monthEntry['profit'] = (monthEntry['profit'] ?? 0) + _asInt(s['profit']);
+      monthEntry['sell'] = (monthEntry['sell'] ?? 0) + _asInt(s['sellTotal']);
+      monthEntry['miles'] = (monthEntry['miles'] ?? 0) + _asInt(s['miles']);
+    }
+    final monthKeys = monthlyStats.keys.toList()..sort();
+    return monthKeys.map((key) => {'key': key, ...monthlyStats[key]!}).toList();
+  }
+
+  Future<void> _loadMonthlyTrendExpandedData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    if (_periodType != DashboardPeriodType.month) return;
+    final selectedYear = _selectedMonth.year;
+    if (_monthlyTrendExpandedYear == selectedYear &&
+        _cachedMonthlyTrendExpandedRows.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _monthlyTrendExpanded = true;
+          _monthlyTrendExpansionLoading = false;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _monthlyTrendExpansionLoading = true;
+    });
+    try {
+      final data = await GiftcardService.loadInfoData(
+        uid: uid,
+        periodType: DashboardPeriodType.year,
+        selectedMonth: _selectedMonth,
+        selectedYear: selectedYear,
+      );
+      final expandedRows = _monthlyTrendRowsFromSales(data.sales);
+      setState(() {
+        _cachedMonthlyTrendExpandedRows = expandedRows;
+        _monthlyTrendExpandedYear = selectedYear;
+        _monthlyTrendExpanded = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '월별 추세 확장 데이터를 불러오지 못했습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+      if (mounted) {
+        _monthlyTrendExpanded = false;
+        _cachedMonthlyTrendExpandedRows = <Map<String, dynamic>>[];
+        _monthlyTrendExpandedYear = null;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _monthlyTrendExpansionLoading = false;
+        });
+      }
+    }
+  }
+
+  String _monthlyTrendExpandedScopeLabel() {
+    final now = DateTime.now();
+    final selectedYear = _selectedMonth.year;
+    if (selectedYear == now.year) {
+      final month = _selectedMonth.month.toString().padLeft(2, '0');
+      if (_selectedMonth.month <= 1) {
+        return '${selectedYear}년 전체';
+      }
+      return '${selectedYear}년 1월 ~ ${selectedYear}년 $month월';
+    }
+    return '${selectedYear}년 전체';
+  }
+
+  Future<void> _confirmAndExpandMonthlyTrend() async {
+    if (_periodType != DashboardPeriodType.month) return;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final userData = await UserService.getUserFromFirestore(uid);
+      final currentPeanuts = _asInt(userData?['peanutCount']);
+      if (currentPeanuts < _monthlyTrendExpansionPeanutCost) {
+        Fluttertoast.showToast(
+          msg: '땅콩이 모자랍니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        return;
+      }
+
+      final ok = await showDialog<bool>(
+        context: context,
+        barrierColor: Colors.transparent,
+        builder: (dialogContext) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              '확인',
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              '월별 차트를 ${_monthlyTrendExpandedScopeLabel()} 범위로 확장하려면 땅콩 '
+              '${_monthlyTrendExpansionPeanutCost}개를 소모합니다.\n\n'
+              '진행하시겠습니까?',
+              style: const TextStyle(color: Colors.black, fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text(
+                  '취소',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.w700),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text(
+                  '확인',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      if (ok != true) return;
+
+      await UserService.updatePeanutCount(
+        uid,
+        currentPeanuts - _monthlyTrendExpansionPeanutCost,
+      );
+      await _loadMonthlyTrendExpandedData();
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '땅콩 ${_monthlyTrendExpansionPeanutCost}개가 사용되었습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '월별 차트 확장 처리 중 오류가 발생했습니다.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _getMonthlyTrendChartRows() {
+    List<Map<String, dynamic>> rows = _monthlyTrendRows();
+    if (_monthlyTrendExpanded &&
+        _periodType == DashboardPeriodType.month &&
+        _cachedMonthlyTrendExpandedRows.isNotEmpty) {
+      rows = _cachedMonthlyTrendExpandedRows;
+    }
+
+    if (_periodType != DashboardPeriodType.month) return rows;
+
+    final selectedYear = _selectedMonth.year;
+    final now = DateTime.now();
+    final maxMonth = (selectedYear == now.year) ? now.month : 12;
+    return rows.where((r) {
+      final key = r['key'] as String? ?? '';
+      final parts = key.split('-');
+      if (parts.length != 2) return false;
+      final year = int.tryParse(parts[0]) ?? 0;
+      final month = int.tryParse(parts[1]) ?? 0;
+      if (year != selectedYear) return false;
+      if (month < 1 || month > maxMonth) return false;
+      return true;
+    }).toList();
   }
 
   Future<String?> _askTemplateName(String initialName) async {
@@ -727,6 +951,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                 ),
                 onTap: () async {
                   Navigator.pop(sheetContext);
+                  _resetMonthlyTrendExpansion();
                   setState(() {
                     _periodType = DashboardPeriodType.all;
                     _loading = true;
@@ -755,6 +980,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                     ),
                     onTap: () async {
                       Navigator.pop(sheetContext);
+                      _resetMonthlyTrendExpansion();
                       setState(() {
                         _periodType = DashboardPeriodType.year;
                         _selectedYear = y;
@@ -787,6 +1013,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                     ),
                     onTap: () async {
                       Navigator.pop(sheetContext);
+                      _resetMonthlyTrendExpansion();
                       setState(() {
                         _periodType = DashboardPeriodType.month;
                         _selectedMonth = DateTime(d.year, d.month);
@@ -1440,14 +1667,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
             if (showAdvanced) ...[
               const SizedBox(height: 20),
               _buildSectionHeader(
-                title: '월별 손익/판매/마일 추세',
-                description:
-                    '월 단위로 매입 대비 판매 추세를 손익, 판매금액, 획득 마일로 보여줘요. 기간별 흐름을 한눈에 확인해요.',
-              ),
-              const SizedBox(height: 8),
-              _buildMonthlyTrendChart(),
-              const SizedBox(height: 20),
-              _buildSectionHeader(
                 title: brandDistLabel,
                 description:
                     '브랜드별로 현재 기간의 보유량을 수량 또는 금액으로 분포를 확인해요. 토글로 기준을 바꿔 확인 가능합니다.',
@@ -1577,6 +1796,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
               _buildInsightCards(),
               const SizedBox(height: 20),
               _buildSectionHeader(
+                title: '월별 손익/판매/마일 추세',
+                description:
+                    '월 단위로 매입 대비 판매 추세를 손익, 판매금액, 획득 마일로 보여줘요. 기간별 흐름을 한눈에 확인해요.',
+              ),
+              const SizedBox(height: 8),
+              _buildMonthlyTrendChart(),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
                 title: '재고 현황',
                 description: '현재 기간 기준 브랜드별 잔여 수량을 보여줘요.',
               ),
@@ -1702,7 +1929,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   }
 
   Widget _buildMonthlyTrendChart() {
-    final rows = _monthlyTrendRows();
+    final rows = _getMonthlyTrendChartRows();
     if (rows.isEmpty) {
       return const Text('데이터가 부족합니다.', style: TextStyle(color: Colors.black54));
     }
@@ -1771,13 +1998,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RepaintBoundary(
-          child: SizedBox(
-            width: double.infinity,
-            height: 220,
+    final bool shouldDimChart =
+        _periodType == DashboardPeriodType.month && !_monthlyTrendExpanded;
+    final String scopeHint = _monthlyTrendExpandedScopeLabel();
+
+    final Widget chartArea = SizedBox(
+      width: double.infinity,
+      height: 220,
+      child: Stack(
+        children: [
+          RepaintBoundary(
             child: LineChart(
               LineChartData(
                 gridData: const FlGridData(show: false),
@@ -1839,7 +2069,62 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
               ),
             ),
           ),
-        ),
+          if (shouldDimChart) ...[
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  color: Colors.white.withOpacity(0.52),
+                ),
+              ),
+            ),
+            if (_monthlyTrendExpansionLoading)
+              const Positioned.fill(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF74512D),
+                  ),
+                ),
+              )
+            else
+              Positioned.fill(
+                child: Center(
+                  child: ElevatedButton.icon(
+                    onPressed: _confirmAndExpandMonthlyTrend,
+                    icon: const Icon(
+                      Icons.lock_open_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      '$scopeHint 보기 (땅콩 ${_monthlyTrendExpansionPeanutCost}개)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF74512D),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        chartArea,
         const SizedBox(height: 8),
         Text(
           'X축: 월 (${firstMonth.isEmpty ? '월' : firstMonth} ~ '
