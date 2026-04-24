@@ -1,0 +1,72 @@
+{
+  "id": "TzCWOjhIH2WMd5vlzPZHSV7Qwk12",
+  "path": "users/TzCWOjhIH2WMd5vlzPZHSV7Qwk12",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "TzCWOjhIH2WMd5vlzPZHSV7Qwk12",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T12:43:57.324000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJcxwVrNBFky0-_Lne_becwt-cBL7dVb8SQiORfpK0vCV7EtA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dLbLUrEFQQaWRLneUmKvsq:APA91bE3rwJy5lh7cpG1jYHU47s3WG6GYjkJgba3-PF341gF03zEuOnGkf6f5e9ZBlp-7-kLXZSKkUmn7mJo61QjGc6tojt0yoRtkSt9DT53qMDJSjFLqPk",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T12:43:57.324000+00:00"
+    },
+    "displayName": "박정희",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T12:43:57.324000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T12:43:57.324000+00:00"
+    },
+    "likesCount": 0,
+    "email": "gkstjd74@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lottesky",
+        "path": "users/TzCWOjhIH2WMd5vlzPZHSV7Qwk12/cards/lottesky",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-11T02:18:45.659000+00:00"
+          },
+          "name": "롯데 아멕스"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "TzCWOjhIH2WMd5vlzPZHSV7Qwk12",
+    "safeFileName": "TzCWOjhIH2WMd5vlzPZHSV7Qwk12.json"
+  }
+}

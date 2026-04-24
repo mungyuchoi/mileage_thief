@@ -1126,6 +1126,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     int sumSell = 0;
     int sumProfit = 0;
     int sumMiles = 0;
+    int sumSoldMiles = 0;
     int sumBuy = 0;
     int openQty = 0;
     int remainingQty = 0;
@@ -1140,6 +1141,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       final buyTs = lot['buyDate'];
 
       sumBuy += buyUnit * qty;
+      sumMiles += _effectiveLotMiles(lot);
       brandAmount[brand] = (brandAmount[brand] ?? 0) + (buyUnit * qty);
       brandCount[brand] = (brandCount[brand] ?? 0) + qty;
       brandTotalQty[brand] = (brandTotalQty[brand] ?? 0) + qty;
@@ -1172,7 +1174,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         dashboardSales.add(s);
         sumSell += _asInt(s['sellTotal']);
         sumProfit += _asInt(s['profit']);
-        sumMiles += _asInt(s['miles']);
+        sumSoldMiles += _asInt(s['miles']);
 
         final d = s['sellDate'];
         if (d is Timestamp) {
@@ -1319,7 +1321,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     _cachedSumProfit = sumProfit;
     _cachedSumMiles = sumMiles;
     _cachedOpenQty = openQty;
-    _cachedAvgCostPerMile = sumMiles == 0 ? 0 : (-sumProfit / sumMiles);
+    _cachedAvgCostPerMile = sumSoldMiles == 0 ? 0 : (-sumProfit / sumSoldMiles);
     _brandAmountByGiftcard = brandAmount;
     _brandCountByGiftcard = brandCount;
     _brandAmountEntries = brandAmountEntries;
@@ -1354,6 +1356,27 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     if (v is double) return v;
     if (v is num) return v.toDouble();
     return double.tryParse(v.toString()) ?? 0;
+  }
+
+  int _effectiveLotMiles(Map<String, dynamic> lot) {
+    final storedMiles = _asInt(lot['miles']);
+    if (storedMiles > 0) return storedMiles;
+
+    final buyTotal = _asInt(lot['buyUnit']) * _asInt(lot['qty']);
+    if (buyTotal <= 0) return 0;
+
+    int rule = _asInt(lot['mileRuleUsedPerMileKRW']);
+    if (rule <= 0) {
+      final payType = (lot['payType'] as String?) ?? '신용';
+      final cardId = (lot['cardId'] as String?) ?? '';
+      final card = _cards[cardId];
+      if (card != null) {
+        rule = payType == '신용' ? _asInt(card['credit']) : _asInt(card['check']);
+      }
+    }
+
+    if (rule <= 0) return 0;
+    return (buyTotal / rule).round();
   }
 
   int _sumBuy() => _cachedSumBuy;

@@ -1,0 +1,190 @@
+{
+  "id": "zSLlUJSVZdfz9wwtVAOQalNbXD73",
+  "path": "users/zSLlUJSVZdfz9wwtVAOQalNbXD73",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "zSLlUJSVZdfz9wwtVAOQalNbXD73",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-28T14:45:31.878000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-03T06:28:56.338076+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocIe_AEGof5r3igPl8Sdxalx2V-EM1J2_VE29trjMDUU8XPtHQ=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dYI1_egpQMSEN8U46BZomL:APA91bEPAO-OfBJe1M2HwjLpiBes0XSfmNiNmPab2nkREpqrMx0t0M29nS895DqWF-3WUqRof5JkqRA_zK-YxbNL1kd5sNYXf_G05M_8jjXh0jBBbj_Su4A",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-28T14:45:31.878000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-14T07:24:41.924000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-28T14:45:31.878000+00:00"
+    },
+    "displayName": "이도현",
+    "peanutCount": 23,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-28T14:45:31.878000+00:00"
+    },
+    "likesCount": 0,
+    "email": "yjdh170601@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "lots": [
+      {
+        "id": "lot_1775112339792",
+        "path": "users/zSLlUJSVZdfz9wwtVAOQalNbXD73/lots/lot_1775112339792",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 7.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:46:25.419000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:45:00.520420+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 310,
+          "buyUnit": 465000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:45:39.943000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775112491511",
+        "path": "users/zSLlUJSVZdfz9wwtVAOQalNbXD73/lots/lot_1775112491511",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:49:05.092000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:46:54.665628+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 310,
+          "buyUnit": 465500,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:48:11.843000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1775112385254",
+        "path": "users/zSLlUJSVZdfz9wwtVAOQalNbXD73/sales/sale_1775112385254",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 459500,
+          "costPerMile": 17.74,
+          "discount": 8.1,
+          "miles": 310,
+          "sellUnit": 459500,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:46:25.368000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:45:46.151284+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:46:25.368000+00:00"
+          },
+          "profit": -5500,
+          "lotId": "lot_1775112339792"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1775112544954",
+        "path": "users/zSLlUJSVZdfz9wwtVAOQalNbXD73/sales/sale_1775112544954",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 500000,
+          "costPerMile": -111.29,
+          "discount": 0.0,
+          "miles": 310,
+          "sellUnit": 500000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:49:05.057000+00:00"
+          },
+          "buyTotal": 465500,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:48:53.728401+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T06:49:05.057000+00:00"
+          },
+          "profit": 34500,
+          "lotId": "lot_1775112491511"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "zSLlUJSVZdfz9wwtVAOQalNbXD73",
+    "safeFileName": "zSLlUJSVZdfz9wwtVAOQalNbXD73.json"
+  }
+}

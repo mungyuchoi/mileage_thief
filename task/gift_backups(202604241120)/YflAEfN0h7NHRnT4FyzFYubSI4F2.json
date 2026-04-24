@@ -1,0 +1,107 @@
+{
+  "id": "YflAEfN0h7NHRnT4FyzFYubSI4F2",
+  "path": "users/YflAEfN0h7NHRnT4FyzFYubSI4F2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "YflAEfN0h7NHRnT4FyzFYubSI4F2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T08:15:51.027000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-02T14:28:42.198997+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": null,
+    "commentCount": 0,
+    "fcmToken": "eiCJbC5QfkqDkIZsjxnzFN:APA91bFzvhhQL63BHLv7y1j94ELywjcWUXtRSpWDynCNsAffiYz1BoWa_3xENaOHXUDWdVf9cJreypbm_mKptVmWqMlSjBNdJVkdIV2QhoPIQxSlOliWuUg",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T08:15:51.027000+00:00"
+    },
+    "displayName": null,
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T08:15:51.027000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T08:15:51.027000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "n8f7n8kmhq@privaterelay.appleid.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_skypass_amex",
+        "path": "users/YflAEfN0h7NHRnT4FyzFYubSI4F2/cards/lotte_skypass_amex",
+        "data": {
+          "memo": "대한항공용",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T08:17:28.277000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_asiana",
+        "path": "users/YflAEfN0h7NHRnT4FyzFYubSI4F2/cards/samsung_asiana",
+        "data": {
+          "memo": "아시아나용",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T08:20:30.904000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_asiana_air",
+        "path": "users/YflAEfN0h7NHRnT4FyzFYubSI4F2/cards/shinhan_asiana_air",
+        "data": {
+          "memo": "아시아나용",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 666,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T08:19:26.617000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "YflAEfN0h7NHRnT4FyzFYubSI4F2",
+    "safeFileName": "YflAEfN0h7NHRnT4FyzFYubSI4F2.json"
+  }
+}

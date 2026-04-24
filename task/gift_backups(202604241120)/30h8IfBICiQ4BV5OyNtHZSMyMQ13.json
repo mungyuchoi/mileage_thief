@@ -1,0 +1,73 @@
+{
+  "id": "30h8IfBICiQ4BV5OyNtHZSMyMQ13",
+  "path": "users/30h8IfBICiQ4BV5OyNtHZSMyMQ13",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "30h8IfBICiQ4BV5OyNtHZSMyMQ13",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-17T04:28:33.569000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJ7dEA15eoNJW_AtijfO2EWMiqkRcC_6Elo23_E6tykRnP0LA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "fhrN56bBnU4tishO9M7XUD:APA91bEriok7l1WfwSBsnDtBJZHpJaV2i9NrVu_3Ln1EDOCwv585945m3xOgrk4-Q-2GeXOUoqv2_7XtM2YOZ0ryO9tyTPDJQzyfj0jVhqYzco6OVn5ZXN0",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-17T04:28:33.569000+00:00"
+    },
+    "displayName": "한지호",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-17T04:28:33.569000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-17T04:28:33.569000+00:00"
+    },
+    "likesCount": 0,
+    "email": "y.day0925@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte",
+        "path": "users/30h8IfBICiQ4BV5OyNtHZSMyMQ13/cards/lotte",
+        "data": {
+          "memo": "5",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-28T15:55:53.936000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "30h8IfBICiQ4BV5OyNtHZSMyMQ13",
+    "safeFileName": "30h8IfBICiQ4BV5OyNtHZSMyMQ13.json"
+  }
+}

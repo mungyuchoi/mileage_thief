@@ -1,0 +1,1501 @@
+{
+  "id": "alZuJATpNeUWyDUadDYs5pWyNk13",
+  "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "alZuJATpNeUWyDUadDYs5pWyNk13",
+    "postsCount": 2,
+    "photoURLEnable": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-14T01:19:00.488000+00:00"
+    },
+    "isBanned": false,
+    "gradeLevel": 2,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-14T11:58:17.908388+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLpN-Jo5fdWtT-KTg7kS3RLCjR_TtWjd-31z9O1LvxJBpbC3A=s96-c",
+    "commentCount": 7,
+    "fcmToken": "dwMkMr05SASmf3KJq1YU5m:APA91bFfRLmoRf62XoKG_pVRAH_qrJaY5TbPE0tzYqjWvXtLRaqXGuFbqrNjXEH9eXKOPewupwzq1zD_c1RWoDC4w4ChhnX21fCxvfXykiMbLMB73oYeDSU",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "displayNameChangeCount": 0,
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-15T02:03:44.094000+00:00"
+    },
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-09T23:29:20.744000+00:00"
+    },
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-11T06:55:08.379000+00:00"
+    },
+    "displayName": "토미",
+    "peanutCount": 64,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.2",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-09T23:29:20.744000+00:00"
+    },
+    "email": "lsw5401@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 12,
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "skypass",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/cards/skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:01:52.139000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "0ef86da5-4bbc-4998-a68d-6e0ec8b1f7dc",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/0ef86da5-4bbc-4998-a68d-6e0ec8b1f7dc",
+        "data": {
+          "title": "마일 적립/사용 정보 얻고 싶어요",
+          "postPath": "posts/20251202/posts/0ef86da5-4bbc-4998-a68d-6e0ec8b1f7dc",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:59:44.829000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "1a9a9b70-916a-432a-a316-6330f9334472",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/1a9a9b70-916a-432a-a316-6330f9334472",
+        "data": {
+          "title": "마일좌석은 어려워요..",
+          "postPath": "posts/20251107/posts/1a9a9b70-916a-432a-a316-6330f9334472",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:29:16.330000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "2c65f50c-32bc-4e29-87b2-3f841ee82a22",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/2c65f50c-32bc-4e29-87b2-3f841ee82a22",
+        "data": {
+          "title": "너무 좋은 어플",
+          "postPath": "posts/20251203/posts/2c65f50c-32bc-4e29-87b2-3f841ee82a22",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:51:30.725000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "54bf772b-44f5-459c-a855-cdf28e6e5c8f",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/54bf772b-44f5-459c-a855-cdf28e6e5c8f",
+        "data": {
+          "title": "어플이 조금 어려워졌어요.",
+          "postPath": "posts/20251113/posts/54bf772b-44f5-459c-a855-cdf28e6e5c8f",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:29:11.119000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "778d4657-fba0-48e3-94aa-c46feedd50a1",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/778d4657-fba0-48e3-94aa-c46feedd50a1",
+        "data": {
+          "title": "상품권 탭 전면 개편",
+          "postPath": "posts/20260110/posts/778d4657-fba0-48e3-94aa-c46feedd50a1",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T08:55:46.005000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7c0b11b0-cc63-4d32-9669-9e9db86cd688",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/7c0b11b0-cc63-4d32-9669-9e9db86cd688",
+        "data": {
+          "title": "상품권 탭 정보 설명",
+          "postPath": "posts/20260106/posts/7c0b11b0-cc63-4d32-9669-9e9db86cd688",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T01:09:46.370000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7cf3e1c8-34ef-4b7e-a27c-84c94ba51355",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/7cf3e1c8-34ef-4b7e-a27c-84c94ba51355",
+        "data": {
+          "title": "오픈톡방 주소 궁금합니다",
+          "postPath": "posts/20251202/posts/7cf3e1c8-34ef-4b7e-a27c-84c94ba51355",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:51:38.064000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7faec2f1-5c9d-4995-b6d8-f005cbb7b471",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/7faec2f1-5c9d-4995-b6d8-f005cbb7b471",
+        "data": {
+          "title": "마일리지 좌석확인할수있는어플!",
+          "postPath": "posts/20251106/posts/7faec2f1-5c9d-4995-b6d8-f005cbb7b471",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:29:21.585000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "83b9bccc-dddc-4f17-93d9-75fa5d72eb39",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/83b9bccc-dddc-4f17-93d9-75fa5d72eb39",
+        "data": {
+          "title": "반갑습니다",
+          "postPath": "posts/20251206/posts/83b9bccc-dddc-4f17-93d9-75fa5d72eb39",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:38:02.011000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "971449ea-3d2a-4847-80d6-f462c4c93c32",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/971449ea-3d2a-4847-80d6-f462c4c93c32",
+        "data": {
+          "title": "워싱턴 여행 팁(by 포인트 전환님)",
+          "postPath": "posts/20251205/posts/971449ea-3d2a-4847-80d6-f462c4c93c32",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:38:10.243000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ab4a7665-cce4-4a30-8c5d-872791e7ab7a",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/ab4a7665-cce4-4a30-8c5d-872791e7ab7a",
+        "data": {
+          "title": "어플 처음 알게됐어요!!!",
+          "postPath": "posts/20251201/posts/ab4a7665-cce4-4a30-8c5d-872791e7ab7a",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:28:59.268000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "f07e60e0-c65d-42dc-9ad9-32f8807e26fd",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/liked_posts/f07e60e0-c65d-42dc-9ad9-32f8807e26fd",
+        "data": {
+          "title": "저는 뉴욕 가요",
+          "postPath": "posts/20251110/posts/f07e60e0-c65d-42dc-9ad9-32f8807e26fd",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:54:11.492000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1765623756037",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/lots/lot_1765623756037",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:02:09.074062+00:00"
+          },
+          "discount": 7.5,
+          "cardId": "skypass",
+          "buyUnit": 46250,
+          "qty": 20,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:02:36.595000+00:00"
+          },
+          "memo": "",
+          "status": "sold",
+          "payType": "신용",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:02:55.839000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768266851405",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/lots/lot_1768266851405",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-11T15:00:00+00:00"
+          },
+          "discount": 7.5,
+          "cardId": "skypass",
+          "buyUnit": 46250,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T01:14:12.078000+00:00"
+          },
+          "memo": "",
+          "status": "sold",
+          "payType": "신용",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T01:15:22.936000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768392058408",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/lots/lot_1768392058408",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T12:00:32.497619+00:00"
+          },
+          "discount": 7.0,
+          "cardId": "skypass",
+          "buyUnit": 46500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T12:00:58.888000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T12:01:29.965000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768612518476",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/lots/lot_1768612518476",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T01:14:51.561652+00:00"
+          },
+          "discount": 7.0,
+          "cardId": "skypass",
+          "buyUnit": 46500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T01:15:19.177000+00:00"
+          },
+          "memo": "",
+          "status": "sold",
+          "payType": "신용",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T01:15:31.016000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775038863926",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/lots/lot_1775038863926",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 7.0,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:26.752000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-01T10:20:32.588981+00:00"
+          },
+          "cardId": "skypass",
+          "miles": 465,
+          "buyUnit": 46500,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-01T10:21:04.745000+00:00"
+          },
+          "giftcardId": "book_and_life"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775476734569",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/lots/lot_1775476734569",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 13,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:52.754000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:58:36.360423+00:00"
+          },
+          "cardId": "skypass",
+          "miles": 605,
+          "buyUnit": 46550,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:58:55.116000+00:00"
+          },
+          "giftcardId": "book_and_life"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "F3yP0GMUXVKLWOZdc15Q",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/F3yP0GMUXVKLWOZdc15Q",
+        "data": {
+          "commentPath": "posts/20251211/posts/c46218fc-7be4-489a-8b19-7437e46c5522/comments/F3yP0GMUXVKLWOZdc15Q",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T06:10:44.555000+00:00"
+          },
+          "postPath": "posts/20251211/posts/c46218fc-7be4-489a-8b19-7437e46c5522",
+          "contentHtml": "<p>반갑습니다.</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "JglnmCV2vkloCrwxnOgr",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/JglnmCV2vkloCrwxnOgr",
+        "data": {
+          "commentPath": "posts/20251211/posts/e076a62a-8c55-415b-8deb-66bf571f2e57/comments/JglnmCV2vkloCrwxnOgr",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T06:10:59.493000+00:00"
+          },
+          "postPath": "posts/20251211/posts/e076a62a-8c55-415b-8deb-66bf571f2e57",
+          "contentHtml": "<p>반갑습니다^^</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "KIq8T2pqn6BXTMXoXJcV",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/KIq8T2pqn6BXTMXoXJcV",
+        "data": {
+          "commentPath": "posts/20251210/posts/1c6f8d49-5040-421f-93ae-0b51a5266ec1/comments/KIq8T2pqn6BXTMXoXJcV",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T01:58:55.234000+00:00"
+          },
+          "postPath": "posts/20251210/posts/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "contentHtml": "<p>@킹스포드스미스국제공항 감사합니다.</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bfqsaHMyhpk7rmm05xom",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/bfqsaHMyhpk7rmm05xom",
+        "data": {
+          "commentPath": "posts/20251213/posts/0e8b525f-adaf-4860-b3de-28128a9f4317/comments/bfqsaHMyhpk7rmm05xom",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-14T01:19:00.777000+00:00"
+          },
+          "postPath": "posts/20251213/posts/0e8b525f-adaf-4860-b3de-28128a9f4317",
+          "contentHtml": "<p>감사합니다.</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "knt8EEcGaKXG4nliiIVk",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/knt8EEcGaKXG4nliiIVk",
+        "data": {
+          "commentPath": "posts/20251211/posts/01a0b59c-7dc1-4b40-93b3-1e21dc4986d9/comments/knt8EEcGaKXG4nliiIVk",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T01:40:23.226000+00:00"
+          },
+          "postPath": "posts/20251211/posts/01a0b59c-7dc1-4b40-93b3-1e21dc4986d9",
+          "contentHtml": "<p>감사합니다.</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "oUBitRMjVlmUyo6rrtYS",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/oUBitRMjVlmUyo6rrtYS",
+        "data": {
+          "commentPath": "posts/20251211/posts/4115cac6-d841-4db4-803b-dc6cc504bcbb/comments/oUBitRMjVlmUyo6rrtYS",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T01:40:56.626000+00:00"
+          },
+          "postPath": "posts/20251211/posts/4115cac6-d841-4db4-803b-dc6cc504bcbb",
+          "contentHtml": "<p>감사합니다^^</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "t6tMqZsM7iXQFcSE0nQp",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_comments/t6tMqZsM7iXQFcSE0nQp",
+        "data": {
+          "commentPath": "posts/20251210/posts/1c6f8d49-5040-421f-93ae-0b51a5266ec1/comments/t6tMqZsM7iXQFcSE0nQp",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:06:57.643000+00:00"
+          },
+          "postPath": "posts/20251210/posts/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "contentHtml": "<p>@킹스포드스미스국제공항 감사합니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_posts": [
+      {
+        "id": "1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_posts/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+        "data": {
+          "title": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:50:51.106000+00:00"
+          },
+          "postPath": "posts/20251210/posts/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "boardId": "free"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7b18654a-9744-428a-91d4-29bfc118e4a8",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/my_posts/7b18654a-9744-428a-91d4-29bfc118e4a8",
+        "data": {
+          "title": "반갑습니다.",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:37:52.232000+00:00"
+          },
+          "postPath": "posts/20251210/posts/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "boardId": "free"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "6HBUazbIlHHV2qtvxp6q",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/6HBUazbIlHHV2qtvxp6q",
+        "data": {
+          "likedByName": "Kwanshik Chae",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T14:49:54.621000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "반갑습니다.",
+          "body": "Kwanshik Chae님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "8JhHgqpOSVchbsygChYOYGH1Udf1",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6TN6o6IMU5F4Qk3Pmxcy",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/6TN6o6IMU5F4Qk3Pmxcy",
+        "data": {
+          "postId": "c46218fc-7be4-489a-8b19-7437e46c5522",
+          "type": "comment_like",
+          "path": "/community/detail/20251211/c46218fc-7be4-489a-8b19-7437e46c5522",
+          "commentId": "F3yP0GMUXVKLWOZdc15Q",
+          "date": "20251211",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T09:03:56.007000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "토미",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6yIeWXC04rxaIYswFSFZ",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/6yIeWXC04rxaIYswFSFZ",
+        "data": {
+          "postId": "4115cac6-d841-4db4-803b-dc6cc504bcbb",
+          "type": "comment_like",
+          "path": "/community/detail/20251211/4115cac6-d841-4db4-803b-dc6cc504bcbb",
+          "commentId": "oUBitRMjVlmUyo6rrtYS",
+          "date": "20251211",
+          "boardId": "news",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T02:54:13.601000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "토미",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7E2Xnz0d93Vh3Qtrqo6W",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/7E2Xnz0d93Vh3Qtrqo6W",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20251210/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "commentId": "RfGSFSMpJJlYb6HDXYeF",
+          "commentedByName": "킹스포드스미스국제공항",
+          "date": "20251210",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:06:21.275000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "킹스포드스미스국제공항님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "BJsIyrfsw3Wvhag20mV7",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/BJsIyrfsw3Wvhag20mV7",
+        "data": {
+          "likedByName": "u Ryu",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T09:08:59.173000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "body": "u Ryu님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "STz1APCGazRXdLj0JnNwKtwMuBJ2",
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "IHnCUid3WNsnFiA2PFQ6",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/IHnCUid3WNsnFiA2PFQ6",
+        "data": {
+          "postId": "0e8b525f-adaf-4860-b3de-28128a9f4317",
+          "type": "comment_like",
+          "path": "/community/detail/20251213/0e8b525f-adaf-4860-b3de-28128a9f4317",
+          "commentId": "bfqsaHMyhpk7rmm05xom",
+          "date": "20251213",
+          "boardId": "deal",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-14T01:41:25.983000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "commenterName": "토미",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "UGBbljdMANgHZMM0cKWv",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/UGBbljdMANgHZMM0cKWv",
+        "data": {
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "date": "20251210",
+          "boardId": "free",
+          "path": "/community/detail/20251210/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "type": "post_like",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-20T13:31:35.901000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "body": "우주별님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "LQtu0ldS8JOiGiZo8C4QVTt0E4w2",
+          "likedByName": "우주별"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bO0LMunbv4fdznStPJVB",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/bO0LMunbv4fdznStPJVB",
+        "data": {
+          "likedByName": "킹스포드스미스국제공항",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:02:38.585000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "반갑습니다.",
+          "body": "킹스포드스미스국제공항님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bpMRzdSqOtQxW5O3FUjr",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/bpMRzdSqOtQxW5O3FUjr",
+        "data": {
+          "likedByName": "Kwanshik Chae",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T14:49:52.310000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "body": "Kwanshik Chae님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "8JhHgqpOSVchbsygChYOYGH1Udf1",
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fk36K0CZlxj8fdxRD9CN",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/fk36K0CZlxj8fdxRD9CN",
+        "data": {
+          "postId": "01a0b59c-7dc1-4b40-93b3-1e21dc4986d9",
+          "type": "comment_like",
+          "path": "/community/detail/20251211/01a0b59c-7dc1-4b40-93b3-1e21dc4986d9",
+          "commentId": "knt8EEcGaKXG4nliiIVk",
+          "date": "20251211",
+          "boardId": "news",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T02:54:07.134000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "토미",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "iEnuExbOZraxK44aPNCp",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/iEnuExbOZraxK44aPNCp",
+        "data": {
+          "likedByName": "우주별",
+          "date": "20251210",
+          "boardId": "free",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "type": "post_like",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-20T13:31:33.739000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "반갑습니다.",
+          "body": "우주별님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "LQtu0ldS8JOiGiZo8C4QVTt0E4w2",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lTbnyLcDd23ECDiKT876",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/lTbnyLcDd23ECDiKT876",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20251210/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "commentId": "0zoWOS2hRWlomurYdMBs",
+          "commentedByName": "킹스포드스미스국제공항",
+          "date": "20251210",
+          "boardId": "free",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:15:12.116000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "킹스포드스미스국제공항님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "pRd0uMAkmOK1o8EanxlR",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/pRd0uMAkmOK1o8EanxlR",
+        "data": {
+          "likedByName": "u Ryu",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T09:09:04.746000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "반갑습니다.",
+          "body": "u Ryu님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "STz1APCGazRXdLj0JnNwKtwMuBJ2",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ppTMJbXuHLJeQfxfnWB9",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/ppTMJbXuHLJeQfxfnWB9",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:25:22.811000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "반갑습니다.",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rTgru9ptS4o6ljbxCLTK",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/rTgru9ptS4o6ljbxCLTK",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251210",
+          "path": "/community/detail/20251210/1c6f8d49-5040-421f-93ae-0b51a5266ec1",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:25:42.586000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sDWlsu4jCVHEDASgxbjr",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/sDWlsu4jCVHEDASgxbjr",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "postTitle": "반갑습니다.",
+          "commentId": "IqcHucasGUd5SIev5l8K",
+          "commentedByName": "마일캐치",
+          "date": "20251210",
+          "boardId": "free",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:25:28.095000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "wKtkZLwyFUbNZjc2oCGG",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/notifications/wKtkZLwyFUbNZjc2oCGG",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20251210/7b18654a-9744-428a-91d4-29bfc118e4a8",
+          "postTitle": "반갑습니다.",
+          "commentId": "2HtoHRYKcTByEU4R1yw9",
+          "commentedByName": "킹스포드스미스국제공항",
+          "date": "20251210",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:02:47.023000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "킹스포드스미스국제공항님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "0srwplJbdr1wBUdXTcsN",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/0srwplJbdr1wBUdXTcsN",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251202",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:59:44.683000+00:00"
+          },
+          "postTitle": "마일 적립/사용 정보 얻고 싶어요",
+          "amount": 1,
+          "postId": "0ef86da5-4bbc-4998-a68d-6e0ec8b1f7dc"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "1E5LM23DMNsaiMFkJB6r",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/1E5LM23DMNsaiMFkJB6r",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251211",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T01:40:57.164000+00:00"
+          },
+          "postTitle": "2025년 12월 11일 항공 마일리지 주요 뉴스",
+          "commentId": "oUBitRMjVlmUyo6rrtYS",
+          "amount": 2,
+          "postId": "4115cac6-d841-4db4-803b-dc6cc504bcbb"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "26iElzkS0qqOu6LtCh1e",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/26iElzkS0qqOu6LtCh1e",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251210",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T01:58:55.815000+00:00"
+          },
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "commentId": "KIq8T2pqn6BXTMXoXJcV",
+          "amount": 2,
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6orB1yrBlF8NmD4vUD0z",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/6orB1yrBlF8NmD4vUD0z",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20251210",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:50:51.585000+00:00"
+          },
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "amount": 10,
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "9OD6SlzW1K7tvdm9xgoN",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/9OD6SlzW1K7tvdm9xgoN",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251202",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:51:37.924000+00:00"
+          },
+          "postTitle": "오픈톡방 주소 궁금합니다",
+          "amount": 1,
+          "postId": "7cf3e1c8-34ef-4b7e-a27c-84c94ba51355"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Aaq9PsIepQ70Wx5ZaCgq",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/Aaq9PsIepQ70Wx5ZaCgq",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251211",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T06:11:00.003000+00:00"
+          },
+          "postTitle": "카페에서 글 보고 가입 :)",
+          "commentId": "JglnmCV2vkloCrwxnOgr",
+          "amount": 2,
+          "postId": "e076a62a-8c55-415b-8deb-66bf571f2e57"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Cc3g9ksFWV8sr0r5LajE",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/Cc3g9ksFWV8sr0r5LajE",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251110",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:54:11.320000+00:00"
+          },
+          "postTitle": "저는 뉴욕 가요",
+          "amount": 1,
+          "postId": "f07e60e0-c65d-42dc-9ad9-32f8807e26fd"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "CwtG6TMQBI9SeZVeL3Wu",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/CwtG6TMQBI9SeZVeL3Wu",
+        "data": {
+          "type": "post_like",
+          "boardId": "suggestion",
+          "dateString": "20260110",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T08:55:45.815000+00:00"
+          },
+          "postTitle": "상품권 탭 전면 개편",
+          "amount": 1,
+          "postId": "778d4657-fba0-48e3-94aa-c46feedd50a1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "LDCwcIQt18wZ8fsGcsvo",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/LDCwcIQt18wZ8fsGcsvo",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251211",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T01:40:23.808000+00:00"
+          },
+          "postTitle": "2025년 12월 11일 마일캐치 오늘의 매거진",
+          "commentId": "knt8EEcGaKXG4nliiIVk",
+          "amount": 2,
+          "postId": "01a0b59c-7dc1-4b40-93b3-1e21dc4986d9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "LDWlNB60JRRz0mzYkCAl",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/LDWlNB60JRRz0mzYkCAl",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251201",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:28:59.072000+00:00"
+          },
+          "postTitle": "어플 처음 알게됐어요!!!",
+          "amount": 1,
+          "postId": "ab4a7665-cce4-4a30-8c5d-872791e7ab7a"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Men0h8PW357QuVqiFHAu",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/Men0h8PW357QuVqiFHAu",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251210",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T00:06:58.183000+00:00"
+          },
+          "postTitle": "북라 -> 페이코가 막혔네요.ㅜㅜ",
+          "commentId": "t6tMqZsM7iXQFcSE0nQp",
+          "amount": 2,
+          "postId": "1c6f8d49-5040-421f-93ae-0b51a5266ec1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "NljNC7gOrrdSk1NUlzKA",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/NljNC7gOrrdSk1NUlzKA",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251206",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:38:01.879000+00:00"
+          },
+          "postTitle": "반갑습니다",
+          "amount": 1,
+          "postId": "83b9bccc-dddc-4f17-93d9-75fa5d72eb39"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "OhZV0qSaONMpe0DixoJI",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/OhZV0qSaONMpe0DixoJI",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251106",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:29:21.437000+00:00"
+          },
+          "postTitle": "마일리지 좌석확인할수있는어플!",
+          "amount": 1,
+          "postId": "7faec2f1-5c9d-4995-b6d8-f005cbb7b471"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Rd9LptMzZdTrzYzrhHvy",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/Rd9LptMzZdTrzYzrhHvy",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20251210",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:37:52.674000+00:00"
+          },
+          "postTitle": "반갑습니다.",
+          "amount": 10,
+          "postId": "7b18654a-9744-428a-91d4-29bfc118e4a8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Uea2tyev5CVf9j0H6iPh",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/Uea2tyev5CVf9j0H6iPh",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251205",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:38:10.102000+00:00"
+          },
+          "postTitle": "워싱턴 여행 팁(by 포인트 전환님)",
+          "amount": 1,
+          "postId": "971449ea-3d2a-4847-80d6-f462c4c93c32"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dSEyqgiE3g2irar59Drh",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/dSEyqgiE3g2irar59Drh",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251203",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-09T23:51:30.566000+00:00"
+          },
+          "postTitle": "너무 좋은 어플",
+          "amount": 1,
+          "postId": "2c65f50c-32bc-4e29-87b2-3f841ee82a22"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gdduHDJZ14Kf2xxUwems",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/gdduHDJZ14Kf2xxUwems",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251213",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-14T01:19:01.289000+00:00"
+          },
+          "postTitle": "하이요님의 명강의(북앤라이프)",
+          "commentId": "bfqsaHMyhpk7rmm05xom",
+          "amount": 2,
+          "postId": "0e8b525f-adaf-4860-b3de-28128a9f4317"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "j6pOT864p0Xp1lOsIodH",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/j6pOT864p0Xp1lOsIodH",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251107",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:29:16.197000+00:00"
+          },
+          "postTitle": "마일좌석은 어려워요..",
+          "amount": 1,
+          "postId": "1a9a9b70-916a-432a-a316-6330f9334472"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "jJF3NsgMTffqdBOIFp5P",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/jJF3NsgMTffqdBOIFp5P",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20251113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T02:29:10.977000+00:00"
+          },
+          "postTitle": "어플이 조금 어려워졌어요.",
+          "amount": 1,
+          "postId": "54bf772b-44f5-459c-a855-cdf28e6e5c8f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "w6kgHSaLHuOFE0C7WmwA",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/w6kgHSaLHuOFE0C7WmwA",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251211",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-11T06:10:45.171000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "commentId": "F3yP0GMUXVKLWOZdc15Q",
+          "amount": 2,
+          "postId": "c46218fc-7be4-489a-8b19-7437e46c5522"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "zhqSxrcYN1QCmunFzjGf",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/peanut_history/zhqSxrcYN1QCmunFzjGf",
+        "data": {
+          "type": "post_like",
+          "boardId": "deal",
+          "dateString": "20260106",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T01:09:46.213000+00:00"
+          },
+          "postTitle": "상품권 탭 정보 설명",
+          "amount": 1,
+          "postId": "7c0b11b0-cc63-4d32-9669-9e9db86cd688"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1765623775132",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/sales/sale_1765623775132",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 920000,
+          "costPerMile": 5.41,
+          "discount": 8.0,
+          "miles": 925,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:02:55.694000+00:00"
+          },
+          "buyTotal": 925000,
+          "qty": 20,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:02:41.140930+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T11:02:55.694000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1765623756037"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768266922258",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/sales/sale_1768266922258",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460000,
+          "costPerMile": 5.4,
+          "discount": 8.0,
+          "miles": 463,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T01:15:22.804000+00:00"
+          },
+          "buyTotal": 462500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-11T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T01:15:22.804000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1768266851405"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768392089533",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/sales/sale_1768392089533",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460000,
+          "costPerMile": 10.75,
+          "discount": 8.0,
+          "miles": 465,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T12:01:29.845000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T12:01:14.169815+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T12:01:29.845000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1768392058408"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768612530423",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/sales/sale_1768612530423",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460000,
+          "costPerMile": 10.75,
+          "discount": 8.0,
+          "miles": 465,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T01:15:30.885000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T01:15:21.890851+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T01:15:30.885000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1768612518476"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1775476766317",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/sales/sale_1775476766317",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460500,
+          "costPerMile": 9.68,
+          "discount": 7.9,
+          "miles": 465,
+          "sellUnit": 46050,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:26.604000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:00.721191+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:26.604000+00:00"
+          },
+          "profit": -4500,
+          "lotId": "lot_1775038863926"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1775476792331",
+        "path": "users/alZuJATpNeUWyDUadDYs5pWyNk13/sales/sale_1775476792331",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 598650,
+          "costPerMile": 10.74,
+          "discount": 7.9,
+          "miles": 605,
+          "sellUnit": 46050,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:52.618000+00:00"
+          },
+          "buyTotal": 605150,
+          "qty": 13,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:29.773899+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T11:59:52.618000+00:00"
+          },
+          "profit": -6500,
+          "lotId": "lot_1775476734569"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "alZuJATpNeUWyDUadDYs5pWyNk13",
+    "safeFileName": "alZuJATpNeUWyDUadDYs5pWyNk13.json"
+  }
+}

@@ -1,0 +1,413 @@
+{
+  "id": "GTeGy1tC5AavNRadi3tVODUQKss2",
+  "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2",
+  "data": {
+    "displayNameEnable": false,
+    "uid": "GTeGy1tC5AavNRadi3tVODUQKss2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-07-22T23:57:37.157000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-24T03:32:08.563965+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocK3m8dqlYJP8AY3TdRw3MI7TUfOxZ2vF2WUXwn6lB8k106GeA=s96-c",
+    "commentCount": 2,
+    "fcmToken": "eDk7bc17QrW16hpR05cL8u:APA91bFYVqleouQlZZ_YyHIpfkfOxPr3w7vycJL0fWWYe04FY1MDuS8mSS9UUK5bsMi3iLOOke965GEufdMiUiwJKoZPo4eof82BDcxcTUXvCc1I-RIqxjE",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-07-16T22:36:35.188000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-23T04:09:20.613000+00:00"
+    },
+    "displayName": "갈수있을까",
+    "displayNameChangeCount": 1,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-07-16T22:36:35.188000+00:00"
+    },
+    "peanutCount": 85,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-07-16T22:36:35.188000+00:00"
+    },
+    "likesCount": 0,
+    "email": "dcddcd28@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "and_ma_1",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/and_ma_1",
+        "data": {
+          "name": "삼성(앤마_남)",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:08:48.465000+00:00"
+          },
+          "memo": "삼앤마.남카.대한항공"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "as_check",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/as_check",
+        "data": {
+          "memo": "주말.내카.아시아나",
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:15:11.553000+00:00"
+          },
+          "name": "신한(아샤나쳌)"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "as_jeju",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/as_jeju",
+        "data": {
+          "memo": "아시아나.내카",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:15:45.921000+00:00"
+          },
+          "name": "제주(아샤나)"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "g_and_me",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/g_and_me",
+        "data": {
+          "name": "삼성(지앤미)",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:08:54.299000+00:00"
+          },
+          "memo": "지앤미.내카.아시아나"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "g_and_me_1",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/g_and_me_1",
+        "data": {
+          "name": "삼성(지앤미_남)",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:08:41.018000+00:00"
+          },
+          "memo": "지앤미.남카.아시아나"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_platinum",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/kb_platinum",
+        "data": {
+          "name": "국민(플래)",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:09:09.435000+00:00"
+          },
+          "memo": "내카.아시아나"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_platinum_1",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/kb_platinum_1",
+        "data": {
+          "name": "국민(플래_남)",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:09:04.495000+00:00"
+          },
+          "memo": "남카.아시아나"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sp_check",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/sp_check",
+        "data": {
+          "memo": "내카.대한항공",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:14:28.409000+00:00"
+          },
+          "name": "롯데(스패쳌)"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sp_check_1",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/cards/sp_check_1",
+        "data": {
+          "memo": "남카.대한항공",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:13:51.728000+00:00"
+          },
+          "name": "롯데(스패쳌_남)"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1769140642304",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/lots/lot_1769140642304",
+        "data": {
+          "trade": false,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T03:57:38.086000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "cardId": "kb_platinum",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T03:57:22.555000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769141115637",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/lots/lot_1769141115637",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "kb_platinum",
+          "buyUnit": 97000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:05:15.897000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:05:15.897000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769141127902",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/lots/lot_1769141127902",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "kb_platinum",
+          "buyUnit": 97000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:05:28.152000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:05:28.152000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769141158596",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/lots/lot_1769141158596",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "kb_platinum_1",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:05:58.846000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:05:58.846000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769141173647",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/lots/lot_1769141173647",
+        "data": {
+          "trade": false,
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:09:26.386000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "cardId": "kb_platinum_1",
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:06:13.899000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769141194271",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/lots/lot_1769141194271",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "kb_platinum_1",
+          "buyUnit": 97000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:06:34.522000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:06:34.522000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "1x4eeUxYwVYKDfmGK9LW",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/my_comments/1x4eeUxYwVYKDfmGK9LW",
+        "data": {
+          "commentPath": "posts/20250722/posts/c5969ed1-6569-4485-90ce-e396d3a81bd2/comments/1x4eeUxYwVYKDfmGK9LW",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-07-22T23:57:37.233000+00:00"
+          },
+          "postPath": "posts/20250722/posts/c5969ed1-6569-4485-90ce-e396d3a81bd2",
+          "contentHtml": "<p>정보감사합니다~~!!!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sis80NXzhmuqYvBpi1P8",
+        "path": "users/GTeGy1tC5AavNRadi3tVODUQKss2/my_comments/sis80NXzhmuqYvBpi1P8",
+        "data": {
+          "commentPath": "posts/20250717/posts/66244af3-bdea-40d7-9861-85bb3729fec3/comments/sis80NXzhmuqYvBpi1P8",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-07-16T23:02:28.821000+00:00"
+          },
+          "postPath": "posts/20250717/posts/66244af3-bdea-40d7-9861-85bb3729fec3",
+          "contentHtml": "<p>마일캐치 응원합니다^^!!!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "GTeGy1tC5AavNRadi3tVODUQKss2",
+    "safeFileName": "GTeGy1tC5AavNRadi3tVODUQKss2.json"
+  }
+}

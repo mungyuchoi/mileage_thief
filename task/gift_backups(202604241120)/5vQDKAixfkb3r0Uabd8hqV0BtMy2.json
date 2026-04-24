@@ -1,0 +1,73 @@
+{
+  "id": "5vQDKAixfkb3r0Uabd8hqV0BtMy2",
+  "path": "users/5vQDKAixfkb3r0Uabd8hqV0BtMy2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "5vQDKAixfkb3r0Uabd8hqV0BtMy2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-02T02:16:28.513000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKBjtKSYfBp-GnMdr7HggMEZcf6kffnpyRxfEcZmAn1vVMi2A=s96-c",
+    "commentCount": 0,
+    "fcmToken": "foIasysPRdyXw5eqWxICdW:APA91bHRXp6-e_v9Zv9-FuzmBEE_B1c0hJoW3yOtZi7I5MvZqN3UGhSFiE9oWJpIqkRtStJkao7fCjc-NAb4QF9irmR7ZmpBSz46U9pXetZjqAByyT7Qnc0",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-02T02:16:28.513000+00:00"
+    },
+    "displayName": "와우",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-02T02:16:28.513000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-02T02:16:28.513000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "arsenal8815@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "shinhan_hipoint",
+        "path": "users/5vQDKAixfkb3r0Uabd8hqV0BtMy2/cards/shinhan_hipoint",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-02T02:17:43.064000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "5vQDKAixfkb3r0Uabd8hqV0BtMy2",
+    "safeFileName": "5vQDKAixfkb3r0Uabd8hqV0BtMy2.json"
+  }
+}

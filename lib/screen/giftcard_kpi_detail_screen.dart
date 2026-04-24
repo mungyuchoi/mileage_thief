@@ -34,7 +34,8 @@ class GiftcardKpiDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<GiftcardKpiDetailScreen> createState() => _GiftcardKpiDetailScreenState();
+  State<GiftcardKpiDetailScreen> createState() =>
+      _GiftcardKpiDetailScreenState();
 }
 
 class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
@@ -55,7 +56,29 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     return double.tryParse(v.toString()) ?? 0;
   }
 
-  String _fmtWon(int v) => '${v.toString().replaceAllMapped(RegExp(r'\\B(?=(\\d{3})+(?!\\d))'), (m) => ',')}원';
+  int _effectiveLotMiles(Map<String, dynamic> lot) {
+    final storedMiles = _asInt(lot['miles']);
+    if (storedMiles > 0) return storedMiles;
+
+    final buyTotal = _asInt(lot['buyUnit']) * _asInt(lot['qty']);
+    if (buyTotal <= 0) return 0;
+
+    int rule = _asInt(lot['mileRuleUsedPerMileKRW']);
+    if (rule <= 0) {
+      final payType = (lot['payType'] as String?) ?? '신용';
+      final cardId = (lot['cardId'] as String?) ?? '';
+      final card = _data?.cards[cardId];
+      if (card != null) {
+        rule = payType == '신용' ? _asInt(card['credit']) : _asInt(card['check']);
+      }
+    }
+
+    if (rule <= 0) return 0;
+    return (buyTotal / rule).round();
+  }
+
+  String _fmtWon(int v) =>
+      '${v.toString().replaceAllMapped(RegExp(r'\\B(?=(\\d{3})+(?!\\d))'), (m) => ',')}원';
 
   String _fmtDiscount(dynamic v) {
     final double d = _asDouble(v);
@@ -89,6 +112,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
   bool get _isBuyList {
     switch (widget.kpiType) {
       case GiftcardKpiType.totalBuy:
+      case GiftcardKpiType.totalMiles:
       case GiftcardKpiType.openQty:
         return true;
       default:
@@ -107,7 +131,8 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     }
     final start = giftcardYmd(range.start!);
     // end는 exclusive라서 사용자 표시용으로는 -1일로 안내
-    final endInclusive = giftcardYmd(range.end!.subtract(const Duration(days: 1)));
+    final endInclusive =
+        giftcardYmd(range.end!.subtract(const Duration(days: 1)));
     return '$start ~ $endInclusive';
   }
 
@@ -149,8 +174,8 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         common
           ..writeln('')
           ..writeln('누적 마일은 이렇게 계산돼요')
-          ..writeln('- 대상: 위 기준의 “판매 내역”')
-          ..writeln('- 계산: 각 판매에서 적립된 “마일”을 모두 더한 값');
+          ..writeln('- 대상: 위 기준의 “구매 내역”')
+          ..writeln('- 계산: 각 구매 lot에 저장된 “마일(miles)”을 모두 더한 값');
         return common.toString();
       case GiftcardKpiType.avgCostPerMile:
         common
@@ -191,7 +216,12 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.black12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,13 +233,15 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
               color: const Color(0x1174512D),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.info_outline, color: Color(0xFF74512D), size: 18),
+            child: const Icon(Icons.info_outline,
+                color: Color(0xFF74512D), size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               _kpiDescription(),
-              style: const TextStyle(color: Colors.black87, height: 1.35, fontSize: 12),
+              style: const TextStyle(
+                  color: Colors.black87, height: 1.35, fontSize: 12),
             ),
           ),
         ],
@@ -291,10 +323,12 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
 
     if (action == null) return;
     if (action == 'buy') {
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => const GiftBuyScreen()));
+      await Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const GiftBuyScreen()));
       await _load();
     } else if (action == 'sell') {
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => const GiftSellScreen()));
+      await Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const GiftSellScreen()));
       await _load();
     }
   }
@@ -315,10 +349,11 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
       });
 
       if (!mounted) return;
-      
+
       // 전체 리프레시 대신 해당 아이템만 업데이트
       if (_data != null) {
-        final lotIndex = _data!.lots.indexWhere((lot) => (lot['id'] as String?) == lotId);
+        final lotIndex =
+            _data!.lots.indexWhere((lot) => (lot['id'] as String?) == lotId);
         if (lotIndex != -1) {
           // 해당 lot의 trade 값만 업데이트
           _data!.lots[lotIndex]['trade'] = trade;
@@ -345,6 +380,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     final total = qty * buyUnit;
     final payType = (m['payType'] as String?) ?? '';
     final cardId = (m['cardId'] as String?) ?? '';
+    final miles = _effectiveLotMiles(m);
     final status = (m['status'] as String?) ?? 'open';
     final memo = (m['memo'] as String?) ?? '';
     final trade = m['trade'] == true;
@@ -356,7 +392,12 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.black12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,9 +406,13 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
             children: [
               InfoPill(
                 text: status == 'open' ? '미판매' : '판매완료',
-                icon: status == 'open' ? Icons.inventory_2_outlined : Icons.check_circle_outline,
+                icon: status == 'open'
+                    ? Icons.inventory_2_outlined
+                    : Icons.check_circle_outline,
                 filled: true,
-                fillColor: status == 'open' ? const Color(0xFF74512D) : Colors.green.shade600,
+                fillColor: status == 'open'
+                    ? const Color(0xFF74512D)
+                    : Colors.green.shade600,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -377,7 +422,10 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (date.isNotEmpty) Text(date, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+              if (date.isNotEmpty)
+                Text(date,
+                    style:
+                        const TextStyle(color: Colors.black54, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 8),
@@ -385,11 +433,21 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              InfoPill(icon: Icons.payments_outlined, text: '매입가 ${_fmtWon(buyUnit)}'),
-              InfoPill(icon: Icons.calculate_outlined, text: '매입총액 ${_fmtWon(total)}'),
-              if (payType.isNotEmpty) InfoPill(icon: Icons.account_balance_wallet_outlined, text: payType),
-              if (cardId.isNotEmpty) InfoPill(icon: Icons.credit_card_outlined, text: '카드 $cardId'),
-              if (memo.trim().isNotEmpty) InfoPill(icon: Icons.note_outlined, text: memo),
+              InfoPill(
+                  icon: Icons.payments_outlined,
+                  text: '매입가 ${_fmtWon(buyUnit)}'),
+              InfoPill(
+                  icon: Icons.calculate_outlined,
+                  text: '매입총액 ${_fmtWon(total)}'),
+              if (miles > 0)
+                InfoPill(icon: Icons.stars_outlined, text: '마일 $miles'),
+              if (payType.isNotEmpty)
+                InfoPill(
+                    icon: Icons.account_balance_wallet_outlined, text: payType),
+              if (cardId.isNotEmpty)
+                InfoPill(icon: Icons.credit_card_outlined, text: '카드 $cardId'),
+              if (memo.trim().isNotEmpty)
+                InfoPill(icon: Icons.note_outlined, text: memo),
               // status가 'open'인 구매 건에만 미교환/교환완료 버튼 추가
               if (status == 'open' && lotId.isNotEmpty)
                 GestureDetector(
@@ -416,14 +474,16 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     final sellTotal = _asInt(m['sellTotal']);
     final profit = _asInt(m['profit']);
     final miles = _asInt(m['miles']);
-    final costPerMile = (_asDouble(m['costPerMile']) == 0) ? null : _asDouble(m['costPerMile']);
+    final costPerMile =
+        (_asDouble(m['costPerMile']) == 0) ? null : _asDouble(m['costPerMile']);
     final hasDiscount = m.containsKey('discount') && m['discount'] != null;
 
     // lotId를 통해 상품권 이름/지점 이름
     String giftName = '';
     final lotId = m['lotId'] as String?;
     if (lotId != null && _data != null) {
-      final lot = _data!.lots.firstWhere((e) => e['id'] == lotId, orElse: () => <String, dynamic>{});
+      final lot = _data!.lots.firstWhere((e) => e['id'] == lotId,
+          orElse: () => <String, dynamic>{});
       final giftId = (lot['giftcardId'] as String?) ?? '';
       giftName = (_data!.giftcardNames[giftId] ?? giftId).trim();
     }
@@ -437,14 +497,20 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.black12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const InfoPill(text: '판매', icon: Icons.attach_money_outlined, filled: true),
+              const InfoPill(
+                  text: '판매', icon: Icons.attach_money_outlined, filled: true),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -453,7 +519,10 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (date.isNotEmpty) Text(date, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+              if (date.isNotEmpty)
+                Text(date,
+                    style:
+                        const TextStyle(color: Colors.black54, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 8),
@@ -461,13 +530,27 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              InfoPill(icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(sellUnit)}'),
-              if (sellTotal > 0) InfoPill(icon: Icons.receipt_long_outlined, text: '판매총액 ${_fmtWon(sellTotal)}'),
-              if (hasDiscount) InfoPill(icon: Icons.percent, text: '할인율 ${_fmtDiscount(m['discount'])}'),
-              InfoPill(icon: Icons.trending_up_outlined, text: '손익 ${_fmtWon(profit)}'),
-              if (miles > 0) InfoPill(icon: Icons.stars_outlined, text: '마일 $miles'),
-              if (costPerMile != null) InfoPill(icon: Icons.percent, text: '원/마일 ${costPerMile.toStringAsFixed(2)}'),
-              if (branchName.isNotEmpty) InfoPill(icon: Icons.store_outlined, text: branchName),
+              InfoPill(
+                  icon: Icons.sell_outlined, text: '판매가 ${_fmtWon(sellUnit)}'),
+              if (sellTotal > 0)
+                InfoPill(
+                    icon: Icons.receipt_long_outlined,
+                    text: '판매총액 ${_fmtWon(sellTotal)}'),
+              if (hasDiscount)
+                InfoPill(
+                    icon: Icons.percent,
+                    text: '할인율 ${_fmtDiscount(m['discount'])}'),
+              InfoPill(
+                  icon: Icons.trending_up_outlined,
+                  text: '손익 ${_fmtWon(profit)}'),
+              if (miles > 0)
+                InfoPill(icon: Icons.stars_outlined, text: '마일 $miles'),
+              if (costPerMile != null)
+                InfoPill(
+                    icon: Icons.percent,
+                    text: '원/마일 ${costPerMile.toStringAsFixed(2)}'),
+              if (branchName.isNotEmpty)
+                InfoPill(icon: Icons.store_outlined, text: branchName),
             ],
           ),
         ],
@@ -499,9 +582,12 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${_kpiTitle()} 내역', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            Text('${_kpiTitle()} 내역',
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 2),
-            Text(periodText, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            Text(periodText,
+                style: const TextStyle(color: Colors.black54, fontSize: 12)),
           ],
         ),
       ),
@@ -531,7 +617,9 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                         _buildDescriptionCard(),
                         const SizedBox(height: 12),
                         const SizedBox(height: 80),
-                        const Center(child: Text('데이터를 불러오지 못했습니다.', style: TextStyle(color: Colors.black54))),
+                        const Center(
+                            child: Text('데이터를 불러오지 못했습니다.',
+                                style: TextStyle(color: Colors.black54))),
                       ],
                     );
                   }
@@ -539,15 +627,19 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                   if (_isBuyList) {
                     final lots = List<Map<String, dynamic>>.from(data.lots);
                     if (widget.kpiType == GiftcardKpiType.openQty) {
-                      lots.removeWhere((e) => ((e['status'] as String?) ?? 'open') != 'open');
+                      lots.removeWhere((e) =>
+                          ((e['status'] as String?) ?? 'open') != 'open');
                     }
-                    lots.sort((a, b) => _tsOf(b, sale: false).compareTo(_tsOf(a, sale: false)));
+                    lots.sort((a, b) =>
+                        _tsOf(b, sale: false).compareTo(_tsOf(a, sale: false)));
 
                     return ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
                       itemCount: lots.length + 1,
-                      separatorBuilder: (_, i) => i == 0 ? const SizedBox(height: 12) : const SizedBox(height: 10),
+                      separatorBuilder: (_, i) => i == 0
+                          ? const SizedBox(height: 12)
+                          : const SizedBox(height: 10),
                       itemBuilder: (_, i) {
                         if (i == 0) return _buildDescriptionCard();
                         return _buildLotTile(lots[i - 1]);
@@ -555,13 +647,17 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                     );
                   }
 
-                  final sales = List<Map<String, dynamic>>.from(_salesForKpi(data));
-                  sales.sort((a, b) => _tsOf(b, sale: true).compareTo(_tsOf(a, sale: true)));
+                  final sales =
+                      List<Map<String, dynamic>>.from(_salesForKpi(data));
+                  sales.sort((a, b) =>
+                      _tsOf(b, sale: true).compareTo(_tsOf(a, sale: true)));
                   return ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
                     itemCount: sales.length + 1,
-                    separatorBuilder: (_, i) => i == 0 ? const SizedBox(height: 12) : const SizedBox(height: 10),
+                    separatorBuilder: (_, i) => i == 0
+                        ? const SizedBox(height: 12)
+                        : const SizedBox(height: 10),
                     itemBuilder: (_, i) {
                       if (i == 0) return _buildDescriptionCard();
                       return _buildSaleTile(sales[i - 1]);
@@ -573,5 +669,3 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     );
   }
 }
-
-

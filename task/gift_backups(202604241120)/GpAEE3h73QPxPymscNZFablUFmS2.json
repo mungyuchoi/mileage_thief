@@ -1,0 +1,185 @@
+{
+  "id": "GpAEE3h73QPxPymscNZFablUFmS2",
+  "path": "users/GpAEE3h73QPxPymscNZFablUFmS2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "GpAEE3h73QPxPymscNZFablUFmS2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-18T11:46:59.761000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-13T14:12:24.262379+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocIuJsnZFZIddZFYuTBbABSVXa2vkCGnCkpWxp5MnN0kmXcxuk3XpQ=s96-c",
+    "commentCount": 0,
+    "fcmToken": "f5pZwuJrZEKwlzJqtsbxBM:APA91bHrSVVVFvwSL6ql29YIyJYuxgAwgBzgNpJuEGcTf3vcLEzFPvAERm-c4QvqSqkbjcWoawq2k_gMbfhfqbBYWTTGlMvnm6ePDqXsehElBY0Ad60X1Y8",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-18T11:46:59.761000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-18T11:57:09.344000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-18T11:46:59.761000+00:00"
+    },
+    "displayName": "Soosung Kim",
+    "peanutCount": 0,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-18T11:46:59.761000+00:00"
+    },
+    "likesCount": 0,
+    "email": "stevn.s.kim@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "air",
+        "path": "users/GpAEE3h73QPxPymscNZFablUFmS2/cards/air",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:50:29.615000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "asiana",
+        "path": "users/GpAEE3h73QPxPymscNZFablUFmS2/cards/asiana",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:52:26.656000+00:00"
+          },
+          "name": "국민"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "skypass",
+        "path": "users/GpAEE3h73QPxPymscNZFablUFmS2/cards/skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:51:46.277000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "the1",
+        "path": "users/GpAEE3h73QPxPymscNZFablUFmS2/cards/the1",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:51:18.004000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1768737186789",
+        "path": "users/GpAEE3h73QPxPymscNZFablUFmS2/lots/lot_1768737186789",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:52:33.471299+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "skypass",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:53:06.840000+00:00"
+          },
+          "payType": "체크",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-18T11:53:06.840000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768795622496",
+        "path": "users/GpAEE3h73QPxPymscNZFablUFmS2/lots/lot_1768795622496",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-19T04:05:58.231464+00:00"
+          },
+          "discount": 2.8,
+          "cardId": "skypass",
+          "buyUnit": 486000,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-19T04:07:02.649000+00:00"
+          },
+          "payType": "체크",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-19T04:07:02.649000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "GpAEE3h73QPxPymscNZFablUFmS2",
+    "safeFileName": "GpAEE3h73QPxPymscNZFablUFmS2.json"
+  }
+}

@@ -1,0 +1,423 @@
+{
+  "id": "G1EfG4pEgKTPT9DQBwT2CyIK1OD3",
+  "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3",
+  "data": {
+    "displayNameEnable": false,
+    "uid": "G1EfG4pEgKTPT9DQBwT2CyIK1OD3",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T14:40:49.547000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-12T01:30:15.156394+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocK7c5cDXcR1fjdk7I48Rtf_GPpvD3OHQVYlFSvBXw_f781ak0x-3w=s96-c",
+    "commentCount": 4,
+    "fcmToken": "c39gCKFnToyoWjzA774n15:APA91bGTNf_bvceAqkU6SHi98iTGh2xbXUrgvVtVgxhsvmU6UDti3GFKARQ0kXSBDtXyMAS8AGvfPfhPWSoikwxyKp5-8N8jy4vRS90G4z7Vuh5DCv9ropI",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T14:30:22.473000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-05T16:57:49.757000+00:00"
+    },
+    "displayName": "검은호랭이",
+    "displayNameChangeCount": 1,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T14:30:22.473000+00:00"
+    },
+    "peanutCount": 23,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T14:30:22.473000+00:00"
+    },
+    "email": "xkfn51@gmail.com",
+    "likesCount": 2,
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/cards/lotte",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-11T02:49:50.624000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lottec",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/cards/lottec",
+        "data": {
+          "memo": "주말만",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-11T02:50:25.124000+00:00"
+          },
+          "name": "롯체"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "270f43bb-ef71-4683-88d9-ac120382c9d4",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/liked_posts/270f43bb-ef71-4683-88d9-ac120382c9d4",
+        "data": {
+          "title": "2025년 12월 25일 마일캐치 오늘의 매거진",
+          "postPath": "posts/20251225/posts/270f43bb-ef71-4683-88d9-ac120382c9d4",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:37:33.284000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "e9826f38-e258-4a00-9efd-3cb2ca3c61b8",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/liked_posts/e9826f38-e258-4a00-9efd-3cb2ca3c61b8",
+        "data": {
+          "title": "검색 관련 건의",
+          "postPath": "posts/20251225/posts/e9826f38-e258-4a00-9efd-3cb2ca3c61b8",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:35:39.586000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1770778331341",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/lots/lot_1770778331341",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "lotte",
+          "buyUnit": 97000,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-11T02:52:11.266000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-11T02:52:11.266000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "1ml3b4cnTwultKR2SYWN",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/my_comments/1ml3b4cnTwultKR2SYWN",
+        "data": {
+          "commentPath": "posts/20251224/posts/57f24ba5-ba90-4cf3-bc9a-0ebdaf66931a/comments/1ml3b4cnTwultKR2SYWN",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:40:49.818000+00:00"
+          },
+          "postPath": "posts/20251224/posts/57f24ba5-ba90-4cf3-bc9a-0ebdaf66931a",
+          "contentHtml": "<p>토스가 선물을 줘서 넘 좋았어요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Lq4Q1GUvXBMefu3tudCL",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/my_comments/Lq4Q1GUvXBMefu3tudCL",
+        "data": {
+          "commentPath": "posts/20251225/posts/270f43bb-ef71-4683-88d9-ac120382c9d4/comments/Lq4Q1GUvXBMefu3tudCL",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:38:14.485000+00:00"
+          },
+          "postPath": "posts/20251225/posts/270f43bb-ef71-4683-88d9-ac120382c9d4",
+          "contentHtml": "<p>감사합니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "OkTc8qIoXqRYvfhUh5qi",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/my_comments/OkTc8qIoXqRYvfhUh5qi",
+        "data": {
+          "commentPath": "posts/20251225/posts/35e94f88-04eb-41ea-8625-62a62efe6cd1/comments/OkTc8qIoXqRYvfhUh5qi",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:35:22.465000+00:00"
+          },
+          "postPath": "posts/20251225/posts/35e94f88-04eb-41ea-8625-62a62efe6cd1",
+          "contentHtml": "<p>잘보았습니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "vFR0i2VBJhAbRKA1h5ti",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/my_comments/vFR0i2VBJhAbRKA1h5ti",
+        "data": {
+          "commentPath": "posts/20251225/posts/43fc972f-387e-4099-a311-d86332303503/comments/vFR0i2VBJhAbRKA1h5ti",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:39:30.225000+00:00"
+          },
+          "postPath": "posts/20251225/posts/43fc972f-387e-4099-a311-d86332303503",
+          "contentHtml": "<p>좋아요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "3atWjNJbkjL5DalVI4Y1",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/notifications/3atWjNJbkjL5DalVI4Y1",
+        "data": {
+          "postId": "270f43bb-ef71-4683-88d9-ac120382c9d4",
+          "type": "comment_like",
+          "path": "/community/detail/20251225/270f43bb-ef71-4683-88d9-ac120382c9d4",
+          "commentId": "Lq4Q1GUvXBMefu3tudCL",
+          "date": "20251225",
+          "boardId": "news",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T15:41:24.836000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "검은호랭이",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gwzFPiKoeJPniSJksYJd",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/notifications/gwzFPiKoeJPniSJksYJd",
+        "data": {
+          "repliedByName": "마일캐치",
+          "path": "/community/detail/20251225/43fc972f-387e-4099-a311-d86332303503",
+          "type": "comment_reply",
+          "commentId": "OnpIkxKAmWwwEpswS3lU",
+          "date": "20251225",
+          "boardId": "suggestion",
+          "parentCommentId": "vFR0i2VBJhAbRKA1h5ti",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T15:41:17.195000+00:00"
+          },
+          "boardName": "건의사항",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "43fc972f-387e-4099-a311-d86332303503"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "pL3BLocr2urwHUW1gWGo",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/notifications/pL3BLocr2urwHUW1gWGo",
+        "data": {
+          "repliedByName": "마일캐치",
+          "path": "/community/detail/20251225/270f43bb-ef71-4683-88d9-ac120382c9d4",
+          "type": "comment_reply",
+          "commentId": "22m4mBjDtNr07OscK0RY",
+          "date": "20251225",
+          "boardId": "news",
+          "parentCommentId": "Lq4Q1GUvXBMefu3tudCL",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T15:41:30.567000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "270f43bb-ef71-4683-88d9-ac120382c9d4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "w8AnSQ6PG0c9rkRrHMNs",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/notifications/w8AnSQ6PG0c9rkRrHMNs",
+        "data": {
+          "postId": "43fc972f-387e-4099-a311-d86332303503",
+          "type": "comment_like",
+          "path": "/community/detail/20251225/43fc972f-387e-4099-a311-d86332303503",
+          "commentId": "vFR0i2VBJhAbRKA1h5ti",
+          "date": "20251225",
+          "boardId": "suggestion",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T15:40:59.963000+00:00"
+          },
+          "boardName": "건의사항",
+          "commenterName": "검은호랭이",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "H6SRmJEuXTnKK7452XS0",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/peanut_history/H6SRmJEuXTnKK7452XS0",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251225",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:38:15.030000+00:00"
+          },
+          "postTitle": "2025년 12월 25일 마일캐치 오늘의 매거진",
+          "commentId": "Lq4Q1GUvXBMefu3tudCL",
+          "amount": 2,
+          "postId": "270f43bb-ef71-4683-88d9-ac120382c9d4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "IikAyhhYsJmnHCFC5h7u",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/peanut_history/IikAyhhYsJmnHCFC5h7u",
+        "data": {
+          "type": "post_like",
+          "boardId": "suggestion",
+          "dateString": "20251225",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:35:39.425000+00:00"
+          },
+          "postTitle": "검색 관련 건의",
+          "amount": 1,
+          "postId": "e9826f38-e258-4a00-9efd-3cb2ca3c61b8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "TckcXKEmetkQxnvp3fUh",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/peanut_history/TckcXKEmetkQxnvp3fUh",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251224",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:40:50.337000+00:00"
+          },
+          "postTitle": "다덜 토스 쇼핑으로 뭐 사셨어요?",
+          "commentId": "1ml3b4cnTwultKR2SYWN",
+          "amount": 2,
+          "postId": "57f24ba5-ba90-4cf3-bc9a-0ebdaf66931a"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "XSGRNkbDOxmUdBNR0Pfl",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/peanut_history/XSGRNkbDOxmUdBNR0Pfl",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20251225",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:37:33.133000+00:00"
+          },
+          "postTitle": "2025년 12월 25일 마일캐치 오늘의 매거진",
+          "amount": 1,
+          "postId": "270f43bb-ef71-4683-88d9-ac120382c9d4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "aBikjqDIjhueNyDnXsf0",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/peanut_history/aBikjqDIjhueNyDnXsf0",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251225",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:39:30.734000+00:00"
+          },
+          "postTitle": "하이요님의 특가 항공권",
+          "commentId": "vFR0i2VBJhAbRKA1h5ti",
+          "amount": 2,
+          "postId": "43fc972f-387e-4099-a311-d86332303503"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dmPeIa2ltwfUGBWtAGw7",
+        "path": "users/G1EfG4pEgKTPT9DQBwT2CyIK1OD3/peanut_history/dmPeIa2ltwfUGBWtAGw7",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251225",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T14:35:22.985000+00:00"
+          },
+          "postTitle": "아, 험난하다 험난해 (에어로케이의 설립 썰)",
+          "commentId": "OkTc8qIoXqRYvfhUh5qi",
+          "amount": 2,
+          "postId": "35e94f88-04eb-41ea-8625-62a62efe6cd1"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "G1EfG4pEgKTPT9DQBwT2CyIK1OD3",
+    "safeFileName": "G1EfG4pEgKTPT9DQBwT2CyIK1OD3.json"
+  }
+}

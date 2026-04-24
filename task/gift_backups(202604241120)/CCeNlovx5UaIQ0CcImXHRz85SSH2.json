@@ -1,0 +1,273 @@
+{
+  "id": "CCeNlovx5UaIQ0CcImXHRz85SSH2",
+  "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "CCeNlovx5UaIQ0CcImXHRz85SSH2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-08T13:06:36.801000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJGCRRK_fQ31-0Y4VlBQqDh0iq1YKafgt7zeqHDUz9KGbvelQ=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dlyHNRD9Qy-Zzy1Rw8oFZx:APA91bEBGBbsZDaMVN_B_lpVY_k8HMtPr-AK6-eeU1c1013WY2sqtrF-3jQfyHdJVzGAUu2DwZLIbswj7BJkp3qncmZxAjn7LAHOvujrqoWy4zuN9ke7LsY",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-08T13:06:36.801000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-07T09:12:06.152000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-08T13:06:36.801000+00:00"
+    },
+    "displayName": "유진",
+    "peanutCount": 13,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-08T13:06:36.801000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "qlsnrjvnas@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_allmy",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/cards/lotte_allmy",
+        "data": {
+          "name": "롯데 올마이쇼핑 신용",
+          "checkPerMileKRW": 99999999,
+          "creditPerMileKRW": 99999999,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-06T13:34:17.998000+00:00"
+          },
+          "memo": "할인"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_skypass",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/cards/lotte_skypass",
+        "data": {
+          "name": "롯데 스카이패스 체크",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 99999999,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-06T13:34:12.216000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1765027825188",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/lots/lot_1765027825188",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-06T13:29:48.054845+00:00"
+          },
+          "discount": 2.5,
+          "cardId": "lotte_allmy",
+          "buyUnit": 487500,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-06T13:30:25.565000+00:00"
+          },
+          "memo": "",
+          "status": "sold",
+          "payType": "신용",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:13:49.561000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1765098691773",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/lots/lot_1765098691773",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:10:34.635184+00:00"
+          },
+          "discount": 3.99,
+          "cardId": "lotte_allmy",
+          "buyUnit": 96010,
+          "qty": 12,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:11:32.225000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:06.712000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1765098768209",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/lots/lot_1765098768209",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:12:30.288078+00:00"
+          },
+          "discount": 2.5,
+          "cardId": "lotte_allmy",
+          "buyUnit": 97500,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:12:48.638000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:23.763000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1765098829107",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/sales/sale_1765098829107",
+        "data": {
+          "mileRuleUsedPerMileKRW": 99999999,
+          "discount": 3.23,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 487500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:13:49.510000+00:00"
+          },
+          "lotId": "lot_1765027825188",
+          "sellTotal": 483850,
+          "miles": 0,
+          "sellUnit": 483850,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:13:49.510000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:12:57.369804+00:00"
+          },
+          "profit": -3650,
+          "branchId": "myeongdong"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1765098846296",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/sales/sale_1765098846296",
+        "data": {
+          "mileRuleUsedPerMileKRW": 99999999,
+          "discount": 3.23,
+          "costPerMile": 0.0,
+          "qty": 12,
+          "buyTotal": 1152120,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:06.671000+00:00"
+          },
+          "lotId": "lot_1765098691773",
+          "sellTotal": 1161240,
+          "miles": 0,
+          "sellUnit": 96770,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:06.671000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:13:52.774042+00:00"
+          },
+          "profit": 9120,
+          "branchId": "myeongdong"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1765098863344",
+        "path": "users/CCeNlovx5UaIQ0CcImXHRz85SSH2/sales/sale_1765098863344",
+        "data": {
+          "mileRuleUsedPerMileKRW": 99999999,
+          "discount": 3.23,
+          "costPerMile": 0.0,
+          "qty": 2,
+          "buyTotal": 195000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:23.723000+00:00"
+          },
+          "lotId": "lot_1765098768209",
+          "sellTotal": 193540,
+          "miles": 0,
+          "sellUnit": 96770,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:23.723000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T09:14:09.290897+00:00"
+          },
+          "profit": -1460,
+          "branchId": "myeongdong"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "CCeNlovx5UaIQ0CcImXHRz85SSH2",
+    "safeFileName": "CCeNlovx5UaIQ0CcImXHRz85SSH2.json"
+  }
+}

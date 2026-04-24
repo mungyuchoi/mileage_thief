@@ -1,0 +1,301 @@
+{
+  "id": "XMXLWivhIbedr9OxkfNcJbtlSNV2",
+  "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "XMXLWivhIbedr9OxkfNcJbtlSNV2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-09-02T17:35:24.079000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-06T08:44:43.280598+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLaZAjvSKY-6p7P2pS9mGfn0vr83TpSiV6xAXncGX1S8XlYrA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "eaDHa5wXRXiiLpeMFr6Ue9:APA91bEdxrecqdXbivffbhQM64IYUmDfIq-PUIBFfsLqlfPjEUViyLW6qW_zmUc9isMGf-c3jftzIG9w8bJRuk5nYG6ZsFS8kUlgkKEoFfXlDFzYbyQPaO0",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-09-02T17:35:24.079000+00:00"
+    },
+    "displayName": "heejung you",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-09-02T17:35:24.079000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-09-02T17:35:24.079000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "heejung615@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "bc",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/cards/bc",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 750,
+          "creditPerMileKRW": 750,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T02:51:04.618000+00:00"
+          },
+          "name": "대구비씨다이아몬드카드"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/cards/lotte",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T02:50:17.517000+00:00"
+          },
+          "name": "롯데스카이패스체크"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/cards/samsung",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T02:49:06.977000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sfc",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/cards/sfc",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:01:04.322000+00:00"
+          },
+          "name": "삼성 앤마일리지"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "woori",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/cards/woori",
+        "data": {
+          "name": "우리연세v(체크)",
+          "checkPerMileKRW": 750,
+          "creditPerMileKRW": 750,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-03T12:47:01.172000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1761965504414",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/lots/lot_1761965504414",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.1,
+          "cardId": "samsung",
+          "buyUnit": 96900,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T02:51:44.667000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T02:51:08.942461+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T02:51:44.667000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1761994912022",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/lots/lot_1761994912022",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.1,
+          "cardId": "sfc",
+          "buyUnit": 96900,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:01:52.378000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:01:06.149581+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:01:52.378000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1761997665616",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/lots/lot_1761997665616",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 2.5,
+          "cardId": "woori",
+          "buyUnit": 97500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:47:45.905000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:47:05.418409+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-01T11:47:45.905000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762174058581",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/lots/lot_1762174058581",
+        "data": {
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.5,
+          "cardId": "woori",
+          "buyUnit": 97500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-03T12:47:38.881000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-03T12:47:26.833442+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-03T12:47:38.881000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762261031042",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/lots/lot_1762261031042",
+        "data": {
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.1,
+          "cardId": "woori",
+          "buyUnit": 97900,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-04T12:57:11.390000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-04T12:56:40.484278+00:00"
+          },
+          "status": "open",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-04T12:57:11.390000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762344669424",
+        "path": "users/XMXLWivhIbedr9OxkfNcJbtlSNV2/lots/lot_1762344669424",
+        "data": {
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.0,
+          "cardId": "woori",
+          "buyUnit": 98000,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T12:11:09.822000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T12:10:29.561435+00:00"
+          },
+          "status": "open",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T12:11:09.822000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "XMXLWivhIbedr9OxkfNcJbtlSNV2",
+    "safeFileName": "XMXLWivhIbedr9OxkfNcJbtlSNV2.json"
+  }
+}

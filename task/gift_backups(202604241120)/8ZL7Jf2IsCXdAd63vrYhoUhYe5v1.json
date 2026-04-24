@@ -1,0 +1,220 @@
+{
+  "id": "8ZL7Jf2IsCXdAd63vrYhoUhYe5v1",
+  "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "8ZL7Jf2IsCXdAd63vrYhoUhYe5v1",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-04T04:00:13.055000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-15T23:19:11.808119+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJW_FO4s1FXGta6oP6PfRtVGwb5tDjorkpEuZ9mcrDA8Zx1Wg=s96-c",
+    "commentCount": 1,
+    "fcmToken": "eKqhe3TlRx6vHtzSjXqmaO:APA91bE_ZZgrd-YQrz51MLhTOUG2FyTy-MHG8ZiUJi6SQvsecDMezob8Vu-4N_DBTL93sJrTMg3TT0NuUcQNNZ3sfK2R4G_sc1xaDPTqfikxnuWcbPKHC4Q",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-04T03:36:43.250000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-04T04:00:13.290000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-04T03:36:43.250000+00:00"
+    },
+    "displayName": "윤선정",
+    "peanutCount": 25,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-04T03:36:43.250000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "sjadieu@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_basic",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/cards/lotte_basic",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T23:16:16.562000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_check",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/cards/lotte_check",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T23:16:44.407000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sam_mile",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/cards/sam_mile",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T23:12:08.142000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1768432795147",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/lots/lot_1768432795147",
+        "data": {
+          "whereToBuyId": "g_thing",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "sam_mile",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T23:19:55.708000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T23:19:55.708000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "XXpKPv0uAjApeprHLk47",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/my_comments/XXpKPv0uAjApeprHLk47",
+        "data": {
+          "commentPath": "posts/20260103/posts/66b57a91-f5ff-485e-b0bf-1d72649ccbb7/comments/XXpKPv0uAjApeprHLk47",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T04:00:13.163000+00:00"
+          },
+          "postPath": "posts/20260103/posts/66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+          "contentHtml": "<p>기대됩니다~~</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "kneKBdfUhtRhnbLltXml",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/notifications/kneKBdfUhtRhnbLltXml",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "comment_like",
+          "path": "/community/detail/20260103/66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+          "commentId": "XXpKPv0uAjApeprHLk47",
+          "date": "20260103",
+          "boardId": "free",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T01:08:29.543000+00:00"
+          },
+          "commenterName": "윤선정",
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "66b57a91-f5ff-485e-b0bf-1d72649ccbb7"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "B3oqhbW4rqZ5Rb4DjZnI",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/peanut_history/B3oqhbW4rqZ5Rb4DjZnI",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T04:00:13.326000+00:00"
+          },
+          "postTitle": "곧 바뀌는 마일캐치 홍보👍",
+          "commentId": "XXpKPv0uAjApeprHLk47",
+          "amount": 2,
+          "postId": "66b57a91-f5ff-485e-b0bf-1d72649ccbb7"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "g_thing",
+        "path": "users/8ZL7Jf2IsCXdAd63vrYhoUhYe5v1/where_to_buy/g_thing",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T23:14:00.841000+00:00"
+          },
+          "name": "지마켓/띵샵"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "8ZL7Jf2IsCXdAd63vrYhoUhYe5v1",
+    "safeFileName": "8ZL7Jf2IsCXdAd63vrYhoUhYe5v1.json"
+  }
+}

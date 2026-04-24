@@ -1,0 +1,1433 @@
+{
+  "id": "v82LauojdhQOAh9z12n8rbC9CpO2",
+  "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2",
+  "data": {
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-17T03:05:49.386030+00:00"
+    },
+    "peanutCountLimit": 3,
+    "fcmToken": "ckl5Smi6hUaWgBB7jv9nAj:APA91bFK27YZLLNMLNwmAOHceh-6gLAC4jQDHbuyKJx-Ch695OvhRWwZGZGirLxrd_aIaCtZuQ1sFGqO8YKNOmzujhQLNtmoZ3tSi4u3-VOzrwOkKo9tstM",
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-04T12:25:05.303000+00:00"
+    },
+    "peanutCount": 20,
+    "ranking_agree": true,
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "kb_heritage",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/cards/kb_heritage",
+        "data": {
+          "name": "헤리티지",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 750,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:42:44.136000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_pointree",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/cards/kb_pointree",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 10000000000000,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:27:41.685000+00:00"
+          },
+          "name": "국민"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_skypass",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/cards/lotte_skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:23:06.354000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_mileage",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/cards/samsung_mileage",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:30:58.490000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_airone",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/cards/shinhan_airone",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:33:35.695000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1771557838139",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771557838139",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.1,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:24:20.396000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T15:00:00+00:00"
+          },
+          "cardId": "lotte_skypass",
+          "miles": 969,
+          "buyUnit": 96900,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:23:58.250000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771558098536",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771558098536",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "payType": "체크",
+          "discount": 2.3,
+          "memo": "",
+          "qty": 5,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:28:34.952000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:27:45.021986+00:00"
+          },
+          "cardId": "kb_pointree",
+          "miles": 0,
+          "buyUnit": 97700,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:28:18.626000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771558291552",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771558291552",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 2.7,
+          "memo": "",
+          "qty": 8,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:56.195000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-09T15:00:00+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 778,
+          "buyUnit": 97300,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:31:31.655000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771558385092",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771558385092",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "payType": "체크",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 5,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:47.812000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T15:00:00+00:00"
+          },
+          "cardId": "kb_pointree",
+          "miles": 0,
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:33:05.204000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771558449276",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771558449276",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 5,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:33:07.650000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-11T15:00:00+00:00"
+          },
+          "cardId": "shinhan_airone",
+          "miles": 489,
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:34:09.352000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771769907618",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771769907618",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.1,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:18:46.265000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "cardId": "lotte_skypass",
+          "miles": 969,
+          "buyUnit": 96900,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:18:27.743000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771770132388",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771770132388",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 7.1,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:22:31.479000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T15:00:00+00:00"
+          },
+          "cardId": "shinhan_airone",
+          "miles": 465,
+          "buyUnit": 46450,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:22:12.509000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771770749485",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771770749485",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -63.2,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:35:49.015000+00:00"
+          },
+          "whereToBuyId": "kream",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T15:00:00+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "buyUnit": 816000,
+          "miles": 816,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:32:29.547000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771771001480",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771771001480",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -63.2,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:36:56.201000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T15:00:00+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 816,
+          "buyUnit": 816000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:36:41.552000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771771046688",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771771046688",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -62.18,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:37:43.185000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T15:00:00+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 811,
+          "buyUnit": 810900,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:37:26.748000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771771123071",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771771123071",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -261.01,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:39:08.728000+00:00"
+          },
+          "whereToBuyId": "kream",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-17T15:00:00+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 1805,
+          "buyUnit": 1805040,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:38:43.140000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1771771384182",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1771771384182",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 750,
+          "payType": "신용",
+          "discount": -15.7,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:43:19.056000+00:00"
+          },
+          "whereToBuyId": "kream",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-19T15:00:00+00:00"
+          },
+          "cardId": "kb_heritage",
+          "miles": 771,
+          "buyUnit": 578508,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:43:04.246000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772434372723",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1772434372723",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.1,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:21.223000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T15:00:00+00:00"
+          },
+          "cardId": "lotte_skypass",
+          "miles": 969,
+          "buyUnit": 96900,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-02T06:52:52.841000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772434440683",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1772434440683",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:30:56.885000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T15:00:00+00:00"
+          },
+          "cardId": "shinhan_airone",
+          "miles": 978,
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-02T06:54:00.819000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772510112008",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1772510112008",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "payType": "체크",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:40.412000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T03:54:47.366445+00:00"
+          },
+          "cardId": "kb_pointree",
+          "miles": 0,
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T03:55:12.094000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772626955113",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1772626955113",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "payType": "체크",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 5,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:49.798000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-04T12:22:17.589721+00:00"
+          },
+          "cardId": "kb_pointree",
+          "miles": 0,
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-04T12:22:35.220000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773279178202",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1773279178202",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -41.62,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:25.411000+00:00"
+          },
+          "whereToBuyId": "kream",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:32:34.289408+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 708,
+          "buyUnit": 708096,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:32:58.315000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773279195808",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1773279195808",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -41.81,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:44.099000+00:00"
+          },
+          "whereToBuyId": "kream",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:33:00.366225+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 709,
+          "buyUnit": 709056,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:33:15.880000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773279215413",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1773279215413",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": -42.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:59.150000+00:00"
+          },
+          "whereToBuyId": "kream",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:33:21.484062+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 710,
+          "buyUnit": 710016,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:33:35.494000+00:00"
+          },
+          "giftcardId": "korea_tourism"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775792944710",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1775792944710",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 3,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:51:15.518000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:00:00+00:00"
+          },
+          "cardId": "samsung_mileage",
+          "miles": 293,
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:49:04.815000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775793014284",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1775793014284",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:51:35.156000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T15:00:00+00:00"
+          },
+          "cardId": "lotte_skypass",
+          "miles": 972,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:50:14.370000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775793052875",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/lots/lot_1775793052875",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:50:52.986000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:50:16.897102+00:00"
+          },
+          "cardId": "kb_pointree",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:50:52.986000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1771557860322",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771557860322",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 966500,
+          "costPerMile": 2.58,
+          "discount": 3.35,
+          "miles": 969,
+          "sellUnit": 96650,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:24:20.365000+00:00"
+          },
+          "buyTotal": 969000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:24:01.068001+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:24:20.365000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1771557838139"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771558114864",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771558114864",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "sellTotal": 485000,
+          "costPerMile": 0.0,
+          "discount": 3.0,
+          "miles": 0,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:28:34.910000+00:00"
+          },
+          "buyTotal": 488500,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:28:22.064924+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-20T03:28:34.910000+00:00"
+          },
+          "profit": -3500,
+          "lotId": "lot_1771558098536"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771769926214",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771769926214",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 963000,
+          "costPerMile": 6.19,
+          "discount": 3.7,
+          "miles": 969,
+          "sellUnit": 96300,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:18:46.233000+00:00"
+          },
+          "buyTotal": 969000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:18:46.233000+00:00"
+          },
+          "profit": -6000,
+          "lotId": "lot_1771769907618"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771770151418",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771770151418",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460000,
+          "costPerMile": 9.68,
+          "discount": 8.0,
+          "miles": 465,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:22:31.441000+00:00"
+          },
+          "buyTotal": 464500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:22:31.441000+00:00"
+          },
+          "profit": -4500,
+          "lotId": "lot_1771770132388"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771770948942",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771770948942",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 821470,
+          "costPerMile": -6.7,
+          "discount": -64.29,
+          "miles": 816,
+          "sellUnit": 821470,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:35:48.969000+00:00"
+          },
+          "buyTotal": 816000,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:35:48.969000+00:00"
+          },
+          "profit": 5470,
+          "lotId": "lot_1771770749485"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771771016137",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771771016137",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 822460,
+          "costPerMile": -7.92,
+          "discount": -64.49,
+          "miles": 816,
+          "sellUnit": 822460,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:36:56.161000+00:00"
+          },
+          "buyTotal": 816000,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:36:56.161000+00:00"
+          },
+          "profit": 6460,
+          "lotId": "lot_1771771001480"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771771063100",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771771063100",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 813510,
+          "costPerMile": -3.22,
+          "discount": -62.7,
+          "miles": 811,
+          "sellUnit": 813510,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:37:43.125000+00:00"
+          },
+          "buyTotal": 810900,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:37:43.125000+00:00"
+          },
+          "profit": 2610,
+          "lotId": "lot_1771771046688"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771771148636",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771771148636",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 1804040,
+          "costPerMile": 0.55,
+          "discount": -260.81,
+          "miles": 1805,
+          "sellUnit": 1804040,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:39:08.661000+00:00"
+          },
+          "buyTotal": 1805040,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-18T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:39:08.661000+00:00"
+          },
+          "profit": -1000,
+          "lotId": "lot_1771771123071"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1771771398989",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1771771398989",
+        "data": {
+          "mileRuleUsedPerMileKRW": 750,
+          "sellTotal": 580790,
+          "costPerMile": -2.96,
+          "discount": -16.16,
+          "miles": 771,
+          "sellUnit": 580790,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:43:19.016000+00:00"
+          },
+          "buyTotal": 578508,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:43:19.016000+00:00"
+          },
+          "profit": 2282,
+          "lotId": "lot_1771771384182"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773210767724",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773210767724",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "sellTotal": 484000,
+          "costPerMile": 0.0,
+          "discount": 3.2,
+          "miles": 0,
+          "sellUnit": 96800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:47.782000+00:00"
+          },
+          "buyTotal": 489000,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:29:53.414862+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:47.782000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1771558385092"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773210776133",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773210776133",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 774400,
+          "costPerMile": 5.14,
+          "discount": 3.2,
+          "miles": 778,
+          "sellUnit": 96800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:56.161000+00:00"
+          },
+          "buyTotal": 778400,
+          "qty": 8,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:49.850728+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:56.161000+00:00"
+          },
+          "profit": -4000,
+          "lotId": "lot_1771558291552"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773210787585",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773210787585",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 484000,
+          "costPerMile": 10.22,
+          "discount": 3.2,
+          "miles": 489,
+          "sellUnit": 96800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:33:07.614000+00:00"
+          },
+          "buyTotal": 489000,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:32:59.103211+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T06:33:07.614000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1771558449276"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279056747",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279056747",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 968000,
+          "costPerMile": 10.22,
+          "discount": 3.2,
+          "miles": 978,
+          "sellUnit": 96800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:30:56.820000+00:00"
+          },
+          "buyTotal": 978000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:30:20.783077+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:30:56.820000+00:00"
+          },
+          "profit": -10000,
+          "lotId": "lot_1772434440683"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279081148",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279081148",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 966000,
+          "costPerMile": 3.1,
+          "discount": 3.4,
+          "miles": 969,
+          "sellUnit": 96600,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:21.177000+00:00"
+          },
+          "buyTotal": 969000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:12.449601+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:21.177000+00:00"
+          },
+          "profit": -3000,
+          "lotId": "lot_1772434372723"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279100339",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279100339",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "sellTotal": 997340,
+          "costPerMile": 0.0,
+          "discount": 0.27,
+          "miles": 0,
+          "sellUnit": 99734,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:40.367000+00:00"
+          },
+          "buyTotal": 978000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:24.247914+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:40.367000+00:00"
+          },
+          "profit": 19340,
+          "lotId": "lot_1772510112008"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279109747",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279109747",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000000000,
+          "sellTotal": 498670,
+          "costPerMile": 0.0,
+          "discount": 0.27,
+          "miles": 0,
+          "sellUnit": 99734,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:49.766000+00:00"
+          },
+          "buyTotal": 489000,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:43.717636+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:31:49.766000+00:00"
+          },
+          "profit": 9670,
+          "lotId": "lot_1772626955113"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279265312",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279265312",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 719040,
+          "costPerMile": -15.46,
+          "discount": -43.81,
+          "miles": 708,
+          "sellUnit": 719040,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:25.376000+00:00"
+          },
+          "buyTotal": 708096,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:25.376000+00:00"
+          },
+          "profit": 10944,
+          "lotId": "lot_1773279178202"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279284032",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279284032",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 717050,
+          "costPerMile": -11.28,
+          "discount": -43.41,
+          "miles": 709,
+          "sellUnit": 717050,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:44.056000+00:00"
+          },
+          "buyTotal": 709056,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:44.056000+00:00"
+          },
+          "profit": 7994,
+          "lotId": "lot_1773279195808"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773279299090",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1773279299090",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 718040,
+          "costPerMile": -11.3,
+          "discount": -43.61,
+          "miles": 710,
+          "sellUnit": 718040,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:59.123000+00:00"
+          },
+          "buyTotal": 710016,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T01:34:59.123000+00:00"
+          },
+          "profit": 8024,
+          "lotId": "lot_1773279215413"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1775793075443",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1775793075443",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 291300,
+          "costPerMile": 7.17,
+          "discount": 2.9,
+          "miles": 293,
+          "sellUnit": 97100,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:51:15.489000+00:00"
+          },
+          "buyTotal": 293400,
+          "qty": 3,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:50:55.804029+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:51:15.489000+00:00"
+          },
+          "profit": -2100,
+          "lotId": "lot_1775792944710"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1775793095079",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/sales/sale_1775793095079",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 966000,
+          "costPerMile": 6.17,
+          "discount": 3.4,
+          "miles": 972,
+          "sellUnit": 483000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:51:35.123000+00:00"
+          },
+          "buyTotal": 972000,
+          "qty": 2,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-09T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T03:51:35.123000+00:00"
+          },
+          "profit": -6000,
+          "lotId": "lot_1775793014284"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "kream",
+        "path": "users/v82LauojdhQOAh9z12n8rbC9CpO2/where_to_buy/kream",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-22T14:31:55.064000+00:00"
+          },
+          "name": "크림"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "v82LauojdhQOAh9z12n8rbC9CpO2",
+    "safeFileName": "v82LauojdhQOAh9z12n8rbC9CpO2.json"
+  }
+}

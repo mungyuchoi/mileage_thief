@@ -1,0 +1,73 @@
+{
+  "id": "amPmZrkjCze3tBRJorU2EktrK5A3",
+  "path": "users/amPmZrkjCze3tBRJorU2EktrK5A3",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "amPmZrkjCze3tBRJorU2EktrK5A3",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T13:50:45.082000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLsDiRA_CMDzmo8yJNKZVX800D3C9lfFIlFzmWcEHggCR6foQ=s96-c",
+    "commentCount": 0,
+    "fcmToken": "fKCFndBygkO6rzvsrNeSr8:APA91bFdXCL4yomvBapCs8T8MV04tMy6tQZjd5B0epBBQPYxzB7Uk9h_tL8H1yMVNIqv66E4HmDh6kX8VZqUcLViD6DH0Pzi37gm0rWh1spNR0msakMvetE",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T13:50:45.082000+00:00"
+    },
+    "displayName": "HYUNGKEUN LEE",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T13:50:45.082000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T13:50:45.082000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "ganymede0210@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lottesky",
+        "path": "users/amPmZrkjCze3tBRJorU2EktrK5A3/cards/lottesky",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T13:52:37.095000+00:00"
+          },
+          "name": "lotte"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "amPmZrkjCze3tBRJorU2EktrK5A3",
+    "safeFileName": "amPmZrkjCze3tBRJorU2EktrK5A3.json"
+  }
+}

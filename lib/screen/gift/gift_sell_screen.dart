@@ -45,14 +45,22 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || widget.editSaleId == null) return;
     final saleDoc = await FirebaseFirestore.instance
-        .collection('users').doc(uid).collection('sales').doc(widget.editSaleId).get();
+        .collection('users')
+        .doc(uid)
+        .collection('sales')
+        .doc(widget.editSaleId)
+        .get();
     if (!saleDoc.exists) return;
     final sale = saleDoc.data() as Map<String, dynamic>;
     final lotId = sale['lotId'] as String?;
     Map<String, dynamic>? lot;
     if (lotId != null) {
       final lotDoc = await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('lots').doc(lotId).get();
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
+          .doc(lotId)
+          .get();
       if (lotDoc.exists) {
         lot = {'lotId': lotDoc.id, ...lotDoc.data()!};
       }
@@ -65,8 +73,10 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         _selectedLot = lot;
       }
       _selectedBranchId = sale['branchId'] as String?;
-      _sellUnitController.text = ((sale['sellUnit'] as num?)?.toInt() ?? 0).toString();
-      _discountController.text = ((sale['discount'] as num?)?.toDouble() ?? 0).toString();
+      _sellUnitController.text =
+          ((sale['sellUnit'] as num?)?.toInt() ?? 0).toString();
+      _discountController.text =
+          ((sale['discount'] as num?)?.toDouble() ?? 0).toString();
       _qtyController.text = ((sale['qty'] as num?)?.toInt() ?? 0).toString();
       final ts = sale['sellDate'];
       if (ts is Timestamp) _sellDate = ts.toDate();
@@ -78,11 +88,14 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     if (uid == null) return;
     try {
       final lotsSnap = await FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('lots')
+          .collection('users')
+          .doc(uid)
+          .collection('lots')
           .where('status', isEqualTo: 'open')
           .get();
       setState(() {
-        _openLots = lotsSnap.docs.map((d) => {'lotId': d.id, ...d.data()}).toList();
+        _openLots =
+            lotsSnap.docs.map((d) => {'lotId': d.id, ...d.data()}).toList();
         if (_openLots.isNotEmpty) {
           _selectedLotId = _openLots.first['lotId'] as String;
           _selectedLot = _openLots.first;
@@ -98,9 +111,12 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
   Future<void> _loadBranches() async {
     if (_branchesLoading || _branches.isNotEmpty) return;
-    setState(() { _branchesLoading = true; });
+    setState(() {
+      _branchesLoading = true;
+    });
     try {
-      final snap = await FirebaseFirestore.instance.collection('branches').get();
+      final snap =
+          await FirebaseFirestore.instance.collection('branches').get();
       final list = snap.docs.map((d) {
         final data = d.data();
         return {
@@ -109,17 +125,23 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         };
       }).toList()
         ..sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
-      setState(() { _branches = list; });
+      setState(() {
+        _branches = list;
+      });
     } catch (_) {
     } finally {
-      if (mounted) setState(() { _branchesLoading = false; });
+      if (mounted)
+        setState(() {
+          _branchesLoading = false;
+        });
     }
   }
 
   void _onLotChanged(String? lotId) {
     setState(() {
       _selectedLotId = lotId;
-      _selectedLot = _openLots.firstWhere((e) => e['lotId'] == lotId, orElse: () => {});
+      _selectedLot =
+          _openLots.firstWhere((e) => e['lotId'] == lotId, orElse: () => {});
       // lot 변경 시 수량을 전체 수량으로 초기화
       if (_selectedLot != null && _selectedLot!.isNotEmpty) {
         final totalQty = (_selectedLot!['qty'] as int?) ?? 0;
@@ -132,7 +154,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
   void _onSellUnitChanged() {
     final face = (_selectedLot?['faceValue'] as int?) ?? 0;
-    final unit = int.tryParse(_sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+    final unit = int.tryParse(
+        _sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), ''));
     if (unit == null || face == 0) return;
     final disc = 100 * (1 - (unit / face));
     final str = disc.toStringAsFixed(2);
@@ -161,15 +184,20 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   int _getSellQty() {
     if (widget.editSaleId != null) {
       // 수정 모드일 때는 기존 판매 수량 사용
-      return (_existingSale?['qty'] as int?) ?? ((_selectedLot?['qty'] as int?) ?? 0);
+      return (_existingSale?['qty'] as int?) ??
+          ((_selectedLot?['qty'] as int?) ?? 0);
     }
     // 신규 모드일 때는 입력된 수량 사용
-    return int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    return int.tryParse(
+            _qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        0;
   }
 
   int _sellTotal() {
     final qty = _getSellQty();
-    final unit = int.tryParse(_sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final unit = int.tryParse(
+            _sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        0;
     return qty * unit;
   }
 
@@ -190,9 +218,14 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     return 0;
   }
 
-  Future<int> _loadRulePerMile(String uid, String cardId, String payType) async {
+  Future<int> _loadRulePerMile(
+      String uid, String cardId, String payType) async {
     final cardDoc = await FirebaseFirestore.instance
-        .collection('users').doc(uid).collection('cards').doc(cardId).get();
+        .collection('users')
+        .doc(uid)
+        .collection('cards')
+        .doc(cardId)
+        .get();
     if (!cardDoc.exists) return 0;
     final data = cardDoc.data() as Map<String, dynamic>;
     final int val = (payType == '신용')
@@ -208,7 +241,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: Color(0xFF74512D))),
+        data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFF74512D))),
         child: child!,
       ),
     );
@@ -216,34 +250,50 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   }
 
   Future<void> _save() async {
-    setState(() { _error = null; });
+    setState(() {
+      _error = null;
+    });
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       Fluttertoast.showToast(msg: '로그인이 필요합니다.');
       return;
     }
     if (_selectedLotId == null || _selectedLot == null) {
-      setState(() { _error = '판매할 구매(Lot)를 선택하세요.'; });
+      setState(() {
+        _error = '판매할 구매(Lot)를 선택하세요.';
+      });
       return;
     }
-    final sellUnit = int.tryParse(_sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final sellUnit = int.tryParse(
+            _sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        0;
     if (sellUnit <= 0) {
-      setState(() { _error = '판매가를 입력하세요.'; });
+      setState(() {
+        _error = '판매가를 입력하세요.';
+      });
       return;
     }
-    final sellQty = int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final sellQty =
+        int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+            0;
     if (sellQty <= 0) {
-      setState(() { _error = '수량은 1개 이상이어야 합니다.'; });
+      setState(() {
+        _error = '수량은 1개 이상이어야 합니다.';
+      });
       return;
     }
     final totalQty = (_selectedLot?['qty'] as int?) ?? 0;
     if (sellQty > totalQty) {
-      setState(() { _error = '판매 수량이 전체 수량보다 많을 수 없습니다.'; });
+      setState(() {
+        _error = '판매 수량이 전체 수량보다 많을 수 없습니다.';
+      });
       return;
     }
 
     if (_saving) return;
-    setState(() { _saving = true; });
+    setState(() {
+      _saving = true;
+    });
     try {
       final qty = sellQty;
       final faceValue = (_selectedLot?['faceValue'] as int?) ?? 100000;
@@ -251,14 +301,23 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       final sellTotal = qty * sellUnit;
       final discount = 100 * (1 - (sellUnit / faceValue));
 
-      // 카드 규칙 불러와서 마일 계산
-      final milePerKRW = await _loadRulePerMile(uid, _selectedLot!['cardId'] as String, _selectedLot!['payType'] as String);
+      // 판매/lot 분할 시에는 구매 lot에 저장된 스냅샷 규칙을 우선 사용한다.
+      final int storedMilePerKRW =
+          (_selectedLot!['mileRuleUsedPerMileKRW'] as num?)?.toInt() ?? 0;
+      final milePerKRW = storedMilePerKRW > 0
+          ? storedMilePerKRW
+          : await _loadRulePerMile(uid, _selectedLot!['cardId'] as String,
+              _selectedLot!['payType'] as String);
       final miles = milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round();
       final profit = sellTotal - buyTotal;
       final costPerMile = miles == 0 ? 0 : (-profit / miles);
 
-      final salesRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('sales');
-      final saleId = widget.editSaleId ?? 'sale_${DateTime.now().millisecondsSinceEpoch}';
+      final salesRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sales');
+      final saleId =
+          widget.editSaleId ?? 'sale_${DateTime.now().millisecondsSinceEpoch}';
       final payload = {
         'lotId': _selectedLotId,
         'sellDate': Timestamp.fromDate(_sellDate),
@@ -283,19 +342,29 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
       if (widget.editSaleId == null) {
         // 신규 저장일 때만 lot 처리
-        final lotsRef = FirebaseFirestore.instance.collection('users').doc(uid).collection('lots');
+        final lotsRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('lots');
         final originalLotRef = lotsRef.doc(_selectedLotId!);
-        
+
         if (qty < totalQty) {
           // 부분 판매: lot 분할
+          final originalLotBuyUnit = (_selectedLot!['buyUnit'] as int?) ?? 0;
+          final originalLotTotalBuy = originalLotBuyUnit * qty;
+          final originalLotMiles =
+              milePerKRW == 0 ? 0 : (originalLotTotalBuy / milePerKRW).round();
+
           // 1. 원본 lot 업데이트: qty를 판매 수량으로 변경, status를 sold로 변경
           await originalLotRef.update({
             'qty': qty,
+            'mileRuleUsedPerMileKRW': milePerKRW,
+            'miles': originalLotMiles,
             'status': 'sold',
             'trade': true, // 판매 완료 시 교환 완료로 처리
             'updatedAt': FieldValue.serverTimestamp(),
           });
-          
+
           // 2. 새로운 lot 생성: 나머지 수량
           final remainingQty = totalQty - qty;
           final newLotId = 'lot_${DateTime.now().millisecondsSinceEpoch}';
@@ -307,6 +376,10 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
             'discount': (_selectedLot!['discount'] as num?)?.toDouble() ?? 0,
             'qty': remainingQty,
             'cardId': _selectedLot!['cardId'],
+            'mileRuleUsedPerMileKRW': milePerKRW,
+            'miles': milePerKRW == 0
+                ? 0
+                : ((originalLotBuyUnit * remainingQty) / milePerKRW).round(),
             'status': 'open',
             'giftcardId': _selectedLot!['giftcardId'],
             'memo': _selectedLot!['memo'] ?? '',
@@ -317,6 +390,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         } else {
           // 전체 판매: 원본 lot의 status만 sold로 변경
           await originalLotRef.update({
+            'mileRuleUsedPerMileKRW': milePerKRW,
+            'miles': miles,
             'status': 'sold',
             'trade': true, // 판매 완료 시 교환 완료로 처리
             'updatedAt': FieldValue.serverTimestamp(),
@@ -327,14 +402,19 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       // 지점 선택 시 월간 랭킹 반영
       print('[GiftSellScreen] 랭킹 업데이트 시작 - 지점: $_selectedBranchId');
       try {
-        final monthKey = '${_sellDate.year}${_sellDate.month.toString().padLeft(2, '0')}';
+        final monthKey =
+            '${_sellDate.year}${_sellDate.month.toString().padLeft(2, '0')}';
         print('[GiftSellScreen] monthKey: $monthKey');
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
         final userData = userDoc.data() as Map<String, dynamic>?;
-        final displayName = (userData?['displayName'] as String?) ?? (userData?['email'] as String?) ?? '익명';
+        final displayName = (userData?['displayName'] as String?) ??
+            (userData?['email'] as String?) ??
+            '익명';
         final photoUrl = (userData?['photoURL'] as String?) ?? '';
-        print('[GiftSellScreen] 사용자 정보 - uid: $uid, displayName: $displayName, saleTotal: $sellTotal');
-        
+        print(
+            '[GiftSellScreen] 사용자 정보 - uid: $uid, displayName: $displayName, saleTotal: $sellTotal');
+
         // 지점 선택 시 지점 랭킹 업데이트
         if (_selectedBranchId != null && _selectedBranchId!.isNotEmpty) {
           print('[GiftSellScreen] 지점 랭킹 업데이트 시작');
@@ -357,12 +437,16 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         // 랭킹 업데이트 실패해도 판매 저장은 성공으로 처리
       }
 
-      Fluttertoast.showToast(msg: widget.editSaleId == null ? '판매가 저장되었습니다.' : '판매가 수정되었습니다.');
+      Fluttertoast.showToast(
+          msg: widget.editSaleId == null ? '판매가 저장되었습니다.' : '판매가 수정되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       Fluttertoast.showToast(msg: '저장 실패: $e');
     } finally {
-      if (mounted) setState(() { _saving = false; });
+      if (mounted)
+        setState(() {
+          _saving = false;
+        });
     }
   }
 
@@ -394,7 +478,12 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       int index = -1;
       for (int i = 0; i < users.length; i++) {
         final e = users[i];
-        if (e is Map && (e['uid'] as String?) == uid && (e['saleId'] as String?) == saleId) { index = i; break; }
+        if (e is Map &&
+            (e['uid'] as String?) == uid &&
+            (e['saleId'] as String?) == saleId) {
+          index = i;
+          break;
+        }
       }
       final entry = {
         'uid': uid,
@@ -418,7 +507,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
         final String dn = (u['displayName'] as String?) ?? '';
         final String pu = (u['photoUrl'] as String?) ?? '';
-        final Map<String, dynamic> cur = agg[uid0] ?? {'uid': uid0, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
+        final Map<String, dynamic> cur = agg[uid0] ??
+            {'uid': uid0, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
         cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
         cur['displayName'] = dn; // 최신 정보로 업데이트
         cur['photoUrl'] = pu;
@@ -427,7 +517,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       final List<Map<String, dynamic>> ranked = agg.values.toList()
         ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
 
-      Map<String, dynamic>? toTop(int i) => (i < ranked.length) ? ranked[i] : null;
+      Map<String, dynamic>? toTop(int i) =>
+          (i < ranked.length) ? ranked[i] : null;
 
       final update = <String, dynamic>{
         'users': users,
@@ -446,7 +537,6 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -455,7 +545,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        title: Text(widget.editSaleId == null ? '상품권 판매' : '상품권 판매 수정', style: const TextStyle(color: Colors.black, fontSize: 16)),
+        title: Text(widget.editSaleId == null ? '상품권 판매' : '상품권 판매 수정',
+            style: const TextStyle(color: Colors.black, fontSize: 16)),
       ),
       body: SafeArea(
         child: Column(
@@ -472,153 +563,192 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    const SizedBox(height: 12),
-                    const Text('구매 선택(Lot)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: _selectedLotId,
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(color: Colors.black),
-                      iconEnabledColor: Colors.black54,
-                      items: _openLots
-                          .map((l) {
-                            final ts = l['buyDate'];
-                            String dateLabel = '';
-                            if (ts is Timestamp) {
-                              final d = ts.toDate();
-                              dateLabel = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-                            }
-                            final memo = l['memo'] as String?;
-                            final memoText = (memo != null && memo.trim().isNotEmpty) ? '  $memo' : '';
-                            return DropdownMenuItem<String>(
-                              value: l['lotId'] as String,
-                              child: Text(
-                                '${l['giftcardId'] ?? ''}  ${l['buyUnit']}원 x ${l['qty']}  |  $dateLabel$memoText',
-                                style: const TextStyle(color: Colors.black),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            );
-                          })
-                          .toList(),
-                      onChanged: widget.editSaleId != null ? null : (v) => _onLotChanged(v),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 1.5)),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('판매일', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    OutlinedButton(
-                      onPressed: _pickDate,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        side: const BorderSide(color: Colors.black26),
-                      ),
-                      child: Text(
-                        '${_sellDate.year}-${_sellDate.month.toString().padLeft(2, '0')}-${_sellDate.day.toString().padLeft(2, '0')}',
-                        style: const TextStyle(color: Colors.black),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _sellUnitController,
-                            keyboardType: TextInputType.number,
-                            cursorColor: const Color(0xFF74512D),
-                            decoration: const InputDecoration(
-                              labelText: '판매가(권당, 원)',
-                              border: OutlineInputBorder(),
-                              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 2)),
-                              labelStyle: TextStyle(color: Colors.black54),
-                              floatingLabelStyle: TextStyle(color: Color(0xFF74512D)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _discountController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            cursorColor: const Color(0xFF74512D),
-                            decoration: const InputDecoration(
-                              labelText: '할인율(%)',
-                              border: OutlineInputBorder(),
-                              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 2)),
-                              labelStyle: TextStyle(color: Colors.black54),
-                              floatingLabelStyle: TextStyle(color: Color(0xFF74512D)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    if (widget.editSaleId == null && _selectedLot != null) ...[
-                      const Text('수량', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _qtyController,
-                        keyboardType: TextInputType.number,
-                        cursorColor: const Color(0xFF74512D),
-                        decoration: InputDecoration(
-                          labelText: '판매 수량 (최대 ${_selectedLot!['qty']}개)',
-                          hintText: '0',
-                          border: const OutlineInputBorder(),
-                          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                          focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 2)),
-                          labelStyle: const TextStyle(color: Colors.black54),
-                          floatingLabelStyle: const TextStyle(color: Color(0xFF74512D)),
-                        ),
-                        onChanged: (value) => setState(() {}),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    if (_selectedLot != null) ...[
-                      Text('수량: ${_getSellQty()}'),
-                      const SizedBox(height: 4),
-                      Text('총 판매금액: ${_sellTotal()}원'),
-                      const SizedBox(height: 4),
-                      Text('총 매입금액: ${_buyTotal()}원'),
-                      const SizedBox(height: 4),
-                      Text('예상 손익: ${_sellTotal() - _buyTotal()}원'),
-                    ],
-                    const SizedBox(height: 16),
-                    const Text('지점 (선택)', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String?>(
-                      value: _selectedBranchId,
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(color: Colors.black),
-                      iconEnabledColor: Colors.black54,
-                      items: [
-                        const DropdownMenuItem<String?>(value: null, child: Text('선택 안 함', style: TextStyle(color: Colors.black))),
-                        ..._branches.map((b) => DropdownMenuItem<String?>(
-                              value: b['id'] as String,
-                              child: Text(b['name'] as String, style: const TextStyle(color: Colors.black)),
-                            )),
-                      ],
-                      onChanged: (v) => setState(() => _selectedBranchId = v),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black26)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF74512D), width: 1.5)),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                    if (_error != null) ...[
                       const SizedBox(height: 12),
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
-                    ],
-                    const SizedBox(height: 80),
+                      const Text('구매 선택(Lot)',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        value: _selectedLotId,
+                        dropdownColor: Colors.white,
+                        style: const TextStyle(color: Colors.black),
+                        iconEnabledColor: Colors.black54,
+                        items: _openLots.map((l) {
+                          final ts = l['buyDate'];
+                          String dateLabel = '';
+                          if (ts is Timestamp) {
+                            final d = ts.toDate();
+                            dateLabel =
+                                '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                          }
+                          final memo = l['memo'] as String?;
+                          final memoText =
+                              (memo != null && memo.trim().isNotEmpty)
+                                  ? '  $memo'
+                                  : '';
+                          return DropdownMenuItem<String>(
+                            value: l['lotId'] as String,
+                            child: Text(
+                              '${l['giftcardId'] ?? ''}  ${l['buyUnit']}원 x ${l['qty']}  |  $dateLabel$memoText',
+                              style: const TextStyle(color: Colors.black),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: widget.editSaleId != null
+                            ? null
+                            : (v) => _onLotChanged(v),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black26)),
+                          focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Color(0xFF74512D), width: 1.5)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('판매일',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      OutlinedButton(
+                        onPressed: _pickDate,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          side: const BorderSide(color: Colors.black26),
+                        ),
+                        child: Text(
+                          '${_sellDate.year}-${_sellDate.month.toString().padLeft(2, '0')}-${_sellDate.day.toString().padLeft(2, '0')}',
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _sellUnitController,
+                              keyboardType: TextInputType.number,
+                              cursorColor: const Color(0xFF74512D),
+                              decoration: const InputDecoration(
+                                labelText: '판매가(권당, 원)',
+                                border: OutlineInputBorder(),
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.black26)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Color(0xFF74512D), width: 2)),
+                                labelStyle: TextStyle(color: Colors.black54),
+                                floatingLabelStyle:
+                                    TextStyle(color: Color(0xFF74512D)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _discountController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              cursorColor: const Color(0xFF74512D),
+                              decoration: const InputDecoration(
+                                labelText: '할인율(%)',
+                                border: OutlineInputBorder(),
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.black26)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Color(0xFF74512D), width: 2)),
+                                labelStyle: TextStyle(color: Colors.black54),
+                                floatingLabelStyle:
+                                    TextStyle(color: Color(0xFF74512D)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (widget.editSaleId == null &&
+                          _selectedLot != null) ...[
+                        const Text('수량',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _qtyController,
+                          keyboardType: TextInputType.number,
+                          cursorColor: const Color(0xFF74512D),
+                          decoration: InputDecoration(
+                            labelText: '판매 수량 (최대 ${_selectedLot!['qty']}개)',
+                            hintText: '0',
+                            border: const OutlineInputBorder(),
+                            enabledBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black26)),
+                            focusedBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Color(0xFF74512D), width: 2)),
+                            labelStyle: const TextStyle(color: Colors.black54),
+                            floatingLabelStyle:
+                                const TextStyle(color: Color(0xFF74512D)),
+                          ),
+                          onChanged: (value) => setState(() {}),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      if (_selectedLot != null) ...[
+                        Text('수량: ${_getSellQty()}'),
+                        const SizedBox(height: 4),
+                        Text('총 판매금액: ${_sellTotal()}원'),
+                        const SizedBox(height: 4),
+                        Text('총 매입금액: ${_buyTotal()}원'),
+                        const SizedBox(height: 4),
+                        Text('예상 손익: ${_sellTotal() - _buyTotal()}원'),
+                      ],
+                      const SizedBox(height: 16),
+                      const Text('지점 (선택)',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black)),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String?>(
+                        value: _selectedBranchId,
+                        dropdownColor: Colors.white,
+                        style: const TextStyle(color: Colors.black),
+                        iconEnabledColor: Colors.black54,
+                        items: [
+                          const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text('선택 안 함',
+                                  style: TextStyle(color: Colors.black))),
+                          ..._branches.map((b) => DropdownMenuItem<String?>(
+                                value: b['id'] as String,
+                                child: Text(b['name'] as String,
+                                    style:
+                                        const TextStyle(color: Colors.black)),
+                              )),
+                        ],
+                        onChanged: (v) => setState(() => _selectedBranchId = v),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black26)),
+                          focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Color(0xFF74512D), width: 1.5)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 12),
+                        Text(_error!,
+                            style: const TextStyle(color: Colors.red)),
+                      ],
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -636,10 +766,13 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
               onPressed: _saving ? null : _save,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF74512D),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: Text(widget.editSaleId == null ? '저장' : '수정', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              child: Text(widget.editSaleId == null ? '저장' : '수정',
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
             ),
           ),
         ),
@@ -647,5 +780,3 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     );
   }
 }
-
-

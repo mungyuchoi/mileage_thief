@@ -1,0 +1,123 @@
+{
+  "id": "n42SaSAVLibaUsrt27un2mEAMO52",
+  "path": "users/n42SaSAVLibaUsrt27un2mEAMO52",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "n42SaSAVLibaUsrt27un2mEAMO52",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-01T23:25:10.022000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocK1AadG1pmiXu2SYZCxEQI3jstFTIhfH0f6T_640CFBaMk5ZA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "ecx8l785SViaQefB0ywoRQ:APA91bGi4rq_CbkzeCesyaWOjGJiOKGMnhsULWWxmGuKAPWtrBt1vwsPDWN9SSl8oy2uQqCGoebylKN5JRt7tFQl739Zv-JBSiIEVFzOx3mt3KzmfLtXvZg",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-01T23:25:10.022000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-02T01:18:21.908000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-01T23:25:10.022000+00:00"
+    },
+    "displayName": "펩시제로",
+    "peanutCount": 10,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-01T23:25:10.022000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "gongsungho@naver.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "samsung_theone",
+        "path": "users/n42SaSAVLibaUsrt27un2mEAMO52/cards/samsung_theone",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-30T23:44:27.764000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1764546348956",
+        "path": "users/n42SaSAVLibaUsrt27un2mEAMO52/lots/lot_1764546348956",
+        "data": {
+          "whereToBuyId": "samsungcardshop",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-30T23:45:20.303764+00:00"
+          },
+          "discount": 3.1,
+          "cardId": "samsung_theone",
+          "buyUnit": 96900,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-30T23:45:49.058000+00:00"
+          },
+          "memo": "",
+          "status": "open",
+          "payType": "신용",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-30T23:45:49.058000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "samsungcardshop",
+        "path": "users/n42SaSAVLibaUsrt27un2mEAMO52/where_to_buy/samsungcardshop",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-30T23:45:18.423000+00:00"
+          },
+          "name": "삼카쇼"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "n42SaSAVLibaUsrt27un2mEAMO52",
+    "safeFileName": "n42SaSAVLibaUsrt27un2mEAMO52.json"
+  }
+}

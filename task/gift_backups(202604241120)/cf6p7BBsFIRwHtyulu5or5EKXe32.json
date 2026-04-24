@@ -1,0 +1,1928 @@
+{
+  "id": "cf6p7BBsFIRwHtyulu5or5EKXe32",
+  "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "cf6p7BBsFIRwHtyulu5or5EKXe32",
+    "hasGift": true,
+    "lastFcmUpdate": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-10-17T09:48:42.456000+00:00"
+    },
+    "postsCount": 4,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-22T08:49:15.046000+00:00"
+    },
+    "isBanned": false,
+    "gradeLevel": 2,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-08T00:14:19.193376+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLo6rXBDMOha1Wq0bmmDbDQi1R_bV91WJYUZ40b74KcJAPyew=s96-c",
+    "commentCount": 7,
+    "fcmToken": "cWan6xg8RXq9UQBJfNnu4g:APA91bEOEMrc46lSOYgVyYL6o_QYdimBEOWxNIO0S9fVnr5ypccdhQOR5-0gJkMOaxvjOu6WOe8ZW0mdUlK2VQC1Al5LnXb0aPuAbUdXO0KbIDNQuI2z5SM",
+    "likesReceived": 0,
+    "followerCount": 1,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "displayNameChangeCount": 0,
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-04T11:58:00.801000+00:00"
+    },
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-07T12:26:59.967000+00:00"
+    },
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-21T12:42:49.473000+00:00"
+    },
+    "displayName": "이상원",
+    "peanutCount": 40,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.2",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-07T12:26:59.967000+00:00"
+    },
+    "email": "82great82@gmail.com",
+    "likesCount": 12,
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "asiana",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/cards/asiana",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 667,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:32:31.985000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      }
+    ],
+    "followers": [
+      {
+        "id": "aP3C0N511beyK7QZG9GyChs5oqO2",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/followers/aP3C0N511beyK7QZG9GyChs5oqO2",
+        "data": {
+          "followedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:46:08.790000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "0742cee6-1f66-4e3b-a650-25c6db1a45cc",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/0742cee6-1f66-4e3b-a650-25c6db1a45cc",
+        "data": {
+          "title": "아시아나 조회시 세금&마일리지 단위",
+          "postPath": "posts/20250821/posts/0742cee6-1f66-4e3b-a650-25c6db1a45cc",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-21T12:42:38.413000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "14668716-870f-4b44-bf8b-50cc4830850f",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/14668716-870f-4b44-bf8b-50cc4830850f",
+        "data": {
+          "title": "2025년 8월 16일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20250816/posts/14668716-870f-4b44-bf8b-50cc4830850f",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-17T08:46:25.710000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+        "data": {
+          "title": "앞으로의 기능 업데이트",
+          "postPath": "posts/20250819/posts/21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-19T08:44:22.578000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "399b2efa-c5de-44db-99ce-1969462368a5",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/399b2efa-c5de-44db-99ce-1969462368a5",
+        "data": {
+          "title": "2025년 8월 17일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20250817/posts/399b2efa-c5de-44db-99ce-1969462368a5",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-17T08:46:21.239000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4259c790-1cba-445e-ada5-bcb12f2a0e19",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/4259c790-1cba-445e-ada5-bcb12f2a0e19",
+        "data": {
+          "title": "안드로이드 2.2.0 버전 업데이트",
+          "postPath": "posts/20250814/posts/4259c790-1cba-445e-ada5-bcb12f2a0e19",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:16.039000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4f55789c-4e7d-40a4-81ab-0e32edd73ace",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/4f55789c-4e7d-40a4-81ab-0e32edd73ace",
+        "data": {
+          "title": "카타르 항공 비즈니스 좋아요",
+          "postPath": "posts/20250814/posts/4f55789c-4e7d-40a4-81ab-0e32edd73ace",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:25.777000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "5b9969e3-0625-4051-a63c-3c2cb3963e70",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/5b9969e3-0625-4051-a63c-3c2cb3963e70",
+        "data": {
+          "title": "보리와 함께 9월에 스위스 갑니다~",
+          "postPath": "posts/20250814/posts/5b9969e3-0625-4051-a63c-3c2cb3963e70",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-17T08:47:51.624000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8dd99b20-1d55-405d-8087-82f3742730f3",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/8dd99b20-1d55-405d-8087-82f3742730f3",
+        "data": {
+          "title": "유용한 어플이네요",
+          "postPath": "posts/20250821/posts/8dd99b20-1d55-405d-8087-82f3742730f3",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-21T12:42:36.023000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "KfyZlOsONFMlba6uMTKY",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/KfyZlOsONFMlba6uMTKY",
+        "data": {
+          "title": "✈️ 2025년 08월 22일 현재 아시아나 마일리지 좌석 정보 (비즈니스/퍼스트)",
+          "postPath": "posts/20250822/posts/KfyZlOsONFMlba6uMTKY",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T08:49:30.649000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "a73af7f9-d5a4-4e2f-9da5-8e24d11f222b",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/a73af7f9-d5a4-4e2f-9da5-8e24d11f222b",
+        "data": {
+          "title": "[외항사] 일본항공 GMP>HND>LAX>GRU / GRU>JFK>HND>GMP",
+          "postPath": "posts/20250812/posts/a73af7f9-d5a4-4e2f-9da5-8e24d11f222b",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:43.557000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "cojFAgMz9hm3lSI1LAfZ",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/cojFAgMz9hm3lSI1LAfZ",
+        "data": {
+          "title": "✈️ 2025년 08월 23일 현재 아시아나 마일리지 좌석 정보 (비즈니스/퍼스트)",
+          "postPath": "posts/20250823/posts/cojFAgMz9hm3lSI1LAfZ",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-23T04:31:34.481000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "e4efaa58-37b1-4c7e-88af-41981d516b32",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/liked_posts/e4efaa58-37b1-4c7e-88af-41981d516b32",
+        "data": {
+          "title": "2025년 8월 14일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20250814/posts/e4efaa58-37b1-4c7e-88af-41981d516b32",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:35.025000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1769574769762",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/lots/lot_1769574769762",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 2.2,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:03.560000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:32:38.200782+00:00"
+          },
+          "cardId": "asiana",
+          "buyUnit": 97800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:32:49.688000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769574796165",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/lots/lot_1769574796165",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 2.3,
+          "memo": "",
+          "qty": 6,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:12.656000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:32:52.637882+00:00"
+          },
+          "cardId": "asiana",
+          "buyUnit": 97700,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:33:16.115000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "9hzasEhyrtAdc89omkB7",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/9hzasEhyrtAdc89omkB7",
+        "data": {
+          "commentPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7/comments/9hzasEhyrtAdc89omkB7",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:33:19.022000+00:00"
+          },
+          "postPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7",
+          "contentHtml": "<p>@마일캐치 감사합니다\n이 앱을 사용하시는 분들은 대부분 비즈니스이상을 찾기위함이라 생각해서요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ABcfB6XVsOfyNYkmNoj5",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/ABcfB6XVsOfyNYkmNoj5",
+        "data": {
+          "commentPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7/comments/ABcfB6XVsOfyNYkmNoj5",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T02:22:25.902000+00:00"
+          },
+          "postPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7",
+          "contentHtml": "<p>@마일캐치 아 감사합니다!!!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "JJb8SH6R3Ysm4BHFu13D",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/JJb8SH6R3Ysm4BHFu13D",
+        "data": {
+          "commentPath": "posts/20250814/posts/1f5f1bda-c366-4f7f-916c-7dcac18d38f8/comments/JJb8SH6R3Ysm4BHFu13D",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T14:02:22.377000+00:00"
+          },
+          "postPath": "posts/20250814/posts/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "contentHtml": "<p>@마일캐치 감사합니다!!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "a0DDepHixtoQgDEpIOxe",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/a0DDepHixtoQgDEpIOxe",
+        "data": {
+          "commentPath": "posts/20250819/posts/21d4c643-b12c-4fe7-be59-f895ad8e3cbc/comments/a0DDepHixtoQgDEpIOxe",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-19T08:44:33.475000+00:00"
+          },
+          "postPath": "posts/20250819/posts/21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+          "contentHtml": "<p>늘 감사드립니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "mdJqAAG7H93VwPbMsBs3",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/mdJqAAG7H93VwPbMsBs3",
+        "data": {
+          "commentPath": "posts/20250814/posts/1f5f1bda-c366-4f7f-916c-7dcac18d38f8/comments/mdJqAAG7H93VwPbMsBs3",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:09:13.046000+00:00"
+          },
+          "postPath": "posts/20250814/posts/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "contentHtml": "<p>@마일캐치 좋은앱만들어주셔서 감사합니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "uOFN1Nww2WpY5tq2pbwH",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/uOFN1Nww2WpY5tq2pbwH",
+        "data": {
+          "commentPath": "posts/20250822/posts/9baccf2b-b924-40a8-be28-b6ff0c91f84d/comments/uOFN1Nww2WpY5tq2pbwH",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T08:49:15.163000+00:00"
+          },
+          "postPath": "posts/20250822/posts/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "contentHtml": "<p>@마일캐치 계속 업그레이드되서 너무 좋네요ㅋㅋ</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "zkUbM75DaZzl3w9VmBYU",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_comments/zkUbM75DaZzl3w9VmBYU",
+        "data": {
+          "commentPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7/comments/zkUbM75DaZzl3w9VmBYU",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:19:59.608000+00:00"
+          },
+          "postPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7",
+          "contentHtml": "<p>@마일캐치 아시아나에 이코노미노선은 꽤 많아서 조회가 어렵지않을거같아요.\n\n전 비즈니스이상만 보이게해도 충분히 만족스러울거같아요~~</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_posts": [
+      {
+        "id": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_posts/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+        "data": {
+          "title": "아시아나 검색 감사합니다",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T08:03:44.601000+00:00"
+          },
+          "postPath": "posts/20250814/posts/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "boardId": "question"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_posts/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+        "data": {
+          "title": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T00:02:47.069000+00:00"
+          },
+          "postPath": "posts/20250822/posts/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "boardId": "free"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "b5890932-537b-487a-bfea-79406a4be2b7",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_posts/b5890932-537b-487a-bfea-79406a4be2b7",
+        "data": {
+          "title": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T01:56:48.474000+00:00"
+          },
+          "postPath": "posts/20250815/posts/b5890932-537b-487a-bfea-79406a4be2b7",
+          "boardId": "error_report"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "efe2407b-d4a6-463b-bef3-d0b619723fd4",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/my_posts/efe2407b-d4a6-463b-bef3-d0b619723fd4",
+        "data": {
+          "title": "지마켓 신세계2.3%",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-04T11:58:00.666000+00:00"
+          },
+          "postPath": "posts/20260204/posts/efe2407b-d4a6-463b-bef3-d0b619723fd4",
+          "boardId": "deal"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "1DwmMy8oeqGrmZuhaQaL",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/1DwmMy8oeqGrmZuhaQaL",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260204/efe2407b-d4a6-463b-bef3-d0b619723fd4",
+          "postTitle": "지마켓 신세계2.3%",
+          "commentId": "amoOZyKsXgZKuBFISre4",
+          "commentedByName": "마일캐치",
+          "date": "20260204",
+          "boardId": "deal",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T06:35:55.602000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "efe2407b-d4a6-463b-bef3-d0b619723fd4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "2wEL9VnExzIEgxScxj0M",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/2wEL9VnExzIEgxScxj0M",
+        "data": {
+          "likedByName": "나드리가고싶네요",
+          "type": "post_like",
+          "boardId": "question",
+          "date": "20250814",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-09-01T22:57:58.219000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "나드리가고싶네요님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "FgruWjt0V3SyBjD2GqsKENl5qPI3",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "33ebxFg4YKaLrlmNfkoE",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/33ebxFg4YKaLrlmNfkoE",
+        "data": {
+          "postId": "21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+          "type": "comment_like",
+          "path": "/community/detail/20250819/21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+          "commentId": "a0DDepHixtoQgDEpIOxe",
+          "date": "20250819",
+          "boardId": "suggestion",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-19T08:45:07.710000+00:00"
+          },
+          "boardName": "건의사항",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4KIDLNhY3cs4RQ6DFsEV",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/4KIDLNhY3cs4RQ6DFsEV",
+        "data": {
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "type": "comment_like",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "commentId": "JJb8SH6R3Ysm4BHFu13D",
+          "date": "20250814",
+          "boardId": "question",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T23:10:48.968000+00:00"
+          },
+          "boardName": "마일리지",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6WA1yx3yUJqmnl64VRgh",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/6WA1yx3yUJqmnl64VRgh",
+        "data": {
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7",
+          "type": "comment_like",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "ABcfB6XVsOfyNYkmNoj5",
+          "date": "20250815",
+          "boardId": "error_report",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T02:58:02.766000+00:00"
+          },
+          "boardName": "오류 신고",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6frZJgZPU8cKUAYLlRvd",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/6frZJgZPU8cKUAYLlRvd",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "xQQOcBuSJ6mJpVLyqayU",
+          "date": "20250815",
+          "boardId": "error_report",
+          "parentCommentId": "ABcfB6XVsOfyNYkmNoj5",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:13:06.801000+00:00"
+          },
+          "boardName": "오류 신고",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7P2EhNngVo3WLM970Amq",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/7P2EhNngVo3WLM970Amq",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20250822",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T01:33:06.602000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7ZdvkE7aF6oHGoR0LEs0",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/7ZdvkE7aF6oHGoR0LEs0",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "vw0Af5u3SDRKo5Ubb3NA",
+          "date": "20250815",
+          "boardId": "error_report",
+          "parentCommentId": "9hzasEhyrtAdc89omkB7",
+          "isRead": true,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T08:45:07.175000+00:00"
+          },
+          "boardName": "오류 신고",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8bOEotGw3JbD18kD8yUl",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/8bOEotGw3JbD18kD8yUl",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "postTitle": "아시아나 검색 감사합니다",
+          "commentId": "bFXIIFqecUG9SIqsNpvA",
+          "commentedByName": "마일캐치",
+          "date": "20250814",
+          "boardId": "question",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T10:04:05.656000+00:00"
+          },
+          "boardName": "마일리지",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "DfTOucoBb9uJh0JkqvmK",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/DfTOucoBb9uJh0JkqvmK",
+        "data": {
+          "likedByName": "JH PARK",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20250822",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-23T08:58:29.624000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "body": "JH PARK님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "NCYTn79HduUDlcMSxWs2y33ivnu2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "E1JLqu3d2fxtwO04r9Zx",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/E1JLqu3d2fxtwO04r9Zx",
+        "data": {
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7",
+          "type": "comment_like",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "9hzasEhyrtAdc89omkB7",
+          "date": "20250815",
+          "boardId": "error_report",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:36:38.252000+00:00"
+          },
+          "boardName": "오류 신고",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "EU3Voax8HZSIJEB0ftlk",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/EU3Voax8HZSIJEB0ftlk",
+        "data": {
+          "likedByName": "보리아버님",
+          "type": "post_like",
+          "boardId": "question",
+          "date": "20250814",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-25T02:24:01.268000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "보리아버님님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "5YbCGIjExXO8OSZUbkkfHt0WPAN2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ExkSeE3gAxw2WxS2vXTD",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/ExkSeE3gAxw2WxS2vXTD",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "deal",
+          "date": "20260204",
+          "path": "/community/detail/20260204/efe2407b-d4a6-463b-bef3-d0b619723fd4",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T00:34:26.637000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "postTitle": "지마켓 신세계2.3%",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "efe2407b-d4a6-463b-bef3-d0b619723fd4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "J0JaZm2GWrkyF4Xs9Tw5",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/J0JaZm2GWrkyF4Xs9Tw5",
+        "data": {
+          "likedByName": "익명",
+          "type": "post_like",
+          "boardId": "error_report",
+          "date": "20250815",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-21T13:26:14.034000+00:00"
+          },
+          "boardName": "오류 신고",
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "body": "익명님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "D0Z1LId1YscLFGjaq8ajS3iLUK52",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "J7Yv2hnu3eUSMv43RGoU",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/J7Yv2hnu3eUSMv43RGoU",
+        "data": {
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "type": "comment_like",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "commentId": "mdJqAAG7H93VwPbMsBs3",
+          "date": "20250814",
+          "boardId": "question",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:36:35.796000+00:00"
+          },
+          "boardName": "마일리지",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "KHASkwDyhxkpx24vrp6s",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/KHASkwDyhxkpx24vrp6s",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "postTitle": "아시아나 검색 감사합니다",
+          "commentId": "k14fDDsz9ctmCQOrVE4z",
+          "commentedByName": "마일캐치",
+          "date": "20250814",
+          "boardId": "question",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:45:53.478000+00:00"
+          },
+          "boardName": "마일리지",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Kn8lHQzbhRQYTX11V4fo",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/Kn8lHQzbhRQYTX11V4fo",
+        "data": {
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "date": "20250814",
+          "boardId": "question",
+          "type": "post_like",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:15:06.194000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "오잉님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "3cyyBoshv7MHpgqPzuJlEhSKqYy2",
+          "likedByName": "오잉"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "QAhvBTbX3kTsCQw4yuO7",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/QAhvBTbX3kTsCQw4yuO7",
+        "data": {
+          "likedByName": "킹스포드스미스국제공항",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20250822",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T02:27:53.829000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "body": "킹스포드스미스국제공항님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "UntdsCcIsREUeFQNUnE9",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/UntdsCcIsREUeFQNUnE9",
+        "data": {
+          "likedByName": "Jungjun Kim",
+          "type": "post_like",
+          "boardId": "question",
+          "date": "20250814",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-28T01:33:53.558000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "Jungjun Kim님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "Fuqw1xNIr6evGBKIE7tw96mPFvN2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "aPgk6R5S5RjpEDLCuWjT",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/aPgk6R5S5RjpEDLCuWjT",
+        "data": {
+          "likedByName": "킹스포드스미스국제공항",
+          "type": "post_like",
+          "boardId": "error_report",
+          "date": "20250815",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T12:15:51.217000+00:00"
+          },
+          "boardName": "오류 신고",
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "body": "킹스포드스미스국제공항님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "cFgduKom2La7uFPrw0d4",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/cFgduKom2La7uFPrw0d4",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "commentId": "5P9PsI8X3yjgngggBE6i",
+          "commentedByName": "마일캐치",
+          "date": "20250815",
+          "boardId": "error_report",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T02:20:42.871000+00:00"
+          },
+          "boardName": "오류 신고",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dPxmFkAk1sVQ193vro4f",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/dPxmFkAk1sVQ193vro4f",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "wraaPFLyN5bDbopRwDl3",
+          "date": "20250815",
+          "boardId": "error_report",
+          "parentCommentId": "zkUbM75DaZzl3w9VmBYU",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:21:00.953000+00:00"
+          },
+          "boardName": "오류 신고",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "f2bHt3vtQfmEgWyulOYI",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/f2bHt3vtQfmEgWyulOYI",
+        "data": {
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7",
+          "type": "comment_like",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "ABcfB6XVsOfyNYkmNoj5",
+          "date": "20250815",
+          "boardId": "error_report",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T10:34:01.456000+00:00"
+          },
+          "boardName": "오류 신고",
+          "commenterName": "이상원",
+          "body": "Geonwoo Park님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "6gfZHTkehCgY9yJS87Vg5KpupR72",
+          "likedByName": "Geonwoo Park"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "f3atfs8CLsM466gW8eWd",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/f3atfs8CLsM466gW8eWd",
+        "data": {
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "type": "comment_like",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "commentId": "uOFN1Nww2WpY5tq2pbwH",
+          "date": "20250822",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T09:03:05.134000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fkJHZ3mdVOQuc5se3MzP",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/fkJHZ3mdVOQuc5se3MzP",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "postTitle": "아시아나 검색 감사합니다",
+          "commentId": "zoW8g5Ii1xDqwQJibCSc",
+          "commentedByName": "마일캐치",
+          "date": "20250814",
+          "boardId": "question",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T23:10:15.965000+00:00"
+          },
+          "boardName": "마일리지",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "goD6ZDSx3oaJmG8Mtdt4",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/goD6ZDSx3oaJmG8Mtdt4",
+        "data": {
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7",
+          "type": "comment_like",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "zkUbM75DaZzl3w9VmBYU",
+          "date": "20250815",
+          "boardId": "error_report",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T10:34:08.457000+00:00"
+          },
+          "boardName": "오류 신고",
+          "commenterName": "이상원",
+          "body": "Geonwoo Park님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "6gfZHTkehCgY9yJS87Vg5KpupR72",
+          "likedByName": "Geonwoo Park"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "iaw8XIe4CPfV2g2jjTfo",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/iaw8XIe4CPfV2g2jjTfo",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250819/21d4c643-b12c-4fe7-be59-f895ad8e3cbc",
+          "commentId": "LqX1ClQmmdDBhuZhrX6A",
+          "date": "20250819",
+          "boardId": "suggestion",
+          "parentCommentId": "a0DDepHixtoQgDEpIOxe",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-19T08:45:21.949000+00:00"
+          },
+          "boardName": "건의사항",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "21d4c643-b12c-4fe7-be59-f895ad8e3cbc"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lEMVubGdsbe08zVGuODf",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/lEMVubGdsbe08zVGuODf",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "commentId": "t8y4BC2J8T6nyjJ4CWLu",
+          "commentedByName": "JH PARK",
+          "date": "20250822",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-23T08:58:39.040000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "JH PARK님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "NCYTn79HduUDlcMSxWs2y33ivnu2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "n4R9iRaQk06CuiKVPHIb",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/n4R9iRaQk06CuiKVPHIb",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "commentId": "bBjlA9gaXkl02rOlZ6WB",
+          "commentedByName": "마일캐치",
+          "date": "20250822",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T01:33:41.868000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "piQ3bOhYWMZodgqcOSy4",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/piQ3bOhYWMZodgqcOSy4",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "wYDMyjLOVvA3k1y4cngb",
+          "date": "20250815",
+          "boardId": "error_report",
+          "parentCommentId": "ABcfB6XVsOfyNYkmNoj5",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:15:09.689000+00:00"
+          },
+          "boardName": "오류 신고",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "q0sZwICKzzDJNeDWs5qR",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/q0sZwICKzzDJNeDWs5qR",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "aOrEf86o8aOgU5eHRaJJ",
+          "date": "20250815",
+          "boardId": "error_report",
+          "parentCommentId": "ABcfB6XVsOfyNYkmNoj5",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:14:42.701000+00:00"
+          },
+          "boardName": "오류 신고",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "qj3dbYfoYpv5gJMWVFuS",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/qj3dbYfoYpv5gJMWVFuS",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260204/efe2407b-d4a6-463b-bef3-d0b619723fd4",
+          "postTitle": "지마켓 신세계2.3%",
+          "commentId": "sb4dCLDenKQcEKMS5ev0",
+          "commentedByName": "마일캐치",
+          "date": "20260204",
+          "boardId": "deal",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T00:34:44.723000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "efe2407b-d4a6-463b-bef3-d0b619723fd4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "r7TX5mYMO2NfLs35pWlE",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/r7TX5mYMO2NfLs35pWlE",
+        "data": {
+          "likedByName": "seunghoon ji",
+          "type": "post_like",
+          "boardId": "question",
+          "date": "20250814",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-21T10:54:30.928000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "seunghoon ji님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "H72JMTN4n8hHimjHBl06zL8fngT2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rxmgUByw3oaFpXpJiYmL",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/rxmgUByw3oaFpXpJiYmL",
+        "data": {
+          "likedByName": "보리아버님",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20250822",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T01:50:09.273000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "body": "보리아버님님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "5YbCGIjExXO8OSZUbkkfHt0WPAN2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sSiL2RiQWoHcvqR2LeNi",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/sSiL2RiQWoHcvqR2LeNi",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "commentId": "Ki5E673b0XdqzNABlS9N",
+          "commentedByName": "마일캐치",
+          "date": "20250822",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T07:03:07.455000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "slkGVZst6iuOfhYmkAkc",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/slkGVZst6iuOfhYmkAkc",
+        "data": {
+          "likedByName": "킹스포드스미스국제공항",
+          "type": "post_like",
+          "boardId": "deal",
+          "date": "20260204",
+          "path": "/community/detail/20260204/efe2407b-d4a6-463b-bef3-d0b619723fd4",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T00:29:26.657000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "postTitle": "지마켓 신세계2.3%",
+          "body": "킹스포드스미스국제공항님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "efe2407b-d4a6-463b-bef3-d0b619723fd4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "tzBmMG7BCJsEKII1XJHJ",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/tzBmMG7BCJsEKII1XJHJ",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "question",
+          "date": "20250814",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T10:04:13.406000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "wbtr54OnFwOPyx7iD4o4",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/wbtr54OnFwOPyx7iD4o4",
+        "data": {
+          "likedByName": "니응니응",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20250822",
+          "path": "/community/detail/20250822/9baccf2b-b924-40a8-be28-b6ff0c91f84d",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-27T13:17:37.964000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "body": "니응니응님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "6ht0SSb2gFgQ3tCDUt6uvRHLpcv2",
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "xbam7DrhYAbUvuw8bEva",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/xbam7DrhYAbUvuw8bEva",
+        "data": {
+          "likedByName": "익명",
+          "type": "post_like",
+          "boardId": "question",
+          "date": "20250814",
+          "path": "/community/detail/20250814/1f5f1bda-c366-4f7f-916c-7dcac18d38f8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-24T14:55:50.197000+00:00"
+          },
+          "boardName": "마일리지",
+          "postTitle": "아시아나 검색 감사합니다",
+          "body": "익명님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "ttYGHe6fu8YqAYrj1fvtvZ2YUIR2",
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "xoQoOY7V2JrqBYKGNems",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/xoQoOY7V2JrqBYKGNems",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "error_report",
+          "date": "20250815",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T02:19:34.613000+00:00"
+          },
+          "boardName": "오류 신고",
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "zDjB8LPk1uquuzxwTpgc",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/notifications/zDjB8LPk1uquuzxwTpgc",
+        "data": {
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7",
+          "type": "comment_like",
+          "path": "/community/detail/20250815/b5890932-537b-487a-bfea-79406a4be2b7",
+          "commentId": "zkUbM75DaZzl3w9VmBYU",
+          "date": "20250815",
+          "boardId": "error_report",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:20:20.178000+00:00"
+          },
+          "boardName": "오류 신고",
+          "commenterName": "이상원",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "5njxi59RUJxCvO9Zmopk",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/5njxi59RUJxCvO9Zmopk",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20250821",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-21T12:42:35.903000+00:00"
+          },
+          "postTitle": "유용한 어플이네요",
+          "amount": 1,
+          "postId": "8dd99b20-1d55-405d-8087-82f3742730f3"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "9McItXHhnGaBaawdItrj",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/9McItXHhnGaBaawdItrj",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20250822",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T00:02:47.282000+00:00"
+          },
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "amount": 10,
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Fx9uJRZwNB1tSjJyGvsz",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/Fx9uJRZwNB1tSjJyGvsz",
+        "data": {
+          "type": "post_like",
+          "boardId": "suggestion",
+          "dateString": "20250819",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-19T08:44:22.499000+00:00"
+          },
+          "postTitle": "앞으로의 기능 업데이트",
+          "amount": 1,
+          "postId": "21d4c643-b12c-4fe7-be59-f895ad8e3cbc"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "GgsT8g5caU6H8RpZjrSU",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/GgsT8g5caU6H8RpZjrSU",
+        "data": {
+          "amount": 50,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:45:58.232000+00:00"
+          },
+          "type": "admin_gift",
+          "adminName": "마일캐치",
+          "reason": "운영자 선물",
+          "adminId": "aP3C0N511beyK7QZG9GyChs5oqO2"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "IKXIkr2rTEew2rj8gA9A",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/IKXIkr2rTEew2rj8gA9A",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250819",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-19T08:44:33.630000+00:00"
+          },
+          "postTitle": "앞으로의 기능 업데이트",
+          "commentId": "a0DDepHixtoQgDEpIOxe",
+          "amount": 2,
+          "postId": "21d4c643-b12c-4fe7-be59-f895ad8e3cbc"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "KHPCqebzaY4YkyNgeRBi",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/KHPCqebzaY4YkyNgeRBi",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250815",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:19:59.780000+00:00"
+          },
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "commentId": "zkUbM75DaZzl3w9VmBYU",
+          "amount": 2,
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "PcobYFEa4oeHwm1zTNju",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/PcobYFEa4oeHwm1zTNju",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T14:02:22.579000+00:00"
+          },
+          "postTitle": "아시아나 검색 감사합니다",
+          "commentId": "JJb8SH6R3Ysm4BHFu13D",
+          "amount": 2,
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "PioMStUHQubyi4djeNvv",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/PioMStUHQubyi4djeNvv",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250815",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T07:33:19.188000+00:00"
+          },
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "commentId": "9hzasEhyrtAdc89omkB7",
+          "amount": 2,
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Rd0LY9c4pG54CF3HRyPS",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/Rd0LY9c4pG54CF3HRyPS",
+        "data": {
+          "type": "post_create",
+          "boardId": "question",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T08:03:44.875000+00:00"
+          },
+          "postTitle": "아시아나 검색 감사합니다",
+          "amount": 10,
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "TE389TWT99hWLblgUNnq",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/TE389TWT99hWLblgUNnq",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250822",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T08:49:15.320000+00:00"
+          },
+          "postTitle": "오늘의 좌석 아시아나도 올려주실수 있나요?",
+          "commentId": "uOFN1Nww2WpY5tq2pbwH",
+          "amount": 2,
+          "postId": "9baccf2b-b924-40a8-be28-b6ff0c91f84d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "VGLpwvNN9Q8ynY64Bspi",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/VGLpwvNN9Q8ynY64Bspi",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:09:13.195000+00:00"
+          },
+          "postTitle": "아시아나 검색 감사합니다",
+          "commentId": "mdJqAAG7H93VwPbMsBs3",
+          "amount": 2,
+          "postId": "1f5f1bda-c366-4f7f-916c-7dcac18d38f8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "W9hC5ZDTMdkZPohixVYq",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/W9hC5ZDTMdkZPohixVYq",
+        "data": {
+          "type": "post_create",
+          "boardId": "error_report",
+          "dateString": "20250815",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T01:56:48.662000+00:00"
+          },
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "amount": 10,
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ZXFnMkT8Lf5L7H9byhHm",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/ZXFnMkT8Lf5L7H9byhHm",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20250816",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-17T08:46:25.667000+00:00"
+          },
+          "postTitle": "2025년 8월 16일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "14668716-870f-4b44-bf8b-50cc4830850f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ZghttTLrtcooz0EBh0Wo",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/ZghttTLrtcooz0EBh0Wo",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:15.983000+00:00"
+          },
+          "postTitle": "안드로이드 2.2.0 버전 업데이트",
+          "amount": 1,
+          "postId": "4259c790-1cba-445e-ada5-bcb12f2a0e19"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ZohmndTxcJiLTLY1d7mT",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/ZohmndTxcJiLTLY1d7mT",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:34.968000+00:00"
+          },
+          "postTitle": "2025년 8월 14일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "e4efaa58-37b1-4c7e-88af-41981d516b32"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "cFTasvRyvWWzKhubC4lo",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/cFTasvRyvWWzKhubC4lo",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250815",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-15T02:22:26.048000+00:00"
+          },
+          "postTitle": "마일캐치님~~아시아나 비즈니스가 안보이는 오류가 푸켓노선만 수정이된거같습니다.La로 가는 노선이 지금 보이는데 마일캐치에선 이코노미만 보이네요.확인한번 부탁드립니다.",
+          "commentId": "ABcfB6XVsOfyNYkmNoj5",
+          "amount": 2,
+          "postId": "b5890932-537b-487a-bfea-79406a4be2b7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "g4LgwupzRjon0Bx4p7JU",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/g4LgwupzRjon0Bx4p7JU",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20250817",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-17T08:46:21.165000+00:00"
+          },
+          "postTitle": "2025년 8월 17일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "399b2efa-c5de-44db-99ce-1969462368a5"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "jiBJzKugc68e0NjPNx3a",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/jiBJzKugc68e0NjPNx3a",
+        "data": {
+          "type": "post_like",
+          "boardId": "seats",
+          "dateString": "20250823",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-23T04:31:34.392000+00:00"
+          },
+          "postTitle": "✈️ 2025년 08월 23일 현재 아시아나 마일리지 좌석 정보 (비즈니스/퍼스트)",
+          "amount": 1,
+          "postId": "cojFAgMz9hm3lSI1LAfZ"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lT1rtg2fk6HZ4gpNhuMo",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/lT1rtg2fk6HZ4gpNhuMo",
+        "data": {
+          "type": "post_like",
+          "boardId": "seat_share",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-17T08:47:51.567000+00:00"
+          },
+          "postTitle": "보리와 함께 9월에 스위스 갑니다~",
+          "amount": 1,
+          "postId": "5b9969e3-0625-4051-a63c-3c2cb3963e70"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "li6g3huOl8aScdpB4Stm",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/li6g3huOl8aScdpB4Stm",
+        "data": {
+          "type": "post_like",
+          "boardId": "review",
+          "dateString": "20250814",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:25.696000+00:00"
+          },
+          "postTitle": "카타르 항공 비즈니스 좋아요",
+          "amount": 1,
+          "postId": "4f55789c-4e7d-40a4-81ab-0e32edd73ace"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lnEK5lu8RRLc49Pot4HT",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/lnEK5lu8RRLc49Pot4HT",
+        "data": {
+          "type": "post_like",
+          "boardId": "error_report",
+          "dateString": "20250821",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-21T12:42:38.297000+00:00"
+          },
+          "postTitle": "아시아나 조회시 세금&마일리지 단위",
+          "amount": 1,
+          "postId": "0742cee6-1f66-4e3b-a650-25c6db1a45cc"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lx3UCVyYhbcISFSn03V0",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/lx3UCVyYhbcISFSn03V0",
+        "data": {
+          "type": "post_like",
+          "boardId": "review",
+          "dateString": "20250812",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-14T13:37:43.520000+00:00"
+          },
+          "postTitle": "[외항사] 일본항공 GMP>HND>LAX>GRU / GRU>JFK>HND>GMP",
+          "amount": 1,
+          "postId": "a73af7f9-d5a4-4e2f-9da5-8e24d11f222b"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "qzu9vfRV6yzVpbRLCRij",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/qzu9vfRV6yzVpbRLCRij",
+        "data": {
+          "type": "post_like",
+          "boardId": "seats",
+          "dateString": "20250822",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-08-22T08:49:30.593000+00:00"
+          },
+          "postTitle": "✈️ 2025년 08월 22일 현재 아시아나 마일리지 좌석 정보 (비즈니스/퍼스트)",
+          "amount": 1,
+          "postId": "KfyZlOsONFMlba6uMTKY"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "udMDlZiRXPUl0G1zG825",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/peanut_history/udMDlZiRXPUl0G1zG825",
+        "data": {
+          "type": "post_create",
+          "boardId": "deal",
+          "dateString": "20260204",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-04T11:58:00.857000+00:00"
+          },
+          "postTitle": "지마켓 신세계2.3%",
+          "amount": 10,
+          "postId": "efe2407b-d4a6-463b-bef3-d0b619723fd4"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1769574843567",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/sales/sale_1769574843567",
+        "data": {
+          "mileRuleUsedPerMileKRW": 667,
+          "sellTotal": 96800,
+          "costPerMile": 6.8,
+          "discount": 3.2,
+          "miles": 147,
+          "sellUnit": 96800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:03.509000+00:00"
+          },
+          "buyTotal": 97800,
+          "qty": 1,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:33:22.070381+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:03.509000+00:00"
+          },
+          "profit": -1000,
+          "lotId": "lot_1769574769762"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1769574852700",
+        "path": "users/cf6p7BBsFIRwHtyulu5or5EKXe32/sales/sale_1769574852700",
+        "data": {
+          "mileRuleUsedPerMileKRW": 667,
+          "sellTotal": 580800,
+          "costPerMile": 6.14,
+          "discount": 3.2,
+          "miles": 879,
+          "sellUnit": 96800,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:12.606000+00:00"
+          },
+          "buyTotal": 586200,
+          "qty": 6,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:07.048460+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-28T04:34:12.606000+00:00"
+          },
+          "profit": -5400,
+          "lotId": "lot_1769574796165"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "cf6p7BBsFIRwHtyulu5or5EKXe32",
+    "safeFileName": "cf6p7BBsFIRwHtyulu5or5EKXe32.json"
+  }
+}

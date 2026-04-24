@@ -1,0 +1,47 @@
+{
+  "id": "2yvsP80mrnTy13m4VjtwoxDeEho1",
+  "path": "users/2yvsP80mrnTy13m4VjtwoxDeEho1",
+  "data": {
+    "rankingAgreement": true,
+    "fcmToken": "eVT__HozQTewI90Q4CsaGH:APA91bErN6IoM4hkssSAD2GjYMA9fBSGwj_hiz1IN88EH5sv3Td4w2eDxjVKhj2f1AiD9WmJALWT1CA8izL5-Id5W5Kb0S5po8nt7rtV8F-t9Jg2Or_phKQ",
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte",
+        "path": "users/2yvsP80mrnTy13m4VjtwoxDeEho1/cards/lotte",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T05:52:07.343000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_andma",
+        "path": "users/2yvsP80mrnTy13m4VjtwoxDeEho1/cards/samsung_andma",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T05:54:09.413000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "2yvsP80mrnTy13m4VjtwoxDeEho1",
+    "safeFileName": "2yvsP80mrnTy13m4VjtwoxDeEho1.json"
+  }
+}

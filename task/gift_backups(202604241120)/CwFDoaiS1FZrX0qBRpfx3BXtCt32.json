@@ -1,0 +1,134 @@
+{
+  "id": "CwFDoaiS1FZrX0qBRpfx3BXtCt32",
+  "path": "users/CwFDoaiS1FZrX0qBRpfx3BXtCt32",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "CwFDoaiS1FZrX0qBRpfx3BXtCt32",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-03T05:04:30.706000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocIWbaPIEJvmpZQeXlmyLxUutApXKoH56pOvsWYyuA7JNY1yOw=s96-c",
+    "commentCount": 0,
+    "fcmToken": "f0j8Pi8XQhyHMlrdDH4nkl:APA91bGVgda2W-Wav-4MsYNEqvZgirEtYc-h1-1PfScdyc-gPPRLdXPmf7zXC-tzXcqukkMx07zjBzYQeVupuEUpQ7L8_lcDm_CBCgpzWmG05Fw72JWKkkc",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-03T05:04:30.706000+00:00"
+    },
+    "displayName": "정지희",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-03T05:04:30.706000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-03T05:04:30.706000+00:00"
+    },
+    "likesCount": 0,
+    "email": "ach7jjh@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lottecheck",
+        "path": "users/CwFDoaiS1FZrX0qBRpfx3BXtCt32/cards/lottecheck",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T05:31:10.432000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1770096724880",
+        "path": "users/CwFDoaiS1FZrX0qBRpfx3BXtCt32/lots/lot_1770096724880",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 10,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T06:00:04.245000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T05:31:40.650038+00:00"
+          },
+          "cardId": "lottecheck",
+          "buyUnit": 97200,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T05:32:05.129000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770098389550",
+        "path": "users/CwFDoaiS1FZrX0qBRpfx3BXtCt32/lots/lot_1770098389550",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T05:59:36.523237+00:00"
+          },
+          "discount": 2.8,
+          "cardId": "lottecheck",
+          "buyUnit": 97200,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T05:59:49.865000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T05:59:49.865000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "CwFDoaiS1FZrX0qBRpfx3BXtCt32",
+    "safeFileName": "CwFDoaiS1FZrX0qBRpfx3BXtCt32.json"
+  }
+}

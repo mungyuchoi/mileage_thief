@@ -1,0 +1,156 @@
+{
+  "id": "DLS78xdy5TSpgWlUjEMAZcL4RNr2",
+  "path": "users/DLS78xdy5TSpgWlUjEMAZcL4RNr2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "DLS78xdy5TSpgWlUjEMAZcL4RNr2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T08:00:12.280000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKzZ0HGU4w3DtE02Ov7odNegNR_TyzQRS-GyoHUQYOM5YeOME7T-g=s96-c",
+    "commentCount": 0,
+    "fcmToken": "cqn2_TrhQNqPAt4ZQI8OQW:APA91bH07wTNxANoUsQ6CXVfdHvpX70Y0QzWS8y7WVuEpPcIoRgKgel39qbFUyM7v7XL1QvDFDXID2GMF3m6_uuBIx9WN4xn258Pz6TMfFjnw-Spb9PsZOs",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T08:00:12.280000+00:00"
+    },
+    "displayName": "우인아모해",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T08:00:12.280000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T08:00:12.280000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "kdh0219@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_skypass",
+        "path": "users/DLS78xdy5TSpgWlUjEMAZcL4RNr2/cards/lotte_skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:11:35.536000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1762330366825",
+        "path": "users/DLS78xdy5TSpgWlUjEMAZcL4RNr2/lots/lot_1762330366825",
+        "data": {
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 2.8,
+          "cardId": "lotte_skypass",
+          "buyUnit": 486000,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:12:46.981000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-09-23T15:00:00+00:00"
+          },
+          "status": "open",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:12:46.981000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762330386890",
+        "path": "users/DLS78xdy5TSpgWlUjEMAZcL4RNr2/lots/lot_1762330386890",
+        "data": {
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "cardId": "lotte_skypass",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:13:07.018000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-09-23T15:00:00+00:00"
+          },
+          "status": "open",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:13:07.018000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762330432128",
+        "path": "users/DLS78xdy5TSpgWlUjEMAZcL4RNr2/lots/lot_1762330432128",
+        "data": {
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 2.8,
+          "cardId": "lotte_skypass",
+          "buyUnit": 486000,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:13:52.294000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-09-30T15:00:00+00:00"
+          },
+          "status": "open",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T08:13:52.294000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "DLS78xdy5TSpgWlUjEMAZcL4RNr2",
+    "safeFileName": "DLS78xdy5TSpgWlUjEMAZcL4RNr2.json"
+  }
+}

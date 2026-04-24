@@ -1,0 +1,72 @@
+{
+  "id": "6LeHaqdwV1ZUuGUa0tlhMpMxN463",
+  "path": "users/6LeHaqdwV1ZUuGUa0tlhMpMxN463",
+  "data": {
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-11T02:45:31.246669+00:00"
+    },
+    "peanutCountLimit": 3,
+    "ranking_agree": true,
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-01T15:43:54.397000+00:00"
+    },
+    "fcmToken": "ePg8q6bMSKiHWqT5PCU2hr:APA91bFBXpxIaxZBYKn3VBYHb2ZK92YoKqLjq3F-lzKvPg9j4tOZhxRigYfQhr6GQ0SYw1CsEoi3ozuSqAmQc5TirrcwrU3XIBZVmG39gyW6zQzlZ0D3Dw8",
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "the1",
+        "path": "users/6LeHaqdwV1ZUuGUa0tlhMpMxN463/cards/the1",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-01T15:41:19.821000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1769960673148",
+        "path": "users/6LeHaqdwV1ZUuGUa0tlhMpMxN463/lots/lot_1769960673148",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-01T15:44:16.759435+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "the1",
+          "buyUnit": 97000,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-01T15:44:33.492000+00:00"
+          },
+          "memo": "",
+          "status": "open",
+          "payType": "신용",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-01T15:44:33.492000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "6LeHaqdwV1ZUuGUa0tlhMpMxN463",
+    "safeFileName": "6LeHaqdwV1ZUuGUa0tlhMpMxN463.json"
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "id": "3FbC5P1eABdXbwcJ4F2hHfSbGQV2",
+  "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "3FbC5P1eABdXbwcJ4F2hHfSbGQV2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T07:36:46.108000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJ9YXN2UnDlcZ58OvEPAq1V1LCoLrN8AEib7rm2hCecM8nm0Q=s96-c",
+    "commentCount": 0,
+    "fcmToken": "e2Qu37ZA8Uu2hV88xRLiJf:APA91bGuIPeNNQfbSm6yy0UR_uF-v5DRygGFWCSbkc4kOW5fsNvvFED9wwGb3RuB-3xgSqvr4tt3Bs_XctWO4xiU6trYuyKI54Rx4dlevpSzgtYvvFfxe7Q",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T07:36:46.108000+00:00"
+    },
+    "displayName": "jihyun kim",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T07:36:46.108000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T07:36:46.108000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "kjh0201@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "ace",
+        "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2/cards/ace",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-23T00:33:39.338000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "asiana",
+        "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2/cards/asiana",
+        "data": {
+          "name": "삼성아샤",
+          "checkPerMileKRW": 200,
+          "creditPerMileKRW": 200,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T12:48:58.636000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bliss7",
+        "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2/cards/bliss7",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-23T00:34:00.817000+00:00"
+          },
+          "name": "기업"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "blsse",
+        "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2/cards/blsse",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1,
+          "creditPerMileKRW": 1,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T07:56:31.935000+00:00"
+          },
+          "name": "기업"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "the_one",
+        "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2/cards/the_one",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1,
+          "creditPerMileKRW": 1,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T12:49:41.764000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1762588369457",
+        "path": "users/3FbC5P1eABdXbwcJ4F2hHfSbGQV2/lots/lot_1762588369457",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "cardId": "ace",
+          "buyUnit": 97000,
+          "qty": 3,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T07:52:49.665000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T07:52:09.363548+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T07:52:49.665000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "3FbC5P1eABdXbwcJ4F2hHfSbGQV2",
+    "safeFileName": "3FbC5P1eABdXbwcJ4F2hHfSbGQV2.json"
+  }
+}

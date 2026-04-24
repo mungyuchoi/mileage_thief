@@ -1,0 +1,421 @@
+{
+  "id": "eymaE0FnjtW3Xa8t23j2imj6Ezz2",
+  "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "eymaE0FnjtW3Xa8t23j2imj6Ezz2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-04T09:58:01.492000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-22T04:48:39.460327+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocL17IlCYSJzGv0-dj3LkvPepSQdZBgtYncN6h6nRdbQxUkBxw=s96-c",
+    "commentCount": 0,
+    "fcmToken": "e07IQvJpRrGQVfAjQC3arW:APA91bG4lsA24nyE0eyKN7TR5DLry85xvapBB7PypFTEnHAshgCSPutbr2bGDJ7igGIQdMUWmCaSGI97trqv1enKdG4UInZb-2VNVGN-BzV0dNhEwOVb2QM",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-11T17:41:10.007000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-04T10:00:04.631000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-11T17:41:10.007000+00:00"
+    },
+    "displayName": "su do",
+    "peanutCount": 13,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-11T17:41:10.007000+00:00"
+    },
+    "likesCount": 0,
+    "email": "dokki0216@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/cards/lotte",
+        "data": {
+          "memo": "비고",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-17T02:35:29.013000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_check",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/cards/lotte_check",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:45:52.879000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sam_one1",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/cards/sam_one1",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:46:10.312000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sam_one2",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/cards/sam_one2",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:46:23.051000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "the1",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/cards/the1",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-17T02:35:50.360000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "the2",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/cards/the2",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-17T02:36:03+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1773478010638",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773478010638",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:46:51.050000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:46:51.050000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773478038681",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773478038681",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:47:19.116000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "cardId": "lotte_check",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:47:19.116000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773478060107",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773478060107",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:47:40.523000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-11T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T08:47:40.523000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773483824072",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773483824072",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T10:23:44.654000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-10T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T10:23:44.654000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773483916939",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773483916939",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T10:25:17.664000+00:00"
+          },
+          "whereToBuyId": "thingshop",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-09T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T10:25:17.664000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773496466171",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773496466171",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T13:54:26.723000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-08T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T13:54:26.723000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773496489005",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773496489005",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T13:54:49.478000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-06T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 648,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T13:54:49.478000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1773496753907",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/lots/lot_1773496753907",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1500,
+          "payType": "체크",
+          "discount": 2.8,
+          "memo": "",
+          "qty": 12,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T13:59:14.363000+00:00"
+          },
+          "whereToBuyId": "thingshop",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-05T15:00:00+00:00"
+          },
+          "cardId": "lotte",
+          "miles": 3888,
+          "buyUnit": 486000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T13:59:14.363000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "thingshop",
+        "path": "users/eymaE0FnjtW3Xa8t23j2imj6Ezz2/where_to_buy/thingshop",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-14T10:23:12.725000+00:00"
+          },
+          "name": "띵샵"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "eymaE0FnjtW3Xa8t23j2imj6Ezz2",
+    "safeFileName": "eymaE0FnjtW3Xa8t23j2imj6Ezz2.json"
+  }
+}

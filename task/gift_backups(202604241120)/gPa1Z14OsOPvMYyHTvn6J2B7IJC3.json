@@ -1,0 +1,1171 @@
+{
+  "id": "gPa1Z14OsOPvMYyHTvn6J2B7IJC3",
+  "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3",
+  "data": {
+    "displayNameEnable": false,
+    "uid": "gPa1Z14OsOPvMYyHTvn6J2B7IJC3",
+    "postsCount": 2,
+    "photoURLEnable": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-27T23:58:06.284000+00:00"
+    },
+    "isBanned": false,
+    "gradeLevel": 2,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-01T21:43:35.748040+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocI5Eg4eZA793FVegcsRx-v49lncFYgT4Ox5Md0dDhjEG3ywYxBuJA=s96-c",
+    "commentCount": 6,
+    "fcmToken": "c1PPEGTiS0szoiEJB_uMQS:APA91bGSpVqccDQL8Xr0CZsDp_PnqSHOXyw-oVDnBa9oFpW_T4AnCJlW0mYGt6JMGJOBMWjONQpuBD9ZvcsLya6PRpC91SlzZAczOMktivN8sRaNzqOVmUA",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-27T13:10:42.810000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-15T07:23:16.013000+00:00"
+    },
+    "displayNameChangeCount": 1,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-27T04:33:24.961000+00:00"
+    },
+    "displayName": "백만마일",
+    "peanutCount": 131,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.2",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-27T13:10:42.810000+00:00"
+    },
+    "email": "kuhooh@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 16,
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "air1",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/cards/air1",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-09T09:49:29.144000+00:00"
+          },
+          "name": "신한카드"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "the_o",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/cards/the_o",
+        "data": {
+          "memo": "아시아나",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T12:56:57.132000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "0957d9c0-d7f1-4164-9164-a1d5a4004860",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/0957d9c0-d7f1-4164-9164-a1d5a4004860",
+        "data": {
+          "title": "2026년 3월 2일 마일캐치 오늘의 매거진",
+          "postPath": "posts/20260302/posts/0957d9c0-d7f1-4164-9164-a1d5a4004860",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-02T12:36:03.438000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "3370e5e4-99ae-4486-a039-cddde4ccc3a1",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/3370e5e4-99ae-4486-a039-cddde4ccc3a1",
+        "data": {
+          "title": "돼지목살 1240원",
+          "postPath": "posts/20260115/posts/3370e5e4-99ae-4486-a039-cddde4ccc3a1",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-15T13:36:35.099000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4117de16-5c65-426f-bda7-3c601c872f67",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/4117de16-5c65-426f-bda7-3c601c872f67",
+        "data": {
+          "title": "2026년 1월 13일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20260113/posts/4117de16-5c65-426f-bda7-3c601c872f67",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T23:41:13.499000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4faef522-6240-4e61-a2cc-d24a09f148e8",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/4faef522-6240-4e61-a2cc-d24a09f148e8",
+        "data": {
+          "title": "2025년 12월 29일 마일캐치 오늘의 매거진",
+          "postPath": "posts/20251229/posts/4faef522-6240-4e61-a2cc-d24a09f148e8",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:42:12.113000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+        "data": {
+          "title": "곧 바뀌는 마일캐치 홍보👍",
+          "postPath": "posts/20260103/posts/66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T13:30:39.865000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8ce30fe8-c449-4a2b-9b5a-bb0b5f16a25e",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/8ce30fe8-c449-4a2b-9b5a-bb0b5f16a25e",
+        "data": {
+          "title": "북라 지마켓 46500원 (5만원권)",
+          "postPath": "posts/20260112/posts/8ce30fe8-c449-4a2b-9b5a-bb0b5f16a25e",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T02:28:42.158000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "a248aa97-01aa-4f4d-aad9-f38ee6a8256c",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/a248aa97-01aa-4f4d-aad9-f38ee6a8256c",
+        "data": {
+          "title": "인천-밀라노 이코노미 가격 좋네요 (1월)",
+          "postPath": "posts/20251227/posts/a248aa97-01aa-4f4d-aad9-f38ee6a8256c",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T09:50:25.410000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ab7d605f-969e-4731-8603-f709435f2d8f",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/ab7d605f-969e-4731-8603-f709435f2d8f",
+        "data": {
+          "title": "특가 항공권 베타 기간 1주",
+          "postPath": "posts/20260103/posts/ab7d605f-969e-4731-8603-f709435f2d8f",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T13:31:10.132000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "acf88211-6eca-489e-9723-f53bfd563763",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/acf88211-6eca-489e-9723-f53bfd563763",
+        "data": {
+          "title": "북유럽 항공권 비쌀 때, 저렴하게 발권하는 법 (ex. 핀란드 로바니에미)",
+          "postPath": "posts/20251228/posts/acf88211-6eca-489e-9723-f53bfd563763",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:39:51.876000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ba88d314-5786-4963-9bee-504194dae8f9",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/ba88d314-5786-4963-9bee-504194dae8f9",
+        "data": {
+          "title": "백화점 상품권 상테크 대략적인 흐름",
+          "postPath": "posts/20260204/posts/ba88d314-5786-4963-9bee-504194dae8f9",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T07:27:32.244000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bc6480d9-bc68-4c80-9a34-500f3b2fb820",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/bc6480d9-bc68-4c80-9a34-500f3b2fb820",
+        "data": {
+          "title": "마드리드 왕복 43만원 (12/31 출발 임박표)",
+          "postPath": "posts/20251227/posts/bc6480d9-bc68-4c80-9a34-500f3b2fb820",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T09:50:15.610000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "c17d6107-7e08-47c7-be4a-198084774f2f",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/c17d6107-7e08-47c7-be4a-198084774f2f",
+        "data": {
+          "title": "2025년 12월 28일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20251228/posts/c17d6107-7e08-47c7-be4a-198084774f2f",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T09:50:09.652000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "c3bfd6e0-c521-46b5-9592-f5e7ce8aa755",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/c3bfd6e0-c521-46b5-9592-f5e7ce8aa755",
+        "data": {
+          "title": "[대한항공] 대한항공, 서울-괌 노선을 2026년 10월 말까지 연장",
+          "postPath": "posts/20260228/posts/c3bfd6e0-c521-46b5-9592-f5e7ce8aa755",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T23:58:08.471000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dKCPQGG9UkWwlPzsX9tl",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/dKCPQGG9UkWwlPzsX9tl",
+        "data": {
+          "title": "✈️ 2026년 03월 13일 현재 대한항공 마일리지 좌석 정보 (비즈니스/퍼스트)",
+          "postPath": "posts/20260313/posts/dKCPQGG9UkWwlPzsX9tl",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-15T07:23:16.244000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "e25f63f6-bd53-41a5-afb1-aec9db244606",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/e25f63f6-bd53-41a5-afb1-aec9db244606",
+        "data": {
+          "title": "특가 호텔 기능 변경",
+          "postPath": "posts/20260115/posts/e25f63f6-bd53-41a5-afb1-aec9db244606",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-15T13:35:53.705000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "edd22daf-a372-466c-8a23-3ef057e3f05c",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/liked_posts/edd22daf-a372-466c-8a23-3ef057e3f05c",
+        "data": {
+          "title": "[아시아나] 아시아나항공, 대한항공, 2025년 12월 호놀룰루 항공편 증편",
+          "postPath": "posts/20251228/posts/edd22daf-a372-466c-8a23-3ef057e3f05c",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:41:12.648000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1768222648864",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/lots/lot_1768222648864",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T12:57:00.895826+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "the_o",
+          "buyUnit": 97000,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T12:57:28.893000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T12:57:28.893000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "7fY6R8WW6NryjZ4zLVXw",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_comments/7fY6R8WW6NryjZ4zLVXw",
+        "data": {
+          "commentPath": "posts/20260228/posts/c3bfd6e0-c521-46b5-9592-f5e7ce8aa755/comments/7fY6R8WW6NryjZ4zLVXw",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T23:58:06.355000+00:00"
+          },
+          "postPath": "posts/20260228/posts/c3bfd6e0-c521-46b5-9592-f5e7ce8aa755",
+          "contentHtml": "<p>또 괌 가고싶네요 ㅋ</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Cp23i6xEdOq7iu7fSTaO",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_comments/Cp23i6xEdOq7iu7fSTaO",
+        "data": {
+          "commentPath": "posts/20260210/posts/bcc9d5c4-a958-4839-8f53-029146801e36/comments/Cp23i6xEdOq7iu7fSTaO",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T05:12:26.958000+00:00"
+          },
+          "postPath": "posts/20260210/posts/bcc9d5c4-a958-4839-8f53-029146801e36",
+          "contentHtml": "<p>감사합니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "MiORzGOiL9ngTuuZEztv",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_comments/MiORzGOiL9ngTuuZEztv",
+        "data": {
+          "commentPath": "posts/20260208/posts/e538ba43-18d9-4cc1-bb4e-6c8da6e4f26d/comments/MiORzGOiL9ngTuuZEztv",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:32:34.539000+00:00"
+          },
+          "postPath": "posts/20260208/posts/e538ba43-18d9-4cc1-bb4e-6c8da6e4f26d",
+          "contentHtml": "<p>아시아나 카드 있으시면 괜찮을듯 합니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "O2EPBWCTouWEGHhUSQOX",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_comments/O2EPBWCTouWEGHhUSQOX",
+        "data": {
+          "commentPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a/comments/O2EPBWCTouWEGHhUSQOX",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:33:11.696000+00:00"
+          },
+          "postPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a",
+          "contentHtml": "<p>정보의 바다가 될때까지!!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "oeSC2tKJNhqCT10ezyuw",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_comments/oeSC2tKJNhqCT10ezyuw",
+        "data": {
+          "commentPath": "posts/20260207/posts/06c36e9e-5f5a-45eb-84f5-76ab44460d4b/comments/oeSC2tKJNhqCT10ezyuw",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:27:39.543000+00:00"
+          },
+          "postPath": "posts/20260207/posts/06c36e9e-5f5a-45eb-84f5-76ab44460d4b",
+          "contentHtml": "<p>괌도 갈때 타올 주더라구요 은근 유용</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "tlnSYPsRLULGNgS3Vfti",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_comments/tlnSYPsRLULGNgS3Vfti",
+        "data": {
+          "commentPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6/comments/tlnSYPsRLULGNgS3Vfti",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-27T13:20:31.692000+00:00"
+          },
+          "postPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "contentHtml": "<p>반갑습니다 처음 가입했어요!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_posts": [
+      {
+        "id": "829e9ab6-90b2-459a-b313-daa7b4f56f05",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_posts/829e9ab6-90b2-459a-b313-daa7b4f56f05",
+        "data": {
+          "title": "스얼 타이항공 티켓오픈 일정 공유",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:23:54.037000+00:00"
+          },
+          "boardId": "seat_share",
+          "postPath": "posts/20260210/posts/829e9ab6-90b2-459a-b313-daa7b4f56f05",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:25:28.208000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8b209b90-66c5-49ff-9a65-6c3957d5c0e3",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/my_posts/8b209b90-66c5-49ff-9a65-6c3957d5c0e3",
+        "data": {
+          "title": "아시아나 런던비즈 좌석 많이 열려있네요",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:31:15.829000+00:00"
+          },
+          "boardId": "seat_share",
+          "postPath": "posts/20260227/posts/8b209b90-66c5-49ff-9a65-6c3957d5c0e3"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "3DCoJbxpso2ckTKIbjm0",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/3DCoJbxpso2ckTKIbjm0",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "comment_like",
+          "path": "/community/detail/20250825/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "commentId": "tlnSYPsRLULGNgS3Vfti",
+          "date": "20250825",
+          "boardId": "notice",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-27T13:23:37.588000+00:00"
+          },
+          "commenterName": "SEUNG OH CHOI",
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6hYC1jknizctoiIJPNiz",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/6hYC1jknizctoiIJPNiz",
+        "data": {
+          "likedByName": "하이요",
+          "type": "post_like",
+          "boardId": "seat_share",
+          "date": "20260210",
+          "path": "/community/detail/20260210/829e9ab6-90b2-459a-b313-daa7b4f56f05",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T06:11:20.412000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "postTitle": "스얼 타이항공 티켓오픈 일정 공유",
+          "body": "하이요님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "yj1r4OqEUoYoFsHTmhjsyX5hUIm1",
+          "postId": "829e9ab6-90b2-459a-b313-daa7b4f56f05"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "HaROHpWqq6ZqCBi8BOkP",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/HaROHpWqq6ZqCBi8BOkP",
+        "data": {
+          "postId": "bcc9d5c4-a958-4839-8f53-029146801e36",
+          "type": "comment_like",
+          "path": "/community/detail/20260210/bcc9d5c4-a958-4839-8f53-029146801e36",
+          "commentId": "Cp23i6xEdOq7iu7fSTaO",
+          "date": "20260210",
+          "boardId": "hotdeal",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T05:26:29.268000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "백만마일",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "JunetgZQnLKyBbssKa8O",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/JunetgZQnLKyBbssKa8O",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260227/8b209b90-66c5-49ff-9a65-6c3957d5c0e3",
+          "postTitle": "아시아나 런던비즈 좌석 많이 열려있네요",
+          "commentId": "5AuFdEPBdU4ZJWqGl5x9",
+          "commentedByName": "익명",
+          "date": "20260227",
+          "boardId": "seat_share",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T05:44:01.146000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "body": "익명님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "Jwhh3K8M5UWWYRVenonwm2RNosn2",
+          "postId": "8b209b90-66c5-49ff-9a65-6c3957d5c0e3"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "OtpdKx2vMXbuzyx04o6B",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/OtpdKx2vMXbuzyx04o6B",
+        "data": {
+          "likedByName": "Kwanshik Chae",
+          "type": "post_like",
+          "boardId": "seat_share",
+          "date": "20260210",
+          "path": "/community/detail/20260210/829e9ab6-90b2-459a-b313-daa7b4f56f05",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-21T03:31:13.296000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "postTitle": "스얼 타이항공 티켓오픈 일정 공유",
+          "body": "Kwanshik Chae님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "8JhHgqpOSVchbsygChYOYGH1Udf1",
+          "postId": "829e9ab6-90b2-459a-b313-daa7b4f56f05"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "QSzyxCM9Wi4f9SiU2vvR",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/QSzyxCM9Wi4f9SiU2vvR",
+        "data": {
+          "likedByName": "킹스포드스미스국제공항",
+          "type": "post_like",
+          "boardId": "seat_share",
+          "date": "20260227",
+          "path": "/community/detail/20260227/8b209b90-66c5-49ff-9a65-6c3957d5c0e3",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:42:37.750000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "postTitle": "아시아나 런던비즈 좌석 많이 열려있네요",
+          "body": "킹스포드스미스국제공항님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "AsiC7Pd78GfgNwUEHN1mfG7Nrkp2",
+          "postId": "8b209b90-66c5-49ff-9a65-6c3957d5c0e3"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "SO2yIFiTe3HdsPaGTt71",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/SO2yIFiTe3HdsPaGTt71",
+        "data": {
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a",
+          "type": "comment_like",
+          "path": "/community/detail/20260120/2c942065-1391-4750-a7c2-a068c908a39a",
+          "commentId": "O2EPBWCTouWEGHhUSQOX",
+          "date": "20260120",
+          "boardId": "free",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:40:52.886000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "백만마일",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "d51RnNQG5wIuN6cQxjDN",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/d51RnNQG5wIuN6cQxjDN",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250825/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "commentId": "GITMT3yZVvJqkc5zVSHz",
+          "date": "20250825",
+          "parentCommentId": "tlnSYPsRLULGNgS3Vfti",
+          "boardId": "notice",
+          "isRead": true,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-27T13:23:51.085000+00:00"
+          },
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rZxZWUDqzy6f4Y4QeaUU",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/rZxZWUDqzy6f4Y4QeaUU",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "seat_share",
+          "date": "20260210",
+          "path": "/community/detail/20260210/829e9ab6-90b2-459a-b313-daa7b4f56f05",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T05:26:34.531000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "postTitle": "스얼 타이항공 티켓오픈 일정 공유",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "829e9ab6-90b2-459a-b313-daa7b4f56f05"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rfqgQhC4h04CbDn8WW5r",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/rfqgQhC4h04CbDn8WW5r",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "seat_share",
+          "date": "20260227",
+          "path": "/community/detail/20260227/8b209b90-66c5-49ff-9a65-6c3957d5c0e3",
+          "isRead": true,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T08:46:51.003000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "postTitle": "아시아나 런던비즈 좌석 많이 열려있네요",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "8b209b90-66c5-49ff-9a65-6c3957d5c0e3"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "yhAERG3kv77i3puxs5rb",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/notifications/yhAERG3kv77i3puxs5rb",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260227/8b209b90-66c5-49ff-9a65-6c3957d5c0e3",
+          "postTitle": "아시아나 런던비즈 좌석 많이 열려있네요",
+          "commentId": "dE1JlOMyc9Q5QloP6unm",
+          "commentedByName": "마일캐치",
+          "date": "20260227",
+          "boardId": "seat_share",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T08:46:58.939000+00:00"
+          },
+          "boardName": "좌석 공유",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "8b209b90-66c5-49ff-9a65-6c3957d5c0e3"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "2TX8kMoDpekolhenA072",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/2TX8kMoDpekolhenA072",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20251228",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T09:50:09.615000+00:00"
+          },
+          "postTitle": "2025년 12월 28일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "c17d6107-7e08-47c7-be4a-198084774f2f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "522Y8gJKlNoDQdGlzOf2",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/522Y8gJKlNoDQdGlzOf2",
+        "data": {
+          "type": "post_like",
+          "boardId": "seats",
+          "dateString": "20260313",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-15T07:23:16.129000+00:00"
+          },
+          "postTitle": "✈️ 2026년 03월 13일 현재 대한항공 마일리지 좌석 정보 (비즈니스/퍼스트)",
+          "amount": 1,
+          "postId": "dKCPQGG9UkWwlPzsX9tl"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "DQFdrZoLX2lGxnHsYeNO",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/DQFdrZoLX2lGxnHsYeNO",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260228",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T23:58:06.446000+00:00"
+          },
+          "postTitle": "[대한항공] 대한항공, 서울-괌 노선을 2026년 10월 말까지 연장",
+          "commentId": "7fY6R8WW6NryjZ4zLVXw",
+          "amount": 2,
+          "postId": "c3bfd6e0-c521-46b5-9592-f5e7ce8aa755"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "EImg5MTf4wvdEwLXYHw1",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/EImg5MTf4wvdEwLXYHw1",
+        "data": {
+          "type": "post_create",
+          "boardId": "seat_share",
+          "dateString": "20260227",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:31:16.394000+00:00"
+          },
+          "postTitle": "아시아나 런던비즈 좌석 많이 열려있네요",
+          "amount": 10,
+          "postId": "8b209b90-66c5-49ff-9a65-6c3957d5c0e3"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Fhr8xDpwXzDl5s11vpj1",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/Fhr8xDpwXzDl5s11vpj1",
+        "data": {
+          "type": "post_like",
+          "boardId": "question",
+          "dateString": "20260204",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T07:27:32.104000+00:00"
+          },
+          "postTitle": "백화점 상품권 상테크 대략적인 흐름",
+          "amount": 1,
+          "postId": "ba88d314-5786-4963-9bee-504194dae8f9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "GIkq4eD7lRThsY57r7CP",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/GIkq4eD7lRThsY57r7CP",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260210",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T05:12:27.443000+00:00"
+          },
+          "postTitle": "신세계 3퍼 네이버",
+          "commentId": "Cp23i6xEdOq7iu7fSTaO",
+          "amount": 2,
+          "postId": "bcc9d5c4-a958-4839-8f53-029146801e36"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "JV8Vnq100BThId4K5Mxe",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/JV8Vnq100BThId4K5Mxe",
+        "data": {
+          "amount": 100,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-27T13:23:40.046000+00:00"
+          },
+          "type": "admin_gift",
+          "adminName": "마일캐치",
+          "reason": "운영자 선물",
+          "adminId": "aP3C0N511beyK7QZG9GyChs5oqO2"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Mz7xZhhVYzzaR0ktbPLd",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/Mz7xZhhVYzzaR0ktbPLd",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260207",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:27:40.338000+00:00"
+          },
+          "postTitle": "대한항공 어린이선물(호놀룰루)",
+          "commentId": "oeSC2tKJNhqCT10ezyuw",
+          "amount": 2,
+          "postId": "06c36e9e-5f5a-45eb-84f5-76ab44460d4b"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "QBAA3z0vq0B7Loja94Qz",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/QBAA3z0vq0B7Loja94Qz",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260120",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:33:12.167000+00:00"
+          },
+          "postTitle": "마일캐치 현재 시점 정리",
+          "commentId": "O2EPBWCTouWEGHhUSQOX",
+          "amount": 2,
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "RntmFj8iu7F54UNKNgpk",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/RntmFj8iu7F54UNKNgpk",
+        "data": {
+          "type": "post_like",
+          "boardId": "hotdeal",
+          "dateString": "20260115",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-15T13:36:35.078000+00:00"
+          },
+          "postTitle": "돼지목살 1240원",
+          "amount": 1,
+          "postId": "3370e5e4-99ae-4486-a039-cddde4ccc3a1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "XoFxakr24AqFEucY0PBq",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/XoFxakr24AqFEucY0PBq",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260208",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T04:32:35.020000+00:00"
+          },
+          "postTitle": "댄공 80만 마일인데 그만하고 아시아나 상테크 시작?",
+          "commentId": "MiORzGOiL9ngTuuZEztv",
+          "amount": 2,
+          "postId": "e538ba43-18d9-4cc1-bb4e-6c8da6e4f26d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Yi74TiTmgB9fumj1SIRq",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/Yi74TiTmgB9fumj1SIRq",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20260115",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-15T13:35:53.681000+00:00"
+          },
+          "postTitle": "특가 호텔 기능 변경",
+          "amount": 1,
+          "postId": "e25f63f6-bd53-41a5-afb1-aec9db244606"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bvwOE2RUx78Ya1xtRs1J",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/bvwOE2RUx78Ya1xtRs1J",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20251229",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:42:12.008000+00:00"
+          },
+          "postTitle": "2025년 12월 29일 마일캐치 오늘의 매거진",
+          "amount": 1,
+          "postId": "4faef522-6240-4e61-a2cc-d24a09f148e8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ezSjbMZ5mpZFI2yGRLpM",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/ezSjbMZ5mpZFI2yGRLpM",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20251228",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:41:12.548000+00:00"
+          },
+          "postTitle": "[아시아나] 아시아나항공, 대한항공, 2025년 12월 호놀룰루 항공편 증편",
+          "amount": 1,
+          "postId": "edd22daf-a372-466c-8a23-3ef057e3f05c"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fBtcrw29XfaVnwDTAADL",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/fBtcrw29XfaVnwDTAADL",
+        "data": {
+          "type": "post_like",
+          "boardId": "aeroroute_news",
+          "dateString": "20260228",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-27T23:58:08.448000+00:00"
+          },
+          "postTitle": "[대한항공] 대한항공, 서울-괌 노선을 2026년 10월 말까지 연장",
+          "amount": 1,
+          "postId": "c3bfd6e0-c521-46b5-9592-f5e7ce8aa755"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fZkrx7QxsVRWamXO5RQA",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/fZkrx7QxsVRWamXO5RQA",
+        "data": {
+          "type": "post_like",
+          "boardId": "hotdeal",
+          "dateString": "20251227",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T09:50:25.389000+00:00"
+          },
+          "postTitle": "인천-밀라노 이코노미 가격 좋네요 (1월)",
+          "amount": 1,
+          "postId": "a248aa97-01aa-4f4d-aad9-f38ee6a8256c"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "nKDSz4lbuuD5AtiMiAuf",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/nKDSz4lbuuD5AtiMiAuf",
+        "data": {
+          "type": "post_like",
+          "boardId": "hotdeal",
+          "dateString": "20251227",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T09:50:15.589000+00:00"
+          },
+          "postTitle": "마드리드 왕복 43만원 (12/31 출발 임박표)",
+          "amount": 1,
+          "postId": "bc6480d9-bc68-4c80-9a34-500f3b2fb820"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "o9I6ANwI99LB6jQxecEc",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/o9I6ANwI99LB6jQxecEc",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20260302",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-02T12:36:03.419000+00:00"
+          },
+          "postTitle": "2026년 3월 2일 마일캐치 오늘의 매거진",
+          "amount": 1,
+          "postId": "0957d9c0-d7f1-4164-9164-a1d5a4004860"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ogIhetQvE07jlSvFFKLE",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/ogIhetQvE07jlSvFFKLE",
+        "data": {
+          "type": "post_create",
+          "boardId": "seat_share",
+          "dateString": "20260210",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:23:54.557000+00:00"
+          },
+          "postTitle": "스얼 타이항공 티켓오픈 일정 공유",
+          "amount": 10,
+          "postId": "829e9ab6-90b2-459a-b313-daa7b4f56f05"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "uIQE2S6180eDzXouPvGg",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/uIQE2S6180eDzXouPvGg",
+        "data": {
+          "type": "post_like",
+          "boardId": "hotdeal",
+          "dateString": "20260112",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T02:28:42.043000+00:00"
+          },
+          "postTitle": "북라 지마켓 46500원 (5만원권)",
+          "amount": 1,
+          "postId": "8ce30fe8-c449-4a2b-9b5a-bb0b5f16a25e"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "uSMeqcVkVTjY9lT0tBco",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/uSMeqcVkVTjY9lT0tBco",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T13:30:39.833000+00:00"
+          },
+          "postTitle": "곧 바뀌는 마일캐치 홍보👍",
+          "amount": 1,
+          "postId": "66b57a91-f5ff-485e-b0bf-1d72649ccbb7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "whR7iZ7g9wvjkEsrXcOo",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/whR7iZ7g9wvjkEsrXcOo",
+        "data": {
+          "type": "post_like",
+          "boardId": "question",
+          "dateString": "20251228",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:39:51.761000+00:00"
+          },
+          "postTitle": "북유럽 항공권 비쌀 때, 저렴하게 발권하는 법 (ex. 핀란드 로바니에미)",
+          "amount": 1,
+          "postId": "acf88211-6eca-489e-9723-f53bfd563763"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "xhI6syLxCTRJYUfZUILP",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/xhI6syLxCTRJYUfZUILP",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250825",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-27T13:20:31.856000+00:00"
+          },
+          "postTitle": "[공지] 마일캐치 레벨 시스템 안내",
+          "commentId": "tlnSYPsRLULGNgS3Vfti",
+          "amount": 2,
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ywUhtOrMv6JbPqg0Pzsg",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/ywUhtOrMv6JbPqg0Pzsg",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T13:31:10.111000+00:00"
+          },
+          "postTitle": "특가 항공권 베타 기간 1주",
+          "amount": 1,
+          "postId": "ab7d605f-969e-4731-8603-f709435f2d8f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "zp5RknIJpnk6l9K8bC1i",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/peanut_history/zp5RknIJpnk6l9K8bC1i",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20260113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T23:41:13.394000+00:00"
+          },
+          "postTitle": "2026년 1월 13일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "4117de16-5c65-426f-bda7-3c601c872f67"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "gmarket",
+        "path": "users/gPa1Z14OsOPvMYyHTvn6J2B7IJC3/where_to_buy/gmarket",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-09T09:49:50.064000+00:00"
+          },
+          "name": "지마켓"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "gPa1Z14OsOPvMYyHTvn6J2B7IJC3",
+    "safeFileName": "gPa1Z14OsOPvMYyHTvn6J2B7IJC3.json"
+  }
+}

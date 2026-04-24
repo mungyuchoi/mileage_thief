@@ -1,0 +1,269 @@
+{
+  "id": "KSO2iqxzLBfTCMsmifWLKJ2bTyz2",
+  "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "KSO2iqxzLBfTCMsmifWLKJ2bTyz2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T12:58:55.521000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-16T02:08:28.298637+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKz8FsXrxJkAhIaFGnazMLi8z9V9fSOw-pJJQPoKssiB6wGpA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "fYpH9An7zEakmd5DPoDdTN:APA91bH3f9ohoRcttjZ783YO6cvDLC4l6oYstCiKlA4QYYlBvUF32rIf7GqsDt3PLThVS4-zzqtZTb65hlEZBwa4Ey0J-O0XMcxxI0gRdy-L4derX1y8WOs",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T12:58:55.521000+00:00"
+    },
+    "displayName": "BYEONGHUN CHOI",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T12:58:55.521000+00:00"
+    },
+    "peanutCount": 23,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-25T12:58:55.521000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "cbh4757@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "jeju_asiana",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/cards/jeju_asiana",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 15000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T22:54:57.700000+00:00"
+          },
+          "name": "제주"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_asians",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/cards/kb_asians",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T22:53:26.058000+00:00"
+          },
+          "name": "국민"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_skypass_amex",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/cards/lotte_skypass_amex",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:01:45.950000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_skypass",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/cards/samsung_skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:05:35.534000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_aisiana",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/cards/shinhan_aisiana",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 667,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T22:55:06.772000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_skypass",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/cards/shinhan_skypass",
+        "data": {
+          "name": "신한에어원",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T22:51:42.371000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1766668729639",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/lots/lot_1766668729639",
+        "data": {
+          "whereToBuyId": "thingshop",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:18:09.322801+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "lotte_skypass_amex",
+          "buyUnit": 97000,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:18:49.703000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:19:42.546000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1766668782483",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/sales/sale_1766668782483",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.4,
+          "costPerMile": 4.12,
+          "qty": 10,
+          "buyTotal": 970000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:19:42.500000+00:00"
+          },
+          "lotId": "lot_1766668729639",
+          "sellTotal": 966000,
+          "miles": 970,
+          "sellUnit": 96600,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:19:42.500000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:19:05.439462+00:00"
+          },
+          "profit": -4000,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "auction",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/where_to_buy/auction",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T22:56:21.167000+00:00"
+          },
+          "name": "옥션"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gmarket",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/where_to_buy/gmarket",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:15:38.103000+00:00"
+          },
+          "name": "지마켓"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_shopping",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/where_to_buy/samsung_shopping",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:17:47.090000+00:00"
+          },
+          "name": "삼성카드쇼핑"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "thingshop",
+        "path": "users/KSO2iqxzLBfTCMsmifWLKJ2bTyz2/where_to_buy/thingshop",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-25T13:16:06.306000+00:00"
+          },
+          "name": "띵샵"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "KSO2iqxzLBfTCMsmifWLKJ2bTyz2",
+    "safeFileName": "KSO2iqxzLBfTCMsmifWLKJ2bTyz2.json"
+  }
+}

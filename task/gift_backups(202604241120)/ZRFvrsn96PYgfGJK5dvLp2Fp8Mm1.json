@@ -1,0 +1,73 @@
+{
+  "id": "ZRFvrsn96PYgfGJK5dvLp2Fp8Mm1",
+  "path": "users/ZRFvrsn96PYgfGJK5dvLp2Fp8Mm1",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "ZRFvrsn96PYgfGJK5dvLp2Fp8Mm1",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T05:45:56.964000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": null,
+    "commentCount": 0,
+    "fcmToken": "dYdCijXC6UlviCrgfNOJi3:APA91bGh6L-B-7wwriu1z14CL91hg7Hjz47OESP47buiR4kcS8qV7m9KWLLFCP8HEb2HzHBp-iHKkrgoLpxD-onlj6b68qtn5Nji2HLK-7cO7lF-4dehjFc",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T05:45:56.964000+00:00"
+    },
+    "displayName": null,
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T05:45:56.964000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T05:45:56.964000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "wz7wbjsrgy@privaterelay.appleid.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_skypass",
+        "path": "users/ZRFvrsn96PYgfGJK5dvLp2Fp8Mm1/cards/lotte_skypass",
+        "data": {
+          "memo": "롯데스카이패스 신용카두",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T05:47:21.839000+00:00"
+          },
+          "name": "롯데카드"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "ZRFvrsn96PYgfGJK5dvLp2Fp8Mm1",
+    "safeFileName": "ZRFvrsn96PYgfGJK5dvLp2Fp8Mm1.json"
+  }
+}

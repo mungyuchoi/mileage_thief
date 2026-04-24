@@ -1,0 +1,4187 @@
+{
+  "id": "3MSpY8LrxvPUYFAXJH6VrsHyB1l1",
+  "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1",
+  "data": {
+    "displayNameEnable": false,
+    "uid": "3MSpY8LrxvPUYFAXJH6VrsHyB1l1",
+    "photoURLEnable": false,
+    "postsCount": 3,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-03T22:27:38.160000+00:00"
+    },
+    "isBanned": false,
+    "gradeLevel": 2,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-24T23:37:05.722873+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2F3MSpY8LrxvPUYFAXJH6VrsHyB1l1.png?alt=media&token=5843d6db-4623-4bdf-b778-256d69ebaa62",
+    "commentCount": 5,
+    "fcmToken": "dAqgNEom4UE2ozITM4trkJ:APA91bFSRYNZuTuPvjv8hTpyiHQMwax6FvxRDaBOVh-esIuTBu3yFzdiHzzz85S_Dh8bfqs7ZLUqCgFo9Oiv88y2XIwDgDJzRuo96gB9gsHd6a7UNh9Pqzs",
+    "likesReceived": 0,
+    "followerCount": 1,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T01:26:54.964000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-16T02:45:57.830000+00:00"
+    },
+    "displayNameChangeCount": 1,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-03T22:28:03.752000+00:00"
+    },
+    "displayName": "totori",
+    "peanutCount": 62,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.2",
+    "ownedEffects": [],
+    "photoURLChangeCount": 1,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T01:26:54.964000+00:00"
+    },
+    "email": "jwj419@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 11,
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "bc_goat",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/bc_goat",
+        "data": {
+          "memo": "국내 100만 이하 1.5%적립\n국내 100만 이상 1.0%적립",
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 9999999999999,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:04.293000+00:00"
+          },
+          "name": "BC GOAT"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "hyundai_gold",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/hyundai_gold",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 10000000,
+          "creditPerMileKRW": 10000000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:14:13.506000+00:00"
+          },
+          "name": "현대 골드"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "hyundai_green",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/hyundai_green",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 10000000,
+          "creditPerMileKRW": 10000000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T01:52:32.399000+00:00"
+          },
+          "name": "현대 그린"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_asiana",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/kb_asiana",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T21:45:09.981000+00:00"
+          },
+          "name": "국민 신용 아시아나"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_nasaka",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/kb_nasaka",
+        "data": {
+          "name": "국민 나사카",
+          "checkPerMileKRW": 9999999,
+          "creditPerMileKRW": 99999999,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-16T08:29:41.486000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_check",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/lotte_check",
+        "data": {
+          "name": "롯데체크 댄공",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:11:30.854000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_credit",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/lotte_credit",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T21:46:49.808000+00:00"
+          },
+          "name": "롯데 신용"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_andma",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/samsung_andma",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T06:55:48.914000+00:00"
+          },
+          "name": "삼성 앤마"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_air_check",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/shinhan_air_check",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:34:48.165000+00:00"
+          },
+          "name": "신한 에어 체크"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_ebla",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/shinhan_ebla",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:12:49.821000+00:00"
+          },
+          "name": "신한 에블라"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_ev",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/shinhan_ev",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 99999999999,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:18:33.689000+00:00"
+          },
+          "name": "신한 EV"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "the_naun",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/cards/the_naun",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 99999999999,
+          "creditPerMileKRW": 0,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:20:32.957000+00:00"
+          },
+          "name": "새마을 더나은"
+        },
+        "subcollections": {}
+      }
+    ],
+    "followers": [
+      {
+        "id": "aP3C0N511beyK7QZG9GyChs5oqO2",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/followers/aP3C0N511beyK7QZG9GyChs5oqO2",
+        "data": {
+          "followedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T20:17:35.024000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "3b32c1ae-8d85-4633-8b92-c455b58b1030",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/3b32c1ae-8d85-4633-8b92-c455b58b1030",
+        "data": {
+          "title": "2026년 2월 밀라노 동계올림픽 예정 (여행 계획 짜기전에 참고하셔유)",
+          "postPath": "posts/20260101/posts/3b32c1ae-8d85-4633-8b92-c455b58b1030",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:11.656000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "5c269659-4d02-48b7-8c50-7e21512f4fa4",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/5c269659-4d02-48b7-8c50-7e21512f4fa4",
+        "data": {
+          "title": "2026년 새해가 시작됐습니다",
+          "postPath": "posts/20260102/posts/5c269659-4d02-48b7-8c50-7e21512f4fa4",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:03.106000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+        "data": {
+          "title": "곧 바뀌는 마일캐치 홍보👍",
+          "postPath": "posts/20260103/posts/66b57a91-f5ff-485e-b0bf-1d72649ccbb7",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:40.724000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6ffada4f-5bd2-4cbb-8fdd-55b5497f1a03",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/6ffada4f-5bd2-4cbb-8fdd-55b5497f1a03",
+        "data": {
+          "title": "2026년 1월 3일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20260103/posts/6ffada4f-5bd2-4cbb-8fdd-55b5497f1a03",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:55.577000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "844fb75d-288c-46fc-aa86-37a638571ac1",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/844fb75d-288c-46fc-aa86-37a638571ac1",
+        "data": {
+          "title": "스위스 5/4~5/6일에 가는 분 숙소",
+          "postPath": "posts/20260102/posts/844fb75d-288c-46fc-aa86-37a638571ac1",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:00.999000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70",
+        "data": {
+          "title": "(1월 5일 선착순 / 추첨) 푸켓 20,260원",
+          "postPath": "posts/20260103/posts/a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:50.711000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bdf78059-842e-42df-af58-1b75bb62b09d",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/bdf78059-842e-42df-af58-1b75bb62b09d",
+        "data": {
+          "title": "2026년 1월 4일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20260104/posts/bdf78059-842e-42df-af58-1b75bb62b09d",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:30.820000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "c304a54c-e0e1-408c-b7aa-9ab780383373",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/c304a54c-e0e1-408c-b7aa-9ab780383373",
+        "data": {
+          "title": "1월 4일 끄적끄적",
+          "postPath": "posts/20260104/posts/c304a54c-e0e1-408c-b7aa-9ab780383373",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:36.715000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dc3e3b35-c74b-4493-8107-46fc1ca05ee2",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/dc3e3b35-c74b-4493-8107-46fc1ca05ee2",
+        "data": {
+          "title": "2026년 1월 1일 마일캐치 오늘의 매거진",
+          "postPath": "posts/20260101/posts/dc3e3b35-c74b-4493-8107-46fc1ca05ee2",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:09.403000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "e9204065-4589-4eec-834b-a9a5b0e114ac",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/e9204065-4589-4eec-834b-a9a5b0e114ac",
+        "data": {
+          "title": "오잉님의 상품권 제보",
+          "postPath": "posts/20260103/posts/e9204065-4589-4eec-834b-a9a5b0e114ac",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:57.267000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "f676e314-5902-4a29-8421-62a37a6f50af",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/liked_posts/f676e314-5902-4a29-8421-62a37a6f50af",
+        "data": {
+          "title": "2026년 1월 2일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20260102/posts/f676e314-5902-4a29-8421-62a37a6f50af",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:07.604000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1767478232670",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767478232670",
+        "data": {
+          "whereToBuyId": "thingshop",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:09:35.928136+00:00"
+          },
+          "discount": 2.8,
+          "cardId": "lotte_check",
+          "buyUnit": 486000,
+          "qty": 4,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:10:32.700000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:18.161000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767478617435",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767478617435",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "hyundai_gold",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:16:57.502000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:01.255000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767478695068",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767478695068",
+        "data": {
+          "whereToBuyId": "thingshop",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-23T15:00:00+00:00"
+          },
+          "discount": 2.8,
+          "cardId": "lotte_check",
+          "buyUnit": 97200,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:18:15.122000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:06:41.147000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767577972350",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767577972350",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T01:52:38.236169+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "hyundai_green",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T01:52:52.404000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:47.253000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767649646579",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767649646579",
+        "data": {
+          "whereToBuyId": "thingshop",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T21:46:51.562646+00:00"
+          },
+          "discount": 3.1,
+          "cardId": "lotte_credit",
+          "buyUnit": 484500,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-05T21:47:26.694000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:08:35.767000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767682569720",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767682569720",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 5,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:19:53.015000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T06:55:52.830352+00:00"
+          },
+          "cardId": "samsung_andma",
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T06:56:09.774000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767735968533",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767735968533",
+        "data": {
+          "whereToBuyId": "kb_pay",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T21:45:51.313375+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "kb_asiana",
+          "buyUnit": 485000,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T21:46:08.573000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:09:12.663000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767865586227",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1767865586227",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:12.945000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-08T09:46:13.692125+00:00"
+          },
+          "cardId": "samsung_andma",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-08T09:46:26.255000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768404387194",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1768404387194",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-11T15:00:00+00:00"
+          },
+          "discount": 7.0,
+          "cardId": "lotte_check",
+          "buyUnit": 46500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:26:27.228000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:09.881000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768404406314",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1768404406314",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T15:00:00+00:00"
+          },
+          "discount": 7.0,
+          "cardId": "lotte_check",
+          "buyUnit": 46500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:26:46.341000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:27.277000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768404423192",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1768404423192",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T15:00:00+00:00"
+          },
+          "discount": 7.0,
+          "cardId": "lotte_check",
+          "buyUnit": 46500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:27:03.224000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:37.442000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768552172207",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1768552172207",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:37.161000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-16T08:29:11.717666+00:00"
+          },
+          "cardId": "kb_nasaka",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-16T08:29:32.258000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769142938836",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1769142938836",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:46.922000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-17T15:00:00+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T04:35:38.983000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769755667781",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1769755667781",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.3,
+          "memo": "",
+          "qty": 3,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-13T17:08:38.415000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-30T06:47:29.563745+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 97700,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-30T06:47:47.830000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769882807478",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1769882807478",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.1,
+          "memo": "",
+          "qty": 2,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:22:43.920000+00:00"
+          },
+          "whereToBuyId": "thingshop",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:06:28.184189+00:00"
+          },
+          "cardId": "lotte_credit",
+          "buyUnit": 484500,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:06:47.508000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769883566716",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1769883566716",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "payType": "신용",
+          "discount": 2.0,
+          "memo": "",
+          "qty": 3,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:21:33.452000+00:00"
+          },
+          "whereToBuyId": "naver",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T15:00:00+00:00"
+          },
+          "cardId": "shinhan_ev",
+          "buyUnit": 49000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:19:26.775000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1769883590337",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1769883590337",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "payType": "체크",
+          "discount": 2.0,
+          "memo": "",
+          "qty": 2,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:22:00.748000+00:00"
+          },
+          "whereToBuyId": "naver",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-23T15:00:00+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "buyUnit": 49000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:19:50.363000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770026559574",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770026559574",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:13.695000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-02T10:02:25.447573+00:00"
+          },
+          "cardId": "hyundai_green",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-02T10:02:39.596000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770118024958",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770118024958",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:24.057000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T11:26:52.493268+00:00"
+          },
+          "cardId": "hyundai_gold",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T11:27:05.001000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770195964813",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770195964813",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:38.528000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-04T09:05:53.447127+00:00"
+          },
+          "cardId": "samsung_andma",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-04T09:06:04.851000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770296977767",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770296977767",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:49.429000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-03T15:00:00+00:00"
+          },
+          "cardId": "samsung_andma",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:09:37.822000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770297191602",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770297191602",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:48.410000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:12:53.149080+00:00"
+          },
+          "cardId": "shinhan_ebla",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:13:11.670000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770297208863",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770297208863",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 2,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:23.776000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:13:14.294436+00:00"
+          },
+          "cardId": "shinhan_ev",
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:13:28.888000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770297223932",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770297223932",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 3,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:34.968000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:13:30.714672+00:00"
+          },
+          "cardId": "shinhan_ebla",
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-05T13:13:43.955000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770386849298",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770386849298",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:07.971000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-06T14:07:15.573617+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-06T14:07:29.339000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770387182929",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770387182929",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:19.114000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-06T14:12:47.132339+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-06T14:13:03.009000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770562352983",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770562352983",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:54.854000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:52:20.965318+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:52:33.026000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770562364909",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770562364909",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:05.946000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:52:34.518317+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:52:44.945000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770684651392",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770684651392",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "payType": "체크",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:29.998000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:50:28.614988+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 46550,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:50:51.448000+00:00"
+          },
+          "giftcardId": "book_and_life"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770684668131",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770684668131",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "payType": "체크",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:44.900000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:50:53.159998+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 46550,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:08.211000+00:00"
+          },
+          "giftcardId": "book_and_life"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770689141771",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770689141771",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-13T17:08:49.034000+00:00"
+          },
+          "whereToBuyId": "naver",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:05:28.811032+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T02:05:41.804000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770736992980",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770736992980",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 3,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-13T17:08:49.967000+00:00"
+          },
+          "whereToBuyId": "naver",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T15:22:58.603425+00:00"
+          },
+          "cardId": "lotte_check",
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T15:23:13.004000+00:00"
+          },
+          "giftcardId": "shinsegae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770869015630",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770869015630",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:31.490000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-06T15:00:00+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-12T04:03:35.724000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1770869044581",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1770869044581",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:43.925000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-06T15:00:00+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-12T04:04:04.627000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772322368959",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772322368959",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 10000000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:45.723000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T23:45:52.406639+00:00"
+          },
+          "cardId": "hyundai_gold",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T23:46:09.124000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772322384178",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772322384178",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:57.343000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T23:46:11.826806+00:00"
+          },
+          "cardId": "shinhan_ebla",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T23:46:24.343000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772322400931",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772322400931",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.1,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:14.830000+00:00"
+          },
+          "whereToBuyId": "thingshop",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T23:46:25.937650+00:00"
+          },
+          "cardId": "lotte_credit",
+          "buyUnit": 96900,
+          "miles": 969,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-28T23:46:41.074000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772500858920",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772500858920",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 10000000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:33.530000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-01T15:00:00+00:00"
+          },
+          "cardId": "hyundai_gold",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:20:59.043000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772500875406",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772500875406",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:43.188000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-01T15:00:00+00:00"
+          },
+          "cardId": "samsung_andma",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:21:15.538000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772500889384",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772500889384",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:37:31.803000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:21:18.531861+00:00"
+          },
+          "cardId": "samsung_andma",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:21:29.489000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772501399813",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772501399813",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 99999999999,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:37:13.634000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:29:35.418196+00:00"
+          },
+          "cardId": "shinhan_ev",
+          "miles": 0,
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:30:00.181000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772501494392",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772501494392",
+        "data": {
+          "trade": true,
+          "faceValue": 100000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 3,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:37:26.262000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:31:22.266898+00:00"
+          },
+          "cardId": "shinhan_ebla",
+          "miles": 291,
+          "buyUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T01:31:34.563000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1772580708121",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1772580708121",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-20T04:00:44.180000+00:00"
+          },
+          "whereToBuyId": "kb_pay",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T23:31:31.033571+00:00"
+          },
+          "cardId": "kb_asiana",
+          "miles": 970,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-03T23:31:48.238000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1774969392017",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1774969392017",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 10000000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T09:10:23.242000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:02:54.148520+00:00"
+          },
+          "cardId": "hyundai_gold",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:03:12.125000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1774969575049",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1774969575049",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 10000000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-10T09:10:24.782000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:03:14.509243+00:00"
+          },
+          "cardId": "hyundai_green",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:06:15.200000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1774969716777",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1774969716777",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-11T07:41:54.385000+00:00"
+          },
+          "whereToBuyId": "kb_pay",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:08:22.591361+00:00"
+          },
+          "cardId": "kb_asiana",
+          "miles": 970,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:08:36.952000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1774970766351",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1774970766351",
+        "data": {
+          "trade": true,
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 2,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:53:26.373000+00:00"
+          },
+          "whereToBuyId": "thingshop",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:25:50.097824+00:00"
+          },
+          "cardId": "lotte_credit",
+          "miles": 970,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T15:26:06.519000+00:00"
+          },
+          "giftcardId": "lotte"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775092536138",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775092536138",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:15:36.229000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:15:22.618918+00:00"
+          },
+          "cardId": "shinhan_ebla",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:15:36.229000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775092776003",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775092776003",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 99999999999,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:19:36.160000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:17:36.783963+00:00"
+          },
+          "cardId": "shinhan_ev",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-02T01:19:36.160000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775343384432",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775343384432",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-04T22:56:24.536000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-04T22:55:48.172615+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-04T22:56:24.536000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775343401168",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775343401168",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "체크",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-04T22:56:41.235000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-04T22:56:27.583350+00:00"
+          },
+          "cardId": "shinhan_air_check",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-04T22:56:41.235000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775454773484",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775454773484",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:52:53.681000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:52:40.974545+00:00"
+          },
+          "cardId": "samsung_andma",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:52:53.681000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775454791400",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775454791400",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:53:11.559000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:53:00.865670+00:00"
+          },
+          "cardId": "samsung_andma",
+          "miles": 485,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-06T05:53:11.559000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775541679242",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775541679242",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 9999999999999,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:19.355000+00:00"
+          },
+          "whereToBuyId": "gmarket",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:08.191510+00:00"
+          },
+          "cardId": "bc_goat",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:19.355000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775541695908",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/lots/lot_1775541695908",
+        "data": {
+          "faceValue": 500000,
+          "mileRuleUsedPerMileKRW": 9999999999999,
+          "payType": "신용",
+          "discount": 3.0,
+          "memo": "",
+          "qty": 1,
+          "status": "open",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:35.988000+00:00"
+          },
+          "whereToBuyId": "gmarket_2",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:22.201950+00:00"
+          },
+          "cardId": "bc_goat",
+          "miles": 0,
+          "buyUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-07T06:01:35.988000+00:00"
+          },
+          "giftcardId": "hyundai"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "3HKWNxqwBE9s7xRAKwmF",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_comments/3HKWNxqwBE9s7xRAKwmF",
+        "data": {
+          "commentPath": "posts/20251231/posts/c970668a-b0e4-4a13-bc6d-a520295d96e9/comments/3HKWNxqwBE9s7xRAKwmF",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:23:44.867000+00:00"
+          },
+          "postPath": "posts/20251231/posts/c970668a-b0e4-4a13-bc6d-a520295d96e9",
+          "contentHtml": "<p>안녕하세요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "5ja28YKUBXmkMBfJI4ou",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_comments/5ja28YKUBXmkMBfJI4ou",
+        "data": {
+          "commentPath": "posts/20260102/posts/5c269659-4d02-48b7-8c50-7e21512f4fa4/comments/5ja28YKUBXmkMBfJI4ou",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:22:59.135000+00:00"
+          },
+          "postPath": "posts/20260102/posts/5c269659-4d02-48b7-8c50-7e21512f4fa4",
+          "contentHtml": "<p>٩꒰｡•◡•｡꒱۶</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "BS1UaNLdUruByKiHCyFP",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_comments/BS1UaNLdUruByKiHCyFP",
+        "data": {
+          "commentPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6/comments/BS1UaNLdUruByKiHCyFP",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:43:09.120000+00:00"
+          },
+          "postPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "contentHtml": "<p>열심히 해볼게요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ep9G5cL9OByl1Uulr3z6",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_comments/ep9G5cL9OByl1Uulr3z6",
+        "data": {
+          "commentPath": "posts/20260101/posts/0de4226b-0849-4430-8872-c170b35881d9/comments/ep9G5cL9OByl1Uulr3z6",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:38.220000+00:00"
+          },
+          "postPath": "posts/20260101/posts/0de4226b-0849-4430-8872-c170b35881d9",
+          "contentHtml": "<p>새해 복 많이 받으세요~</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "tfxhG4Q9SM1vFcqRwMJO",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_comments/tfxhG4Q9SM1vFcqRwMJO",
+        "data": {
+          "commentPath": "posts/20260103/posts/a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70/comments/tfxhG4Q9SM1vFcqRwMJO",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:22:24.962000+00:00"
+          },
+          "postPath": "posts/20260103/posts/a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70",
+          "contentHtml": "<p>몰랐네요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_posts": [
+      {
+        "id": "382238fb-701e-47d5-8611-42c73746d98c",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_posts/382238fb-701e-47d5-8611-42c73746d98c",
+        "data": {
+          "title": "카톡은 어떻게 들어가나요..?",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:25:31.109000+00:00"
+          },
+          "boardId": "free",
+          "postPath": "posts/20260104/posts/382238fb-701e-47d5-8611-42c73746d98c"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_posts/3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+        "data": {
+          "title": "띵샵 롯모상 3.1%",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:08:22.465000+00:00"
+          },
+          "boardId": "deal",
+          "postPath": "posts/20260201/posts/3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fe838516-284c-4086-b8ab-a856fe90fec8",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/my_posts/fe838516-284c-4086-b8ab-a856fe90fec8",
+        "data": {
+          "title": "가입했습니다",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:43:38.331000+00:00"
+          },
+          "boardId": "free",
+          "postPath": "posts/20251226/posts/fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "2PICqToWv652E2oNJkdV",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/2PICqToWv652E2oNJkdV",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260201/3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+          "postTitle": "띵샵 롯모상 3.1%",
+          "commentId": "hN4XhDHWn7flU63pn2Zl",
+          "commentedByName": "마일캐치",
+          "date": "20260201",
+          "boardId": "deal",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T23:43:39.087000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "3q91K1AzmcalCIUnX4VA",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/3q91K1AzmcalCIUnX4VA",
+        "data": {
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8",
+          "date": "20251226",
+          "boardId": "free",
+          "type": "post_like",
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-30T16:00:36.059000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "가입했습니다",
+          "body": "문응철님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "MvYPXCEv0zTNO9eOQTVIH201TZE3",
+          "likedByName": "문응철"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "BPBNlXnFrkCieGsUxum4",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/BPBNlXnFrkCieGsUxum4",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260104/382238fb-701e-47d5-8611-42c73746d98c",
+          "postTitle": "카톡은 어떻게 들어가나요..?",
+          "commentId": "zSYMAHvwrj3wT7xFOmNv",
+          "commentedByName": "마일캐치",
+          "date": "20260104",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T23:44:18.404000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "382238fb-701e-47d5-8611-42c73746d98c"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Dv5obahufiHfKqovMimk",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/Dv5obahufiHfKqovMimk",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260201/3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+          "postTitle": "띵샵 롯모상 3.1%",
+          "commentId": "492ufusD4r0irfJnlWim",
+          "commentedByName": "4881kim",
+          "date": "20260201",
+          "boardId": "deal",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-02T01:13:13.930000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "body": "4881kim님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "A9Ar8qCaKEfk6dywi4vneXQyglB3",
+          "postId": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "FB0BIHxWaN5CkbQ43Iso",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/FB0BIHxWaN5CkbQ43Iso",
+        "data": {
+          "postId": "0de4226b-0849-4430-8872-c170b35881d9",
+          "type": "comment_like",
+          "path": "/community/detail/20260101/0de4226b-0849-4430-8872-c170b35881d9",
+          "commentId": "ep9G5cL9OByl1Uulr3z6",
+          "date": "20260101",
+          "boardId": "notice",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T08:39:21.010000+00:00"
+          },
+          "commenterName": "totori",
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "HkH7sWZTqfVfWpP6J2Rl",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/HkH7sWZTqfVfWpP6J2Rl",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260201/3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+          "postTitle": "띵샵 롯모상 3.1%",
+          "commentId": "zC5azVknsoNcLL5RtyEv",
+          "commentedByName": "xx xx",
+          "date": "20260201",
+          "boardId": "deal",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-01T00:32:00.196000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "body": "xx xx님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "7Na4WO1IlESIUEzLJSgzJfWxSRV2",
+          "postId": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "L3AugHtaWY54Y1ulJlQO",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/L3AugHtaWY54Y1ulJlQO",
+        "data": {
+          "postId": "382238fb-701e-47d5-8611-42c73746d98c",
+          "path": "/community/detail/20260104/382238fb-701e-47d5-8611-42c73746d98c",
+          "boardId": "free",
+          "date": "20260104",
+          "type": "post_like",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T06:48:36.105000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "카톡은 어떻게 들어가나요..?",
+          "body": "SJ H님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "ALDilXqGCBYogdHDdH0l6WG1j6x2",
+          "likedByName": "SJ H"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "SBBbNb2B01fo6QRSSslI",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/SBBbNb2B01fo6QRSSslI",
+        "data": {
+          "likedByName": "스피스",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251226",
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T09:00:11.463000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "가입했습니다",
+          "body": "스피스님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "XCMFb6juEja4dZi2mpGObSlZSQj1",
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Sh33d7MINgQ7iEqy2hlY",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/Sh33d7MINgQ7iEqy2hlY",
+        "data": {
+          "likedByName": "rooroo",
+          "type": "post_like",
+          "boardId": "deal",
+          "date": "20260201",
+          "path": "/community/detail/20260201/3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-01T04:51:31.167000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "postTitle": "띵샵 롯모상 3.1%",
+          "body": "rooroo님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "5v5Ta9whN4dQMqsQeBoL4ZdH9ap2",
+          "postId": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "bljgpZFBuzil4VuewWqF",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/bljgpZFBuzil4VuewWqF",
+        "data": {
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "path": "/community/detail/20250825/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "type": "comment_like",
+          "commentId": "BS1UaNLdUruByKiHCyFP",
+          "date": "20250825",
+          "boardId": "notice",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:44:05.400000+00:00"
+          },
+          "commenterName": "totori",
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "clRtJNoyHtojdK5abhYC",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/clRtJNoyHtojdK5abhYC",
+        "data": {
+          "postId": "382238fb-701e-47d5-8611-42c73746d98c",
+          "path": "/community/detail/20260104/382238fb-701e-47d5-8611-42c73746d98c",
+          "boardId": "free",
+          "date": "20260104",
+          "type": "post_like",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-04T00:07:01.580000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "카톡은 어떻게 들어가나요..?",
+          "body": "yoonsik kang님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "OM3b0VpA2CgQrfL1JnHjlwWWNHQ2",
+          "likedByName": "yoonsik kang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "eyJcFXkNC55V4NyMzXD3",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/eyJcFXkNC55V4NyMzXD3",
+        "data": {
+          "repliedByName": "하이요",
+          "path": "/community/detail/20260103/a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70",
+          "type": "comment_reply",
+          "commentId": "QcJNxpbX5nODrn1CkE11",
+          "date": "20260103",
+          "parentCommentId": "tfxhG4Q9SM1vFcqRwMJO",
+          "boardId": "hotdeal",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T05:25:00.108000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "하이요님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "yj1r4OqEUoYoFsHTmhjsyX5hUIm1",
+          "postId": "a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gxY1wrxO6pGgIT1kBOHF",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/gxY1wrxO6pGgIT1kBOHF",
+        "data": {
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8",
+          "date": "20251226",
+          "boardId": "free",
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "type": "post_like",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T05:45:31.536000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "가입했습니다",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "iggrnXmbOTuxh7sKnAUX",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/iggrnXmbOTuxh7sKnAUX",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20250825/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "commentId": "6ctjfsukydZfWE4qmfGu",
+          "date": "20250825",
+          "parentCommentId": "BS1UaNLdUruByKiHCyFP",
+          "boardId": "notice",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:44:20.462000+00:00"
+          },
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kHER9G7aTgbISa5KgQj9",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/kHER9G7aTgbISa5KgQj9",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "deal",
+          "date": "20260201",
+          "path": "/community/detail/20260201/3cfdc702-98df-4b86-bcd5-d269cedbdaf9",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T23:43:15.742000+00:00"
+          },
+          "boardName": "적립/카드 혜택",
+          "postTitle": "띵샵 롯모상 3.1%",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kzkCKvSICiTKV7kppf6w",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/kzkCKvSICiTKV7kppf6w",
+        "data": {
+          "likedByName": "채아빠",
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "boardId": "free",
+          "type": "post_like",
+          "date": "20251226",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T14:02:27.115000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "가입했습니다",
+          "body": "채아빠님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "lza9YRnlevNKgaUFAJ5uHG1Mmef1",
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "m0xczik7hdr4bdgwwCCj",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/m0xczik7hdr4bdgwwCCj",
+        "data": {
+          "likedByName": "Kwanshik Chae",
+          "date": "20251226",
+          "boardId": "free",
+          "type": "post_like",
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T14:55:46.475000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "가입했습니다",
+          "body": "Kwanshik Chae님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "8JhHgqpOSVchbsygChYOYGH1Udf1",
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rWj99LInahVlaM50x7vY",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/rWj99LInahVlaM50x7vY",
+        "data": {
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "type": "post_comment",
+          "postTitle": "가입했습니다",
+          "commentId": "CUVR5kiix3CQWGw3GSDs",
+          "commentedByName": "마일캐치",
+          "date": "20251226",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T05:46:01.559000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "uY6ZQhqae14qGYgxLGRe",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/uY6ZQhqae14qGYgxLGRe",
+        "data": {
+          "likedByName": "마일캐치",
+          "date": "20260104",
+          "boardId": "free",
+          "type": "post_like",
+          "path": "/community/detail/20260104/382238fb-701e-47d5-8611-42c73746d98c",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T23:43:28.958000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "카톡은 어떻게 들어가나요..?",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "382238fb-701e-47d5-8611-42c73746d98c"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "vc1X5wSWXSEzPpByPAcA",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/vc1X5wSWXSEzPpByPAcA",
+        "data": {
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "type": "post_comment",
+          "postTitle": "가입했습니다",
+          "commentId": "sGqz2o0UxuF5jflGq6qm",
+          "commentedByName": "도니",
+          "date": "20251226",
+          "boardId": "free",
+          "isRead": true,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T07:14:40.797000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "도니님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "6r2iaR0DC9bc5r3L80fy8wYLGqf1",
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "zMNhw9t2xHGknEhu1rZy",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/notifications/zMNhw9t2xHGknEhu1rZy",
+        "data": {
+          "likedByName": "도니",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20251226",
+          "path": "/community/detail/20251226/fe838516-284c-4086-b8ab-a856fe90fec8",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T07:10:58.374000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "가입했습니다",
+          "body": "도니님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "6r2iaR0DC9bc5r3L80fy8wYLGqf1",
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "1asTRvvQOAqcBbGdjmGx",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/1asTRvvQOAqcBbGdjmGx",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260102",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:00.978000+00:00"
+          },
+          "postTitle": "스위스 5/4~5/6일에 가는 분 숙소",
+          "amount": 1,
+          "postId": "844fb75d-288c-46fc-aa86-37a638571ac1"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "3fYpQ09SyEb0CEFkbBjS",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/3fYpQ09SyEb0CEFkbBjS",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20251226",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:43:38.416000+00:00"
+          },
+          "postTitle": "가입했습니다",
+          "amount": 10,
+          "postId": "fe838516-284c-4086-b8ab-a856fe90fec8"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "7hOjxmdT9sg4y45mncwL",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/7hOjxmdT9sg4y45mncwL",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20260102",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:07.580000+00:00"
+          },
+          "postTitle": "2026년 1월 2일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "f676e314-5902-4a29-8421-62a37a6f50af"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "GnK6sjqT6UT5lZuQTqKv",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/GnK6sjqT6UT5lZuQTqKv",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260101",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:11.640000+00:00"
+          },
+          "postTitle": "2026년 2월 밀라노 동계올림픽 예정 (여행 계획 짜기전에 참고하셔유)",
+          "amount": 1,
+          "postId": "3b32c1ae-8d85-4633-8b92-c455b58b1030"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "M03MIING7QvRIVIHyodg",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/M03MIING7QvRIVIHyodg",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:40.694000+00:00"
+          },
+          "postTitle": "곧 바뀌는 마일캐치 홍보👍",
+          "amount": 1,
+          "postId": "66b57a91-f5ff-485e-b0bf-1d72649ccbb7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "NXyloGpecQLxuvJn21eV",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/NXyloGpecQLxuvJn21eV",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251231",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:23:44.943000+00:00"
+          },
+          "postTitle": "잘부탁드려요",
+          "commentId": "3HKWNxqwBE9s7xRAKwmF",
+          "amount": 2,
+          "postId": "c970668a-b0e4-4a13-bc6d-a520295d96e9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "QGkJXgeSQMUoYKqgnjSU",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/QGkJXgeSQMUoYKqgnjSU",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20260104",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:30.795000+00:00"
+          },
+          "postTitle": "2026년 1월 4일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "bdf78059-842e-42df-af58-1b75bb62b09d"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "TgKTM0mRAoWtmm70EB7S",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/TgKTM0mRAoWtmm70EB7S",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260102",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:22:59.217000+00:00"
+          },
+          "postTitle": "2026년 새해가 시작됐습니다",
+          "commentId": "5ja28YKUBXmkMBfJI4ou",
+          "amount": 2,
+          "postId": "5c269659-4d02-48b7-8c50-7e21512f4fa4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "YdTA9brLwPs1Cekw9Eee",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/YdTA9brLwPs1Cekw9Eee",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20260104",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:25:31.223000+00:00"
+          },
+          "postTitle": "카톡은 어떻게 들어가나요..?",
+          "amount": 10,
+          "postId": "382238fb-701e-47d5-8611-42c73746d98c"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "biLSIaHMCnRO6iW6vOXq",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/biLSIaHMCnRO6iW6vOXq",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20260101",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:09.387000+00:00"
+          },
+          "postTitle": "2026년 1월 1일 마일캐치 오늘의 매거진",
+          "amount": 1,
+          "postId": "dc3e3b35-c74b-4493-8107-46fc1ca05ee2"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dOuesE7RSltO8FyQABLz",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/dOuesE7RSltO8FyQABLz",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:55.553000+00:00"
+          },
+          "postTitle": "2026년 1월 3일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "6ffada4f-5bd2-4cbb-8fdd-55b5497f1a03"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dr7UnXNIAB9jaKZnlKNh",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/dr7UnXNIAB9jaKZnlKNh",
+        "data": {
+          "type": "post_like",
+          "boardId": "error_report",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:57.248000+00:00"
+          },
+          "postTitle": "오잉님의 상품권 제보",
+          "amount": 1,
+          "postId": "e9204065-4589-4eec-834b-a9a5b0e114ac"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "hZkStyK6JAiSViQeanIa",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/hZkStyK6JAiSViQeanIa",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250825",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:43:09.230000+00:00"
+          },
+          "postTitle": "[공지] 마일캐치 레벨 시스템 안내",
+          "commentId": "BS1UaNLdUruByKiHCyFP",
+          "amount": 2,
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "iWCU3pno6y6posgKPPNz",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/iWCU3pno6y6posgKPPNz",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20260104",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:36.690000+00:00"
+          },
+          "postTitle": "1월 4일 끄적끄적",
+          "amount": 1,
+          "postId": "c304a54c-e0e1-408c-b7aa-9ab780383373"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kME1isbX9ReHQUVLPJm5",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/kME1isbX9ReHQUVLPJm5",
+        "data": {
+          "amount": 100,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:44:09.181000+00:00"
+          },
+          "type": "admin_gift",
+          "adminName": "마일캐치",
+          "reason": "운영자 선물",
+          "adminId": "aP3C0N511beyK7QZG9GyChs5oqO2"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "nE74sd69bMuDbBdNSGjY",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/nE74sd69bMuDbBdNSGjY",
+        "data": {
+          "type": "post_like",
+          "boardId": "hotdeal",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:26:50.682000+00:00"
+          },
+          "postTitle": "(1월 5일 선착순 / 추첨) 푸켓 20,260원",
+          "amount": 1,
+          "postId": "a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "nn1VLWzeCAUi5ukrmEGE",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/nn1VLWzeCAUi5ukrmEGE",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260101",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:38.315000+00:00"
+          },
+          "postTitle": "마일캐치 가족 여러분, 2026년 새해 복 많이 받으세요!🎉",
+          "commentId": "ep9G5cL9OByl1Uulr3z6",
+          "amount": 2,
+          "postId": "0de4226b-0849-4430-8872-c170b35881d9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "otNFGY94Dc5cbvkchgkm",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/otNFGY94Dc5cbvkchgkm",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260102",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:27:03.075000+00:00"
+          },
+          "postTitle": "2026년 새해가 시작됐습니다",
+          "amount": 1,
+          "postId": "5c269659-4d02-48b7-8c50-7e21512f4fa4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rlctGTJtG2YKbtTsCpXr",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/rlctGTJtG2YKbtTsCpXr",
+        "data": {
+          "type": "post_create",
+          "boardId": "deal",
+          "dateString": "20260201",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:08:22.552000+00:00"
+          },
+          "postTitle": "띵샵 롯모상 3.1%",
+          "amount": 10,
+          "postId": "3cfdc702-98df-4b86-bcd5-d269cedbdaf9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "yfrvGPQM8j2o4ZmzjyHo",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/peanut_history/yfrvGPQM8j2o4ZmzjyHo",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260103",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:22:25.074000+00:00"
+          },
+          "postTitle": "(1월 5일 선착순 / 추첨) 푸켓 20,260원",
+          "commentId": "tfxhG4Q9SM1vFcqRwMJO",
+          "amount": 2,
+          "postId": "a8a6e9c2-673c-4e7f-bb32-13bce4fbbc70"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1768010801066",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768010801066",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "discount": 2.75,
+          "costPerMile": -0.77,
+          "qty": 10,
+          "buyTotal": 972000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:06:41.105000+00:00"
+          },
+          "lotId": "lot_1767478695068",
+          "sellTotal": 972500,
+          "miles": 648,
+          "sellUnit": 97250,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:06:41.105000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T01:59:05.731688+00:00"
+          },
+          "profit": 500,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768010821008",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768010821008",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000,
+          "discount": 2.75,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:01.212000+00:00"
+          },
+          "lotId": "lot_1767478617435",
+          "sellTotal": 486250,
+          "miles": 0,
+          "sellUnit": 486250,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:01.212000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:06:49.955266+00:00"
+          },
+          "profit": 1250,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768010838092",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768010838092",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "discount": 2.75,
+          "costPerMile": -0.77,
+          "qty": 4,
+          "buyTotal": 1944000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:18.135000+00:00"
+          },
+          "lotId": "lot_1767478232670",
+          "sellTotal": 1945000,
+          "miles": 1296,
+          "sellUnit": 486250,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:18.135000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:10.591287+00:00"
+          },
+          "profit": 1000,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768010867192",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768010867192",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000,
+          "discount": 2.75,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:47.227000+00:00"
+          },
+          "lotId": "lot_1767577972350",
+          "sellTotal": 486250,
+          "miles": 0,
+          "sellUnit": 486250,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:47.227000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:37.462860+00:00"
+          },
+          "profit": 1250,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768010915700",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768010915700",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 1.55,
+          "qty": 2,
+          "buyTotal": 969000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:08:35.735000+00:00"
+          },
+          "lotId": "lot_1767649646579",
+          "sellTotal": 967500,
+          "miles": 969,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:08:35.735000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:07:53.002647+00:00"
+          },
+          "profit": -1500,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768010952599",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768010952599",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 2.75,
+          "costPerMile": -2.58,
+          "qty": 2,
+          "buyTotal": 970000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:09:12.633000+00:00"
+          },
+          "lotId": "lot_1767735968533",
+          "sellTotal": 972500,
+          "miles": 970,
+          "sellUnit": 486250,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:09:12.633000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T02:08:45.083106+00:00"
+          },
+          "profit": 2500,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768404489802",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768404489802",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 460000,
+          "costPerMile": 16.13,
+          "discount": 8.0,
+          "miles": 310,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:09.848000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-11T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:09.848000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1768404387194"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768404507237",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768404507237",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 460000,
+          "costPerMile": 16.13,
+          "discount": 8.0,
+          "miles": 310,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:27.256000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-12T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:27.256000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1768404406314"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768404517394",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1768404517394",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 460000,
+          "costPerMile": 16.13,
+          "discount": 8.0,
+          "miles": 310,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:37.413000+00:00"
+          },
+          "buyTotal": 465000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-14T15:28:37.413000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1768404423192"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1770684689928",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1770684689928",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 460000,
+          "costPerMile": 17.74,
+          "discount": 8.0,
+          "miles": 310,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:29.958000+00:00"
+          },
+          "buyTotal": 465500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:09.673961+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:29.958000+00:00"
+          },
+          "profit": -5500,
+          "lotId": "lot_1770684651392"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1770684704835",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1770684704835",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 460000,
+          "costPerMile": 17.74,
+          "discount": 8.0,
+          "miles": 310,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:44.865000+00:00"
+          },
+          "buyTotal": 465500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:32.937592+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T00:51:44.865000+00:00"
+          },
+          "profit": -5500,
+          "lotId": "lot_1770684668131"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418792912",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418792912",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 5,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:19:52.982000+00:00"
+          },
+          "lotId": "lot_1767682569720",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 96750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:19:52.982000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418812881",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418812881",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:12.913000+00:00"
+          },
+          "lotId": "lot_1767865586227",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:12.913000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418837068",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418837068",
+        "data": {
+          "mileRuleUsedPerMileKRW": 9999999,
+          "discount": 3.25,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:37.129000+00:00"
+          },
+          "lotId": "lot_1768552172207",
+          "sellTotal": 483750,
+          "miles": 0,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:37.129000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418846858",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418846858",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:46.889000+00:00"
+          },
+          "lotId": "lot_1769142938836",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:20:46.889000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418893366",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418893366",
+        "data": {
+          "mileRuleUsedPerMileKRW": 99999999999,
+          "discount": 3.15,
+          "costPerMile": 0.0,
+          "qty": 3,
+          "buyTotal": 147000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:21:33.425000+00:00"
+          },
+          "lotId": "lot_1769883566716",
+          "sellTotal": 145275,
+          "miles": 0,
+          "sellUnit": 48425,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:21:33.425000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1725,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418920661",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418920661",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.15,
+          "costPerMile": 11.73,
+          "qty": 2,
+          "buyTotal": 98000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:22:00.724000+00:00"
+          },
+          "lotId": "lot_1769883590337",
+          "sellTotal": 96850,
+          "miles": 98,
+          "sellUnit": 48425,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:22:00.724000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1150,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418963834",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418963834",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.35,
+          "costPerMile": 2.58,
+          "qty": 2,
+          "buyTotal": 969000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:22:43.891000+00:00"
+          },
+          "lotId": "lot_1769882807478",
+          "sellTotal": 966500,
+          "miles": 969,
+          "sellUnit": 483250,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:22:43.891000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -2500,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773418993606",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773418993606",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000,
+          "discount": 3.25,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:13.665000+00:00"
+          },
+          "lotId": "lot_1770026559574",
+          "sellTotal": 483750,
+          "miles": 0,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:13.665000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419003999",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419003999",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000,
+          "discount": 3.25,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:24.033000+00:00"
+          },
+          "lotId": "lot_1770118024958",
+          "sellTotal": 483750,
+          "miles": 0,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:24.033000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419018433",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419018433",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:38.494000+00:00"
+          },
+          "lotId": "lot_1770195964813",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:38.494000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419029368",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419029368",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:49.400000+00:00"
+          },
+          "lotId": "lot_1770296977767",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:23:49.400000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419063684",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419063684",
+        "data": {
+          "mileRuleUsedPerMileKRW": 99999999999,
+          "discount": 3.25,
+          "costPerMile": 0.0,
+          "qty": 2,
+          "buyTotal": 194000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:23.745000+00:00"
+          },
+          "lotId": "lot_1770297208863",
+          "sellTotal": 193500,
+          "miles": 0,
+          "sellUnit": 96750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:23.745000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -500,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419074910",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419074910",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 3,
+          "buyTotal": 291000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:34.942000+00:00"
+          },
+          "lotId": "lot_1770297223932",
+          "sellTotal": 290250,
+          "miles": 291,
+          "sellUnit": 96750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:34.942000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -750,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419088340",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419088340",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:48.373000+00:00"
+          },
+          "lotId": "lot_1770297191602",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:24:48.373000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419107872",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419107872",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "discount": 3.25,
+          "costPerMile": 3.87,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:07.933000+00:00"
+          },
+          "lotId": "lot_1770386849298",
+          "sellTotal": 483750,
+          "miles": 323,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:07.933000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419119053",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419119053",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "discount": 3.25,
+          "costPerMile": 3.87,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:19.089000+00:00"
+          },
+          "lotId": "lot_1770387182929",
+          "sellTotal": 483750,
+          "miles": 323,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:19.089000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419131439",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419131439",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:31.471000+00:00"
+          },
+          "lotId": "lot_1770869015630",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:31.471000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419143873",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419143873",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:43.906000+00:00"
+          },
+          "lotId": "lot_1770869044581",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:43.906000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419154795",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419154795",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:54.828000+00:00"
+          },
+          "lotId": "lot_1770562352983",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:25:54.828000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419165888",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419165888",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:05.922000+00:00"
+          },
+          "lotId": "lot_1770562364909",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:05.922000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419205632",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419205632",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000,
+          "discount": 3.25,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:45.696000+00:00"
+          },
+          "lotId": "lot_1772322368959",
+          "sellTotal": 483750,
+          "miles": 0,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:45.696000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419217277",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419217277",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:57.315000+00:00"
+          },
+          "lotId": "lot_1772322384178",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:26:57.315000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419234743",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419234743",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.35,
+          "costPerMile": 2.58,
+          "qty": 10,
+          "buyTotal": 969000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:14.805000+00:00"
+          },
+          "lotId": "lot_1772322400931",
+          "sellTotal": 966500,
+          "miles": 969,
+          "sellUnit": 96650,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:14.805000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -2500,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419253438",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419253438",
+        "data": {
+          "mileRuleUsedPerMileKRW": 10000000,
+          "discount": 3.25,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:33.493000+00:00"
+          },
+          "lotId": "lot_1772500858920",
+          "sellTotal": 483750,
+          "miles": 0,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:33.493000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1773419263122",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/sales/sale_1773419263122",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.25,
+          "costPerMile": 2.58,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:43.157000+00:00"
+          },
+          "lotId": "lot_1772500875406",
+          "sellTotal": 483750,
+          "miles": 485,
+          "sellUnit": 483750,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-13T16:27:43.157000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-12T15:00:00+00:00"
+          },
+          "profit": -1250,
+          "branchId": "mirae"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "gmarket",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/where_to_buy/gmarket",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:14:30.528000+00:00"
+          },
+          "name": "지마켓"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gmarket_2",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/where_to_buy/gmarket_2",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-04T09:05:51.204000+00:00"
+          },
+          "name": "지마켓 사업자"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_pay",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/where_to_buy/kb_pay",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-06T21:45:46.926000+00:00"
+          },
+          "name": "KBpay"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "naver",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/where_to_buy/naver",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-31T18:18:00.706000+00:00"
+          },
+          "name": "네이버"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "thingshop",
+        "path": "users/3MSpY8LrxvPUYFAXJH6VrsHyB1l1/where_to_buy/thingshop",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-03T22:09:32.946000+00:00"
+          },
+          "name": "띵샵"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "3MSpY8LrxvPUYFAXJH6VrsHyB1l1",
+    "safeFileName": "3MSpY8LrxvPUYFAXJH6VrsHyB1l1.json"
+  }
+}

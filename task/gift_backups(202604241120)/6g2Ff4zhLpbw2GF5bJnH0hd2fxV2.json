@@ -1,0 +1,286 @@
+{
+  "id": "6g2Ff4zhLpbw2GF5bJnH0hd2fxV2",
+  "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2",
+  "data": {
+    "displayNameEnable": false,
+    "uid": "6g2Ff4zhLpbw2GF5bJnH0hd2fxV2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-10T14:08:19.445000+00:00"
+    },
+    "isBanned": false,
+    "gradeLevel": 1,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-23T13:45:19.520513+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2F6g2Ff4zhLpbw2GF5bJnH0hd2fxV2.png?alt=media&token=9435c42d-51eb-472c-867c-815841c493ed",
+    "commentCount": 1,
+    "fcmToken": "eORU0-Y4ScmHV2MRyUy7AQ:APA91bEqY_x98WiH5i4wg7orzWzN-P3ZesDYF2Fn33tk8Ol3jxSJ01PLCQm0C-Ovgn9tZXo1Pk2cA0FTLoSop5fhvyzbeXcnbUpYcFuO4cxyY3P9HPfaU-g",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T03:02:36.413000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-10T14:09:53.453000+00:00"
+    },
+    "displayName": "여행사냥꾼",
+    "displayNameChangeCount": 1,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T03:02:36.413000+00:00"
+    },
+    "peanutCount": 29,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 1,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T03:02:36.413000+00:00"
+    },
+    "email": "kyj870606@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 2,
+    "photoURLEnable": false
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "bc_diamond",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/cards/bc_diamond",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 750,
+          "creditPerMileKRW": 750,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:03:30.535000+00:00"
+          },
+          "name": "대구은행"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "2c942065-1391-4750-a7c2-a068c908a39a",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/liked_posts/2c942065-1391-4750-a7c2-a068c908a39a",
+        "data": {
+          "title": "마일캐치 현재 시점 정리",
+          "postPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:09:53.549000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "a224b0ac-5e0a-4f12-bef7-f9adc20d5784",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/liked_posts/a224b0ac-5e0a-4f12-bef7-f9adc20d5784",
+        "data": {
+          "title": "드디어 상품권 다 털고왔네요",
+          "postPath": "posts/20260121/posts/a224b0ac-5e0a-4f12-bef7-f9adc20d5784",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:07:32.937000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1766718345470",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/lots/lot_1766718345470",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:05:20.526800+00:00"
+          },
+          "discount": 0.5,
+          "cardId": "bc_diamond",
+          "buyUnit": 99500,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:05:45.186000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:06:28.352000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "zgU29pcIqcHIeXhN5qyF",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/my_comments/zgU29pcIqcHIeXhN5qyF",
+        "data": {
+          "commentPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a/comments/zgU29pcIqcHIeXhN5qyF",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:08:19.647000+00:00"
+          },
+          "postPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a",
+          "contentHtml": "<p>감사합니다.</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "Sl3SgOrTfD1y1NmJt3tK",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/notifications/Sl3SgOrTfD1y1NmJt3tK",
+        "data": {
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a",
+          "type": "comment_like",
+          "path": "/community/detail/20260120/2c942065-1391-4750-a7c2-a068c908a39a",
+          "commentId": "zgU29pcIqcHIeXhN5qyF",
+          "date": "20260120",
+          "boardId": "free",
+          "isRead": true,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:15:01.640000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "여행사냥꾼",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "8kBgcSdjir5jieI0ibsn",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/peanut_history/8kBgcSdjir5jieI0ibsn",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260121",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:07:32.859000+00:00"
+          },
+          "postTitle": "드디어 상품권 다 털고왔네요",
+          "amount": 1,
+          "postId": "a224b0ac-5e0a-4f12-bef7-f9adc20d5784"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8wazcWa4qYtWPgFKPI1R",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/peanut_history/8wazcWa4qYtWPgFKPI1R",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260120",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:09:53.501000+00:00"
+          },
+          "postTitle": "마일캐치 현재 시점 정리",
+          "amount": 1,
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "JDroS9PWqNx3jfg5r3RG",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/peanut_history/JDroS9PWqNx3jfg5r3RG",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260120",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:08:19.807000+00:00"
+          },
+          "postTitle": "마일캐치 현재 시점 정리",
+          "commentId": "zgU29pcIqcHIeXhN5qyF",
+          "amount": 2,
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "jyOlFuoMZvf92z7MDtAd",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/peanut_history/jyOlFuoMZvf92z7MDtAd",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260208",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-10T14:06:34.406000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "5da94ac3-4459-447a-ba60-e5ccee053194"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1766718388646",
+        "path": "users/6g2Ff4zhLpbw2GF5bJnH0hd2fxV2/sales/sale_1766718388646",
+        "data": {
+          "mileRuleUsedPerMileKRW": 750,
+          "discount": 2.83,
+          "costPerMile": 17.52,
+          "qty": 1,
+          "buyTotal": 99500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:06:28.300000+00:00"
+          },
+          "lotId": "lot_1766718345470",
+          "sellTotal": 97170,
+          "miles": 133,
+          "sellUnit": 97170,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:06:28.300000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T03:06:21.082284+00:00"
+          },
+          "profit": -2330,
+          "branchId": "jungang"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "6g2Ff4zhLpbw2GF5bJnH0hd2fxV2",
+    "safeFileName": "6g2Ff4zhLpbw2GF5bJnH0hd2fxV2.json"
+  }
+}

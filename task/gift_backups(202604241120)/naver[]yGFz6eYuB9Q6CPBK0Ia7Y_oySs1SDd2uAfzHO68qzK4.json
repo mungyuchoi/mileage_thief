@@ -1,0 +1,1104 @@
+{
+  "id": "naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4",
+  "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4",
+    "postsCount": 2,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-18T02:21:16.786000+00:00"
+    },
+    "isBanned": false,
+    "gradeLevel": 2,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-18T09:23:39.179885+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": null,
+    "commentCount": 5,
+    "fcmToken": "eKMYeXMeRb-Q-DUBqPcX08:APA91bFpofzWVevo5V6N8x_3IjjAh_MBd4mdo0Pa6VMFEMxg2wVY92VwFy1lVd_jyccr5yf_jTN-tOvy4HhHzbhdhW9JvE9lwfLbsv6LYvPH0I6mZZuwP3s",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "displayNameChangeCount": 0,
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-29T12:18:54.226000+00:00"
+    },
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-18T02:18:08.742000+00:00"
+    },
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-18T02:22:48.198000+00:00"
+    },
+    "displayName": "아름다운길잡이",
+    "peanutCount": 25,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.2",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-03-18T02:18:08.742000+00:00"
+    },
+    "email": null,
+    "likesCount": 11,
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "sam",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/cards/sam",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:35:06.929000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "1fbc7113-127c-491f-8d5f-9b70f2a636bb",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/1fbc7113-127c-491f-8d5f-9b70f2a636bb",
+        "data": {
+          "title": "톡방비밀번호가 뭔가요?",
+          "postPath": "posts/20260113/posts/1fbc7113-127c-491f-8d5f-9b70f2a636bb",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:23.964000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "25b0e221-e135-4548-b97d-51ca89d76b32",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/25b0e221-e135-4548-b97d-51ca89d76b32",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260306/posts/25b0e221-e135-4548-b97d-51ca89d76b32",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:08.531000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "34c708a3-a9fe-4644-aa76-913f02ab0720",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/34c708a3-a9fe-4644-aa76-913f02ab0720",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260113/posts/34c708a3-a9fe-4644-aa76-913f02ab0720",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:33.811000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "5da94ac3-4459-447a-ba60-e5ccee053194",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/5da94ac3-4459-447a-ba60-e5ccee053194",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260208/posts/5da94ac3-4459-447a-ba60-e5ccee053194",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:36.541000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "65ec5f81-f27b-4956-89d7-52374da3bcb9",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/65ec5f81-f27b-4956-89d7-52374da3bcb9",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260114/posts/65ec5f81-f27b-4956-89d7-52374da3bcb9",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:20.706000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "819a0cf1-98e6-4bd1-82b6-206b9cc6d999",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/819a0cf1-98e6-4bd1-82b6-206b9cc6d999",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260118/posts/819a0cf1-98e6-4bd1-82b6-206b9cc6d999",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:41.260000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "c1beea57-214d-4808-b483-b61415d0b6f7",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/c1beea57-214d-4808-b483-b61415d0b6f7",
+        "data": {
+          "title": "상테크 아직도 하는줄 몰랐어요",
+          "postPath": "posts/20260218/posts/c1beea57-214d-4808-b483-b61415d0b6f7",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:18.571000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "c5f3a94d-37ac-48f7-88c3-c65ef1976209",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/c5f3a94d-37ac-48f7-88c3-c65ef1976209",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260114/posts/c5f3a94d-37ac-48f7-88c3-c65ef1976209",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:17.621000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "cfcc95b5-9d6a-41f6-a519-909f73f0f33f",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/cfcc95b5-9d6a-41f6-a519-909f73f0f33f",
+        "data": {
+          "title": "안녕하세요",
+          "postPath": "posts/20260115/posts/cfcc95b5-9d6a-41f6-a519-909f73f0f33f",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:06.141000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "f59c1841-b3e5-485e-ba20-00145e251dc4",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/f59c1841-b3e5-485e-ba20-00145e251dc4",
+        "data": {
+          "title": "오픈채팅방",
+          "postPath": "posts/20260304/posts/f59c1841-b3e5-485e-ba20-00145e251dc4",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:51.470000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "f639247d-b8d0-43da-9fb6-1ee3b5936825",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/liked_posts/f639247d-b8d0-43da-9fb6-1ee3b5936825",
+        "data": {
+          "title": "현대백화점 상품권 교환 질문",
+          "postPath": "posts/20260113/posts/f639247d-b8d0-43da-9fb6-1ee3b5936825",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:36.552000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1774989381453",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/lots/lot_1774989381453",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:37:02.456000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:35:14.388922+00:00"
+          },
+          "cardId": "sam",
+          "miles": 466,
+          "buyUnit": 46550,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:36:21.433000+00:00"
+          },
+          "giftcardId": "culture_land"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1775993178667",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/lots/lot_1775993178667",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "mileRuleUsedPerMileKRW": 1000,
+          "payType": "신용",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 10,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-12T11:26:41.986000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-12T11:26:05.059701+00:00"
+          },
+          "cardId": "sam",
+          "miles": 466,
+          "buyUnit": 46550,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-12T11:26:18.251000+00:00"
+          },
+          "giftcardId": "culture_land"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "08Ex4vRc8zXo62bIdo7y",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_comments/08Ex4vRc8zXo62bIdo7y",
+        "data": {
+          "commentPath": "posts/20260218/posts/c1beea57-214d-4808-b483-b61415d0b6f7/comments/08Ex4vRc8zXo62bIdo7y",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:27.601000+00:00"
+          },
+          "postPath": "posts/20260218/posts/c1beea57-214d-4808-b483-b61415d0b6f7",
+          "contentHtml": "<p>오!</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4CwwkuVH5NxJrmqNc4oM",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_comments/4CwwkuVH5NxJrmqNc4oM",
+        "data": {
+          "commentPath": "posts/20260208/posts/5da94ac3-4459-447a-ba60-e5ccee053194/comments/4CwwkuVH5NxJrmqNc4oM",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:40.056000+00:00"
+          },
+          "postPath": "posts/20260208/posts/5da94ac3-4459-447a-ba60-e5ccee053194",
+          "contentHtml": "<p>반가워요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "4fdNcG9OVw8z835lJZ2o",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_comments/4fdNcG9OVw8z835lJZ2o",
+        "data": {
+          "commentPath": "posts/20260306/posts/25b0e221-e135-4548-b97d-51ca89d76b32/comments/4fdNcG9OVw8z835lJZ2o",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:06.556000+00:00"
+          },
+          "postPath": "posts/20260306/posts/25b0e221-e135-4548-b97d-51ca89d76b32",
+          "contentHtml": "<p>반가워요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "AeyZAmMiNy4wX2EqbstQ",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_comments/AeyZAmMiNy4wX2EqbstQ",
+        "data": {
+          "commentPath": "posts/20260114/posts/c5f3a94d-37ac-48f7-88c3-c65ef1976209/comments/AeyZAmMiNy4wX2EqbstQ",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:16.946000+00:00"
+          },
+          "postPath": "posts/20260114/posts/c5f3a94d-37ac-48f7-88c3-c65ef1976209",
+          "contentHtml": "<p>반가워요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "SNAvywa4PVFDqN7GJwxU",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_comments/SNAvywa4PVFDqN7GJwxU",
+        "data": {
+          "commentPath": "posts/20260115/posts/cfcc95b5-9d6a-41f6-a519-909f73f0f33f/comments/SNAvywa4PVFDqN7GJwxU",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:05.521000+00:00"
+          },
+          "postPath": "posts/20260115/posts/cfcc95b5-9d6a-41f6-a519-909f73f0f33f",
+          "contentHtml": "<p>반가워요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_posts": [
+      {
+        "id": "45700c95-ed6e-468b-8580-6b7675efba28",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_posts/45700c95-ed6e-468b-8580-6b7675efba28",
+        "data": {
+          "title": "안녕하세요~가입했어요~",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:19:57.779000+00:00"
+          },
+          "postPath": "posts/20260318/posts/45700c95-ed6e-468b-8580-6b7675efba28",
+          "boardId": "free"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "d27de29f-074f-418c-886c-3cd2c507eede",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/my_posts/d27de29f-074f-418c-886c-3cd2c507eede",
+        "data": {
+          "title": "빨리해외가고싶어요~",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:22:25.383000+00:00"
+          },
+          "postPath": "posts/20260318/posts/d27de29f-074f-418c-886c-3cd2c507eede",
+          "boardId": "free"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "0sFpjiB1kdF8UZNfoUQd",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/0sFpjiB1kdF8UZNfoUQd",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/45700c95-ed6e-468b-8580-6b7675efba28",
+          "postTitle": "안녕하세요~가입했어요~",
+          "commentId": "wvIgK3cnpz6btavrh8iU",
+          "commentedByName": "마일캐치",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T22:57:09.786000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "2NdJE4Z9KHW7mfbIGLye",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/2NdJE4Z9KHW7mfbIGLye",
+        "data": {
+          "likedByName": "하이요",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20260318",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:26:04.774000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "빨리해외가고싶어요~",
+          "body": "하이요님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "yj1r4OqEUoYoFsHTmhjsyX5hUIm1",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8ONQhnNaNx6LeEEuiXa1",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/8ONQhnNaNx6LeEEuiXa1",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "postTitle": "빨리해외가고싶어요~",
+          "commentId": "v9gWhH9BrX8XYMP67d2b",
+          "commentedByName": "마일캐치",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T22:57:26.269000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "마일캐치님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "EybB8XIPuUtBLhSdc3rx",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/EybB8XIPuUtBLhSdc3rx",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "postTitle": "빨리해외가고싶어요~",
+          "commentId": "1V0tse7A87caE0zGzVUX",
+          "commentedByName": "파이팅팅오",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-21T13:24:18.373000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "파이팅팅오님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "WmMpVa2m1bfQZ13Rduna0melsvx1",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "HjpUcKKBfsaA4x1xpJTO",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/HjpUcKKBfsaA4x1xpJTO",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20260318",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T22:57:28.559000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "빨리해외가고싶어요~",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "J1kS6uEEILMSwINZfeHb",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/J1kS6uEEILMSwINZfeHb",
+        "data": {
+          "likedByName": "하이요",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20260318",
+          "path": "/community/detail/20260318/45700c95-ed6e-468b-8580-6b7675efba28",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:26:06.918000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "안녕하세요~가입했어요~",
+          "body": "하이요님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "yj1r4OqEUoYoFsHTmhjsyX5hUIm1",
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "LxA8vlXOqC8FP8Q7SOGC",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/LxA8vlXOqC8FP8Q7SOGC",
+        "data": {
+          "likedByName": "만비즈",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20260318",
+          "path": "/community/detail/20260318/45700c95-ed6e-468b-8580-6b7675efba28",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-19T12:23:50.382000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "안녕하세요~가입했어요~",
+          "body": "만비즈님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "xt5ctOcUwiRXE3fgYw0XJ6JBXJl2",
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "LxqsPy4m5X2u9pJ3OmMn",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/LxqsPy4m5X2u9pJ3OmMn",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "postTitle": "빨리해외가고싶어요~",
+          "commentId": "oSqgqSRfeAuXqGZgGDno",
+          "commentedByName": "김기범",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-22T03:45:23.814000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "김기범님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "QVZdLwUh4sQjyiJJkjwHjZY8Gjq2",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "UecjDN9h4DNzMZKUWm5y",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/UecjDN9h4DNzMZKUWm5y",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20260318",
+          "path": "/community/detail/20260318/45700c95-ed6e-468b-8580-6b7675efba28",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T22:57:02.403000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "안녕하세요~가입했어요~",
+          "body": "마일캐치님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "X0HhVtKUiSmxf60TtNz3",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/X0HhVtKUiSmxf60TtNz3",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/45700c95-ed6e-468b-8580-6b7675efba28",
+          "postTitle": "안녕하세요~가입했어요~",
+          "commentId": "xWJsRC76iUA0BW1HwbUY",
+          "commentedByName": "파이팅팅오",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-21T13:24:11.665000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "파이팅팅오님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "WmMpVa2m1bfQZ13Rduna0melsvx1",
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "aZriN2A7PW4mTBLmCKJX",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/aZriN2A7PW4mTBLmCKJX",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "postTitle": "빨리해외가고싶어요~",
+          "commentId": "AoqUmsSXrdmWq69tsM7E",
+          "commentedByName": "junbum park",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-23T06:52:36.376000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "junbum park님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "u5uCjeCgqRUcPz5frxqo7IB8vdw1",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gPwbegPSnoTchyTkYHyo",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/gPwbegPSnoTchyTkYHyo",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/45700c95-ed6e-468b-8580-6b7675efba28",
+          "postTitle": "안녕하세요~가입했어요~",
+          "commentId": "jZcqX1vR9jrzsUWp3bME",
+          "commentedByName": "만비즈",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-19T12:24:26.175000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "만비즈님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "xt5ctOcUwiRXE3fgYw0XJ6JBXJl2",
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ke30Ac0tzXErNtANdkSc",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/ke30Ac0tzXErNtANdkSc",
+        "data": {
+          "likedByName": "만비즈",
+          "type": "post_like",
+          "boardId": "free",
+          "date": "20260318",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "isRead": false,
+          "title": "좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-19T12:23:47.542000+00:00"
+          },
+          "boardName": "자유게시판",
+          "postTitle": "빨리해외가고싶어요~",
+          "body": "만비즈님이 게시글에 좋아요를 하였습니다.",
+          "likedBy": "xt5ctOcUwiRXE3fgYw0XJ6JBXJl2",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "oHUzzqYVbwtxiCxZEWrc",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/notifications/oHUzzqYVbwtxiCxZEWrc",
+        "data": {
+          "type": "post_comment",
+          "path": "/community/detail/20260318/d27de29f-074f-418c-886c-3cd2c507eede",
+          "postTitle": "빨리해외가고싶어요~",
+          "commentId": "gpyFNNTJ1V1Bplqeye5i",
+          "commentedByName": "만비즈",
+          "date": "20260318",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-19T12:24:36.667000+00:00"
+          },
+          "boardName": "자유게시판",
+          "body": "만비즈님이 게시글에 댓글을 달았습니다.",
+          "commentedBy": "xt5ctOcUwiRXE3fgYw0XJ6JBXJl2",
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "2Z1EYd8HCtqOgQhKDPP8",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/2Z1EYd8HCtqOgQhKDPP8",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260208",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:40.366000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "commentId": "4CwwkuVH5NxJrmqNc4oM",
+          "amount": 2,
+          "postId": "5da94ac3-4459-447a-ba60-e5ccee053194"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "3zgVMgMtDldITAhXyzMS",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/3zgVMgMtDldITAhXyzMS",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260306",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:08.436000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "25b0e221-e135-4548-b97d-51ca89d76b32"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "62yqcWiqcgPtPvkKnLhZ",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/62yqcWiqcgPtPvkKnLhZ",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260114",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:20.611000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "65ec5f81-f27b-4956-89d7-52374da3bcb9"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "AR3EJF7nV6gRxbC013rG",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/AR3EJF7nV6gRxbC013rG",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260114",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:17.351000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "commentId": "AeyZAmMiNy4wX2EqbstQ",
+          "amount": 2,
+          "postId": "c5f3a94d-37ac-48f7-88c3-c65ef1976209"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "BgiqvCPzLlBTgZS8lKmd",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/BgiqvCPzLlBTgZS8lKmd",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260208",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:36.451000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "5da94ac3-4459-447a-ba60-e5ccee053194"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "GecylpG7hm2orzC2sqsk",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/GecylpG7hm2orzC2sqsk",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260218",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:27.931000+00:00"
+          },
+          "postTitle": "상테크 아직도 하는줄 몰랐어요",
+          "commentId": "08Ex4vRc8zXo62bIdo7y",
+          "amount": 2,
+          "postId": "c1beea57-214d-4808-b483-b61415d0b6f7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "HvMYvpx0lSsWvr24cxyx",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/HvMYvpx0lSsWvr24cxyx",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:23.861000+00:00"
+          },
+          "postTitle": "톡방비밀번호가 뭔가요?",
+          "amount": 1,
+          "postId": "1fbc7113-127c-491f-8d5f-9b70f2a636bb"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "I61ceUOgouUf5AaQzV0I",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/I61ceUOgouUf5AaQzV0I",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260304",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:51.358000+00:00"
+          },
+          "postTitle": "오픈채팅방",
+          "amount": 1,
+          "postId": "f59c1841-b3e5-485e-ba20-00145e251dc4"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "MBvzjlCK8D5MaKSWVs8M",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/MBvzjlCK8D5MaKSWVs8M",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260306",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:06.931000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "commentId": "4fdNcG9OVw8z835lJZ2o",
+          "amount": 2,
+          "postId": "25b0e221-e135-4548-b97d-51ca89d76b32"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "Q86n2Zi0whoRsbcKZsPK",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/Q86n2Zi0whoRsbcKZsPK",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260114",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:17.536000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "c5f3a94d-37ac-48f7-88c3-c65ef1976209"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "RvfUueInTUiSn9kcCUKT",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/RvfUueInTUiSn9kcCUKT",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260218",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:20:18.481000+00:00"
+          },
+          "postTitle": "상테크 아직도 하는줄 몰랐어요",
+          "amount": 1,
+          "postId": "c1beea57-214d-4808-b483-b61415d0b6f7"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "WtxBgW6gOKS9Cn4fQwOR",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/WtxBgW6gOKS9Cn4fQwOR",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260118",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:41.141000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "819a0cf1-98e6-4bd1-82b6-206b9cc6d999"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "dp65poNgL8nsJPoxDYyr",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/dp65poNgL8nsJPoxDYyr",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:33.700000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "34c708a3-a9fe-4644-aa76-913f02ab0720"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fYRxynCXpTUIa2sYYL0c",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/fYRxynCXpTUIa2sYYL0c",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20260318",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:22:25.703000+00:00"
+          },
+          "postTitle": "빨리해외가고싶어요~",
+          "amount": 10,
+          "postId": "d27de29f-074f-418c-886c-3cd2c507eede"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gH3RKbBDRwNTN598gkXl",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/gH3RKbBDRwNTN598gkXl",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260115",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:06.071000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "amount": 1,
+          "postId": "cfcc95b5-9d6a-41f6-a519-909f73f0f33f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ozANVWBJZjduVLlPBr9V",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/ozANVWBJZjduVLlPBr9V",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:36.419000+00:00"
+          },
+          "postTitle": "현대백화점 상품권 교환 질문",
+          "amount": 1,
+          "postId": "f639247d-b8d0-43da-9fb6-1ee3b5936825"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "tOb9e1Y0luIvQ1jUHhat",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/tOb9e1Y0luIvQ1jUHhat",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260115",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:21:05.891000+00:00"
+          },
+          "postTitle": "안녕하세요",
+          "commentId": "SNAvywa4PVFDqN7GJwxU",
+          "amount": 2,
+          "postId": "cfcc95b5-9d6a-41f6-a519-909f73f0f33f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "yP4wlS88qFwrYZhlxRyc",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/peanut_history/yP4wlS88qFwrYZhlxRyc",
+        "data": {
+          "type": "post_create",
+          "boardId": "free",
+          "dateString": "20260318",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-18T02:19:58.126000+00:00"
+          },
+          "postTitle": "안녕하세요~가입했어요~",
+          "amount": 10,
+          "postId": "45700c95-ed6e-468b-8580-6b7675efba28"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1774989422557",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/sales/sale_1774989422557",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460000,
+          "costPerMile": 11.8,
+          "discount": 8.0,
+          "miles": 466,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:37:02.356000+00:00"
+          },
+          "buyTotal": 465500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:36:30.061937+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-03-31T20:37:02.356000+00:00"
+          },
+          "profit": -5500,
+          "lotId": "lot_1774989381453"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1775993202435",
+        "path": "users/naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4/sales/sale_1775993202435",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 460000,
+          "costPerMile": 11.8,
+          "discount": 8.0,
+          "miles": 466,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-12T11:26:41.924000+00:00"
+          },
+          "buyTotal": 465500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-12T11:26:34.545672+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-12T11:26:41.924000+00:00"
+          },
+          "profit": -5500,
+          "lotId": "lot_1775993178667"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "naver:yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4",
+    "safeFileName": "naver[]yGFz6eYuB9Q6CPBK0Ia7Y_oySs1SDd2uAfzHO68qzK4.json"
+  }
+}

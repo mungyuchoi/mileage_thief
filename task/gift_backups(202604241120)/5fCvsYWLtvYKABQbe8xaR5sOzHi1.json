@@ -1,0 +1,242 @@
+{
+  "id": "5fCvsYWLtvYKABQbe8xaR5sOzHi1",
+  "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "5fCvsYWLtvYKABQbe8xaR5sOzHi1",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T06:29:52.302000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocIa2DIqY3TwViopPfheYgwyeh92uPJ8-lD9Irrcsi89a_EJ9Q=s96-c",
+    "commentCount": 0,
+    "fcmToken": "fEfchpdV3ETRqpigL2n5u2:APA91bHLe-l9lCcJq4CkDtLe_taHRKds7BLiWYUfJejAbUECBiUzE-O2XCVSiPCmmnVGm0937szr38UCU-vPWP5UShCOdijFu5zjZBYCwat1rmAft720fCY",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T06:29:52.302000+00:00"
+    },
+    "displayName": "ahyoung baek",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T06:29:52.302000+00:00"
+    },
+    "peanutCount": 35,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T06:29:52.302000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "gksrnrrp@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "heritage",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/cards/heritage",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:35:57.587000+00:00"
+          },
+          "name": "KB"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1762324630973",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/lots/lot_1762324630973",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.47,
+          "cardId": "heritage",
+          "buyUnit": 96525,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:37:11.187000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:36:48.495591+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:40:38.590000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762324941484",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/lots/lot_1762324941484",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 2.4,
+          "cardId": "heritage",
+          "buyUnit": 97600,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:42:21.747000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-03T15:00:00+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:42:53.747000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762579570254",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/lots/lot_1762579570254",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.47,
+          "cardId": "heritage",
+          "buyUnit": 96530,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:26:10.368000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:25:18.931956+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:26:10.368000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762579892449",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/lots/lot_1762579892449",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.47,
+          "cardId": "heritage",
+          "buyUnit": 96525,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:31:32.560000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T15:00:00+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:31:32.560000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762579904085",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/lots/lot_1762579904085",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.47,
+          "cardId": "heritage",
+          "buyUnit": 96525,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:31:44.110000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T15:00:00+00:00"
+          },
+          "status": "open",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T05:31:44.110000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1762324647877",
+        "path": "users/5fCvsYWLtvYKABQbe8xaR5sOzHi1/sales/sale_1762324647877",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "discount": 3.15,
+          "costPerMile": -3.37,
+          "qty": 10,
+          "buyTotal": 965250,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:43:46.304000+00:00"
+          },
+          "lotId": "lot_1762324630973",
+          "sellTotal": 968500,
+          "miles": 965,
+          "sellUnit": 96850,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:37:27.977000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T06:37:12.925237+00:00"
+          },
+          "profit": 3250,
+          "branchId": "myungin"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "5fCvsYWLtvYKABQbe8xaR5sOzHi1",
+    "safeFileName": "5fCvsYWLtvYKABQbe8xaR5sOzHi1.json"
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "id": "U1EGog6JY9hp4IWJI4NXWltsD7u2",
+  "path": "users/U1EGog6JY9hp4IWJI4NXWltsD7u2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "U1EGog6JY9hp4IWJI4NXWltsD7u2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-01T14:28:48.844000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-05T03:02:15.543726+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": null,
+    "commentCount": 0,
+    "fcmToken": "f5-HKt2PZ0jytP_8omoyzn:APA91bFh8ARKUEQTo-QzODFqii-WwpmiLaE_jDLSXS-ouvThbt6hfWXOLYuz1zdwJ5Jp98NixNEv3knOyJ36gWIoQKWMf13OAGGllT9d0_0apGAWs0LSPSk",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-01T14:28:48.844000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-01T14:46:30.629000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-01T14:28:48.844000+00:00"
+    },
+    "displayName": null,
+    "peanutCount": 70,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-01T14:28:48.844000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "bryank1235@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotteplatinum",
+        "path": "users/U1EGog6JY9hp4IWJI4NXWltsD7u2/cards/lotteplatinum",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:35:57.923000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1767278196693",
+        "path": "users/U1EGog6JY9hp4IWJI4NXWltsD7u2/lots/lot_1767278196693",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:36:08.864263+00:00"
+          },
+          "discount": 6.9,
+          "cardId": "lotteplatinum",
+          "buyUnit": 46550,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:36:37.035000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "culture_land",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:37:06.834000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1767278226593",
+        "path": "users/U1EGog6JY9hp4IWJI4NXWltsD7u2/sales/sale_1767278226593",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 460000,
+          "costPerMile": 17.74,
+          "discount": 8.0,
+          "miles": 310,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:37:06.701000+00:00"
+          },
+          "buyTotal": 465500,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:36:48.207251+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T14:37:06.701000+00:00"
+          },
+          "profit": -5500,
+          "lotId": "lot_1767278196693"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "U1EGog6JY9hp4IWJI4NXWltsD7u2",
+    "safeFileName": "U1EGog6JY9hp4IWJI4NXWltsD7u2.json"
+  }
+}

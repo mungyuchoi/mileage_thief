@@ -1,0 +1,77 @@
+{
+  "id": "2UgOFKfQHNXb9kthbEEEXRCTsYZ2",
+  "path": "users/2UgOFKfQHNXb9kthbEEEXRCTsYZ2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "2UgOFKfQHNXb9kthbEEEXRCTsYZ2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-10T06:14:31.741000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLh2D3zEcr_SMITGp_75C1rWHva6ke1ItnWwsFekouPRzQCBQ=s96-c",
+    "commentCount": 0,
+    "fcmToken": "eUjZBB7NLUN6hOt2os4W9Z:APA91bF1bF4OTvPqYbfTsEB8_oKdlg7Qu2pgq5OUas3A8U1fHCfYm2Ir0aV86qA_H25Uecq21XRnpmXRJn90pEqHCjBaHbTDgrMdnA-zNEQd7aGwSy9656A",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-10T06:14:31.741000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-10T06:24:15.133000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-10T06:14:31.741000+00:00"
+    },
+    "displayName": "Hyeongjun Kim",
+    "peanutCount": 30,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-10T06:14:31.741000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "tokhyeongjunk@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte",
+        "path": "users/2UgOFKfQHNXb9kthbEEEXRCTsYZ2/cards/lotte",
+        "data": {
+          "memo": "메모",
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-10T06:19:09.253000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "2UgOFKfQHNXb9kthbEEEXRCTsYZ2",
+    "safeFileName": "2UgOFKfQHNXb9kthbEEEXRCTsYZ2.json"
+  }
+}

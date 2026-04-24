@@ -1,0 +1,140 @@
+{
+  "id": "cXnKQN2yrQX9e9fTLMet33JmuBo1",
+  "path": "users/cXnKQN2yrQX9e9fTLMet33JmuBo1",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "cXnKQN2yrQX9e9fTLMet33JmuBo1",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-08T13:14:40.707000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-17T12:44:21.297668+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": null,
+    "commentCount": 0,
+    "fcmToken": "exnmGuyZ80HBtr19tesNOc:APA91bHB6yKlF9DIRungplQ4Uv-xGCxbzoSa6xFdp2Zg_1-FIp2IAzi28p5KARz_9HJBi4frVy-jyM5eaKC5cscul-O-OcrZM2NqDAsUDY0bmKHpIJlk138",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-08T13:14:40.707000+00:00"
+    },
+    "displayName": null,
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-08T13:14:40.707000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "ranking_agree": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-02-08T13:14:40.707000+00:00"
+    },
+    "likesCount": 0,
+    "email": "xm86cyvf99@privaterelay.appleid.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "and_mile_samsung",
+        "path": "users/cXnKQN2yrQX9e9fTLMet33JmuBo1/cards/and_mile_samsung",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 0,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T13:17:35.034000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1770562206732",
+        "path": "users/cXnKQN2yrQX9e9fTLMet33JmuBo1/lots/lot_1770562206732",
+        "data": {
+          "trade": true,
+          "faceValue": 50000,
+          "payType": "신용",
+          "discount": 6.9,
+          "memo": "",
+          "qty": 20,
+          "status": "sold",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:50:25.745000+00:00"
+          },
+          "whereToBuyId": null,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:49:15.781270+00:00"
+          },
+          "cardId": "and_mile_samsung",
+          "buyUnit": 46550,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:50:07.213000+00:00"
+          },
+          "giftcardId": "culture_land"
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1770562225259",
+        "path": "users/cXnKQN2yrQX9e9fTLMet33JmuBo1/sales/sale_1770562225259",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 920000,
+          "costPerMile": 11.82,
+          "discount": 8.0,
+          "miles": 931,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:50:25.642000+00:00"
+          },
+          "buyTotal": 931000,
+          "qty": 20,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:50:15.971415+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-02-08T14:50:25.642000+00:00"
+          },
+          "profit": -11000,
+          "lotId": "lot_1770562206732"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "cXnKQN2yrQX9e9fTLMet33JmuBo1",
+    "safeFileName": "cXnKQN2yrQX9e9fTLMet33JmuBo1.json"
+  }
+}

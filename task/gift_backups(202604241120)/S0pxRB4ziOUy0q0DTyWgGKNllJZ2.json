@@ -1,0 +1,211 @@
+{
+  "id": "S0pxRB4ziOUy0q0DTyWgGKNllJZ2",
+  "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "S0pxRB4ziOUy0q0DTyWgGKNllJZ2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-30T16:11:21.343000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-03T00:46:35.600440+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocIznfaSWvvmtweqnoZE9lWZ7SvbBCbP1SlW3YR1O3zqpe56zw=s96-c",
+    "commentCount": 0,
+    "fcmToken": "deTPYz0oSOyE49FkfUYtMn:APA91bFiL2hL76tMXuu1jZ0yLxhvEhqELergH28QRqYSnY0K8pMOXrxBKE4EiNzWa0ByHmrIKLMThmHQIKlAArvlIzf4VKfsRz1I3aQSWYc7T91QedC3BDo",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-30T16:11:21.343000+00:00"
+    },
+    "displayName": "김현정",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-30T16:11:21.343000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-30T16:11:21.343000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "koreanhj@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "kookmin",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/cards/kookmin",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T11:53:18.731000+00:00"
+          },
+          "name": "국민"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/cards/lotte",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T11:52:06.947000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/cards/samsung",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T11:52:58.287000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/cards/shinhan",
+        "data": {
+          "memo": "하이포인트 2% 적립",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T00:49:23.528000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1767268488447",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/lots/lot_1767268488447",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T11:54:04.986200+00:00"
+          },
+          "discount": 3.1,
+          "cardId": "lotte",
+          "buyUnit": 96900,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T11:54:48.682000+00:00"
+          },
+          "memo": "롯데 띵샵",
+          "status": "open",
+          "payType": "신용",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T11:54:48.682000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767314851789",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/lots/lot_1767314851789",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T00:46:58.780448+00:00"
+          },
+          "discount": 2.8,
+          "cardId": "lotte",
+          "buyUnit": 97200,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T00:47:32.026000+00:00"
+          },
+          "memo": "띵샵",
+          "status": "open",
+          "payType": "체크",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T00:47:32.026000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767315000499",
+        "path": "users/S0pxRB4ziOUy0q0DTyWgGKNllJZ2/lots/lot_1767315000499",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "shinhan",
+          "buyUnit": 97000,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T00:50:00.776000+00:00"
+          },
+          "memo": "지마켓",
+          "status": "open",
+          "payType": "신용",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-02T00:50:00.776000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "S0pxRB4ziOUy0q0DTyWgGKNllJZ2",
+    "safeFileName": "S0pxRB4ziOUy0q0DTyWgGKNllJZ2.json"
+  }
+}

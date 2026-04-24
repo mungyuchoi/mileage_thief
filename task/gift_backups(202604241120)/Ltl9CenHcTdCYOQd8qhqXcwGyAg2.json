@@ -1,0 +1,531 @@
+{
+  "id": "Ltl9CenHcTdCYOQd8qhqXcwGyAg2",
+  "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "Ltl9CenHcTdCYOQd8qhqXcwGyAg2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T23:56:19.412000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": null,
+    "commentCount": 0,
+    "fcmToken": "dYuwURYGnkCQt4VaEYE7mh:APA91bHxxkEd1iNmPzrwW7PADHAOkU3g-Hp-ja4Au5wtnEFJiatq3sEFASazkNMwZ0Ds0G_sybSXGMzbnr1RCVgeHjF8LCJpcN8kvRA2aZXXbTKcHSaZMXs",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T23:56:19.412000+00:00"
+    },
+    "displayName": null,
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T23:56:19.412000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T23:56:19.412000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "cc7dvy4ff2@privaterelay.appleid.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_skypass",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/cards/lotte_skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T00:03:57.040000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1762387233697",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1762387233697",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97000,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T00:00:33.813000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-10-31T15:00:00+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:01.839000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762387508140",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1762387508140",
+        "data": {
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.5,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97500,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T00:05:08.260000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-10-31T15:00:00+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:18.283000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762387546116",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1762387546116",
+        "data": {
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.5,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97500,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T00:05:46.229000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T15:00:00+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:30.494000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762387624444",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1762387624444",
+        "data": {
+          "faceValue": 100000,
+          "payType": "체크",
+          "discount": 2.5,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97500,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T00:07:04.558000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-02T15:00:00+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:41.430000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762387704202",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1762387704202",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 3.0,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97000,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-06T00:08:24.326000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-10-31T15:00:00+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:05:12.118000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1764630338500",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1764630338500",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-30T15:00:00+00:00"
+          },
+          "discount": 2.5,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97500,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:05:38.830000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:16.079000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1764630491510",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1764630491510",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:07:55.318978+00:00"
+          },
+          "discount": 2.5,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97500,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:08:11.841000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:26.267000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1765164875852",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/lots/lot_1765164875852",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-08T03:34:23.039036+00:00"
+          },
+          "discount": 2.5,
+          "cardId": "lotte_skypass",
+          "buyUnit": 97500,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-08T03:34:37.951000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:35.497000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1764630241469",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1764630241469",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 485000,
+          "costPerMile": 0.0,
+          "discount": 3.0,
+          "miles": 485,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:01.795000+00:00"
+          },
+          "buyTotal": 485000,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-28T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:01.795000+00:00"
+          },
+          "profit": 0,
+          "lotId": "lot_1762387233697"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1764630257943",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1764630257943",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 485000,
+          "costPerMile": 7.69,
+          "discount": 3.0,
+          "miles": 325,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:18.265000+00:00"
+          },
+          "buyTotal": 487500,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-28T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:18.265000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1762387508140"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1764630270140",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1764630270140",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 485000,
+          "costPerMile": 7.69,
+          "discount": 3.0,
+          "miles": 325,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:30.463000+00:00"
+          },
+          "buyTotal": 487500,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:22.521763+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:30.463000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1762387546116"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1764630281067",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1764630281067",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 485000,
+          "costPerMile": 7.69,
+          "discount": 3.0,
+          "miles": 325,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:41.389000+00:00"
+          },
+          "buyTotal": 487500,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-28T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:41.389000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1762387624444"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1764630311741",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1764630311741",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 500000,
+          "costPerMile": -30.93,
+          "discount": 0.0,
+          "miles": 485,
+          "sellUnit": 100000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:05:12.077000+00:00"
+          },
+          "buyTotal": 485000,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:04:56.550103+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T23:05:12.077000+00:00"
+          },
+          "profit": 15000,
+          "lotId": "lot_1762387704202"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1766925015899",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1766925015899",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 970000,
+          "costPerMile": 5.13,
+          "discount": 3.0,
+          "miles": 975,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:16.044000+00:00"
+          },
+          "buyTotal": 975000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:16.044000+00:00"
+          },
+          "profit": -5000,
+          "lotId": "lot_1764630338500"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1766925026138",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1766925026138",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 485000,
+          "costPerMile": 7.69,
+          "discount": 3.0,
+          "miles": 325,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:26.243000+00:00"
+          },
+          "buyTotal": 487500,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:26.243000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1764630491510"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1766925035367",
+        "path": "users/Ltl9CenHcTdCYOQd8qhqXcwGyAg2/sales/sale_1766925035367",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1500,
+          "sellTotal": 485000,
+          "costPerMile": 7.69,
+          "discount": 3.0,
+          "miles": 325,
+          "sellUnit": 97000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:35.473000+00:00"
+          },
+          "buyTotal": 487500,
+          "qty": 5,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-13T15:00:00+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T12:30:35.473000+00:00"
+          },
+          "profit": -2500,
+          "lotId": "lot_1765164875852"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "Ltl9CenHcTdCYOQd8qhqXcwGyAg2",
+    "safeFileName": "Ltl9CenHcTdCYOQd8qhqXcwGyAg2.json"
+  }
+}

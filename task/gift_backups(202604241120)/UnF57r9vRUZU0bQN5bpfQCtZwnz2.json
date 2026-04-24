@@ -1,0 +1,130 @@
+{
+  "id": "UnF57r9vRUZU0bQN5bpfQCtZwnz2",
+  "path": "users/UnF57r9vRUZU0bQN5bpfQCtZwnz2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "UnF57r9vRUZU0bQN5bpfQCtZwnz2",
+    "postsCount": 0,
+    "photoURLEnable": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-20T08:55:19.188000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-02T08:23:04.834265+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocK0iZrao__afK2Pao4VuSeorlGJOpsF4zpJ5hlWiS6pCuGmAw=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dzFc-JW1Rlqs9CiMadSepr:APA91bE3WV4tSh5TW3NVb3KFmgAXngmo03yBevVdqzPLOqxxkrD1gQwArqEoE3e7yIVk7E8YZrOGXlVtdj1-QGZTPB170K_6h8Idn4Mmob_vpD2VULwxNao",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-31T11:14:23.542000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-10T08:54:50.506000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-31T11:14:23.542000+00:00"
+    },
+    "displayName": "seimeen park",
+    "peanutCount": 136,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-31T11:14:23.542000+00:00"
+    },
+    "email": "seimeen.park@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 1,
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_check",
+        "path": "users/UnF57r9vRUZU0bQN5bpfQCtZwnz2/cards/lotte_check",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T08:24:56.099000+00:00"
+          },
+          "name": "롯데체크"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "0de4226b-0849-4430-8872-c170b35881d9",
+        "path": "users/UnF57r9vRUZU0bQN5bpfQCtZwnz2/liked_posts/0de4226b-0849-4430-8872-c170b35881d9",
+        "data": {
+          "title": "마일캐치 가족 여러분, 2026년 새해 복 많이 받으세요!🎉",
+          "postPath": "posts/20260101/posts/0de4226b-0849-4430-8872-c170b35881d9",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T08:54:50.587000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "yyl6zsxOkMOF5jJubyFx",
+        "path": "users/UnF57r9vRUZU0bQN5bpfQCtZwnz2/peanut_history/yyl6zsxOkMOF5jJubyFx",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20260101",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T08:54:50.539000+00:00"
+          },
+          "postTitle": "마일캐치 가족 여러분, 2026년 새해 복 많이 받으세요!🎉",
+          "amount": 1,
+          "postId": "0de4226b-0849-4430-8872-c170b35881d9"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "gmarket",
+        "path": "users/UnF57r9vRUZU0bQN5bpfQCtZwnz2/where_to_buy/gmarket",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T08:25:36.600000+00:00"
+          },
+          "name": "지마켓"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "UnF57r9vRUZU0bQN5bpfQCtZwnz2",
+    "safeFileName": "UnF57r9vRUZU0bQN5bpfQCtZwnz2.json"
+  }
+}

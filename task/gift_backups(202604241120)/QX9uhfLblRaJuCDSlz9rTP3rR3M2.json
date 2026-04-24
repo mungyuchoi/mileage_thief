@@ -1,0 +1,553 @@
+{
+  "id": "QX9uhfLblRaJuCDSlz9rTP3rR3M2",
+  "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "QX9uhfLblRaJuCDSlz9rTP3rR3M2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-28T22:49:52.361000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-02T02:26:08.691802+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKLmJrMxpsmRnTPXTy6iWCfHucvxOdJD97kOfDyiGvLiqsDe2ga=s96-c",
+    "commentCount": 1,
+    "fcmToken": "c3j3Ja8USSqxhcy6S457Z_:APA91bHm_7HNK3LYR73ZD2m5UKG18OcVUGjrdaeoGCuLDgnASEPyAD_f0DH0CJ-lR0cQum5mAu7FsanFBvhR2a8f-08q76DQ3RnOiJD1SxE67BX6dE6Chj4",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T07:32:48.444000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-28T22:49:58.246000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T07:32:48.444000+00:00"
+    },
+    "displayName": "nara lee",
+    "peanutCount": 106,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T07:32:48.444000+00:00"
+    },
+    "email": "tripfornara0210@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 1,
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "citi",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/cards/citi",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:28:17.240000+00:00"
+          },
+          "name": "씨티 프마"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kb_asianaplat",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/cards/kb_asianaplat",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:49:40.396000+00:00"
+          },
+          "name": "kb 아시아나플래티늄"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/cards/samsung",
+        "data": {
+          "name": "삼성 아플",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:34:15.183000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/cards/shinhan",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:26:33.556000+00:00"
+          },
+          "name": "신한레베"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_deepon",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/cards/shinhan_deepon",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1,
+          "creditPerMileKRW": 1,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:47:33.134000+00:00"
+          },
+          "name": "신한 딥온"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "woori",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/cards/woori",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:30:31.810000+00:00"
+          },
+          "name": "우리 SK"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/liked_posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+        "data": {
+          "title": "[공지] 마일캐치 레벨 시스템 안내",
+          "postPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:49:58.472000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1767196078997",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767196078997",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:47:38.290081+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "shinhan_deepon",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:47:59.294000+00:00"
+          },
+          "payType": "체크",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:47:59.294000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767196199575",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767196199575",
+        "data": {
+          "whereToBuyId": "kbpay",
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:49:44.026277+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "kb_asianaplat",
+          "buyUnit": 485000,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:49:59.873000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:49:59.873000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767234465491",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767234465491",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:26:50.210647+00:00"
+          },
+          "discount": 2.1,
+          "cardId": "shinhan",
+          "buyUnit": 97900,
+          "qty": 4,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:27:45.940000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:27:45.940000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767234552385",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767234552385",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:28:19.925114+00:00"
+          },
+          "discount": 2.1,
+          "cardId": "shinhan_deepon",
+          "buyUnit": 97900,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:29:12.702000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:29:12.702000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767234607537",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767234607537",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:29:17.773476+00:00"
+          },
+          "discount": 2.1,
+          "cardId": "citi",
+          "buyUnit": 97900,
+          "qty": 3,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:30:07.860000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:30:07.860000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767234670710",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767234670710",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:30:37.196381+00:00"
+          },
+          "discount": 2.1,
+          "cardId": "woori",
+          "buyUnit": 97900,
+          "qty": 3,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:31:11.043000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:31:11.043000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767234800732",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767234800732",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:32:43.815434+00:00"
+          },
+          "discount": 2.1,
+          "cardId": "samsung",
+          "buyUnit": 97900,
+          "qty": 3,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:33:21.062000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:33:21.062000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1767234907836",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/lots/lot_1767234907836",
+        "data": {
+          "whereToBuyId": "gmarket",
+          "faceValue": 100000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:34:20.282401+00:00"
+          },
+          "discount": 2.1,
+          "cardId": "samsung",
+          "buyUnit": 97900,
+          "qty": 5,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:35:08.165000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "shinsegae",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-01T02:35:08.165000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "o0tRD9kzs3M0uEWSSSGa",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/my_comments/o0tRD9kzs3M0uEWSSSGa",
+        "data": {
+          "commentPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6/comments/o0tRD9kzs3M0uEWSSSGa",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:49:52.576000+00:00"
+          },
+          "postPath": "posts/20250825/posts/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "contentHtml": "<p>어플 좋네요!^^</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "hHdNpJzNb2eSFhcjrAcG",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/notifications/hHdNpJzNb2eSFhcjrAcG",
+        "data": {
+          "likedByName": "마일캐치",
+          "type": "comment_like",
+          "path": "/community/detail/20250825/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "commentId": "o0tRD9kzs3M0uEWSSSGa",
+          "date": "20250825",
+          "boardId": "notice",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T23:23:51.190000+00:00"
+          },
+          "commenterName": "nara lee",
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rfDrNofvcF1vhNyrnCc9",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/notifications/rfDrNofvcF1vhNyrnCc9",
+        "data": {
+          "repliedByName": "마일캐치",
+          "path": "/community/detail/20250825/e466cdbe-2ab6-48c5-8060-c0950f6b84f6",
+          "type": "comment_reply",
+          "commentId": "GgmNZT0nFVGeN900IXRe",
+          "date": "20250825",
+          "boardId": "notice",
+          "parentCommentId": "o0tRD9kzs3M0uEWSSSGa",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T23:24:06.843000+00:00"
+          },
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "3huYNguCdmU3tVR388Sl",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/peanut_history/3huYNguCdmU3tVR388Sl",
+        "data": {
+          "amount": 100,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T23:23:54.301000+00:00"
+          },
+          "type": "admin_gift",
+          "adminName": "마일캐치",
+          "reason": "운영자 선물",
+          "adminId": "aP3C0N511beyK7QZG9GyChs5oqO2"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "gENC3a6EEJMhAziNrG0C",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/peanut_history/gENC3a6EEJMhAziNrG0C",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20250825",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:49:58.362000+00:00"
+          },
+          "postTitle": "[공지] 마일캐치 레벨 시스템 안내",
+          "amount": 1,
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "i5fPreDHWJSkDayPRTWf",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/peanut_history/i5fPreDHWJSkDayPRTWf",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20250825",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-28T22:49:53.037000+00:00"
+          },
+          "postTitle": "[공지] 마일캐치 레벨 시스템 안내",
+          "commentId": "o0tRD9kzs3M0uEWSSSGa",
+          "amount": 2,
+          "postId": "e466cdbe-2ab6-48c5-8060-c0950f6b84f6"
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "gmarket",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/where_to_buy/gmarket",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:46:17.869000+00:00"
+          },
+          "name": "지마켓"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "kbpay",
+        "path": "users/QX9uhfLblRaJuCDSlz9rTP3rR3M2/where_to_buy/kbpay",
+        "data": {
+          "memo": null,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-31T15:48:43.043000+00:00"
+          },
+          "name": "KB쇼핑"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "QX9uhfLblRaJuCDSlz9rTP3rR3M2",
+    "safeFileName": "QX9uhfLblRaJuCDSlz9rTP3rR3M2.json"
+  }
+}

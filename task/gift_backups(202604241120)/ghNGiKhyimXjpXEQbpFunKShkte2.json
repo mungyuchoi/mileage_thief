@@ -1,0 +1,198 @@
+{
+  "id": "ghNGiKhyimXjpXEQbpFunKShkte2",
+  "path": "users/ghNGiKhyimXjpXEQbpFunKShkte2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "ghNGiKhyimXjpXEQbpFunKShkte2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T01:16:25.570000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-11T14:30:18.482144+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLNxHP32m_fuPughvaiORyG9tHqr7CqT8lbcUqBDy12nje6Vru0Cg=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dtFHSH-Xp0M6v-0QrIj2J9:APA91bExs8hZVZq9riznEQnUxYZx94tdBwU2LnmQMIxIZzUQd4yWBjo6dUCh44PsExI3EB3RBeeRY1TW3-MRaBvaG7t18FwdJPD_q3738Qc-ivJq2GfPSuY",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T01:16:25.570000+00:00"
+    },
+    "displayName": "Sae Young Choi",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T01:16:25.570000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-26T01:16:25.570000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "syc1001@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "woori_yonsei_asiana",
+        "path": "users/ghNGiKhyimXjpXEQbpFunKShkte2/cards/woori_yonsei_asiana",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 750,
+          "creditPerMileKRW": 833,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:20:12.042000+00:00"
+          },
+          "name": "우리"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1766712162949",
+        "path": "users/ghNGiKhyimXjpXEQbpFunKShkte2/lots/lot_1766712162949",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-07T15:00:00+00:00"
+          },
+          "discount": 7.6,
+          "cardId": "woori_yonsei_asiana",
+          "buyUnit": 46200,
+          "qty": 10,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:22:43.304000+00:00"
+          },
+          "payType": "체크",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "culture_land",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:23:10.970000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1768055466558",
+        "path": "users/ghNGiKhyimXjpXEQbpFunKShkte2/lots/lot_1768055466558",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 500000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-07T15:00:00+00:00"
+          },
+          "discount": 3.0,
+          "cardId": "woori_yonsei_asiana",
+          "buyUnit": 485000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T14:31:06.756000+00:00"
+          },
+          "payType": "신용",
+          "status": "sold",
+          "memo": "",
+          "giftcardId": "hyundai",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T14:31:29.680000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1766712190664",
+        "path": "users/ghNGiKhyimXjpXEQbpFunKShkte2/sales/sale_1766712190664",
+        "data": {
+          "mileRuleUsedPerMileKRW": 750,
+          "sellTotal": 460000,
+          "costPerMile": 3.25,
+          "discount": 8.0,
+          "miles": 616,
+          "sellUnit": 46000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:23:10.841000+00:00"
+          },
+          "buyTotal": 462000,
+          "qty": 10,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:22:52.553110+00:00"
+          },
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-26T01:23:10.841000+00:00"
+          },
+          "profit": -2000,
+          "lotId": "lot_1766712162949"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1768055489370",
+        "path": "users/ghNGiKhyimXjpXEQbpFunKShkte2/sales/sale_1768055489370",
+        "data": {
+          "mileRuleUsedPerMileKRW": 833,
+          "discount": 3.0,
+          "costPerMile": 0.0,
+          "qty": 1,
+          "buyTotal": 485000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T14:31:29.562000+00:00"
+          },
+          "lotId": "lot_1768055466558",
+          "sellTotal": 485000,
+          "miles": 582,
+          "sellUnit": 485000,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T14:31:29.562000+00:00"
+          },
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-10T14:31:14.481117+00:00"
+          },
+          "profit": 0,
+          "branchId": "samsung"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "ghNGiKhyimXjpXEQbpFunKShkte2",
+    "safeFileName": "ghNGiKhyimXjpXEQbpFunKShkte2.json"
+  }
+}

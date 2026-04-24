@@ -1,0 +1,234 @@
+{
+  "id": "2yvN0pZYgxOMw1it2f3ajXaQxhy1",
+  "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "2yvN0pZYgxOMw1it2f3ajXaQxhy1",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T04:29:59.430000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLiuu_qcY_myfUhxl5C2LWyA5LB4OHRcv4DYQG9T-X7jBgouw=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dADRdeyaQiGlTNgN_RTBQ3:APA91bFmdiY93op92AuFoaza72fzuMmbqPJFVJktSbiYhHC_5pJOVW94iKqCASdGlZJ37IIvaxmKnHeKgpGIV8BdYVEsZPmExQe-N8SMkxX3wFqU29_Nsow",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T04:29:59.430000+00:00"
+    },
+    "displayName": "쿠호호",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T04:29:59.430000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-11-05T04:29:59.430000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "sweet107771@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_amex",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/cards/lotte_amex",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T04:31:45.011000+00:00"
+          },
+          "name": "롯데"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_amex",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/cards/samsung_amex",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T04:32:27.879000+00:00"
+          },
+          "name": "삼성"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "shinhan_air15",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/cards/shinhan_air15",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T04:33:17.391000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sinhan_airone",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/cards/sinhan_airone",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-05T04:32:53.991000+00:00"
+          },
+          "name": "신한"
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1762645469117",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/lots/lot_1762645469117",
+        "data": {
+          "faceValue": 100000,
+          "payType": "신용",
+          "discount": 2.0,
+          "cardId": "lotte_amex",
+          "buyUnit": 98000,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:44:29.585000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:44:17.395052+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:45:04.535000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1762645577124",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/lots/lot_1762645577124",
+        "data": {
+          "faceValue": 500000,
+          "payType": "신용",
+          "discount": 2.5,
+          "cardId": "lotte_amex",
+          "buyUnit": 487500,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:46:17.603000+00:00"
+          },
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:46:03.487753+00:00"
+          },
+          "status": "sold",
+          "giftcardId": "lotte",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:46:38.824000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "sales": [
+      {
+        "id": "sale_1762645503889",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/sales/sale_1762645503889",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 96800,
+          "costPerMile": 12.24,
+          "discount": 3.2,
+          "miles": 98,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:45:04.423000+00:00"
+          },
+          "buyTotal": 98000,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:44:34.026026+00:00"
+          },
+          "sellUnit": 96800,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:45:43.843000+00:00"
+          },
+          "profit": -1200,
+          "lotId": "lot_1762645469117"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "sale_1762645598191",
+        "path": "users/2yvN0pZYgxOMw1it2f3ajXaQxhy1/sales/sale_1762645598191",
+        "data": {
+          "mileRuleUsedPerMileKRW": 1000,
+          "sellTotal": 484500,
+          "costPerMile": 6.15,
+          "discount": 3.1,
+          "miles": 488,
+          "qty": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:46:38.723000+00:00"
+          },
+          "buyTotal": 487500,
+          "sellDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:46:19.061454+00:00"
+          },
+          "sellUnit": 484500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-11-08T23:47:06.885000+00:00"
+          },
+          "profit": -3000,
+          "lotId": "lot_1762645577124"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "2yvN0pZYgxOMw1it2f3ajXaQxhy1",
+    "safeFileName": "2yvN0pZYgxOMw1it2f3ajXaQxhy1.json"
+  }
+}

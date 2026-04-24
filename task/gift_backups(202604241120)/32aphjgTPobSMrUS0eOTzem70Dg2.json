@@ -1,0 +1,567 @@
+{
+  "id": "32aphjgTPobSMrUS0eOTzem70Dg2",
+  "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "32aphjgTPobSMrUS0eOTzem70Dg2",
+    "postsCount": 0,
+    "photoURLEnable": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-21T04:18:07.979000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-07T06:27:09.254221+00:00"
+    },
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKP4Ig_gUlukv1twHdeSky-nIZr4fYTBBKgAEi5j6uf8p7QIQ=s96-c",
+    "commentCount": 7,
+    "fcmToken": "fLxoQId6QRC2zvq45-Cv58:APA91bFToIswDcE6bkYNpNOsW0JsBLGwbWdwlMjgtIEmfjpDoq7G3c6Rk3IkgA_bVcqCE3sfxmwd6BEMlZgf0kAY9QABCoBsMJpeHkPwqEZWFcyfKN-lLNM",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-19T06:12:06.098000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-01-21T04:18:08.514000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-19T06:12:06.098000+00:00"
+    },
+    "displayName": "Jinseo Park",
+    "peanutCount": 28,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-08-19T06:12:06.098000+00:00"
+    },
+    "email": "jin0seo.park@gmail.com",
+    "rankingAgreement": true,
+    "likesCount": 4,
+    "hasGift": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "100se",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/cards/100se",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 200,
+          "creditPerMileKRW": 200,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-09T01:11:24.886000+00:00"
+          },
+          "name": "우리"
+        },
+        "subcollections": {}
+      }
+    ],
+    "liked_posts": [
+      {
+        "id": "0772cd46-428e-40a5-84e6-a345f82d3765",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/liked_posts/0772cd46-428e-40a5-84e6-a345f82d3765",
+        "data": {
+          "title": "안드로이드 2.2.24 버전 업데이트",
+          "postPath": "posts/20251220/posts/0772cd46-428e-40a5-84e6-a345f82d3765",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:23:30.025000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "2c942065-1391-4750-a7c2-a068c908a39a",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/liked_posts/2c942065-1391-4750-a7c2-a068c908a39a",
+        "data": {
+          "title": "마일캐치 현재 시점 정리",
+          "postPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:17:21.459000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "36172835-4876-421b-8e6f-1d2f1f222115",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/liked_posts/36172835-4876-421b-8e6f-1d2f1f222115",
+        "data": {
+          "title": "2025년 12월 20일 항공 마일리지 주요 뉴스",
+          "postPath": "posts/20251220/posts/36172835-4876-421b-8e6f-1d2f1f222115",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:23:37.485000+00:00"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "6108640f-81b9-42d2-8255-0c83af174599",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/liked_posts/6108640f-81b9-42d2-8255-0c83af174599",
+        "data": {
+          "title": "호텔 핫딜",
+          "postPath": "posts/20251213/posts/6108640f-81b9-42d2-8255-0c83af174599",
+          "likedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:24:44.275000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1767921140411",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/lots/lot_1767921140411",
+        "data": {
+          "whereToBuyId": null,
+          "faceValue": 50000,
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-09T01:11:29.538256+00:00"
+          },
+          "discount": 6.9,
+          "cardId": "100se",
+          "buyUnit": 46550,
+          "qty": 2,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-09T01:12:20.870000+00:00"
+          },
+          "payType": "신용",
+          "status": "open",
+          "memo": "",
+          "giftcardId": "book_and_life",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-09T01:12:20.870000+00:00"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "my_comments": [
+      {
+        "id": "FUWPE4YwHEyLB6wD7MIw",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/FUWPE4YwHEyLB6wD7MIw",
+        "data": {
+          "commentPath": "posts/20251216/posts/7001f93e-4d32-4765-b6fc-730555373cf3/comments/FUWPE4YwHEyLB6wD7MIw",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:24:30.455000+00:00"
+          },
+          "postPath": "posts/20251216/posts/7001f93e-4d32-4765-b6fc-730555373cf3",
+          "contentHtml": "<p>오로라보러갈수있겠네요ㅎㅎ</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ZCx0zf4TxVtACSdWK2wd",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/ZCx0zf4TxVtACSdWK2wd",
+        "data": {
+          "commentPath": "posts/20260113/posts/f639247d-b8d0-43da-9fb6-1ee3b5936825/comments/ZCx0zf4TxVtACSdWK2wd",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T06:29:35.251000+00:00"
+          },
+          "postPath": "posts/20260113/posts/f639247d-b8d0-43da-9fb6-1ee3b5936825",
+          "contentHtml": "<p>1인당 한번에100입니다ㅠ</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "aBj6d2dydnfJyTQUpbbX",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/aBj6d2dydnfJyTQUpbbX",
+        "data": {
+          "commentPath": "posts/20251201/posts/8e03622e-f5ce-4598-a159-91c736e3f035/comments/aBj6d2dydnfJyTQUpbbX",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:26:41.039000+00:00"
+          },
+          "postPath": "posts/20251201/posts/8e03622e-f5ce-4598-a159-91c736e3f035",
+          "contentHtml": "<p>저도  프러스티지1.0 이 좌석이넓어서더좋은거같아요\n2.0은 좋은건 개인이어폰사용할수있는점?ㅠ</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "h8ZUlP7POBNApKuQ5XKD",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/h8ZUlP7POBNApKuQ5XKD",
+        "data": {
+          "commentPath": "posts/20260113/posts/15944b28-76c7-45a6-95ea-5e34968f72dd/comments/h8ZUlP7POBNApKuQ5XKD",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T06:33:35.830000+00:00"
+          },
+          "postPath": "posts/20260113/posts/15944b28-76c7-45a6-95ea-5e34968f72dd",
+          "contentHtml": "<p>@웃자 가족등록해놓으셔야 같이쓰실수있어요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "hkYGNv4ifuHfIUh70xgP",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/hkYGNv4ifuHfIUh70xgP",
+        "data": {
+          "commentPath": "posts/20251228/posts/acf88211-6eca-489e-9723-f53bfd563763/comments/hkYGNv4ifuHfIUh70xgP",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-29T00:42:16.151000+00:00"
+          },
+          "postPath": "posts/20251228/posts/acf88211-6eca-489e-9723-f53bfd563763",
+          "contentHtml": "<p>삼포적금있으신분들은 캐세이1마일당 10원구매가능하니 65만원에도왕복이가능하네요</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "joOeFhyAzsJ302SgyjA3",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/joOeFhyAzsJ302SgyjA3",
+        "data": {
+          "commentPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a/comments/joOeFhyAzsJ302SgyjA3",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:18:08.207000+00:00"
+          },
+          "postPath": "posts/20260120/posts/2c942065-1391-4750-a7c2-a068c908a39a",
+          "contentHtml": "<p>비즈니스는..늘타기어렵군요ㅠ</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "oIPCkuAICZdwE7F5TttN",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/my_comments/oIPCkuAICZdwE7F5TttN",
+        "data": {
+          "commentPath": "posts/20260121/posts/f638adc6-b662-4aa1-8bd9-31b61559d16f/comments/oIPCkuAICZdwE7F5TttN",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:16:35.094000+00:00"
+          },
+          "postPath": "posts/20260121/posts/f638adc6-b662-4aa1-8bd9-31b61559d16f",
+          "contentHtml": "<p>오..고생하셨습니다</p>",
+          "attachments": [],
+          "contentType": "html"
+        },
+        "subcollections": {}
+      }
+    ],
+    "notifications": [
+      {
+        "id": "OQbUNUTLCsnGopdkjbsW",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/notifications/OQbUNUTLCsnGopdkjbsW",
+        "data": {
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a",
+          "type": "comment_like",
+          "path": "/community/detail/20260120/2c942065-1391-4750-a7c2-a068c908a39a",
+          "commentId": "joOeFhyAzsJ302SgyjA3",
+          "date": "20260120",
+          "boardId": "free",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:18:18.505000+00:00"
+          },
+          "boardName": "자유게시판",
+          "commenterName": "Jinseo Park",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "YzzvHUTHikk7LpBijKx7",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/notifications/YzzvHUTHikk7LpBijKx7",
+        "data": {
+          "postId": "f638adc6-b662-4aa1-8bd9-31b61559d16f",
+          "type": "comment_like",
+          "path": "/community/detail/20260121/f638adc6-b662-4aa1-8bd9-31b61559d16f",
+          "commentId": "oIPCkuAICZdwE7F5TttN",
+          "date": "20260121",
+          "boardId": "notice",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:17:56.935000+00:00"
+          },
+          "boardName": "운영 공지사항",
+          "commenterName": "Jinseo Park",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "eulxsedKjMZfXgQRYMph",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/notifications/eulxsedKjMZfXgQRYMph",
+        "data": {
+          "repliedByName": "마일캐치",
+          "type": "comment_reply",
+          "path": "/community/detail/20260121/f638adc6-b662-4aa1-8bd9-31b61559d16f",
+          "commentId": "tcwp9wSjfUSjMy4wGmBP",
+          "date": "20260121",
+          "boardId": "notice",
+          "parentCommentId": "oIPCkuAICZdwE7F5TttN",
+          "isRead": false,
+          "title": "대댓글 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:18:00.662000+00:00"
+          },
+          "boardName": "운영 공지사항",
+          "body": "마일캐치님이 댓글에 댓글을 달았습니다.",
+          "repliedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "postId": "f638adc6-b662-4aa1-8bd9-31b61559d16f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lMDPPObjaf4Q6NMFwsgJ",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/notifications/lMDPPObjaf4Q6NMFwsgJ",
+        "data": {
+          "postId": "7001f93e-4d32-4765-b6fc-730555373cf3",
+          "path": "/community/detail/20251216/7001f93e-4d32-4765-b6fc-730555373cf3",
+          "type": "comment_like",
+          "commentId": "FUWPE4YwHEyLB6wD7MIw",
+          "date": "20251216",
+          "boardId": "question",
+          "isRead": false,
+          "title": "댓글 좋아요 알림",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:25:01.978000+00:00"
+          },
+          "boardName": "마일리지",
+          "commenterName": "Jinseo Park",
+          "body": "마일캐치님이 댓글에 좋아요를 하였습니다.",
+          "likedBy": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "likedByName": "마일캐치"
+        },
+        "subcollections": {}
+      }
+    ],
+    "peanut_history": [
+      {
+        "id": "2AVGANWEo9TlLU4nWUCb",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/2AVGANWEo9TlLU4nWUCb",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251228",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-29T00:42:16.592000+00:00"
+          },
+          "postTitle": "북유럽 항공권 비쌀 때, 저렴하게 발권하는 법 (ex. 핀란드 로바니에미)",
+          "commentId": "hkYGNv4ifuHfIUh70xgP",
+          "amount": 2,
+          "postId": "acf88211-6eca-489e-9723-f53bfd563763"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "2ushFv3P78rAs2ow4WJb",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/2ushFv3P78rAs2ow4WJb",
+        "data": {
+          "type": "post_like",
+          "boardId": "hotdeal",
+          "dateString": "20251213",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:24:44.175000+00:00"
+          },
+          "postTitle": "호텔 핫딜",
+          "amount": 1,
+          "postId": "6108640f-81b9-42d2-8255-0c83af174599"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "3yhKyaNDBtQKIxRwB8TF",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/3yhKyaNDBtQKIxRwB8TF",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T06:33:36.279000+00:00"
+          },
+          "postTitle": "마일리지 사용 관련 질문 드립니다.",
+          "commentId": "h8ZUlP7POBNApKuQ5XKD",
+          "amount": 2,
+          "postId": "15944b28-76c7-45a6-95ea-5e34968f72dd"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "8cF39dv61a4YtwmBNma1",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/8cF39dv61a4YtwmBNma1",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260113",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-13T06:29:35.710000+00:00"
+          },
+          "postTitle": "현대백화점 상품권 교환 질문",
+          "commentId": "ZCx0zf4TxVtACSdWK2wd",
+          "amount": 2,
+          "postId": "f639247d-b8d0-43da-9fb6-1ee3b5936825"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "DrQNRZjIXYP2xMMKeEBU",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/DrQNRZjIXYP2xMMKeEBU",
+        "data": {
+          "type": "post_like",
+          "boardId": "news",
+          "dateString": "20251220",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:23:37.379000+00:00"
+          },
+          "postTitle": "2025년 12월 20일 항공 마일리지 주요 뉴스",
+          "amount": 1,
+          "postId": "36172835-4876-421b-8e6f-1d2f1f222115"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "V0TgHmPeA4rvNr9Yxxoc",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/V0TgHmPeA4rvNr9Yxxoc",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251201",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:26:41.409000+00:00"
+          },
+          "postTitle": "댄공 b787-10 777 프레스티지 리뷰",
+          "commentId": "aBj6d2dydnfJyTQUpbbX",
+          "amount": 2,
+          "postId": "8e03622e-f5ce-4598-a159-91c736e3f035"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "eCkM6FT5mpRqFPFvHx59",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/eCkM6FT5mpRqFPFvHx59",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260121",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:16:35.514000+00:00"
+          },
+          "postTitle": "[공지] 마일캐치 × 아고다(Agoda) 공식 제휴(Verified Affiliate) 선정 안내",
+          "commentId": "oIPCkuAICZdwE7F5TttN",
+          "amount": 2,
+          "postId": "f638adc6-b662-4aa1-8bd9-31b61559d16f"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "fjWMyCR1q55D065NYrNo",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/fjWMyCR1q55D065NYrNo",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20251216",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:24:30.834000+00:00"
+          },
+          "postTitle": "아이슬란드 직항(피리어드님의 팁)",
+          "commentId": "FUWPE4YwHEyLB6wD7MIw",
+          "amount": 2,
+          "postId": "7001f93e-4d32-4765-b6fc-730555373cf3"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "nVshy6xYlGsgJHml9MJS",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/nVshy6xYlGsgJHml9MJS",
+        "data": {
+          "type": "comment_create",
+          "dateString": "20260120",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:18:08.614000+00:00"
+          },
+          "postTitle": "마일캐치 현재 시점 정리",
+          "commentId": "joOeFhyAzsJ302SgyjA3",
+          "amount": 2,
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "r6gXHdKqxK5nyrjUWcAY",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/r6gXHdKqxK5nyrjUWcAY",
+        "data": {
+          "type": "post_like",
+          "boardId": "notice",
+          "dateString": "20251220",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-22T04:23:29.904000+00:00"
+          },
+          "postTitle": "안드로이드 2.2.24 버전 업데이트",
+          "amount": 1,
+          "postId": "0772cd46-428e-40a5-84e6-a345f82d3765"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "rGLmaxfoJjv7hnRZXgFR",
+        "path": "users/32aphjgTPobSMrUS0eOTzem70Dg2/peanut_history/rGLmaxfoJjv7hnRZXgFR",
+        "data": {
+          "type": "post_like",
+          "boardId": "free",
+          "dateString": "20260120",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-01-21T04:17:21.359000+00:00"
+          },
+          "postTitle": "마일캐치 현재 시점 정리",
+          "amount": 1,
+          "postId": "2c942065-1391-4750-a7c2-a068c908a39a"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "32aphjgTPobSMrUS0eOTzem70Dg2",
+    "safeFileName": "32aphjgTPobSMrUS0eOTzem70Dg2.json"
+  }
+}

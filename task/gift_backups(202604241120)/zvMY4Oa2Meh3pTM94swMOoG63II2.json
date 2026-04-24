@@ -1,0 +1,118 @@
+{
+  "id": "zvMY4Oa2Meh3pTM94swMOoG63II2",
+  "path": "users/zvMY4Oa2Meh3pTM94swMOoG63II2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "zvMY4Oa2Meh3pTM94swMOoG63II2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-04T06:18:36.350000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKxq9V8LWGXhGBLHq5toXCWQT3jdVCRWRWGf0t5DoFyauNVLy7oRA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dDu-lF_u9kLpi-TqHCjrxm:APA91bEmc-FABGMAgWtiAzzNRLQeCEPpVcOXJ_GDa5rqXE3Jl3lSSDgY5a96cpO0hG_moXsCc75ikF9QGHGBhyaOEJl73rYzw1PowBaqEvy-_sWQPjGmfJw",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-04T06:18:36.350000+00:00"
+    },
+    "displayName": "Donghun Yang",
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-04T06:18:36.350000+00:00"
+    },
+    "peanutCount": 3,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-04T06:18:36.350000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "iamydh@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "lotte_skypass",
+        "path": "users/zvMY4Oa2Meh3pTM94swMOoG63II2/cards/lotte_skypass",
+        "data": {
+          "name": "롯데 스카이패스",
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-04T06:45:19.675000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_uplus",
+        "path": "users/zvMY4Oa2Meh3pTM94swMOoG63II2/cards/lotte_uplus",
+        "data": {
+          "name": "롯데 유플러스",
+          "checkPerMileKRW": 1,
+          "creditPerMileKRW": 1,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-04T06:45:26.415000+00:00"
+          },
+          "memo": null
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_skypass",
+        "path": "users/zvMY4Oa2Meh3pTM94swMOoG63II2/cards/samsung_skypass",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-04T06:27:51.179000+00:00"
+          },
+          "name": "삼성 더원카드"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "woori_water",
+        "path": "users/zvMY4Oa2Meh3pTM94swMOoG63II2/cards/woori_water",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1000,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-04T06:45:44.048000+00:00"
+          },
+          "name": "우리 정수기"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "zvMY4Oa2Meh3pTM94swMOoG63II2",
+    "safeFileName": "zvMY4Oa2Meh3pTM94swMOoG63II2.json"
+  }
+}

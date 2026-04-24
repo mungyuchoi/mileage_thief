@@ -1,0 +1,92 @@
+{
+  "id": "AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2",
+  "path": "users/AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2",
+  "data": {
+    "displayNameEnable": true,
+    "uid": "AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2",
+    "postsCount": 0,
+    "hasGift": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-01T00:56:21.103000+00:00"
+    },
+    "gradeLevel": 1,
+    "isBanned": false,
+    "followingCount": 0,
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocKi-H6WZTxrfcev2GmFMbhw1jk2-SHGKIDV48ouQk0eZFXDlA=s96-c",
+    "commentCount": 0,
+    "fcmToken": "dsZwvQTMmEQVreBok48T2N:APA91bGb1rN6jYX7GfvD3HN9wxXWz--lrKi2_EWMDShZt9aJZz8fHnXkXMyt7oCbps9rgt0-ODBXT6S5g80c4S_hdD6P9seTQFiTLeY5uoZpDAVlYL-YBhI",
+    "likesReceived": 0,
+    "followerCount": 0,
+    "peanutCountLimit": 3,
+    "currentSkyEffect": null,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-01T00:56:21.103000+00:00"
+    },
+    "lastUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-01T00:58:02.717000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-01T00:56:21.103000+00:00"
+    },
+    "displayName": "seth jung",
+    "peanutCount": 33,
+    "grade": "이코노미",
+    "displayGrade": "이코노미 Lv.1",
+    "ownedEffects": [],
+    "photoURLChangeCount": 0,
+    "roles": [
+      "user"
+    ],
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2025-12-01T00:56:21.103000+00:00"
+    },
+    "likesCount": 0,
+    "rankingAgreement": true,
+    "email": "wjdxortlr@gmail.com",
+    "photoURLEnable": true
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "naver_hy",
+        "path": "users/AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2/cards/naver_hy",
+        "data": {
+          "memo": "non",
+          "checkPerMileKRW": 1000,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T01:09:01.627000+00:00"
+          },
+          "name": "hyundai"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "premium_mile",
+        "path": "users/AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2/cards/premium_mile",
+        "data": {
+          "memo": null,
+          "checkPerMileKRW": 1500,
+          "creditPerMileKRW": 1500,
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2025-12-01T01:07:57.257000+00:00"
+          },
+          "name": "citi"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2",
+    "safeFileName": "AQwDJ0U0ovfxrxQLbqH8PfJ8CpS2.json"
+  }
+}
