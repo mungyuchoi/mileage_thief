@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mileage_thief/screen/search_screen.dart';
+import 'package:mileage_thief/screen/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -262,7 +262,7 @@ class _MyAppState extends State<MyApp> {
         Locale('ko'),
       ],
       routes: {
-        '/': (context) => SearchScreen(),
+        '/': (context) => const HomeScreen(),
         '/community_board_select': (context) => const CommunityBoardSelectScreen(),
         '/community/detail': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;

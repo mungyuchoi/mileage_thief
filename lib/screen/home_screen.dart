@@ -326,14 +326,99 @@ class ForceUpdateDialog extends StatelessWidget {
   }
 }
 
-class SearchScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() => _SearchScreenState();
+enum _HomeTab {
+  community,
+  deals,
+  giftcard,
+  koreanAir,
+  settings,
 }
 
-class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMixin {
+class _HomeTabDestination {
+  final IconData icon;
+  final String label;
+
+  const _HomeTabDestination({
+    required this.icon,
+    required this.label,
+  });
+}
+
+const List<_HomeTabDestination> _homeTabDestinations = [
+  _HomeTabDestination(
+    icon: Icons.people_outline_sharp,
+    label: '커뮤니티',
+  ),
+  _HomeTabDestination(
+    icon: Icons.local_offer_outlined,
+    label: '특가',
+  ),
+  _HomeTabDestination(
+    icon: Icons.card_giftcard,
+    label: '상품권',
+  ),
+  _HomeTabDestination(
+    icon: Icons.flight_takeoff,
+    label: '대한항공',
+  ),
+  _HomeTabDestination(
+    icon: Icons.settings,
+    label: '설정',
+  ),
+];
+
+class _HomeBottomNavigationBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _HomeBottomNavigationBar({
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      backgroundColor: Colors.grey[200],
+      currentIndex: currentIndex,
+      selectedItemColor: Colors.black,
+      unselectedItemColor: Colors.black,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+      onTap: onTap,
+      items: _homeTabDestinations
+          .map(
+            (destination) => BottomNavigationBarItem(
+              icon: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(destination.icon),
+                  const SizedBox(height: 2),
+                  Text(
+                    destination.label,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+              label: '',
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // GlobalKey for old AirportScreen removed
-  int _currentIndex = 0;
+  _HomeTab _currentTab = _HomeTab.community;
   final DatabaseReference _versionReference =
       FirebaseDatabase.instance.ref("VERSION");
   bool _giftFabOpen = false;
@@ -351,6 +436,8 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
   // 뒤로가기 버튼 처리 관련 변수
   DateTime? _lastBackPressTime;
   final Duration _backPressTimeLimit = const Duration(seconds: 2);
+
+  int get _currentIndex => _currentTab.index;
 
   @override
   void initState() {
@@ -390,10 +477,8 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
     if (uid == null) return;
 
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final data = userDoc.data();
       final rankingAgreement = data?['ranking_agree'] as bool? ?? true;
 
@@ -401,7 +486,7 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
       if (!rankingAgreement) {
         // 정보 탭으로 강제 이동
         _giftcardTabController.animateTo(0);
-        
+
         // 토스트 메시지 표시
         Fluttertoast.showToast(
           msg: '랭킹 동의를 해야 진입할 수 있습니다.',
@@ -523,378 +608,322 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
     }
   }
 
+  void _selectTab(int index) {
+    setState(() {
+      _currentTab = _HomeTab.values[index];
+    });
+  }
+
+  PreferredSizeWidget _buildHomeAppBar({
+    PreferredSizeWidget? bottom,
+    bool includeGiftcardActions = false,
+  }) {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      titleSpacing: 12,
+      title: Image.asset(
+        'asset/icon/milecatch_logo.png',
+        height: 24,
+        fit: BoxFit.contain,
+      ),
+      backgroundColor: Colors.white,
+      iconTheme: const IconThemeData(color: Colors.black),
+      elevation: 1,
+      actions: includeGiftcardActions
+          ? _buildGiftcardAppBarActions()
+          : _buildDefaultAppBarActions(),
+      bottom: bottom,
+    );
+  }
+
+  List<Widget> _buildDefaultAppBarActions() {
+    return <Widget>[
+      IconButton(
+        icon: const Icon(Icons.share, color: Colors.black),
+        onPressed: _shareApp,
+      ),
+      IconButton(
+        icon: const Icon(Icons.chat, color: Colors.black),
+        onPressed: _launchOpenChat,
+      ),
+    ];
+  }
+
+  List<Widget> _buildGiftcardAppBarActions() {
+    return <Widget>[
+      ..._buildDefaultAppBarActions(),
+      Builder(builder: (context) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return const SizedBox.shrink();
+        return IconButton(
+          icon: const Icon(Icons.send_rounded, color: Colors.black),
+          onPressed: () async {
+            final uri = Uri.parse('https://t.me/+6ZxoqIXFsI5kMzVl');
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+        );
+      }),
+      Builder(builder: (context) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          return PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.black),
+            color: Colors.white,
+            onSelected: (value) async {
+              if (value == 'manage_cards') {
+                await Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const CardManagePage()));
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'manage_cards',
+                child: Text('카드 관리'),
+              ),
+            ],
+          );
+        }
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('where_to_buy')
+              .limit(1)
+              .snapshots(),
+          builder: (context, snap) {
+            final hasWhereToBuy = snap.hasData && snap.data!.docs.isNotEmpty;
+            return PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              color: Colors.white,
+              onSelected: (value) async {
+                switch (value) {
+                  case 'manage_cards':
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const CardManagePage()));
+                    break;
+                  case 'manage_where_to_buy':
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const WhereToBuyManagePage()));
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'manage_cards',
+                  child: Text('카드 관리'),
+                ),
+                if (hasWhereToBuy)
+                  const PopupMenuItem(
+                    value: 'manage_where_to_buy',
+                    child: Text('구매처 관리'),
+                  ),
+              ],
+            );
+          },
+        );
+      }),
+    ];
+  }
+
+  void _shareApp() {
+    String appLink = '';
+    if (Platform.isAndroid) {
+      appLink =
+          'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
+    } else {
+      appLink = 'https://apps.apple.com/app/myapp/6446247689';
+    }
+    String description = "마일리지 항공 앱을 공유해보세요! $appLink";
+    SharePlus.instance.share(ShareParams(text: description));
+  }
+
+  void _refreshGiftcardInfoIfNeeded(Object? navigationResult) {
+    if (navigationResult == true) {
+      (_giftcardInfoKey.currentState as dynamic)?.refresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_currentIndex == 2) {
+    if (_currentTab == _HomeTab.giftcard) {
       // 상품권 탭 전용: 상단 TabBar(지도/정보) + FAB
       return WillPopScope(
         onWillPop: _onWillPop,
         child: Scaffold(
-            backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              titleSpacing: 12,
-              title: Image.asset(
-                'asset/icon/milecatch_logo.png',
-                height: 24,
-                fit: BoxFit.contain,
-              ),
-              backgroundColor: Colors.white,
-              iconTheme: const IconThemeData(color: Colors.black),
-              elevation: 1,
-              actions: <Widget>[
-                IconButton(
-                  icon: const Icon(Icons.share, color: Colors.black),
-                  onPressed: () {
-                    String appLink = '';
-                    if (Platform.isAndroid) {
-                      appLink =
-                          'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
-                    } else {
-                      appLink = 'https://apps.apple.com/app/myapp/6446247689';
-                    }
-                    String description = "마일리지 항공 앱을 공유해보세요! $appLink";
-                    SharePlus.instance.share(ShareParams(text: description));
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chat, color: Colors.black),
-                  onPressed: _launchOpenChat,
-                ),
-                // 로그인 시에만 텔레그램 유사 아이콘 표시 (3번째 아이템)
-                Builder(builder: (context) {
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user == null) return const SizedBox.shrink();
-                  return IconButton(
-                    icon: const Icon(Icons.send_rounded, color: Colors.black),
-                    onPressed: () async {
-                      final uri = Uri.parse('https://t.me/+6ZxoqIXFsI5kMzVl');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
-                      }
-                    },
-                  );
-                }),
-                Builder(builder: (context) {
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user == null) {
-                    return PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, color: Colors.black),
-                      color: Colors.white,
-                      onSelected: (value) async {
-                        if (value == 'manage_cards') {
-                          await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const CardManagePage()));
-                        }
-                      },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(
-                          value: 'manage_cards',
-                          child: Text('카드 관리'),
-                        ),
-                      ],
-                    );
-                  }
-                  return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user.uid)
-                        .collection('where_to_buy')
-                        .limit(1)
-                        .snapshots(),
-                    builder: (context, snap) {
-                      final hasWhereToBuy =
-                          snap.hasData && snap.data!.docs.isNotEmpty;
-                      return PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, color: Colors.black),
-                        color: Colors.white,
-                        onSelected: (value) async {
-                          switch (value) {
-                            case 'manage_cards':
-                              await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const CardManagePage()));
-                              break;
-                            case 'manage_where_to_buy':
-                              await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const WhereToBuyManagePage()));
-                              break;
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'manage_cards',
-                            child: Text('카드 관리'),
-                          ),
-                          if (hasWhereToBuy)
-                            const PopupMenuItem(
-                              value: 'manage_where_to_buy',
-                              child: Text('구매처 관리'),
-                            ),
-                        ],
-                      );
-                    },
-                  );
-                }),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(54),
-                child: SegmentTabBar(
-                  controller: _giftcardTabController,
-                  labels: const ['정보', '지도', '시세', '지점'],
-                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                ),
+          backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+          appBar: _buildHomeAppBar(
+            includeGiftcardActions: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(54),
+              child: SegmentTabBar(
+                controller: _giftcardTabController,
+                labels: const ['정보', '지도', '시세', '지점'],
+                margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
               ),
             ),
-            body: Stack(
-              children: [
-                TabBarView(
-                  controller: _giftcardTabController,
-                  physics: NeverScrollableScrollPhysics(),
-                  children: [
-                    GiftcardInfoScreen(
-                      key: _giftcardInfoKey,
-                      onScrollChanged: (isScrolling) {
-                        setState(() {
-                          _isScrolling = isScrolling;
-                        });
-                      },
-                    ),
-                    GiftcardMapScreen(),
-                    const GiftcardRatesTab(),
-                    const BranchListTab(),
-                  ],
+          ),
+          body: Stack(
+            children: [
+              TabBarView(
+                controller: _giftcardTabController,
+                physics: NeverScrollableScrollPhysics(),
+                children: [
+                  GiftcardInfoScreen(
+                    key: _giftcardInfoKey,
+                    onScrollChanged: (isScrolling) {
+                      setState(() {
+                        _isScrolling = isScrolling;
+                      });
+                    },
+                  ),
+                  GiftcardMapScreen(),
+                  const GiftcardRatesTab(),
+                  const BranchListTab(),
+                ],
+              ),
+              if (_giftFabOpen)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _giftFabOpen = false),
+                    child: Container(color: Colors.black.withOpacity(0.05)),
+                  ),
                 ),
-                if (_giftFabOpen)
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _giftFabOpen = false),
-                      child: Container(color: Colors.black.withOpacity(0.05)),
-                    ),
-                  ),
-                if (_giftFabOpen)
-                  Positioned(
-                    right: 16,
-                    bottom: 96,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        GiftActionPill(
-                          icon: Icons.store_mall_directory_outlined,
-                          label: '지점 생성',
-                          onTap: () {
-                            setState(() => _giftFabOpen = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const BranchStep1Page()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        GiftActionPill(
-                          icon: Icons.credit_card_outlined,
-                          label: '카드 생성',
-                          onTap: () {
-                            setState(() => _giftFabOpen = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CardStepPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        GiftActionPill(
-                          icon: Icons.storefront_outlined,
-                          label: '구매처 생성',
-                          onTap: () {
-                            setState(() => _giftFabOpen = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const WhereToBuyStepPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        GiftActionPill(
-                          icon: Icons.shopping_cart_outlined,
-                          label: '상품권 구매',
-                          onTap: () async {
-                            setState(() => _giftFabOpen = false);
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const GiftBuyScreen()),
-                            );
-                            // 저장 성공 시 데이터 새로고침
-                            if (result == true &&
-                                _giftcardInfoKey.currentState != null) {
-                              final state = _giftcardInfoKey.currentState;
-                              if (state != null &&
-                                  state is State<GiftcardInfoScreen>) {
-                                (state as dynamic).refresh();
-                              }
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        GiftActionPill(
-                          icon: Icons.attach_money_outlined,
-                          label: '상품권 판매',
-                          onTap: () async {
-                            setState(() => _giftFabOpen = false);
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const GiftSellScreen()),
-                            );
-                            // 저장 성공 시 데이터 새로고침
-                            if (result == true &&
-                                _giftcardInfoKey.currentState != null) {
-                              final state = _giftcardInfoKey.currentState;
-                              if (state != null &&
-                                  state is State<GiftcardInfoScreen>) {
-                                (state as dynamic).refresh();
-                              }
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-            floatingActionButton: AnimatedBuilder(
-              animation: _giftcardTabController,
-              builder: (context, _) {
-                final showFab = _giftcardTabController.index == 0;
-                    if (!showFab) return const SizedBox.shrink();
-
-                    // 스크롤 중이면 FAB 숨김
-                    if (_isScrolling) return const SizedBox.shrink();
-
-                    final user = FirebaseAuth.instance.currentUser;
-                    // 로그인 안된 경우: 로그인 유도 FAB 노출
-                    if (user == null) {
-                      return FloatingActionButton(
-                        backgroundColor: const Color(0xFF74512D),
-                        onPressed: () {
+              if (_giftFabOpen)
+                Positioned(
+                  right: 16,
+                  bottom: 96,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      GiftActionPill(
+                        icon: Icons.store_mall_directory_outlined,
+                        label: '지점 생성',
+                        onTap: () {
+                          setState(() => _giftFabOpen = false);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const LoginScreen()),
+                                builder: (_) => const BranchStep1Page()),
                           );
                         },
-                        child: const Icon(Icons.login, color: Colors.white),
-                      );
-                    }
+                      ),
+                      const SizedBox(height: 12),
+                      GiftActionPill(
+                        icon: Icons.credit_card_outlined,
+                        label: '카드 생성',
+                        onTap: () {
+                          setState(() => _giftFabOpen = false);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CardStepPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      GiftActionPill(
+                        icon: Icons.storefront_outlined,
+                        label: '구매처 생성',
+                        onTap: () {
+                          setState(() => _giftFabOpen = false);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const WhereToBuyStepPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      GiftActionPill(
+                        icon: Icons.shopping_cart_outlined,
+                        label: '상품권 구매',
+                        onTap: () async {
+                          setState(() => _giftFabOpen = false);
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const GiftBuyScreen()),
+                          );
+                          _refreshGiftcardInfoIfNeeded(result);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      GiftActionPill(
+                        icon: Icons.attach_money_outlined,
+                        label: '상품권 판매',
+                        onTap: () async {
+                          setState(() => _giftFabOpen = false);
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const GiftSellScreen()),
+                          );
+                          _refreshGiftcardInfoIfNeeded(result);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          floatingActionButton: AnimatedBuilder(
+            animation: _giftcardTabController,
+            builder: (context, _) {
+              final showFab = _giftcardTabController.index == 0;
+              if (!showFab) return const SizedBox.shrink();
 
-                    // 로그인 된 경우: 차단 상태를 구독하여 차단이면 FAB 숨김
-                    return StreamBuilder<
-                        DocumentSnapshot<Map<String, dynamic>>>(
-                      stream: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(user.uid)
-                          .snapshots(),
-                      builder: (context, snap) {
-                        final banned =
-                            (snap.data?.data()?['isBanned'] as bool?) ?? false;
-                        if (banned) return const SizedBox.shrink();
-                        return FloatingActionButton(
-                          backgroundColor: const Color(0xFF74512D),
-                          onPressed: () =>
-                              setState(() => _giftFabOpen = !_giftFabOpen),
-                          child: Icon(_giftFabOpen ? Icons.close : Icons.add,
-                              color: Colors.white),
-                        );
-                      },
+              // 스크롤 중이면 FAB 숨김
+              if (_isScrolling) return const SizedBox.shrink();
+
+              final user = FirebaseAuth.instance.currentUser;
+              // 로그인 안된 경우: 로그인 유도 FAB 노출
+              if (user == null) {
+                return FloatingActionButton(
+                  backgroundColor: const Color(0xFF74512D),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
-                ),
-            bottomNavigationBar: BottomNavigationBar(
-              backgroundColor: Colors.grey[200],
-              currentIndex: _currentIndex,
-              selectedItemColor: Colors.black, // kPrimaryDarkColor 대체
-              unselectedItemColor: Colors.black, // kPrimaryDarkColor 대체
-              type: BottomNavigationBarType.fixed, // 아이콘과 텍스트가 항상 함께 보임
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-              unselectedLabelStyle:
-                  const TextStyle(fontWeight: FontWeight.normal),
-              onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              items: [
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.people_outline_sharp),
-                      SizedBox(height: 2),
-                      Text('커뮤니티', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.local_offer_outlined),
-                      SizedBox(height: 2),
-                      Text('특가', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.card_giftcard),
-                      SizedBox(height: 2),
-                      Text('상품권', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.flight_takeoff),
-                      SizedBox(height: 2),
-                      Text('대한항공', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.settings),
-                      SizedBox(height: 2),
-                      Text('설정', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  label: '',
-                ),
-              ],
-            ),
+                  child: const Icon(Icons.login, color: Colors.white),
+                );
+              }
+
+              // 로그인 된 경우: 차단 상태를 구독하여 차단이면 FAB 숨김
+              return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .snapshots(),
+                builder: (context, snap) {
+                  final banned =
+                      (snap.data?.data()?['isBanned'] as bool?) ?? false;
+                  if (banned) return const SizedBox.shrink();
+                  return FloatingActionButton(
+                    backgroundColor: const Color(0xFF74512D),
+                    onPressed: () =>
+                        setState(() => _giftFabOpen = !_giftFabOpen),
+                    child: Icon(_giftFabOpen ? Icons.close : Icons.add,
+                        color: Colors.white),
+                  );
+                },
+              );
+            },
           ),
+          bottomNavigationBar: _HomeBottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: _selectTab,
+          ),
+        ),
       );
     }
 
@@ -903,292 +932,30 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          titleSpacing: 12,
-          title: Image.asset(
-            'asset/icon/milecatch_logo.png',
-            height: 24,
-            fit: BoxFit.contain,
-          ),
-          backgroundColor: Colors.white,
-          iconTheme: const IconThemeData(color: Colors.black),
-          elevation: 1,
-          actions: <Widget>[
-            if (_currentIndex != 2) ...[
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.black),
-                onPressed: () {
-                  String appLink = '';
-                  if (Platform.isAndroid) {
-                    appLink =
-                        'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
-                  } else {
-                    appLink = 'https://apps.apple.com/app/myapp/6446247689';
-                  }
-                  String description = "마일리지 항공 앱을 공유해보세요! $appLink";
-                  SharePlus.instance.share(ShareParams(text: description));
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.chat, color: Colors.black),
-                onPressed: _launchOpenChat,
-              ),
-            ],
-          ],
-        ),
-        body: buildPage(_currentIndex),
+        appBar: _buildHomeAppBar(),
+        body: _buildCurrentTabPage(),
         floatingActionButton: null,
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Colors.grey[200],
+        bottomNavigationBar: _HomeBottomNavigationBar(
           currentIndex: _currentIndex,
-          selectedItemColor: Colors.black, // kPrimaryDarkColor 대체
-          unselectedItemColor: Colors.black, // kPrimaryDarkColor 대체
-          type: BottomNavigationBarType.fixed, // 아이콘과 텍스트가 항상 함께 보임
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.people_outline_sharp),
-                  SizedBox(height: 2),
-                  Text('커뮤니티', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.local_offer_outlined),
-                  SizedBox(height: 2),
-                  Text('특가', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.card_giftcard),
-                  SizedBox(height: 2),
-                  Text('상품권', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.flight_takeoff),
-                  SizedBox(height: 2),
-                  Text('대한항공', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.settings),
-                  SizedBox(height: 2),
-                  Text('설정', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-              label: '',
-            ),
-          ],
+          onTap: _selectTab,
         ),
       ),
     );
   }
 
-  Widget buildPage(int index) {
-    switch (index) {
-      case 0:
+  Widget _buildCurrentTabPage() {
+    switch (_currentTab) {
+      case _HomeTab.community:
         return const CommunityScreen();
-      case 1:
+      case _HomeTab.deals:
         return const DealsScreen();
-      case 2:
-        return const GiftcardMapScreen();
-      case 3:
+      case _HomeTab.giftcard:
+        return const SizedBox.shrink();
+      case _HomeTab.koreanAir:
         return const SearchDanScreen();
-      case 4:
+      case _HomeTab.settings:
         return buildSettingsWidget();
-      default:
-        return const CommunityScreen();
     }
-  }
-
-  void _showGiftcardActions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.store_mall_directory_outlined),
-                title: const Text('지점 생성'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.credit_card_outlined),
-                title: const Text('카드 생성'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.storefront_outlined),
-                title: const Text('구매처 생성'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const WhereToBuyStepPage()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.call_made_outlined),
-                title: const Text('상품권 구매'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.call_made_outlined),
-                title: const Text('상품권 판매'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 6),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _showCreateBranchDialog() async {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController linkController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('새 지점 요청',
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                autofocus: true,
-                style: const TextStyle(color: Colors.black),
-                cursorColor: Color(0xFF74512D),
-                decoration: const InputDecoration(
-                  labelText: '지점 이름',
-                  hintText: '예: 강남점',
-                  labelStyle: TextStyle(color: Color(0xFF74512D)),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: linkController,
-                keyboardType: TextInputType.url,
-                style: const TextStyle(color: Colors.black),
-                cursorColor: Color(0xFF74512D),
-                decoration: const InputDecoration(
-                  labelText: '네이버 링크',
-                  hintText: '예: https://map.naver.com/...',
-                  labelStyle: TextStyle(color: Color(0xFF74512D)),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소', style: TextStyle(color: Colors.black)),
-            ),
-            TextButton(
-              onPressed: () {
-                final String name = nameController.text.trim();
-                final String link = linkController.text.trim();
-                if (name.isEmpty) {
-                  Fluttertoast.showToast(msg: '지점 이름을 입력해주세요.');
-                  return;
-                }
-                if (link.isEmpty) {
-                  Fluttertoast.showToast(msg: '네이버 링크를 입력해주세요.');
-                  return;
-                }
-                // Firestore에 요청 저장
-                try {
-                  final String uid =
-                      FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
-                  FirebaseFirestore.instance
-                      .collection('branches_request')
-                      .add({
-                    'createdByUid': uid,
-                    'title': name,
-                    'naverLink': link,
-                    'createdAt': FieldValue.serverTimestamp(),
-                  });
-                  Navigator.of(context).pop();
-                  Fluttertoast.showToast(
-                      msg: '1~2일 정도 운영진 검토하에 지도 및 상품권 판매정보에 추가됩니다.');
-                } catch (e) {
-                  Navigator.of(context).pop();
-                  Fluttertoast.showToast(msg: '요청 저장 중 오류가 발생했습니다.');
-                }
-              },
-              child: const Text('요청',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   // 대한항공/아시아나 관련 위젯은 제거되었습니다
