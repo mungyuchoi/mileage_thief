@@ -12,7 +12,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'my_page_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool returnToPreviousOnSuccess;
+
+  const LoginScreen({
+    super.key,
+    this.returnToPreviousOnSuccess = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -29,6 +34,26 @@ class _LoginScreenState extends State<LoginScreen> {
   RewardedAd? _rewardedAd;
   late BannerAd _banner;
   bool _isBannerLoaded = false;
+
+  void _setLoading(bool value) {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = value;
+    });
+  }
+
+  void _completeLogin() {
+    if (!mounted) return;
+
+    if (widget.returnToPreviousOnSuccess) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const MyPageScreen()),
+    );
+  }
 
   @override
   void initState() {
@@ -91,9 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
 
     try {
       final userCredential = await AuthService.signInWithPlatform();
@@ -144,18 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         _getCurrentUser();
 
-        // MyPageScreen으로 이동
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MyPageScreen()),
-        );
-
-        // 로그인 성공 시 MyPageScreen으로 이동
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MyPageScreen()),
-          );
-        }
+        _completeLogin();
       }
     } catch (e) {
       Fluttertoast.showToast(
@@ -168,16 +180,12 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoading(false);
     }
   }
 
   Future<void> _handleAppleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
 
     try {
       final userCredential = await AuthService.signInWithApple();
@@ -228,11 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         _getCurrentUser();
 
-        // MyPageScreen으로 이동
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MyPageScreen()),
-        );
+        _completeLogin();
       }
     } catch (e) {
       Fluttertoast.showToast(
@@ -245,16 +249,12 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoading(false);
     }
   }
 
   Future<void> _handleGoogleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
 
     try {
       final userCredential = await AuthService.signInWithGoogle();
@@ -305,11 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         _getCurrentUser();
 
-        // MyPageScreen으로 이동
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MyPageScreen()),
-        );
+        _completeLogin();
       }
     } catch (e) {
       Fluttertoast.showToast(
@@ -322,16 +318,12 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoading(false);
     }
   }
 
   Future<void> _handleNaverLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
 
     try {
       final userCredential = await AuthService.signInWithNaver();
@@ -382,11 +374,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         _getCurrentUser();
 
-        // MyPageScreen으로 이동
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MyPageScreen()),
-        );
+        _completeLogin();
       }
     } catch (e, st) {
       print('[네이버 로그인] UI catch error: $e');
@@ -401,16 +389,12 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoading(false);
     }
   }
 
   Future<void> _handleKakaoLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
 
     try {
       final userCredential = await AuthService.signInWithKakao();
@@ -456,10 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         _getCurrentUser();
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MyPageScreen()),
-        );
+        _completeLogin();
       }
     } catch (e) {
       Fluttertoast.showToast(
@@ -472,9 +453,7 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoading(false);
     }
   }
 

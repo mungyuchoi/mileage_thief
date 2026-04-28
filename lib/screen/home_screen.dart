@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/login_screen.dart';
+import 'package:mileage_thief/screen/my_page_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -331,7 +332,7 @@ enum _HomeTab {
   deals,
   giftcard,
   koreanAir,
-  settings,
+  profile,
 }
 
 class _HomeTabDestination {
@@ -362,10 +363,64 @@ const List<_HomeTabDestination> _homeTabDestinations = [
     label: '대한항공',
   ),
   _HomeTabDestination(
-    icon: Icons.settings,
-    label: '설정',
+    icon: Icons.person_outline,
+    label: '프로필',
   ),
 ];
+
+class _ProfileTab extends StatefulWidget {
+  const _ProfileTab();
+
+  @override
+  State<_ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<_ProfileTab> {
+  bool _loginRouteOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openLoginIfNeeded();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: AuthService.authStateChanges,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        if (user == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _openLoginIfNeeded();
+          });
+          return const SizedBox.shrink();
+        }
+
+        return const MyPageScreen(showAppBar: false);
+      },
+    );
+  }
+
+  Future<void> _openLoginIfNeeded() async {
+    if (_loginRouteOpen || AuthService.currentUser != null || !mounted) return;
+
+    _loginRouteOpen = true;
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(returnToPreviousOnSuccess: true),
+      ),
+    );
+    if (!mounted) return;
+    _loginRouteOpen = false;
+
+    if (AuthService.currentUser == null) {
+      setState(() {});
+    }
+  }
+}
 
 class _HomeBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -617,6 +672,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   PreferredSizeWidget _buildHomeAppBar({
     PreferredSizeWidget? bottom,
     bool includeGiftcardActions = false,
+    List<Widget>? actions,
   }) {
     return AppBar(
       automaticallyImplyLeading: false,
@@ -629,9 +685,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       backgroundColor: Colors.white,
       iconTheme: const IconThemeData(color: Colors.black),
       elevation: 1,
-      actions: includeGiftcardActions
-          ? _buildGiftcardAppBarActions()
-          : _buildDefaultAppBarActions(),
+      actions: actions ??
+          (includeGiftcardActions
+              ? _buildGiftcardAppBarActions()
+              : _buildDefaultAppBarActions()),
       bottom: bottom,
     );
   }
@@ -645,6 +702,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       IconButton(
         icon: const Icon(Icons.chat, color: Colors.black),
         onPressed: _launchOpenChat,
+      ),
+    ];
+  }
+
+  List<Widget> _buildProfileAppBarActions() {
+    return <Widget>[
+      IconButton(
+        icon: const Icon(Icons.settings, color: Colors.black),
+        onPressed: _openSettingsScreen,
       ),
     ];
   }
@@ -741,6 +807,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
     String description = "마일리지 항공 앱을 공유해보세요! $appLink";
     SharePlus.instance.share(ShareParams(text: description));
+  }
+
+  void _openSettingsScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => buildSettingsWidget()),
+    );
   }
 
   void _refreshGiftcardInfoIfNeeded(Object? navigationResult) {
@@ -932,7 +1005,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
-        appBar: _buildHomeAppBar(),
+        appBar: _buildHomeAppBar(
+          actions: _currentTab == _HomeTab.profile
+              ? _buildProfileAppBarActions()
+              : null,
+        ),
         body: _buildCurrentTabPage(),
         floatingActionButton: null,
         bottomNavigationBar: _HomeBottomNavigationBar(
@@ -953,8 +1030,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return const SizedBox.shrink();
       case _HomeTab.koreanAir:
         return const SearchDanScreen();
-      case _HomeTab.settings:
-        return buildSettingsWidget();
+      case _HomeTab.profile:
+        return const _ProfileTab();
     }
   }
 
@@ -969,6 +1046,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget buildSettingsWidget() {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          '설정',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black),
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
       body: StreamBuilder<User?>(
         stream: AuthService.authStateChanges,
         builder: (context, snapshot) {

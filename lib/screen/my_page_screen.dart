@@ -25,7 +25,13 @@ import '../services/auth_service.dart';
 
 class MyPageScreen extends StatefulWidget {
   final bool highlightAds;
-  const MyPageScreen({Key? key, this.highlightAds = false}) : super(key: key);
+  final bool showAppBar;
+
+  const MyPageScreen({
+    Key? key,
+    this.highlightAds = false,
+    this.showAppBar = true,
+  }) : super(key: key);
 
   @override
   State<MyPageScreen> createState() => _MyPageScreenState();
@@ -74,8 +80,7 @@ class _MyPageScreenState extends State<MyPageScreen>
   DocumentSnapshot? _lastBranchCommentDoc;
   bool _hasMoreBranchComments = true;
   bool _isBranchCommentsLoading = false;
-  final ScrollController _branchCommentsScrollController =
-      ScrollController();
+  final ScrollController _branchCommentsScrollController = ScrollController();
 
   bool _isUpdatingProfileImage = false;
   bool _isUpdatingDisplayName = false;
@@ -156,7 +161,9 @@ class _MyPageScreenState extends State<MyPageScreen>
                 });
                 _showAdManagementDialog();
               },
-              child: const Text('바로가기', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+              child: const Text('바로가기',
+                  style: TextStyle(
+                      color: Colors.black87, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1708,58 +1715,61 @@ class _MyPageScreenState extends State<MyPageScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          '마이페이지',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: const Color(0xFF74512D),
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-        actions: [
-          // 땅콩 히스토리 버튼
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PeanutHistoryScreen(),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text(
+                '마이페이지',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'asset/img/peanuts.png',
-                    width: 20,
-                    height: 20,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${userProfile?['peanutCount'] ?? 0}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+              backgroundColor: const Color(0xFF74512D),
+              iconTheme: const IconThemeData(color: Colors.white),
+              elevation: 0,
+              actions: [
+                // 땅콩 히스토리 버튼
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PeanutHistoryScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'asset/img/peanuts.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${userProfile?['peanutCount'] ?? 0}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+                ),
+              ],
+            )
+          : null,
       body: _tabController == null
           ? const Center(child: CircularProgressIndicator())
           : NestedScrollView(
@@ -2831,8 +2841,8 @@ class _MyPageScreenState extends State<MyPageScreen>
                 DateTime.now();
         final branchName = branchComment['branchName'] ?? '지점';
         final branchId = branchComment['branchId'] ?? '';
-        final content = _removeHtmlTags(
-            branchComment['contentHtml'] ?? '리뷰 내용 없음');
+        final content =
+            _removeHtmlTags(branchComment['contentHtml'] ?? '리뷰 내용 없음');
 
         return GestureDetector(
           onTap: () {
@@ -2862,8 +2872,7 @@ class _MyPageScreenState extends State<MyPageScreen>
               ],
             ),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
