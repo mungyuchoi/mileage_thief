@@ -28,20 +28,21 @@ meta/rates_monthly_v2/rates_monthly_v2/{monthKey}
 
 ### `users` 배열 항목 구조
 
-**서버에서 생성하는 구조**: 각 사용자별로 월별 총 판매금액이 합산되어 저장됩니다.
+**클라이언트 판매 저장 구조**: 판매 건 단위로 저장하고, 화면에서 uid별 합산 후 표시합니다.
 
 ```typescript
 {
   uid: string,           // 사용자 UID
   displayName: string,   // 사용자 닉네임 (최신 정보)
   photoUrl: string,      // 프로필 이미지 URL (최신 정보)
-  sellTotal: number      // 해당 사용자의 월별 총 판매금액 (uid별 합산)
+  saleId: string,        // 판매 문서 ID
+  sellTotal: number      // 해당 판매 건의 판매금액
 }
 ```
 
-**중요**: `users` 배열은 `sellTotal` 기준으로 **내림차순 정렬**되어 저장되므로, 클라이언트에서 바로 랭킹을 표시할 수 있습니다.
+**중요**: 클라이언트는 `users` 배열을 uid별로 합산한 뒤 `sellTotal` 기준 내림차순으로 정렬해 표시합니다.
 
-**Top 3 접근**: `users[0]`, `users[1]`, `users[2]`로 1위, 2위, 3위 사용자 정보에 바로 접근할 수 있습니다.
+**Top 3 접근**: 합산/정렬된 결과의 `[0]`, `[1]`, `[2]`가 1위, 2위, 3위 사용자입니다.
 
 ## 서버 갱신 로직
 
@@ -56,8 +57,7 @@ meta/rates_monthly_v2/rates_monthly_v2/{monthKey}
 1. **`users/{uid}/hasGift`** = `true`
    - 상품권 기능을 사용하는 사용자
 
-2. **`users/{uid}/ranking_agree`** = `true`
-   - 랭킹 참여에 동의한 사용자
+> `ranking_agree` 값과 관계없이 상품권 판매 랭킹에는 포함합니다.
 
 ### 3. 데이터 수집 및 집계
 
@@ -68,7 +68,6 @@ meta/rates_monthly_v2/rates_monthly_v2/{monthKey}
 const eligibleUsers = await firestore
   .collection('users')
   .where('hasGift', '==', true)
-  .where('ranking_agree', '==', true)
   .get();
 ```
 
@@ -195,7 +194,7 @@ await docRef.set({
 | 필드명 | 타입 | 설명 |
 |--------|------|------|
 | `hasGift` | boolean | 상품권 기능 사용 여부 (true인 경우만 랭킹 대상) |
-| `ranking_agree` | boolean | 랭킹 참여 동의 여부 (true인 경우만 랭킹 대상) |
+| `ranking_agree` | boolean | 레거시 필드. 랭킹 포함 여부에는 사용하지 않음 |
 | `displayName` | string | 사용자 닉네임 (랭킹에 표시) |
 | `photoURL` | string | 프로필 이미지 URL (랭킹에 표시) |
 
@@ -203,7 +202,7 @@ await docRef.set({
 
 1. **서버 배치 작업**: 랭킹 데이터는 서버에서 주기적으로 생성/갱신되므로, 실시간 반영이 아닙니다.
 
-2. **필터링 조건**: `hasGift == true` && `ranking_agree == true`인 사용자만 랭킹에 포함됩니다.
+2. **필터링 조건**: `hasGift == true`인 사용자는 `ranking_agree` 값과 관계없이 랭킹에 포함됩니다.
 
 3. **정렬된 배열**: `users` 배열은 서버에서 이미 정렬되어 저장되므로, 클라이언트에서 추가 정렬이 필요 없습니다.
 
@@ -217,27 +216,15 @@ await docRef.set({
 
 - **랭킹 조회**: `lib/screen/giftcard_info_screen.dart`
   - `_loadRanking()`: 랭킹 데이터 로드 함수
-  - `_loadRankingAgreement()`: 사용자 랭킹 동의 상태 로드
-  - `_saveRankingAgreement()`: 사용자 랭킹 동의 상태 저장
-  - `_handleRankingAgreementToggle()`: 랭킹 동의 토글 처리 (false로 변경 시 땅콩 50개 차감)
 
 ## 클라이언트 동작
-
-### 랭킹 동의 관리
-
-사용자는 상품권 정보 화면의 랭킹 탭에서 랭킹 참여 동의를 설정할 수 있습니다:
-
-- **기본값**: `true` (동의)
-- **필드명**: `users/{uid}/ranking_agree`
-- **false로 변경 시**: 땅콩 50개 차감 (확인 팝업 표시)
-- **true로 변경 시**: 즉시 허용 (비용 없음)
 
 ### 랭킹 데이터 조회
 
 클라이언트는 `meta/rates_monthly_v2/rates_monthly_v2/{monthKey}` 경로에서 랭킹 데이터를 조회합니다.
 
-- `users` 배열이 이미 정렬되어 있으므로, 바로 리스트로 표시 가능
-- `users[0]`, `users[1]`, `users[2]`로 Top 3 접근 가능 (배열 인덱스로 직접 접근)
+- `users` 배열을 uid별로 합산한 뒤 리스트로 표시
+- 합산/정렬 결과의 `[0]`, `[1]`, `[2]`로 Top 3 접근
 
 ## 서버 구현 가이드
 
@@ -248,7 +235,7 @@ await docRef.set({
 
 ### 2. 데이터 수집 순서
 
-1. `hasGift == true` && `ranking_agree == true`인 사용자 조회
+1. `hasGift == true`인 사용자 조회
 2. 각 사용자의 해당 월 판매 데이터 조회 (`users/{uid}/sales`)
 3. 판매금액 합산 (`sellTotal` 필드 합계)
 4. 사용자별로 집계된 데이터 생성
@@ -263,6 +250,6 @@ await docRef.set({
 
 ## 참고사항
 
-- **서버 전용**: `meta/rates_monthly_v2` 경로는 서버에서만 데이터를 생성/갱신합니다.
-- **클라이언트 읽기 전용**: 클라이언트는 랭킹 데이터를 조회만 하며, 수정하지 않습니다.
+- **판매 저장 반영**: 클라이언트는 판매 저장 시 `meta/rates_monthly_v2` 경로에 해당 판매 건을 남깁니다.
+- **서버 배치 보정**: 서버 배치가 있는 경우에도 `ranking_agree` 값과 관계없이 `hasGift == true` 사용자 판매를 포함해야 합니다.
 - **이전 경로**: `meta/rates_monthly` 경로는 더 이상 사용하지 않습니다 (레거시).

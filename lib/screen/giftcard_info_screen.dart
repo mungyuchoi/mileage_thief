@@ -222,7 +222,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   // 랭킹 데이터
   List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[];
   bool _rankingLoading = false;
-  bool _rankingAgreement = true; // 랭킹 동의 상태 (기본값 true)
   DateTime? _rankingUpdatedAt; // 랭킹 데이터 업데이트 시간
 
   @override
@@ -247,161 +246,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     _loadCalendarMonth(_calendarMonth);
     // 초기 랭킹 데이터 로드
     _loadRanking();
-    // 랭킹 동의 상태 로드
-    _loadRankingAgreement();
-  }
-
-  // 랭킹 동의 상태 로드
-  Future<void> _loadRankingAgreement() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final data = userDoc.data();
-      if (data != null && data.containsKey('ranking_agree')) {
-        setState(() {
-          _rankingAgreement = data['ranking_agree'] as bool? ?? true;
-        });
-      }
-    } catch (e) {
-      // 오류 시 기본값 유지
-    }
-  }
-
-  // 랭킹 동의 상태 저장
-  Future<void> _saveRankingAgreement(bool value) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .update({'ranking_agree': value});
-      setState(() {
-        _rankingAgreement = value;
-      });
-    } catch (e) {
-      debugPrint('랭킹 동의 상태 저장 오류: $e');
-    }
-  }
-
-  // 랭킹 동의 토글 변경 처리
-  Future<void> _handleRankingAgreementToggle(bool newValue) async {
-    // true로 변경하는 경우 그냥 허용
-    if (newValue) {
-      await _saveRankingAgreement(true);
-      return;
-    }
-
-    // false로 변경하려는 경우 땅콩 50개 차감 확인
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final userData = await UserService.getUserFromFirestore(uid);
-      final currentPeanuts = _asInt(userData?['peanutCount']);
-
-      if (currentPeanuts < 50) {
-        Fluttertoast.showToast(
-          msg: '땅콩이 모자랍니다.',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black87,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-        return;
-      }
-
-      final bool? ok = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text(
-              '확인',
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '랭킹 동의를 해제하시겠습니까?',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '• 땅콩 50개가 소모됩니다.',
-                  style: TextStyle(color: Colors.black, fontSize: 14),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '• 동의하지 않음으로 변경하게 되면 다음번 랭킹 집계할 때 제외됩니다.',
-                  style: TextStyle(color: Colors.black, fontSize: 14),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '• 동의하지 않음으로 변경하게 되면 지도, 시세, 지점탭을 이용할 수 없습니다.',
-                  style: TextStyle(color: Colors.black, fontSize: 14),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '현재 보유 땅콩: ${currentPeanuts}개',
-                  style: TextStyle(
-                    color: currentPeanuts >= 50 ? Colors.green : Colors.red,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text(
-                  '취소',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  '변경',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (ok == true) {
-        await UserService.updatePeanutCount(uid, currentPeanuts - 50);
-        await _saveRankingAgreement(false);
-        Fluttertoast.showToast(
-          msg: '땅콩 50개가 사용되었습니다.',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black87,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      }
-    } catch (e) {
-      debugPrint('랭킹 동의 토글 처리 오류: $e');
-    }
   }
 
   // 외부에서 호출할 수 있는 새로고침 메서드
@@ -3725,6 +3569,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     return '${formatter.format(value)}원';
   }
 
+  String _maskRankingName(String name) {
+    final String trimmed = name.trim();
+    if (trimmed.isEmpty) return '익명';
+    final List<int> runes = trimmed.runes.toList();
+    if (runes.length <= 1) return trimmed;
+    return '${String.fromCharCode(runes.first)}${'*' * (runes.length - 1)}';
+  }
+
   Widget _buildRanking() {
     final String updateTimeText = _rankingUpdatedAt != null
         ? DateFormat('yyyy.MM.dd HH:mm').format(_rankingUpdatedAt!)
@@ -3754,15 +3606,6 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                   Text('${_userRankings.length}명',
                       style:
                           const TextStyle(color: Colors.black54, fontSize: 12)),
-                  const SizedBox(width: 12),
-                  const Text('동의',
-                      style: TextStyle(color: Colors.black87, fontSize: 12)),
-                  const SizedBox(width: 8),
-                  Switch(
-                    value: _rankingAgreement,
-                    activeColor: const Color(0xFF74512D),
-                    onChanged: _handleRankingAgreementToggle,
-                  ),
                 ],
               ),
             ],
@@ -3790,7 +3633,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                       itemBuilder: (context, index) {
                         final Map<String, dynamic> u = _userRankings[index];
                         final String uid = u['uid'] as String? ?? '';
-                        final String name = u['displayName'] as String? ?? '익명';
+                        final String name = _maskRankingName(
+                            u['displayName'] as String? ?? '익명');
                         final String? photo = u['photoUrl'] as String?;
                         final int total =
                             (u['sellTotal'] as num?)?.toInt() ?? 0;

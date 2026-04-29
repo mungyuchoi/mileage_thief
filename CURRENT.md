@@ -199,7 +199,113 @@
 
 ---
 
-## 3. 크롤링 서버 관점에서의 전체 플로우
+## 3. 상품권 시세 표 화면 기본 정책
+
+1bang.kr 형태처럼 `상품권 × 지점` 행렬로 현재 시세를 보여줄 수 있습니다.
+이 표는 기존 `branches/{branchId}/giftcardRates_current/{giftcardId}` 문서를 셀 데이터로 사용합니다.
+
+### 3-1. 기본 행(상품권) 구성
+
+사용자별 설정이 없을 때 표의 기본 행은 아래 상품권 4개를 우선 표시합니다.
+
+- `lotte`: 롯데상품권
+- `shinsegae`: 신세계상품권
+- `hyundai`: 현대상품권
+- `galleria`: 갤러리아상품권
+
+> 기본 표는 현재 앱의 주 사용 단위인 **10만 원권 기준**으로 표시합니다.  
+> 추후 5만 원권, 50만 원권 등을 분리해야 하면 `giftcardRates_current` 문서에 `faceValue` 또는 `denomination` 필드를 추가해 같은 상품권 브랜드 안에서도 권종을 구분합니다.
+
+### 3-2. 기본 열(지점) 구성
+
+사용자별 표시 지점 설정이 없을 때 표의 기본 열은 `lotte` 기준 상위 3개 지점입니다.
+
+- 기준 상품권: `lotte`
+- 기준 가격: `sellPrice_general`
+- 정렬 규칙:
+  1. `branches/{branchId}/giftcardRates_current/lotte` 문서가 존재하는 지점만 후보로 사용
+  2. `sellPrice_general` 높은 순으로 정렬
+  3. 동률이면 `sellFeeRate_general` 낮은 순으로 정렬
+  4. 그래도 동률이면 지점명 오름차순으로 정렬
+- 결과: 상위 3개 `branchId`를 표의 기본 열로 사용
+
+> 사용자 입장에서 “팔 때 가장 유리한 지점”을 기본값으로 잡기 위한 규칙입니다.
+
+### 3-3. 표 셀 표시 규칙
+
+각 셀은 `branches/{branchId}/giftcardRates_current/{giftcardId}` 문서를 읽어 구성합니다.
+
+- 판매 기준 표시:
+  - 가격: `sellPrice_general`
+  - 수수료율: `sellFeeRate_general`
+  - 수수료율이 없으면 `sellPrice_general`과 기준 액면가 100,000원으로 계산
+- 구매 기준 표시:
+  - 가격: `buyPrice_general`
+  - 할인율: `buyDiscountRate_general`
+  - 할인율이 없으면 `buyPrice_general`과 기준 액면가 100,000원으로 계산
+- 해당 지점이 해당 상품권을 취급하지 않거나 문서가 없으면 `-`로 표시
+- 표 기본 모드는 판매 기준(`sellPrice_general`)을 우선 사용하고, 필요 시 UI에서 구매 기준으로 전환합니다.
+
+---
+
+## 4. 사용자별 상품권 시세 표 지점 설정
+
+사용자가 직접 표에 표시할 지점 1, 2, 3순위를 선택하고 순서를 변경할 수 있도록 사용자 문서 하위에 설정 문서를 둡니다.
+
+### 4-1. 경로
+
+- `users/{uid}/giftcard_meta/order`
+
+### 4-2. 문서 구조 예시
+
+```json
+{
+  "branchIds": ["hiticket", "best", "choigo"],
+  "giftcardIds": ["lotte", "hyundai", "shinsegae"],
+  "updatedAt": "serverTimestamp",
+  "updatedByUid": "{uid}"
+}
+```
+
+- `branchIds`: 표 열로 보여줄 지점 ID 목록
+  - 배열 순서가 화면 표시 순서입니다.
+  - 예: 1위 `hiticket`, 2위 `best`, 3위 `choigo`
+  - 기본 UI는 최대 3개 지점을 선택하도록 제한합니다.
+- `giftcardIds`: 표 행으로 보여줄 상품권 ID 목록
+  - 배열 순서가 화면 표시 순서입니다.
+  - 예: 1행 `lotte`, 2행 `hyundai`, 3행 `shinsegae`
+  - 기본 UI는 최소 3개, 최대 6개 상품권을 선택하도록 제한합니다.
+- `updatedAt`: 마지막 수정 시각
+- `updatedByUid`: 수정한 사용자 UID
+
+> 설정 문서 이름은 `order`로 고정합니다.  
+> `branchIds`와 `giftcardIds`는 같은 문서에서 함께 관리합니다.
+
+### 4-3. 화면 적용 규칙
+
+1. 시세 표 진입 시 `users/{uid}/giftcard_meta/order` 문서를 먼저 조회합니다.
+2. 문서가 있고 `branchIds`가 비어 있지 않으면, 해당 지점 목록을 표 열로 사용합니다.
+3. `branchIds` 안에 삭제되었거나 비활성화된 지점이 있으면 해당 지점은 제외합니다.
+4. 유효한 지점이 3개보다 적으면, 부족한 칸은 기본 열 계산 규칙(롯데상품권 판매가 상위 지점)으로 채웁니다.
+5. `giftcardIds`가 3개 이상 있으면 해당 상품권 목록과 순서를 표 행으로 사용합니다.
+6. `giftcardIds`가 없거나 유효한 상품권이 3개 미만이면 3-1의 기본 행 구성을 사용합니다.
+7. 설정 문서가 없거나 유효한 지점이 하나도 없으면 3-2의 기본 열 계산 규칙을 사용합니다.
+
+### 4-4. 사용자 편집 권한
+
+- 로그인한 사용자는 본인 경로의 `users/{uid}/giftcard_meta/order`만 생성/수정할 수 있습니다.
+- 사용자는 메뉴 편집 화면에서:
+  - 표에 보여줄 지점 1~3개 선택
+  - 1, 2, 3위 순서 변경
+  - 표에 보여줄 상품권 3~6개 선택
+  - 상품권 표시 순서 변경
+  - 설정 초기화
+  를 할 수 있습니다.
+- 저장 시 앱은 선택한 지점 ID 배열을 `branchIds`에, 선택한 상품권 ID 배열을 `giftcardIds`에 순서대로 저장합니다.
+
+---
+
+## 5. 크롤링 서버 관점에서의 전체 플로우
 
 1. **각 지점 페이지 크롤링**
    - 입력: `branchId`
@@ -215,4 +321,3 @@
      → `giftcards/{giftcardId}` 의 `best*` 필드 업데이트.
 
 이 문서를 기준으로 크롤링 서버에서 Firestore 쓰기 로직을 구현하면,  
-

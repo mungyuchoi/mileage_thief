@@ -55,6 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _goHome() {
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -906,8 +911,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _goHome,
+        ),
         title: const Text(
           '로그인',
           style: TextStyle(color: Colors.black),
@@ -1339,6 +1348,15 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             )
           : null,
+    );
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _goHome();
+      },
+      child: scaffold,
     );
   }
 }

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-/// 앱 진입 BottomSheet 광고를 관리하는 관리자 전용 화면
+/// 가이드 탭 상단 배너 광고를 관리하는 관리자 전용 화면
 /// 컬렉션: bottom_sheet_ads
 /// 필드:
 ///  - title: String
@@ -43,14 +43,14 @@ class _AdManageScreenState extends State<AdManageScreen> {
       backgroundColor: const Color(0xFFF7F7FA),
       body: Column(
         children: [
-          // 현재 사용자 BottomSheet 광고 숨김 상태 초기화 (admin 전용 유틸)
+          // 기존 앱 진입 광고 숨김 상태 초기화 (admin 전용 유틸)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.refresh),
-                label: const Text('현재 계정의 앱 진입 광고 숨김 상태 초기화'),
+                label: const Text('현재 계정의 기존 앱 진입 광고 숨김 상태 초기화'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.black87,
                   side: const BorderSide(color: Color(0xFF74512D)),
@@ -75,7 +75,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                       },
                     );
                     Fluttertoast.showToast(
-                      msg: '해당 계정의 앱 진입 광고 숨김 상태를 초기화했습니다.',
+                      msg: '해당 계정의 기존 앱 진입 광고 숨김 상태를 초기화했습니다.',
                       toastLength: Toast.LENGTH_SHORT,
                       gravity: ToastGravity.BOTTOM,
                     );
@@ -207,8 +207,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                                         const SizedBox(width: 8),
                                         Switch(
                                           value: isActive,
-                                          activeColor:
-                                              const Color(0xFF74512D),
+                                          activeColor: const Color(0xFF74512D),
                                           onChanged: (value) async {
                                             await doc.reference.update(
                                               <String, dynamic>{
@@ -360,8 +359,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
 
     String linkType = (existingData?['linkType'] as String?) ?? 'web';
     bool isActive = (existingData?['isActive'] as bool?) ?? true;
-    DateTime? startAt =
-        (existingData?['startAt'] as Timestamp?)?.toDate();
+    DateTime? startAt = (existingData?['startAt'] as Timestamp?)?.toDate();
     DateTime? endAt = (existingData?['endAt'] as Timestamp?)?.toDate();
     File? selectedImageFile;
     String? existingImageUrl = existingData?['imageUrl'] as String?;
@@ -422,8 +420,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                 Fluttertoast.showToast(msg: '제목을 입력해주세요.');
                 return;
               }
-              if (existingImageUrl == null &&
-                  selectedImageFile == null) {
+              if (existingImageUrl == null && selectedImageFile == null) {
                 Fluttertoast.showToast(msg: '이미지를 선택해주세요.');
                 return;
               }
@@ -434,8 +431,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
 
               try {
                 final CollectionReference<Map<String, dynamic>> col =
-                    FirebaseFirestore.instance
-                        .collection('bottom_sheet_ads');
+                    FirebaseFirestore.instance.collection('bottom_sheet_ads');
 
                 final DocumentReference<Map<String, dynamic>> docRef =
                     adId == null ? col.doc() : col.doc(adId);
@@ -454,13 +450,10 @@ class _AdManageScreenState extends State<AdManageScreen> {
 
                   final String fileName =
                       '${docRef.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                  final String storagePath =
-                      'bottom_sheet_ads/$fileName';
+                  final String storagePath = 'bottom_sheet_ads/$fileName';
 
-                  final Reference ref =
-                      storage.ref().child(storagePath);
-                  final UploadTask uploadTask =
-                      ref.putFile(selectedImageFile!);
+                  final Reference ref = storage.ref().child(storagePath);
+                  final UploadTask uploadTask = ref.putFile(selectedImageFile!);
                   final TaskSnapshot snapshot = await uploadTask;
                   if (snapshot.state == TaskState.success) {
                     imageUrl = await snapshot.ref.getDownloadURL();
@@ -688,7 +681,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
-                            'BottomSheet에 노출될 이미지를 선택하세요.\n가급적 16:9 비율을 권장합니다.',
+                            '가이드 탭 상단에 노출될 이미지를 선택하세요.\n가급적 16:9 비율을 권장합니다.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -702,9 +695,8 @@ class _AdManageScreenState extends State<AdManageScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: isSaving
-                      ? null
-                      : () => Navigator.of(context).pop(),
+                  onPressed:
+                      isSaving ? null : () => Navigator.of(context).pop(),
                   child: const Text(
                     '취소',
                     style: TextStyle(color: Colors.black),
@@ -737,5 +729,3 @@ class _AdManageScreenState extends State<AdManageScreen> {
     );
   }
 }
-
-

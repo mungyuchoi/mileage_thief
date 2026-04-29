@@ -415,6 +415,16 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         print(
             '[GiftSellScreen] 사용자 정보 - uid: $uid, displayName: $displayName, saleTotal: $sellTotal');
 
+        await _updateGlobalMonthlyRanking(
+          monthKey: monthKey,
+          uid: uid,
+          displayName: displayName,
+          photoUrl: photoUrl,
+          saleId: saleId,
+          saleTotal: sellTotal,
+        );
+        print('[GiftSellScreen] 전체 사용자 랭킹 업데이트 완료');
+
         // 지점 선택 시 지점 랭킹 업데이트
         if (_selectedBranchId != null && _selectedBranchId!.isNotEmpty) {
           print('[GiftSellScreen] 지점 랭킹 업데이트 시작');
@@ -448,6 +458,75 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           _saving = false;
         });
     }
+  }
+
+  Future<void> _updateGlobalMonthlyRanking({
+    required String monthKey,
+    required String uid,
+    required String displayName,
+    required String photoUrl,
+    required String saleId,
+    required int saleTotal,
+  }) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('meta')
+        .doc('rates_monthly_v2')
+        .collection('rates_monthly_v2')
+        .doc(monthKey);
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      List<dynamic> users = [];
+      if (snap.exists) {
+        final data = snap.data() as Map<String, dynamic>;
+        final raw = data['users'];
+        if (raw is List) users = List<dynamic>.from(raw);
+      }
+
+      int index = -1;
+      for (int i = 0; i < users.length; i++) {
+        final e = users[i];
+        if (e is Map &&
+            (e['uid'] as String?) == uid &&
+            (e['saleId'] as String?) == saleId) {
+          index = i;
+          break;
+        }
+      }
+
+      final entry = {
+        'uid': uid,
+        'displayName': displayName,
+        'photoUrl': photoUrl,
+        'saleId': saleId,
+        'sellTotal': saleTotal,
+      };
+      if (index >= 0) {
+        users[index] = entry;
+      } else {
+        users.add(entry);
+      }
+
+      users.sort((a, b) {
+        final int av =
+            (a is Map) ? ((a['sellTotal'] as num?)?.toInt() ?? 0) : 0;
+        final int bv =
+            (b is Map) ? ((b['sellTotal'] as num?)?.toInt() ?? 0) : 0;
+        return bv.compareTo(av);
+      });
+
+      final update = <String, dynamic>{
+        'users': users,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (snap.exists) {
+        tx.update(docRef, update);
+      } else {
+        update['createdAt'] = FieldValue.serverTimestamp();
+        tx.set(docRef, update);
+      }
+    });
   }
 
   Future<void> _updateBranchMonthlyRanking({

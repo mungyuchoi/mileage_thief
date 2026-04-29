@@ -19,6 +19,14 @@ import 'user_profile_screen.dart';
 import 'branch/branch_detail_screen.dart';
 import 'my_page_screen.dart';
 
+String _maskGiftcardRankingName(String name) {
+  final String trimmed = name.trim();
+  if (trimmed.isEmpty) return '익명';
+  final List<int> runes = trimmed.runes.toList();
+  if (runes.length <= 1) return trimmed;
+  return '${String.fromCharCode(runes.first)}${'*' * (runes.length - 1)}';
+}
+
 class GiftcardMapScreen extends StatefulWidget {
   const GiftcardMapScreen({super.key});
 
@@ -27,7 +35,11 @@ class GiftcardMapScreen extends StatefulWidget {
 }
 
 class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
-  final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
+  static const double _bottomFloatingNavClearance = 132;
+  static const double _mapControlBottomPadding = 144;
+
+  final Completer<GoogleMapController> _mapController =
+      Completer<GoogleMapController>();
   CameraPosition _initialCamera = const CameraPosition(
     target: LatLng(37.5665, 126.9780), // 서울시청 근처 기본값
     zoom: 12,
@@ -37,13 +49,18 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   bool _isLoading = false;
   late DateTime _selectedMonth;
   late final double _markerHueBrown; // #73532E
-  final Map<String, BitmapDescriptor> _logoIconCache = <String, BitmapDescriptor>{};
-  final Map<String, Future<BitmapDescriptor>> _logoIconLoading = <String, Future<BitmapDescriptor>>{};
-  final List<Map<String, dynamic>> _branchRankings = <Map<String, dynamic>>[]; // 지점별 월 랭킹(총액 기준 내림차순)
-  final List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[]; // 사용자 월 랭킹(모든 지점 합산)
+  final Map<String, BitmapDescriptor> _logoIconCache =
+      <String, BitmapDescriptor>{};
+  final Map<String, Future<BitmapDescriptor>> _logoIconLoading =
+      <String, Future<BitmapDescriptor>>{};
+  final List<Map<String, dynamic>> _branchRankings =
+      <Map<String, dynamic>>[]; // 지점별 월 랭킹(총액 기준 내림차순)
+  final List<Map<String, dynamic>> _userRankings =
+      <Map<String, dynamic>>[]; // 사용자 월 랭킹(모든 지점 합산)
 
   // 지도 탭 땅콩 차감 안내 다이얼로그 "다시 보지 않기" 플래그
-  static const String _kPeanutDialogDontShowKey = 'giftcard_map_peanut_dialog_dont_show';
+  static const String _kPeanutDialogDontShowKey =
+      'giftcard_map_peanut_dialog_dont_show';
 
   static const String _fallbackMarkerPhotoUrl =
       'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/users%2FaP3C0N511beyK7QZG9GyChs5oqO2.png?alt=media&token=5e0ddec7-45ad-4f0e-b83e-485ee1babf1d';
@@ -66,6 +83,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       }
     }
     return _fallbackMarkerPhotoUrl;
+  }
+
+  String _maskRankingName(String name) {
+    return _maskGiftcardRankingName(name);
   }
 
   @override
@@ -98,13 +119,16 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       return;
     }
     try {
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
       setState(() {
         _locationEnabled = true;
-        _initialCamera = CameraPosition(target: LatLng(position.latitude, position.longitude), zoom: 15);
+        _initialCamera = CameraPosition(
+            target: LatLng(position.latitude, position.longitude), zoom: 15);
       });
       final controller = await _mapController.future;
-      await controller.animateCamera(CameraUpdate.newCameraPosition(_initialCamera));
+      await controller
+          .animateCamera(CameraUpdate.newCameraPosition(_initialCamera));
     } catch (_) {
       setState(() {
         _locationEnabled = false;
@@ -121,7 +145,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     });
     try {
       final String monthKey = DateFormat('yyyyMM').format(_selectedMonth);
-      final branchesSnap = await FirebaseFirestore.instance.collection('branches').get();
+      final branchesSnap =
+          await FirebaseFirestore.instance.collection('branches').get();
       // 기존 마커 초기화 후 지점별 기본 마커를 즉시 추가
       setState(() {
         _markers.clear();
@@ -130,12 +155,17 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       });
 
       // 사용자 집계를 위한 전역 agg
-      final Map<String, Map<String, dynamic>> userAgg = <String, Map<String, dynamic>>{};
+      final Map<String, Map<String, dynamic>> userAgg =
+          <String, Map<String, dynamic>>{};
 
       for (final doc in branchesSnap.docs) {
         final data = doc.data();
-        final double? lat = (data['latitude'] is num) ? (data['latitude'] as num).toDouble() : null;
-        final double? lng = (data['longitude'] is num) ? (data['longitude'] as num).toDouble() : null;
+        final double? lat = (data['latitude'] is num)
+            ? (data['latitude'] as num).toDouble()
+            : null;
+        final double? lng = (data['longitude'] is num)
+            ? (data['longitude'] as num).toDouble()
+            : null;
         if (lat == null || lng == null) {
           continue;
         }
@@ -150,8 +180,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           continue; // 이번 달 데이터 없으면 마커 표시 안함
         }
 
-        final Map<String, dynamic> ratesData = Map<String, dynamic>.from(ratesDoc.data() as Map);
-        final List<dynamic> saleUsers = (ratesData['users'] is List) ? List<dynamic>.from(ratesData['users'] as List) : <dynamic>[];
+        final Map<String, dynamic> ratesData =
+            Map<String, dynamic>.from(ratesDoc.data() as Map);
+        final List<dynamic> saleUsers = (ratesData['users'] is List)
+            ? List<dynamic>.from(ratesData['users'] as List)
+            : <dynamic>[];
 
         // uid별 합산으로 랭킹 계산
         final Map<String, Map<String, dynamic>> agg = {};
@@ -162,14 +195,22 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           final int v = (u['sellTotal'] as num?)?.toInt() ?? 0;
           final String dn = (u['displayName'] as String?) ?? '';
           final String pu = (u['photoUrl'] as String?) ?? '';
-          final Map<String, dynamic> cur = agg[uid] ?? {'uid': uid, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
+          final Map<String, dynamic> cur = agg[uid] ??
+              {'uid': uid, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0};
           cur['sellTotal'] = ((cur['sellTotal'] as int?) ?? 0) + v;
           cur['displayName'] = dn;
           cur['photoUrl'] = pu;
           agg[uid] = cur;
 
           // 전역 사용자 합산
-          final Map<String, dynamic> g = userAgg[uid] ?? {'uid': uid, 'displayName': dn, 'photoUrl': pu, 'sellTotal': 0, 'branches': 0};
+          final Map<String, dynamic> g = userAgg[uid] ??
+              {
+                'uid': uid,
+                'displayName': dn,
+                'photoUrl': pu,
+                'sellTotal': 0,
+                'branches': 0
+              };
           g['sellTotal'] = ((g['sellTotal'] as int?) ?? 0) + v;
           g['displayName'] = dn;
           g['photoUrl'] = pu;
@@ -178,35 +219,50 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         }
         final List<Map<String, dynamic>> ranked = agg.values.toList()
           ..sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
-        final Map<String, dynamic>? firstUser = ranked.isNotEmpty ? ranked[0] : null;
-        final Map<String, dynamic>? secondUser = ranked.length > 1 ? ranked[1] : null;
-        final Map<String, dynamic>? thirdUser = ranked.length > 2 ? ranked[2] : null;
-        final int branchTotal = ranked.fold<int>(0, (sum, u) => sum + ((u['sellTotal'] as num?)?.toInt() ?? 0));
+        final Map<String, dynamic>? firstUser =
+            ranked.isNotEmpty ? ranked[0] : null;
+        final Map<String, dynamic>? secondUser =
+            ranked.length > 1 ? ranked[1] : null;
+        final Map<String, dynamic>? thirdUser =
+            ranked.length > 2 ? ranked[2] : null;
+        final int branchTotal = ranked.fold<int>(
+            0, (sum, u) => sum + ((u['sellTotal'] as num?)?.toInt() ?? 0));
 
         // 저장된 top3와 다르면 업데이트(베스트 effort)
         try {
-          final Map<String, dynamic>? f0 = (ratesData['firstUser'] is Map) ? Map<String, dynamic>.from(ratesData['firstUser'] as Map) : null;
+          final Map<String, dynamic>? f0 = (ratesData['firstUser'] is Map)
+              ? Map<String, dynamic>.from(ratesData['firstUser'] as Map)
+              : null;
           if (f0?['uid'] != firstUser?['uid'] ||
               (ratesData['secondUser'] as Map?)?['uid'] != secondUser?['uid'] ||
               (ratesData['thirdUser'] as Map?)?['uid'] != thirdUser?['uid']) {
-            await ratesRef.set({'firstUser': firstUser, 'secondUser': secondUser, 'thirdUser': thirdUser, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+            await ratesRef.set({
+              'firstUser': firstUser,
+              'secondUser': secondUser,
+              'thirdUser': thirdUser,
+              'updatedAt': FieldValue.serverTimestamp()
+            }, SetOptions(merge: true));
           }
         } catch (_) {}
 
         final String branchName = (data['name'] as String?) ?? doc.id;
         final String snippet = (firstUser != null)
-            ? '${firstUser['displayName'] ?? '판매왕'} ${_formatCurrency(((firstUser['sellTotal'] as num?)?.toInt() ?? 0))}'
+            ? '${_maskRankingName((firstUser['displayName'] as String?) ?? '판매왕')} ${_formatCurrency(((firstUser['sellTotal'] as num?)?.toInt() ?? 0))}'
             : '이달 판매 데이터 없음';
 
         final LatLng position = LatLng(lat, lng);
-        Marker _buildMarker(BitmapDescriptor icon, {bool customAnchor = false}) {
-          final String monthTitle = '${DateFormat('M').format(_selectedMonth)}월 판매왕';
+        Marker _buildMarker(BitmapDescriptor icon,
+            {bool customAnchor = false}) {
+          final String monthTitle =
+              '${DateFormat('M').format(_selectedMonth)}월 판매왕';
           return Marker(
             markerId: MarkerId(doc.id),
             position: position,
-            infoWindow: InfoWindow(title: '$branchName ($monthTitle)', snippet: snippet),
+            infoWindow: InfoWindow(
+                title: '$branchName ($monthTitle)', snippet: snippet),
             icon: icon,
-            anchor: customAnchor ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
+            anchor:
+                customAnchor ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
             onTap: () {
               _showBranchBottomSheet(
                 branchId: doc.id,
@@ -231,11 +287,13 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         final String markerPhoto = _pickMarkerPhotoUrl(
           firstUserPhoto: firstUser?['photoUrl'] as String?,
           storedFirstUserPhoto: (ratesData['firstUser'] is Map)
-              ? (Map<String, dynamic>.from(ratesData['firstUser'] as Map))['photoUrl'] as String?
+              ? (Map<String, dynamic>.from(
+                  ratesData['firstUser'] as Map))['photoUrl'] as String?
               : null,
           logoUrl: data['logoUrl'] as String?,
         );
-        debugPrint('[Map] ${doc.id}: loading marker icon from ${markerPhoto.length > 120 ? markerPhoto.substring(0, 120) + '...' : markerPhoto}');
+        debugPrint(
+            '[Map] ${doc.id}: loading marker icon from ${markerPhoto.length > 120 ? markerPhoto.substring(0, 120) + '...' : markerPhoto}');
         if (markerPhoto.isNotEmpty) {
           _getCircleMarkerFromUrl(markerPhoto).then((BitmapDescriptor icon) {
             if (!mounted) return;
@@ -245,15 +303,18 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             });
           }).catchError((_) {
             // 무시: 로고 로딩 실패 시 기본 마커 유지
-            debugPrint('[Map] ${doc.id}: marker icon load failed, try fallback');
-            _getCircleMarkerFromUrl(_fallbackMarkerPhotoUrl).then((BitmapDescriptor icon) {
+            debugPrint(
+                '[Map] ${doc.id}: marker icon load failed, try fallback');
+            _getCircleMarkerFromUrl(_fallbackMarkerPhotoUrl)
+                .then((BitmapDescriptor icon) {
               if (!mounted) return;
               setState(() {
                 _markers.removeWhere((m) => m.markerId.value == doc.id);
                 _markers.add(_buildMarker(icon, customAnchor: true));
               });
             }).catchError((_) {
-              debugPrint('[Map] ${doc.id}: fallback icon load failed, keep default');
+              debugPrint(
+                  '[Map] ${doc.id}: fallback icon load failed, keep default');
             });
           });
         }
@@ -272,11 +333,13 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       }
 
       // 총액 기준 내림차순 정렬
-      _branchRankings.sort((a, b) => ((b['total'] as int) - (a['total'] as int)));
+      _branchRankings
+          .sort((a, b) => ((b['total'] as int) - (a['total'] as int)));
 
       // 사용자 랭킹 정렬
       _userRankings.addAll(userAgg.values);
-      _userRankings.sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
+      _userRankings
+          .sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
     } catch (_) {
       // silent fail for now
     } finally {
@@ -288,7 +351,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     }
   }
 
-  Future<BitmapDescriptor> _getCircleMarkerFromUrl(String url, {int diameter = 120}) async {
+  Future<BitmapDescriptor> _getCircleMarkerFromUrl(String url,
+      {int diameter = 120}) async {
     final String key = '$url@$diameter';
     final BitmapDescriptor? cached = _logoIconCache[key];
     if (cached != null) return cached;
@@ -304,7 +368,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       // 1차: 기본 NetworkAssetBundle
       Uint8List? bytes;
       try {
-        final ByteData byteData = await NetworkAssetBundle(uri).load(uri.toString());
+        final ByteData byteData =
+            await NetworkAssetBundle(uri).load(uri.toString());
         bytes = byteData.buffer.asUint8List();
       } catch (e) {
         debugPrint('[Map] bundle load failed: $e, url=$url');
@@ -324,7 +389,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         }
       }
 
-      final ui.Codec codec = await ui.instantiateImageCodec(bytes, targetWidth: diameter, targetHeight: diameter);
+      final ui.Codec codec = await ui.instantiateImageCodec(bytes,
+          targetWidth: diameter, targetHeight: diameter);
       final ui.FrameInfo frameInfo = await codec.getNextFrame();
       final ui.Image rawImage = frameInfo.image;
 
@@ -334,14 +400,16 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       final Rect drawRect = Rect.fromLTWH(0, 0, size, size);
 
       final Path clipPath = Path()
-        ..addOval(Rect.fromCircle(center: Offset(size / 2, size / 2), radius: size / 2));
+        ..addOval(Rect.fromCircle(
+            center: Offset(size / 2, size / 2), radius: size / 2));
       canvas.clipPath(clipPath);
       final Paint paint = Paint()
         ..isAntiAlias = true
         ..filterQuality = FilterQuality.high;
       canvas.drawImageRect(
         rawImage,
-        Rect.fromLTWH(0, 0, rawImage.width.toDouble(), rawImage.height.toDouble()),
+        Rect.fromLTWH(
+            0, 0, rawImage.width.toDouble(), rawImage.height.toDouble()),
         drawRect,
         paint,
       );
@@ -352,9 +420,12 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         ..strokeWidth = 6;
       canvas.drawCircle(Offset(size / 2, size / 2), size / 2 - 3, border);
 
-      final ui.Image outImage = await recorder.endRecording().toImage(diameter, diameter);
-      final ByteData? pngBytes = await outImage.toByteData(format: ui.ImageByteFormat.png);
-      final BitmapDescriptor descriptor = BitmapDescriptor.fromBytes(pngBytes!.buffer.asUint8List());
+      final ui.Image outImage =
+          await recorder.endRecording().toImage(diameter, diameter);
+      final ByteData? pngBytes =
+          await outImage.toByteData(format: ui.ImageByteFormat.png);
+      final BitmapDescriptor descriptor =
+          BitmapDescriptor.fromBytes(pngBytes!.buffer.asUint8List());
       _logoIconCache[key] = descriptor;
       completer.complete(descriptor);
     } catch (e) {
@@ -408,7 +479,9 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
   String? _extractUpdatedText(Map<String, dynamic>? ratesData) {
     if (ratesData == null) return null;
-    final dynamic v = ratesData['updatedAt'] ?? ratesData['updated_at'] ?? ratesData['lastUpdated'];
+    final dynamic v = ratesData['updatedAt'] ??
+        ratesData['updated_at'] ??
+        ratesData['lastUpdated'];
     if (v == null) return null;
     try {
       if (v is Timestamp) {
@@ -452,7 +525,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       final currentUid = currentUser.uid;
-      
+
       // 특정 UID에 편집 권한 부여
       const allowedUids = ['xhMasz7TbTSAyRkLbFsUKQcQhc33'];
       if (allowedUids.contains(currentUid)) {
@@ -552,16 +625,20 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                                               content: const Text(
                                                 '이 지점은 마일캐치에서 검증한 공식 인증 지점입니다.\n'
                                                 '운영자 확인을 거쳐 등록되었으며, 최신 정보 유지를 위해 주기적으로 점검하고 있어요.',
-                                                style: TextStyle(color: Colors.black87, fontSize: 14),
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14),
                                               ),
                                               actions: [
                                                 TextButton(
-                                                  onPressed: () => Navigator.of(dCtx).pop(),
+                                                  onPressed: () =>
+                                                      Navigator.of(dCtx).pop(),
                                                   child: const Text(
                                                     '확인',
                                                     style: TextStyle(
                                                       color: Colors.black,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ),
@@ -574,7 +651,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                                         width: 22,
                                         height: 22,
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(999),
+                                          borderRadius:
+                                              BorderRadius.circular(999),
                                         ),
                                         child: Image.asset(
                                           'asset/img/verified.jpg',
@@ -604,9 +682,14 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                               borderRadius: BorderRadius.circular(8),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.phone, size: 16, color: Colors.black54),
+                                  const Icon(Icons.phone,
+                                      size: 16, color: Colors.black54),
                                   const SizedBox(width: 6),
-                                  Text(phone, style: const TextStyle(color: Colors.black87, decoration: TextDecoration.underline)),
+                                  Text(phone,
+                                      style: const TextStyle(
+                                          color: Colors.black87,
+                                          decoration:
+                                              TextDecoration.underline)),
                                 ],
                               ),
                             ),
@@ -615,7 +698,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.place, size: 16, color: Colors.black54),
+                                const Icon(Icons.place,
+                                    size: 16, color: Colors.black54),
                                 const SizedBox(width: 6),
                                 Expanded(child: Text(address)),
                               ],
@@ -644,13 +728,13 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               minimumSize: const Size(0, 0),
-                              tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
                         if (canEdit)
                           IconButton(
-                            icon: const Icon(Icons.edit, size: 20, color: Color(0xFF74512D)),
+                            icon: const Icon(Icons.edit,
+                                size: 20, color: Color(0xFF74512D)),
                             onPressed: () async {
                               Navigator.pop(ctx);
                               final result = await Navigator.push(
@@ -669,7 +753,9 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                             },
                             tooltip: '편집',
                           ),
-                        Text('$monthLabel 기준', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                        Text('$monthLabel 기준',
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.black54)),
                       ],
                     ),
                   ],
@@ -679,24 +765,24 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.access_time, size: 16, color: Colors.black54),
+                      const Icon(Icons.access_time,
+                          size: 16, color: Colors.black54),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: openingHours.entries
-                              .map((e) {
-                                final timeValue = e.value.toString();
-                                final displayValue = timeValue == '휴무' ? '휴무' : timeValue;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    '${_localizeHoursKey(e.key)}: $displayValue',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                );
-                              })
-                              .toList(),
+                          children: openingHours.entries.map((e) {
+                            final timeValue = e.value.toString();
+                            final displayValue =
+                                timeValue == '휴무' ? '휴무' : timeValue;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                '${_localizeHoursKey(e.key)}: $displayValue',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
                     ],
@@ -707,7 +793,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: Colors.black54),
+                      const Icon(Icons.info_outline,
+                          size: 16, color: Colors.black54),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -721,11 +808,13 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: const [
-                    Text('이달의 판매왕', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('이달의 판매왕',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 10),
-                _TopThreeRow(first: firstUser, second: secondUser, third: thirdUser),
+                _TopThreeRow(
+                    first: firstUser, second: secondUser, third: thirdUser),
                 const SizedBox(height: 16),
                 Row(
                   children: const [
@@ -741,10 +830,13 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       itemCount: rankedUsers.length,
                       separatorBuilder: (_, __) => const Divider(height: 12),
                       itemBuilder: (context, index) {
-                        final Map u = Map<String, dynamic>.from(rankedUsers[index] as Map);
-                        final String nameLabel = (u['displayName'] as String?) ?? '익명';
+                        final Map u = Map<String, dynamic>.from(
+                            rankedUsers[index] as Map);
+                        final String nameLabel = _maskRankingName(
+                            (u['displayName'] as String?) ?? '익명');
                         final String? p = u['photoUrl'] as String?;
-                        final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
+                        final int total =
+                            (u['sellTotal'] as num?)?.toInt() ?? 0;
                         return InkWell(
                           onTap: isVerified ? openBranchDetail : null,
                           child: Row(
@@ -752,12 +844,23 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                               Container(
                                 width: 28,
                                 alignment: Alignment.center,
-                                child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                child: Text('${index + 1}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700)),
                               ),
-                              CircleAvatar(radius: 14, backgroundImage: (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
+                              CircleAvatar(
+                                  radius: 14,
+                                  backgroundImage: (p != null && p.isNotEmpty)
+                                      ? NetworkImage(p)
+                                      : null),
                               const SizedBox(width: 8),
-                              Expanded(child: Text(nameLabel, style: const TextStyle(color: Colors.black87))),
-                              Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+                              Expanded(
+                                  child: Text(nameLabel,
+                                      style: const TextStyle(
+                                          color: Colors.black87))),
+                              Text(_formatCurrency(total),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700)),
                             ],
                           ),
                         );
@@ -809,7 +912,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             'sat': '토',
             'sun': '일',
           };
-          
+
           // 3글자씩 나누어 처리
           if (key.length == 6) {
             final first = key.substring(0, 3);
@@ -832,6 +935,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double bottomSafeArea = MediaQuery.of(context).padding.bottom;
+
     return Stack(
       children: [
         GoogleMap(
@@ -841,7 +946,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           compassEnabled: true,
           trafficEnabled: false,
           // 하단 내비/플로팅 버튼과 겹치지 않도록 UI(로고/줌버튼) 패딩
-          padding: const EdgeInsets.only(bottom: 60, right: 12, left: 12),
+          padding: EdgeInsets.only(
+            bottom: _mapControlBottomPadding + bottomSafeArea,
+            right: 12,
+            left: 12,
+          ),
           markers: _markers,
           onMapCreated: (controller) {
             if (!_mapController.isCompleted) {
@@ -862,9 +971,15 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 2))
+                  ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -884,7 +999,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         if (_branchRankings.isNotEmpty)
           Positioned(
             left: 12,
-            bottom: 76,
+            bottom: _bottomFloatingNavClearance + bottomSafeArea,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -894,15 +1009,22 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 2))
+                    ],
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
                       Icon(Icons.leaderboard, size: 16, color: Colors.black87),
                       SizedBox(width: 6),
-                      Text('지점 랭킹', style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text('지점 랭킹',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -924,136 +1046,183 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       builder: (ctx) {
         final double screenH = MediaQuery.of(ctx).size.height;
         // 상단(AppBar+TabBar) + 칩 영역을 보존하여 시트가 그 위로 넘어가지 않도록 제한
-        final double reservedTop =
-            MediaQuery.of(ctx).padding.top + kToolbarHeight + 48.0 + 52.0; // status + appbar + tabbar + chip 여유
+        final double reservedTop = MediaQuery.of(ctx).padding.top +
+            kToolbarHeight +
+            48.0 +
+            52.0; // status + appbar + tabbar + chip 여유
         final double maxHeight = (screenH - reservedTop).clamp(280.0, screenH);
         final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
         return SafeArea(
           child: SizedBox(
             height: maxHeight,
             child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      const Text('지점 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(width: 8),
-                      Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                      const Spacer(),
-                      Text('${_branchRankings.length}개 지점', style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                    ],
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(2)),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _branchRankings.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final Map<String, dynamic> b = _branchRankings[index];
-                      final String name = (b['branchName'] as String?) ?? b['branchId'] as String;
-                      final int total = (b['total'] as num?)?.toInt() ?? 0;
-                      final Map<String, dynamic>? first = b['firstUser'] as Map<String, dynamic>?;
-                      final String? firstUid = first?['uid'] as String?;
-                      final String? firstPhoto = first?['photoUrl'] as String?;
-                      final int firstTotal = (first?['sellTotal'] as num?)?.toInt() ?? 0;
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        const Text('지점 랭킹',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text('($monthLabel 기준)',
+                            style: const TextStyle(
+                                color: Colors.black54, fontSize: 12)),
+                        const Spacer(),
+                        Text('${_branchRankings.length}개 지점',
+                            style: const TextStyle(
+                                color: Colors.black54, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _branchRankings.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final Map<String, dynamic> b = _branchRankings[index];
+                        final String name = (b['branchName'] as String?) ??
+                            b['branchId'] as String;
+                        final int total = (b['total'] as num?)?.toInt() ?? 0;
+                        final Map<String, dynamic>? first =
+                            b['firstUser'] as Map<String, dynamic>?;
+                        final String? firstUid = first?['uid'] as String?;
+                        final String? firstPhoto =
+                            first?['photoUrl'] as String?;
+                        final int firstTotal =
+                            (first?['sellTotal'] as num?)?.toInt() ?? 0;
 
-                      Color bg;
-                      Color fg = Colors.white;
-                      String label;
-                      switch (index) {
-                        case 0:
-                          bg = const Color(0xFFFFD700); // gold
-                          label = '1';
-                          break;
-                        case 1:
-                          bg = const Color(0xFFB0BEC5); // silver-ish
-                          label = '2';
-                          break;
-                        case 2:
-                          bg = const Color(0xFFCD7F32); // bronze
-                          label = '3';
-                          break;
-                        default:
-                          bg = Colors.grey.shade200;
-                          fg = Colors.black87;
-                          label = '${index + 1}';
-                      }
+                        Color bg;
+                        Color fg = Colors.white;
+                        String label;
+                        switch (index) {
+                          case 0:
+                            bg = const Color(0xFFFFD700); // gold
+                            label = '1';
+                            break;
+                          case 1:
+                            bg = const Color(0xFFB0BEC5); // silver-ish
+                            label = '2';
+                            break;
+                          case 2:
+                            bg = const Color(0xFFCD7F32); // bronze
+                            label = '3';
+                            break;
+                          default:
+                            bg = Colors.grey.shade200;
+                            fg = Colors.black87;
+                            label = '${index + 1}';
+                        }
 
-                      return InkWell(
-                        onTap: () async {
-                          final GoogleMapController c = await _mapController.future;
-                          final double lat = (b['lat'] as num).toDouble();
-                          final double lng = (b['lng'] as num).toDouble();
-                          await c.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 16));
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 28,
-                                height: 28,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                                child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w800)),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        if (firstPhoto != null && firstPhoto.isNotEmpty && firstUid != null && firstUid.isNotEmpty)
-                                          GestureDetector(
-                                            onTap: () {
-                                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserProfileScreen(userUid: firstUid)));
-                                            },
-                                            child: CircleAvatar(radius: 10, backgroundImage: NetworkImage(firstPhoto)),
-                                          )
-                                        else
-                                          const CircleAvatar(radius: 10, backgroundColor: Color(0xFFE0E0E0), child: Icon(Icons.person, size: 12, color: Colors.white)),
-                                        const SizedBox(width: 6),
-                                        Flexible(
-                                          child: Text(
-                                            (first != null)
-                                                ? '1위 ${first['displayName'] ?? '익명'} · ${_formatCurrency(firstTotal)}'
-                                                : '데이터 없음',
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(color: Colors.black54, fontSize: 12),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                        return InkWell(
+                          onTap: () async {
+                            final GoogleMapController c =
+                                await _mapController.future;
+                            final double lat = (b['lat'] as num).toDouble();
+                            final double lng = (b['lng'] as num).toDouble();
+                            await c.animateCamera(CameraUpdate.newLatLngZoom(
+                                LatLng(lat, lng), 16));
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      color: bg, shape: BoxShape.circle),
+                                  child: Text(label,
+                                      style: TextStyle(
+                                          color: fg,
+                                          fontWeight: FontWeight.w800)),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          if (firstPhoto != null &&
+                                              firstPhoto.isNotEmpty &&
+                                              firstUid != null &&
+                                              firstUid.isNotEmpty)
+                                            GestureDetector(
+                                              onTap: () {
+                                                Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            UserProfileScreen(
+                                                                userUid:
+                                                                    firstUid)));
+                                              },
+                                              child: CircleAvatar(
+                                                  radius: 10,
+                                                  backgroundImage:
+                                                      NetworkImage(firstPhoto)),
+                                            )
+                                          else
+                                            const CircleAvatar(
+                                                radius: 10,
+                                                backgroundColor:
+                                                    Color(0xFFE0E0E0),
+                                                child: Icon(Icons.person,
+                                                    size: 12,
+                                                    color: Colors.white)),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              (first != null)
+                                                  ? '1위 ${_maskRankingName((first['displayName'] as String?) ?? '익명')} · ${_formatCurrency(firstTotal)}'
+                                                  : '데이터 없음',
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  color: Colors.black54,
+                                                  fontSize: 12),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(_formatCurrency(total),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700)),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ),
         );
       },
@@ -1073,7 +1242,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             MediaQuery.of(ctx).padding.top + kToolbarHeight + 48.0 + 52.0;
         final double maxHeight = (screenH - reservedTop).clamp(280.0, screenH);
         final DateTime start = DateTime(2025, 11);
-        final DateTime now = DateTime(DateTime.now().year, DateTime.now().month);
+        final DateTime now =
+            DateTime(DateTime.now().year, DateTime.now().month);
         final List<DateTime> months = <DateTime>[];
         DateTime cur = now;
         while (!(cur.year == start.year && cur.month == start.month)) {
@@ -1086,50 +1256,58 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           child: SizedBox(
             height: maxHeight,
             child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('월 선택', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(2)),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: months.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final DateTime m = months[index];
-                      final String label = DateFormat('yyyy.MM').format(m);
-                      final bool selected = (m.year == _selectedMonth.year && m.month == _selectedMonth.month);
-                      return ListTile(
-                        title: Text(label),
-                        trailing: selected ? const Icon(Icons.check, color: Color(0xFF73532E)) : null,
-                        onTap: () async {
-                          Navigator.pop(context);
-                          setState(() {
-                            _selectedMonth = m;
-                          });
-                          await _loadMonthlyMarkers();
-                        },
-                      );
-                    },
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('월 선택',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: months.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final DateTime m = months[index];
+                        final String label = DateFormat('yyyy.MM').format(m);
+                        final bool selected = (m.year == _selectedMonth.year &&
+                            m.month == _selectedMonth.month);
+                        return ListTile(
+                          title: Text(label),
+                          trailing: selected
+                              ? const Icon(Icons.check,
+                                  color: Color(0xFF73532E))
+                              : null,
+                          onTap: () async {
+                            Navigator.pop(context);
+                            setState(() {
+                              _selectedMonth = m;
+                            });
+                            await _loadMonthlyMarkers();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
           ),
         );
       },
@@ -1162,17 +1340,25 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                     width: 36,
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(2)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        const Text('사용자 랭킹', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('사용자 랭킹',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(width: 8),
-                        Text('($monthLabel 기준)', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                        Text('($monthLabel 기준)',
+                            style: const TextStyle(
+                                color: Colors.black54, fontSize: 12)),
                         const Spacer(),
-                        Text('${_userRankings.length}명', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                        Text('${_userRankings.length}명',
+                            style: const TextStyle(
+                                color: Colors.black54, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -1184,9 +1370,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       itemBuilder: (context, index) {
                         final Map<String, dynamic> u = _userRankings[index];
                         final String uid = u['uid'] as String? ?? '';
-                        final String name = u['displayName'] as String? ?? '익명';
+                        final String name = _maskRankingName(
+                            u['displayName'] as String? ?? '익명');
                         final String? photo = u['photoUrl'] as String?;
-                        final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
+                        final int total =
+                            (u['sellTotal'] as num?)?.toInt() ?? 0;
 
                         Color bg;
                         Color fg = Colors.white;
@@ -1213,35 +1401,57 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         return InkWell(
                           onTap: () {
                             if (uid.isNotEmpty) {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserProfileScreen(userUid: uid)));
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (_) =>
+                                      UserProfileScreen(userUid: uid)));
                             }
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
                             child: Row(
                               children: [
                                 Container(
                                   width: 28,
                                   height: 28,
                                   alignment: Alignment.center,
-                                  decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                                  child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w800)),
+                                  decoration: BoxDecoration(
+                                      color: bg, shape: BoxShape.circle),
+                                  child: Text(label,
+                                      style: TextStyle(
+                                          color: fg,
+                                          fontWeight: FontWeight.w800)),
                                 ),
                                 const SizedBox(width: 12),
-                                CircleAvatar(radius: 14, backgroundImage: (photo != null && photo.isNotEmpty) ? NetworkImage(photo) : null),
+                                CircleAvatar(
+                                    radius: 14,
+                                    backgroundImage:
+                                        (photo != null && photo.isNotEmpty)
+                                            ? NetworkImage(photo)
+                                            : null),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                      Text(name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600)),
                                       const SizedBox(height: 2),
-                                      Text('총 ${_formatCurrency(total)}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                                      Text('총 ${_formatCurrency(total)}',
+                                          style: const TextStyle(
+                                              color: Colors.black54,
+                                              fontSize: 12)),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Text(_formatCurrency(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+                                Text(_formatCurrency(total),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700)),
                               ],
                             ),
                           ),
@@ -1274,7 +1484,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         return false;
       }
 
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
       if (peanuts < amount) {
         // 요구 조건: 10개 미만이면 토스트로 안내만 하고 동작하지 않도록
@@ -1338,8 +1551,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(localDontShow),
+                      onPressed: () => Navigator.of(context).pop(localDontShow),
                       child: const Text(
                         '확인',
                         style: TextStyle(
@@ -1397,7 +1609,8 @@ class _TopThreeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget cell(Map<String, dynamic>? u, String medal, Color color) {
-      final String name = (u?['displayName'] as String?) ?? '-';
+      final String name =
+          _maskGiftcardRankingName((u?['displayName'] as String?) ?? '-');
       final String? p = u?['photoUrl'] as String?;
       final int total = (u?['sellTotal'] as num?)?.toInt() ?? 0;
       return Expanded(
@@ -1406,17 +1619,27 @@ class _TopThreeRow extends StatelessWidget {
             Stack(
               alignment: Alignment.bottomRight,
               children: [
-                CircleAvatar(radius: 24, backgroundImage: (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
+                CircleAvatar(
+                    radius: 24,
+                    backgroundImage:
+                        (p != null && p.isNotEmpty) ? NetworkImage(p) : null),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
-                  child: Text(medal, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: color, borderRadius: BorderRadius.circular(10)),
+                  child: Text(medal,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Text(name, overflow: TextOverflow.ellipsis),
-            Text(NumberFormat('#,###').format(total), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(NumberFormat('#,###').format(total),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
       );
@@ -1431,5 +1654,3 @@ class _TopThreeRow extends StatelessWidget {
     );
   }
 }
-
-

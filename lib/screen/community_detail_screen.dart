@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:io';
-import 'dart:async';
 import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import '../services/category_service.dart';
@@ -114,11 +113,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isBestPost = false;
   bool _isTogglingBest = false;
 
-  // meta/ads/tag 값 (배열)
-  List<String>? _adsTagHtmlList;
-  int _currentAdIndex = 0;
-  Timer? _adsRotationTimer;
-
   // 광고 위젯 생성 함수
   Widget _buildBannerAd(String adUnitId) {
     return Container(
@@ -144,8 +138,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   BannerAd? _profileBannerAd;
   bool _isProfileBannerAdLoaded = false;
-  BannerAd? _contentBannerAd;
-  bool _isContentBannerAdLoaded = false;
 
   @override
   void initState() {
@@ -157,10 +149,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     _loadMyUserProfile(); // 내 userProfile 불러오기
     _checkIfReportedPost(); // 게시글 신고여부 확인
     _loadProfileBannerAd();
-    _loadContentBannerAd();
     _checkAdRemovalStatus(); // 광고 없애기 상태 확인
     _loadBestPostStatus(); // 베스트 게시글 여부 확인
-    _loadAdsTag(); // meta/ads/tag 값 불러오기
   }
 
   void _loadProfileBannerAd() {
@@ -181,31 +171,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     )..load();
   }
 
-  void _loadContentBannerAd() {
-    _contentBannerAd = BannerAd(
-      adUnitId: AdHelper.postDetailContentBannerAdUnitId,
-      size: AdSize.banner,
-      request: AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          setState(() {
-            _isContentBannerAdLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-        },
-      ),
-    )..load();
-  }
-
   @override
   void dispose() {
     _commentController.dispose();
     _scrollController.dispose();
     _profileBannerAd?.dispose();
-    _contentBannerAd?.dispose();
-    _adsRotationTimer?.cancel();
     super.dispose();
   }
 
@@ -236,61 +206,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     } catch (e) {
       print('베스트 게시글 상태 로드 오류: $e');
     }
-  }
-
-  // meta/ads/tag 값 불러오기 (배열)
-  Future<void> _loadAdsTag() async {
-    try {
-      final adsDoc = await FirebaseFirestore.instance
-          .collection('meta')
-          .doc('ads')
-          .get();
-
-      if (adsDoc.exists) {
-        final data = adsDoc.data() as Map<String, dynamic>?;
-        final tagList = data?['tag'] as List<dynamic>?;
-        
-        if (tagList != null && tagList.isNotEmpty) {
-          final List<String> tagHtmlList = tagList
-              .map((e) => e.toString())
-              .where((html) => html.isNotEmpty)
-              .toList();
-          
-          setState(() {
-            _adsTagHtmlList = tagHtmlList;
-            _currentAdIndex = 0;
-          });
-          
-          // 기존 타이머 취소
-          _adsRotationTimer?.cancel();
-          
-          // 광고가 2개 이상일 때만 타이머 시작
-          if (tagHtmlList.length > 1) {
-            _startAdsRotationTimer();
-          }
-        } else {
-          setState(() {
-            _adsTagHtmlList = null;
-            _currentAdIndex = 0;
-          });
-          _adsRotationTimer?.cancel();
-        }
-      }
-    } catch (e) {
-      print('meta/ads/tag 로드 오류: $e');
-    }
-  }
-
-  // 광고 순환 타이머 시작
-  void _startAdsRotationTimer() {
-    _adsRotationTimer?.cancel();
-    _adsRotationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (mounted && _adsTagHtmlList != null && _adsTagHtmlList!.isNotEmpty) {
-        setState(() {
-          _currentAdIndex = (_currentAdIndex + 1) % _adsTagHtmlList!.length;
-        });
-      }
-    });
   }
 
   // 내가 신고한 댓글 ID 목록 불러오기
@@ -2423,136 +2338,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     ),
                                   ],
                                 ),
-                                // meta/ads/tag 값 표시 (5초마다 순환)
-                                if (_adsTagHtmlList != null && 
-                                    _adsTagHtmlList!.isNotEmpty && 
-                                    _currentAdIndex < _adsTagHtmlList!.length) ...[
-                                  const SizedBox(height: 16),
-                                  Html(
-                                    data: _makeImagesClickable(_cleanupHtmlContent(_adsTagHtmlList![_currentAdIndex])),
-                                    style: {
-                                      "body": Style(
-                                        fontSize: FontSize(15),
-                                        color: Colors.black87,
-                                        lineHeight: LineHeight(1.4),
-                                        margin: Margins.zero,
-                                      ),
-                                      "p": Style(
-                                        margin: Margins.zero,
-                                        padding: HtmlPaddings.zero,
-                                        whiteSpace: WhiteSpace.pre,
-                                      ),
-                                      "div": Style(
-                                        margin: Margins.zero,
-                                        padding: HtmlPaddings.zero,
-                                        display: Display.inline,
-                                      ),
-                                      "br": Style(
-                                        margin: Margins.only(bottom: 4),
-                                        display: Display.block,
-                                        height: Height(1, Unit.em),
-                                      ),
-                                      "img": Style(
-                                        margin: Margins.zero,
-                                        display: Display.block,
-                                      ),
-                                      "u": Style(
-                                        margin: Margins.zero,
-                                      ),
-                                      "a": Style(
-                                        color: Colors.blue,
-                                        textDecoration: TextDecoration.underline,
-                                      ),
-                                    },
-                                    onLinkTap: (url, _, __) {
-                                      if (url != null) {
-                                        // 이미지 URL인지 확인
-                                        if (_isImageUrl(url)) {
-                                          _openImageViewerFromHtml(url, _adsTagHtmlList![_currentAdIndex]);
-                                        } else {
-                                          _launchUrl(url);
-                                        }
-                                      }
-                                    },
-                                    extensions: [
-                                      // 이미지 태그 렌더링 지원 - 전체 화면에 꽉 차게 표시
-                                      TagExtension(
-                                        tagsToExtend: {'img'},
-                                        builder: (ctx) {
-                                          final src = ctx.attributes['src'];
-                                          if (src == null || src.isEmpty) {
-                                            return const SizedBox.shrink();
-                                          }
-                                          return LayoutBuilder(
-                                            builder: (context, constraints) {
-                                              return SizedBox(
-                                                width: double.infinity,
-                                                child: Image.network(
-                                                  src,
-                                                  fit: BoxFit.fitWidth,
-                                                  errorBuilder: (context, error, stackTrace) {
-                                                    return const SizedBox.shrink();
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                      TagExtension(
-                                        tagsToExtend: {'link-preview'},
-                                        builder: (ctx) {
-                                          final link = ctx.attributes['link'];
-                                          if (link == null || link.isEmpty) return const SizedBox.shrink();
-                                          final normalized = link.startsWith('http') ? link : 'https://$link';
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
-                                            child: AnyLinkPreview(
-                                              link: normalized,
-                                              displayDirection: UIDirection.uiDirectionHorizontal,
-                                              showMultimedia: true,
-                                              bodyMaxLines: 3,
-                                              bodyTextOverflow: TextOverflow.ellipsis,
-                                              boxShadow: const [],
-                                              backgroundColor: Colors.grey[100]!,
-                                              errorWidget: Container(
-                                                padding: const EdgeInsets.all(12),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey[100],
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  border: Border.all(color: Colors.grey[300]!),
-                                                ),
-                                                child: Text(normalized, style: const TextStyle(color: Colors.blue)),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      // video 태그 렌더링 지원
-                                      TagExtension(
-                                        tagsToExtend: {'video'},
-                                        builder: (ctx) {
-                                          final src = ctx.attributes['src'];
-                                          if (src == null || src.isEmpty) {
-                                            return const SizedBox.shrink();
-                                          }
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
-                                            child: _HtmlNetworkVideoPlayer(url: src),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
                               ],
                             ),
                         ],
                       ),
                     ),
-
-                    // 광고 영역 2: 게시글과 댓글 사이
-                    _buildContentBannerAd(),
 
                     // 광고 없애기 버튼 (광고가 비활성화되지 않은 경우에만 표시)
                     if (!_isAdRemovalActive)
@@ -3933,31 +3723,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         height: _profileBannerAd!.size.height.toDouble(),
         alignment: Alignment.center,
         child: AdWidget(ad: _profileBannerAd!),
-      );
-    } else {
-      return const SizedBox(height: 50);
-    }
-  }
-
-  Widget _buildContentBannerAd() {
-    // 광고 없애기가 활성화된 경우 빈 공간 반환
-    if (_isAdRemovalActive) {
-      return const SizedBox.shrink();
-    }
-
-    if (_isContentBannerAdLoaded && _contentBannerAd != null) {
-      return Container(
-        width: MediaQuery.of(context).size.width, // 화면 전체 너비로 설정
-        height: _contentBannerAd!.size.height.toDouble(),
-        alignment: Alignment.center,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: _contentBannerAd!.size.height.toDouble(),
-            child: AdWidget(ad: _contentBannerAd!),
-          ),
-        ),
       );
     } else {
       return const SizedBox(height: 50);

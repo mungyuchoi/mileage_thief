@@ -26,11 +26,13 @@ import '../services/auth_service.dart';
 class MyPageScreen extends StatefulWidget {
   final bool highlightAds;
   final bool showAppBar;
+  final double bottomContentPadding;
 
   const MyPageScreen({
     Key? key,
     this.highlightAds = false,
     this.showAppBar = true,
+    this.bottomContentPadding = 0,
   }) : super(key: key);
 
   @override
@@ -1800,13 +1802,18 @@ class _MyPageScreenState extends State<MyPageScreen>
                         color: Colors.white,
                         child: TabBar(
                           controller: _tabController!,
+                          isScrollable: true,
+                          tabAlignment: TabAlignment.start,
                           labelColor: Colors.black,
                           unselectedLabelColor: Colors.grey[600],
                           indicatorColor: const Color(0xFF74512D),
                           indicatorWeight: 2,
+                          labelPadding:
+                              const EdgeInsets.symmetric(horizontal: 14),
                           tabs: [
                             Tab(
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text('게시글'),
@@ -1828,6 +1835,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                             ),
                             Tab(
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text('댓글'),
@@ -1849,6 +1857,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                             ),
                             Tab(
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text('리뷰'),
@@ -1870,6 +1879,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                             ),
                             Tab(
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text('좋아요'),
@@ -1891,6 +1901,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                             ),
                             Tab(
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text('북마크'),
@@ -2480,6 +2491,10 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
   }
 
+  EdgeInsets _tabListPadding() {
+    return EdgeInsets.fromLTRB(12, 12, 12, 12 + widget.bottomContentPadding);
+  }
+
   Widget _buildPostsList() {
     if (_isPostsLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -2491,11 +2506,11 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
     return ListView.builder(
       primary: true,
-      padding: const EdgeInsets.all(12),
+      padding: _tabListPadding(),
       itemCount: _userPosts.length + 1,
       itemBuilder: (context, index) {
         if (index == _userPosts.length) {
-          return const SizedBox(height: 32);
+          return const SizedBox(height: 20);
         }
         final myPost = _userPosts[index].data() as Map<String, dynamic>;
         final createdAt =
@@ -2718,11 +2733,11 @@ class _MyPageScreenState extends State<MyPageScreen>
 
     return ListView.builder(
       primary: true,
-      padding: const EdgeInsets.all(12),
+      padding: _tabListPadding(),
       itemCount: _userComments.length + 1,
       itemBuilder: (context, index) {
         if (index == _userComments.length) {
-          return const SizedBox(height: 32);
+          return const SizedBox(height: 20);
         }
         final myComment = _userComments[index].data() as Map<String, dynamic>;
         final createdAt =
@@ -2827,11 +2842,11 @@ class _MyPageScreenState extends State<MyPageScreen>
 
     return ListView.builder(
       controller: _branchCommentsScrollController,
-      padding: const EdgeInsets.all(12),
+      padding: _tabListPadding(),
       itemCount: _branchComments.length + 1,
       itemBuilder: (context, index) {
         if (index == _branchComments.length) {
-          return const SizedBox(height: 32);
+          return const SizedBox(height: 20);
         }
 
         final branchComment =
@@ -2942,11 +2957,11 @@ class _MyPageScreenState extends State<MyPageScreen>
 
     return ListView.builder(
       primary: true,
-      padding: const EdgeInsets.all(12),
+      padding: _tabListPadding(),
       itemCount: _likedPosts.length + 1,
       itemBuilder: (context, index) {
         if (index == _likedPosts.length) {
-          return const SizedBox(height: 32);
+          return const SizedBox(height: 20);
         }
         final likedPost = _likedPosts[index].data() as Map<String, dynamic>;
         final likedAt =
@@ -3071,11 +3086,11 @@ class _MyPageScreenState extends State<MyPageScreen>
 
     return ListView.builder(
       controller: _bookmarksScrollController,
-      padding: const EdgeInsets.all(12),
+      padding: _tabListPadding(),
       itemCount: _bookmarkedPosts.length + 1,
       itemBuilder: (context, index) {
         if (index == _bookmarkedPosts.length) {
-          return const SizedBox(height: 32);
+          return const SizedBox(height: 20);
         }
         final bookmark = _bookmarkedPosts[index].data() as Map<String, dynamic>;
         final bookmarkedAt =

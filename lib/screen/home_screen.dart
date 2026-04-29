@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
-import 'package:mileage_thief/screen/dan_screen.dart';
 import 'package:mileage_thief/screen/login_screen.dart';
 import 'package:mileage_thief/screen/my_page_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -26,7 +26,7 @@ import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
-import 'deals/deals_screen.dart';
+import 'useful_info_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../widgets/segment_tab_bar.dart';
 import '../branch/card_manage.dart';
@@ -36,228 +36,8 @@ import '../branch/wheretobuy_step.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
-import 'branch/branch_detail_screen.dart';
 import 'branch/branch_list_tab.dart';
-import 'ad_manage_screen.dart';
-import 'contest_manage_screen.dart';
-
-// AdBottomSheetContent
-class _AdBottomSheetContent extends StatefulWidget {
-  final List<Map<String, dynamic>> ads;
-  final String uid;
-  final Function(BuildContext, Map<String, dynamic>) onAdTap;
-
-  const _AdBottomSheetContent({
-    required this.ads,
-    required this.uid,
-    required this.onAdTap,
-  });
-
-  @override
-  State<_AdBottomSheetContent> createState() => _AdBottomSheetContentState();
-}
-
-class _AdBottomSheetContentState extends State<_AdBottomSheetContent> {
-  late PageController pageController;
-  int currentPage = 0;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    pageController = PageController();
-    _startAutoScroll();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    pageController.dispose();
-    super.dispose();
-  }
-
-  void _startAutoScroll() {
-    // 광고가 2개 이상일 때만 자동 넘김 (1개면 넘길 필요 없음)
-    if (widget.ads.length <= 1) return;
-
-    // 한 광고당 10초 노출
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (pageController.hasClients) {
-        final currentPageValue = pageController.page?.round() ?? currentPage;
-        int nextPage = (currentPageValue + 1) % widget.ads.length;
-        pageController.animateToPage(
-          nextPage,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final Size screenSize = MediaQuery.of(context).size;
-    final double sheetHeight = screenSize.height * 0.55;
-
-    return SafeArea(
-      top: false,
-      child: SizedBox(
-        height: sheetHeight,
-        child: Stack(
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: PageView.builder(
-                    controller: pageController,
-                    itemCount: widget.ads.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        currentPage = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final Map<String, dynamic> ad = widget.ads[index];
-                      final String imageUrl = (ad['imageUrl'] as String?) ?? '';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: GestureDetector(
-                          onTap: () => widget.onAdTap(context, ad),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: double.infinity,
-                              height: double.infinity,
-                              color: Colors.grey[200], // 여백(레터박스) 영역 배경
-                              child: imageUrl.isNotEmpty
-                                  ? SizedBox.expand(
-                                      child: Image.network(
-                                        imageUrl,
-                                        fit: BoxFit.contain, // 이미지 잘림 방지
-                                        alignment: Alignment.center,
-                                        loadingBuilder:
-                                            (context, child, loadingProgress) {
-                                          if (loadingProgress == null)
-                                            return child;
-                                          return const Center(
-                                            child: SizedBox(
-                                              width: 22,
-                                              height: 22,
-                                              child: CircularProgressIndicator(
-                                                  strokeWidth: 2),
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Text(
-                                              '이미지를 불러오지 못했습니다',
-                                              style: TextStyle(
-                                                  color: Colors.black54),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Text(
-                                        '이미지가 없습니다',
-                                        style: TextStyle(color: Colors.black54),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () async {
-                          final DateTime hideUntil = DateTime.now().add(
-                            const Duration(days: 1),
-                          );
-                          try {
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(widget.uid)
-                                .update(
-                              <String, dynamic>{
-                                'hideBottomSheetAdUntil':
-                                    Timestamp.fromDate(hideUntil),
-                              },
-                            );
-                          } catch (e) {
-                            print('hideBottomSheetAdUntil 업데이트 오류: $e');
-                          }
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: const Text(
-                          '오늘 하루 보지 않기',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: const Text(
-                          '닫기',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            Positioned(
-              top: 12,
-              right: 16,
-              child: Text(
-                '${currentPage + 1}/${widget.ads.length}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+import 'admin_page_screen.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -328,43 +108,44 @@ class ForceUpdateDialog extends StatelessWidget {
 }
 
 enum _HomeTab {
+  usefulInfo,
   community,
-  deals,
   giftcard,
-  koreanAir,
   profile,
 }
 
 class _HomeTabDestination {
-  final IconData icon;
   final String label;
+  final IconData outlinedIcon;
+  final IconData filledIcon;
 
   const _HomeTabDestination({
-    required this.icon,
     required this.label,
+    required this.outlinedIcon,
+    required this.filledIcon,
   });
 }
 
 const List<_HomeTabDestination> _homeTabDestinations = [
   _HomeTabDestination(
-    icon: Icons.people_outline_sharp,
+    label: '가이드',
+    outlinedIcon: Icons.dashboard_customize_outlined,
+    filledIcon: Icons.dashboard_customize_rounded,
+  ),
+  _HomeTabDestination(
     label: '커뮤니티',
+    outlinedIcon: Icons.forum_outlined,
+    filledIcon: Icons.forum_rounded,
   ),
   _HomeTabDestination(
-    icon: Icons.local_offer_outlined,
-    label: '특가',
-  ),
-  _HomeTabDestination(
-    icon: Icons.card_giftcard,
     label: '상품권',
+    outlinedIcon: Icons.redeem_outlined,
+    filledIcon: Icons.redeem_rounded,
   ),
   _HomeTabDestination(
-    icon: Icons.flight_takeoff,
-    label: '대한항공',
-  ),
-  _HomeTabDestination(
-    icon: Icons.person_outline,
     label: '프로필',
+    outlinedIcon: Icons.person_outline_rounded,
+    filledIcon: Icons.person_rounded,
   ),
 ];
 
@@ -399,7 +180,10 @@ class _ProfileTabState extends State<_ProfileTab> {
           return const SizedBox.shrink();
         }
 
-        return const MyPageScreen(showAppBar: false);
+        return const MyPageScreen(
+          showAppBar: false,
+          bottomContentPadding: 120,
+        );
       },
     );
   }
@@ -433,33 +217,106 @@ class _HomeBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: Colors.grey[200],
-      currentIndex: currentIndex,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black,
-      type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
-      onTap: onTap,
-      items: _homeTabDestinations
-          .map(
-            (destination) => BottomNavigationBarItem(
-              icon: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(destination.icon),
-                  const SizedBox(height: 2),
-                  Text(
-                    destination.label,
-                    style: const TextStyle(fontSize: 12),
-                  ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF202734).withValues(alpha: 0.88),
+                  const Color(0xFF151A24).withValues(alpha: 0.82),
+                ]
+              : [
+                  Colors.white.withValues(alpha: 0.90),
+                  const Color(0xFFF5F8FE).withValues(alpha: 0.74),
                 ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: isDark ? 0.26 : 0.92),
+          width: 1.2,
+        ),
+        borderRadius: BorderRadius.circular(34),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? const Color(0x44000000) : const Color(0x25000000),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: List.generate(_homeTabDestinations.length, (index) {
+          final destination = _homeTabDestinations[index];
+          final selected = index == currentIndex;
+          return Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => onTap(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white.withValues(alpha: isDark ? 0.16 : 0.98)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: isDark
+                                ? const Color(0x55000000)
+                                : const Color(0x12000000),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : const [],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      selected
+                          ? destination.filledIcon
+                          : destination.outlinedIcon,
+                      size: 22,
+                      color: selected
+                          ? (isDark
+                              ? const Color(0xFFF2F5FB)
+                              : const Color(0xFF15161A))
+                          : (isDark
+                              ? const Color(0xFF9BA3B3)
+                              : const Color(0xFF8A8A94)),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      destination.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: selected
+                            ? (isDark
+                                ? const Color(0xFFF2F5FB)
+                                : const Color(0xFF15161A))
+                            : (isDark
+                                ? const Color(0xFF9BA3B3)
+                                : const Color(0xFF8A8A94)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              label: '',
             ),
-          )
-          .toList(growable: false),
+          );
+        }),
+      ),
     );
   }
 }
@@ -473,7 +330,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // GlobalKey for old AirportScreen removed
-  _HomeTab _currentTab = _HomeTab.community;
+  _HomeTab _currentTab = _HomeTab.usefulInfo;
   final DatabaseReference _versionReference =
       FirebaseDatabase.instance.ref("VERSION");
   bool _giftFabOpen = false;
@@ -494,68 +351,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   int get _currentIndex => _currentTab.index;
 
+  void _selectHomeTab(_HomeTab tab) {
+    setState(() {
+      _currentTab = tab;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _giftcardTabController = TabController(length: 4, vsync: this);
-    _giftcardTabController.addListener(_handleGiftcardTabChange);
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
     _loadNotificationSettings();
     _checkForceUpdateAndNotice();
-    _checkAndShowStartupAdBottomSheet();
   }
 
   @override
   void dispose() {
-    _giftcardTabController.removeListener(_handleGiftcardTabChange);
     _giftcardTabController.dispose();
     super.dispose();
-  }
-
-  // 상품권 탭 전환 핸들러
-  void _handleGiftcardTabChange() {
-    if (!_giftcardTabController.indexIsChanging) {
-      // 탭 전환이 완료되었을 때만 체크
-      final int targetIndex = _giftcardTabController.index;
-      // 정보 탭(0)이 아닌 경우에만 체크
-      if (targetIndex != 0) {
-        _checkRankingAgreementAndBlockTab(targetIndex);
-      }
-    }
-  }
-
-  // 랭킹 동의 상태 확인 및 탭 차단
-  Future<void> _checkRankingAgreementAndBlockTab(int targetIndex) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final data = userDoc.data();
-      final rankingAgreement = data?['ranking_agree'] as bool? ?? true;
-
-      // 랭킹 미동의인 경우
-      if (!rankingAgreement) {
-        // 정보 탭으로 강제 이동
-        _giftcardTabController.animateTo(0);
-
-        // 토스트 메시지 표시
-        Fluttertoast.showToast(
-          msg: '랭킹 동의를 해야 진입할 수 있습니다.',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black87,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      }
-    } catch (e) {
-      debugPrint('랭킹 동의 상태 확인 오류: $e');
-    }
   }
 
   Future<void> _checkForceUpdateAndNotice() async {
@@ -637,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   // 뒤로가기 버튼 처리 메서드
-  Future<bool> _onWillPop() async {
+  Future<bool> _shouldExitApp() async {
     final now = DateTime.now();
     final difference = _lastBackPressTime == null
         ? const Duration(seconds: 3)
@@ -663,6 +479,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _handleBackPressed() async {
+    final shouldExit = await _shouldExitApp();
+    if (shouldExit) {
+      await SystemNavigator.pop();
+    }
+  }
+
   void _selectTab(int index) {
     setState(() {
       _currentTab = _HomeTab.values[index];
@@ -672,16 +495,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   PreferredSizeWidget _buildHomeAppBar({
     PreferredSizeWidget? bottom,
     bool includeGiftcardActions = false,
+    bool showLogo = true,
     List<Widget>? actions,
   }) {
     return AppBar(
       automaticallyImplyLeading: false,
       titleSpacing: 12,
-      title: Image.asset(
-        'asset/icon/milecatch_logo.png',
-        height: 24,
-        fit: BoxFit.contain,
-      ),
+      title: showLogo
+          ? Image.asset(
+              'asset/icon/milecatch_logo.png',
+              height: 24,
+              fit: BoxFit.contain,
+            )
+          : const SizedBox.shrink(),
       backgroundColor: Colors.white,
       iconTheme: const IconThemeData(color: Colors.black),
       elevation: 1,
@@ -826,39 +652,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     if (_currentTab == _HomeTab.giftcard) {
       // 상품권 탭 전용: 상단 TabBar(지도/정보) + FAB
-      return WillPopScope(
-        onWillPop: _onWillPop,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          unawaited(_handleBackPressed());
+        },
         child: Scaffold(
+          extendBody: true,
           backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
           appBar: _buildHomeAppBar(
             includeGiftcardActions: true,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(54),
-              child: SegmentTabBar(
-                controller: _giftcardTabController,
-                labels: const ['정보', '지도', '시세', '지점'],
-                margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-              ),
-            ),
+            showLogo: false,
           ),
           body: Stack(
             children: [
-              TabBarView(
-                controller: _giftcardTabController,
-                physics: NeverScrollableScrollPhysics(),
-                children: [
-                  GiftcardInfoScreen(
-                    key: _giftcardInfoKey,
-                    onScrollChanged: (isScrolling) {
-                      setState(() {
-                        _isScrolling = isScrolling;
-                      });
-                    },
-                  ),
-                  GiftcardMapScreen(),
-                  const GiftcardRatesTab(),
-                  const BranchListTab(),
-                ],
+              Positioned.fill(
+                child: Column(
+                  children: [
+                    Container(
+                      color: Colors.white,
+                      child: SegmentTabBar(
+                        controller: _giftcardTabController,
+                        labels: const ['정보', '지도', '시세', '지점'],
+                        margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                      ),
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _giftcardTabController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          GiftcardInfoScreen(
+                            key: _giftcardInfoKey,
+                            onScrollChanged: (isScrolling) {
+                              setState(() {
+                                _isScrolling = isScrolling;
+                              });
+                            },
+                          ),
+                          GiftcardMapScreen(),
+                          const GiftcardRatesTab(),
+                          const BranchListTab(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (_giftFabOpen)
                 Positioned.fill(
@@ -870,7 +710,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               if (_giftFabOpen)
                 Positioned(
                   right: 16,
-                  bottom: 96,
+                  bottom: 176,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -945,74 +785,113 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
+              _buildFloatingBottomNav(),
             ],
           ),
-          floatingActionButton: AnimatedBuilder(
-            animation: _giftcardTabController,
-            builder: (context, _) {
-              final showFab = _giftcardTabController.index == 0;
-              if (!showFab) return const SizedBox.shrink();
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 92),
+            child: AnimatedBuilder(
+              animation: _giftcardTabController,
+              builder: (context, _) {
+                final showFab = _giftcardTabController.index == 0;
+                if (!showFab) return const SizedBox.shrink();
 
-              // 스크롤 중이면 FAB 숨김
-              if (_isScrolling) return const SizedBox.shrink();
+                // 스크롤 중이면 FAB 숨김
+                if (_isScrolling) return const SizedBox.shrink();
 
-              final user = FirebaseAuth.instance.currentUser;
-              // 로그인 안된 경우: 로그인 유도 FAB 노출
-              if (user == null) {
-                return FloatingActionButton(
-                  backgroundColor: const Color(0xFF74512D),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                final user = FirebaseAuth.instance.currentUser;
+                // 로그인 안된 경우: 로그인 유도 FAB 노출
+                if (user == null) {
+                  return FloatingActionButton(
+                    elevation: 8,
+                    backgroundColor: Colors.white.withValues(alpha: 0.90),
+                    foregroundColor: const Color(0xFF74512D),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        width: 1.2,
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
+                    },
+                    child: const Icon(Icons.login),
+                  );
+                }
+
+                // 로그인 된 경우: 차단 상태를 구독하여 차단이면 FAB 숨김
+                return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .snapshots(),
+                  builder: (context, snap) {
+                    final banned =
+                        (snap.data?.data()?['isBanned'] as bool?) ?? false;
+                    if (banned) return const SizedBox.shrink();
+                    return FloatingActionButton(
+                      elevation: 8,
+                      backgroundColor: Colors.white.withValues(alpha: 0.90),
+                      foregroundColor: const Color(0xFF74512D),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          width: 1.2,
+                        ),
+                      ),
+                      onPressed: () =>
+                          setState(() => _giftFabOpen = !_giftFabOpen),
+                      child: Icon(_giftFabOpen ? Icons.close : Icons.add),
                     );
                   },
-                  child: const Icon(Icons.login, color: Colors.white),
                 );
-              }
-
-              // 로그인 된 경우: 차단 상태를 구독하여 차단이면 FAB 숨김
-              return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(user.uid)
-                    .snapshots(),
-                builder: (context, snap) {
-                  final banned =
-                      (snap.data?.data()?['isBanned'] as bool?) ?? false;
-                  if (banned) return const SizedBox.shrink();
-                  return FloatingActionButton(
-                    backgroundColor: const Color(0xFF74512D),
-                    onPressed: () =>
-                        setState(() => _giftFabOpen = !_giftFabOpen),
-                    child: Icon(_giftFabOpen ? Icons.close : Icons.add,
-                        color: Colors.white),
-                  );
-                },
-              );
-            },
-          ),
-          bottomNavigationBar: _HomeBottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: _selectTab,
+              },
+            ),
           ),
         ),
       );
     }
 
     // 기본 케이스 (상품권 외 탭)
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        unawaited(_handleBackPressed());
+      },
       child: Scaffold(
+        extendBody: true,
         backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
         appBar: _buildHomeAppBar(
+          showLogo: _currentTab != _HomeTab.community,
           actions: _currentTab == _HomeTab.profile
               ? _buildProfileAppBarActions()
               : null,
         ),
-        body: _buildCurrentTabPage(),
+        body: Stack(
+          children: [
+            Positioned.fill(child: _buildCurrentTabPage()),
+            _buildFloatingBottomNav(),
+          ],
+        ),
         floatingActionButton: null,
-        bottomNavigationBar: _HomeBottomNavigationBar(
+      ),
+    );
+  }
+
+  Widget _buildFloatingBottomNav() {
+    return Positioned(
+      left: 20,
+      right: 20,
+      bottom: 24,
+      child: SafeArea(
+        top: false,
+        child: _HomeBottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: _selectTab,
         ),
@@ -1024,12 +903,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     switch (_currentTab) {
       case _HomeTab.community:
         return const CommunityScreen();
-      case _HomeTab.deals:
-        return const DealsScreen();
+      case _HomeTab.usefulInfo:
+        return UsefulInfoScreen(
+          onOpenCommunity: () => _selectHomeTab(_HomeTab.community),
+          onOpenGiftcard: () => _selectHomeTab(_HomeTab.giftcard),
+          onOpenProfile: () => _selectHomeTab(_HomeTab.profile),
+        );
       case _HomeTab.giftcard:
         return const SizedBox.shrink();
-      case _HomeTab.koreanAir:
-        return const SearchDanScreen();
       case _HomeTab.profile:
         return const _ProfileTab();
     }
@@ -1043,6 +924,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _commentLikeNotification = true;
   String _version = '';
   String _latestVersion = '';
+
+  bool _hasAdminAccess(dynamic roles) {
+    if (roles is List) {
+      return roles.any((role) {
+        final value = role.toString().trim();
+        return value == 'admin' || value == 'owner';
+      });
+    }
+    if (roles is Map) {
+      return roles['admin'] == true || roles['owner'] == true;
+    }
+    if (roles is String) {
+      final value = roles.trim();
+      return value == 'admin' || value == 'owner';
+    }
+    return false;
+  }
 
   Widget buildSettingsWidget() {
     return Scaffold(
@@ -1073,12 +971,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 : Future.value(null),
             builder: (context, userSnapshot) {
               final Map<String, dynamic>? userData = userSnapshot.data;
-              final List<dynamic> rawRoles =
-                  (userData?['roles'] as List<dynamic>?) ??
-                      const <dynamic>['user'];
-              final List<String> roles =
-                  rawRoles.map((e) => e.toString()).toList();
-              final bool isAdmin = roles.contains('admin');
+              final bool isAdmin = _hasAdminAccess(userData?['roles']);
 
               return SettingsList(
                 platform: DevicePlatform.iOS,
@@ -1206,31 +1099,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const AdManageScreen(),
+                                builder: (_) => const AdminPageScreen(),
                               ),
                             );
                           },
-                          title: const Text('광고'),
+                          title: const Text('관리자 페이지'),
                           description: const Text(
-                            '앱 진입 BottomSheet 광고를 설정합니다.',
+                            '관리자 기능을 한곳에서 관리합니다.',
                           ),
-                          leading: const Icon(Icons.campaign_outlined),
-                        ),
-                      if (isAdmin)
-                        SettingsTile(
-                          onPressed: (context) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ContestManageScreen(),
-                              ),
-                            );
-                          },
-                          title: const Text('콘테스트'),
-                          description: const Text(
-                            '콘테스트를 생성하고 관리합니다.',
-                          ),
-                          leading: const Icon(Icons.emoji_events_outlined),
+                          leading:
+                              const Icon(Icons.admin_panel_settings_outlined),
                         ),
                       SettingsTile(
                         onPressed: (context) => {
@@ -1391,111 +1269,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _commentLikeNotification =
           prefs.getBool('comment_like_notification') ?? true;
     });
-  }
-
-  Future<void> _checkAndShowStartupAdBottomSheet() async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    try {
-      final DocumentSnapshot<Map<String, dynamic>> userDoc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
-      final Map<String, dynamic>? userData = userDoc.data();
-      final Timestamp? hideUntilTs =
-          userData?['hideBottomSheetAdUntil'] as Timestamp?;
-      final DateTime now = DateTime.now();
-
-      if (hideUntilTs != null && hideUntilTs.toDate().isAfter(now)) {
-        return;
-      }
-
-      final QuerySnapshot<Map<String, dynamic>> snap = await FirebaseFirestore
-          .instance
-          .collection('bottom_sheet_ads')
-          .where('isActive', isEqualTo: true)
-          .orderBy('priority', descending: false)
-          .get();
-
-      final List<Map<String, dynamic>> ads = snap.docs
-          .map<Map<String, dynamic>>(
-        (d) => <String, dynamic>{'id': d.id, ...d.data()},
-      )
-          .where((ad) {
-        final Timestamp? startTs = ad['startAt'] as Timestamp?;
-        final Timestamp? endTs = ad['endAt'] as Timestamp?;
-        final DateTime? startAt = startTs != null ? startTs.toDate() : null;
-        final DateTime? endAt = endTs != null ? endTs.toDate() : null;
-        final bool startOk = startAt == null || !startAt.isAfter(now);
-        final bool endOk = endAt == null || !endAt.isBefore(now);
-        return startOk && endOk;
-      }).toList();
-
-      if (ads.isEmpty) return;
-      if (!mounted) return;
-
-      _showStartupAdBottomSheet(ads, user.uid);
-    } catch (e) {
-      print('초기 광고 BottomSheet 로드 오류: $e');
-    }
-  }
-
-  void _showStartupAdBottomSheet(
-    List<Map<String, dynamic>> ads,
-    String uid,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: false,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (BuildContext context) {
-        return _AdBottomSheetContent(ads: ads, uid: uid, onAdTap: _handleAdTap);
-      },
-    );
-  }
-
-  void _handleAdTap(
-    BuildContext context,
-    Map<String, dynamic> ad,
-  ) {
-    final String linkType = (ad['linkType'] as String?) ?? 'web';
-    final String linkValue = (ad['linkValue'] as String?) ?? '';
-
-    if (linkType == 'web') {
-      if (linkValue.isEmpty) return;
-      final Uri uri = Uri.parse(linkValue);
-      launchUrl(uri, mode: LaunchMode.externalApplication);
-      return;
-    }
-
-    if (linkType == 'deeplink') {
-      _handleInternalDeeplink(context, linkValue);
-    }
-  }
-
-  void _handleInternalDeeplink(
-    BuildContext context,
-    String deeplink,
-  ) {
-    // 규칙 예시: 'branch:jungang' → branchId=jungang 지점 상세 화면으로 이동
-    if (deeplink.startsWith('branch:')) {
-      final String branchId = deeplink.substring('branch:'.length);
-      if (branchId.isEmpty) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BranchDetailScreen(
-            branchId: branchId,
-          ),
-        ),
-      );
-      return;
-    }
   }
 
   _launchMileageThief(String mileageTheifMarketUrl) async {

@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'flight_deals_screen.dart';
-import 'hotel_deals_screen.dart';
 import '../../widgets/shopping_mall_grid.dart';
 
 class _PressScale extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final BorderRadius borderRadius;
 
   const _PressScale({
     required this.child,
     this.onTap,
-    this.borderRadius = const BorderRadius.all(Radius.circular(16)),
   });
 
   @override
@@ -32,7 +29,7 @@ class _PressScaleState extends State<_PressScale> {
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
-          borderRadius: widget.borderRadius,
+          borderRadius: BorderRadius.circular(16),
           onHighlightChanged: (v) {
             if (!mounted) return;
             setState(() => _pressed = v);
@@ -132,13 +129,26 @@ class _DealsScreenState extends State<DealsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text(
+          '특가',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
               // 항공권/호텔 버튼 섹션
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -174,16 +184,16 @@ class _DealsScreenState extends State<DealsScreen> {
                                 fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 6),
-                              Row(
+                              const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.flight_takeoff,
                                     size: 14,
                                     color: Colors.black54,
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Text(
+                                  SizedBox(width: 6),
+                                  Text(
                                     '항공권',
                                     style: TextStyle(
                                       fontSize: 14,
@@ -230,16 +240,16 @@ class _DealsScreenState extends State<DealsScreen> {
                                 fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 6),
-                              Row(
+                              const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.hotel,
                                     size: 14,
                                     color: Colors.black54,
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Text(
+                                  SizedBox(width: 6),
+                                  Text(
                                     '호텔',
                                     style: TextStyle(
                                       fontSize: 14,
@@ -260,7 +270,8 @@ class _DealsScreenState extends State<DealsScreen> {
               // 배너 섹션
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),

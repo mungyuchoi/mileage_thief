@@ -10,7 +10,7 @@ import '../services/category_service.dart';
 import '../services/community_notification_history_service.dart';
 import 'login_screen.dart';
 import 'community_detail_screen.dart';
-import 'community_post_create_screen.dart';
+import 'community_post_create_simple_screen.dart';
 import 'community_search_screen.dart';
 import 'community_notification_history_screen.dart';
 import 'my_page_screen.dart';
@@ -32,7 +32,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   String selectedBoardName = '전체글';
   Map<String, dynamic>? userProfile;
   bool isProfileLoading = false;
-  
+
   // 뷰 모드 토글 (false: 카드뷰, true: 간단뷰)
   bool isCompactView = false;
 
@@ -47,19 +47,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 베스트 게시글 섹션 데이터
   List<DocumentSnapshot> _bestPosts = [];
   bool _isLoadingBestPosts = false;
-  
+
   // 등급 안내 고정 게시글 (공지) 이동용 상수
   static const String _gradeGuidePostId =
       'e466cdbe-2ab6-48c5-8060-c0950f6b84f6';
   static const String _gradeGuidePostDateString = '20250825';
   static const String _gradeGuideBoardId = 'notice';
-  
+
   // 초기 로딩 상태 관리
   bool _isInitialLoading = true;
-  
+
   // 이펙트 캐시 (성능 최적화)
   static final Map<String, Map<String, dynamic>> _effectCache = {};
-  
+
   // 스크롤 상태 추적 (애니메이션 최적화)
   bool _isScrolling = false;
   Timer? _scrollTimer;
@@ -132,12 +132,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
         textColor: Colors.white,
         fontSize: 16.0,
       );
-      
+
       // 로그인 화면으로 이동
       final result = await Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-      
+
       // 로그인 성공 시 프로필 다시 로드
       if (result == true) {
         await _loadUserProfile();
@@ -146,6 +146,204 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return false;
     }
     return true;
+  }
+
+  bool get _isAdmin {
+    final roles = userProfile?['roles'];
+    return roles is List && roles.contains('admin');
+  }
+
+  List<Map<String, dynamic>> _writableBoards() {
+    return boards.where((board) {
+      final boardId = (board['id'] ?? '').toString();
+      if (boardId == 'notice') return _isAdmin;
+      return board['fabEnabled'] == true;
+    }).toList();
+  }
+
+  Future<Map<String, dynamic>?> _openPostBoardSheet() async {
+    if (boards.isEmpty) {
+      try {
+        final loadedBoards = await _categoryService.getBoards();
+        _safeSetState(() {
+          boards = loadedBoards;
+          isLoadingBoards = false;
+        });
+      } catch (_) {
+        await _loadBoards();
+      }
+    }
+    if (!mounted) return null;
+
+    final writableBoards = _writableBoards();
+    if (writableBoards.isEmpty) {
+      Fluttertoast.showToast(
+        msg: '작성 가능한 게시판이 없습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.grey[850],
+        textColor: Colors.white,
+      );
+      return null;
+    }
+
+    return showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.58,
+          minChildSize: 0.38,
+          maxChildSize: 0.86,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        width: 54,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFBDBDBD),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        '게시판 선택',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        itemCount: writableBoards.length,
+                        itemBuilder: (context, index) {
+                          final board = writableBoards[index];
+                          final boardId = (board['id'] ?? '').toString();
+                          final boardName = (board['name'] ?? '').toString();
+                          final description =
+                              (board['description'] ?? '').toString();
+                          final icon = getBoardIcon(board['icon']?.toString());
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(18),
+                              onTap: () => Navigator.of(context).pop(board),
+                              child: Container(
+                                width: double.infinity,
+                                padding:
+                                    const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: boardId == 'notice'
+                                        ? Colors.black
+                                        : const Color(0xFFDADADA),
+                                    width: boardId == 'notice' ? 1.4 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(icon, color: Colors.black, size: 24),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            boardName,
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          if (description.isNotEmpty) ...[
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              description,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Color(0xFF707070),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Colors.black45,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openCreatePostFlow() async {
+    final isLoggedIn = await _checkLoginAndNavigate();
+    if (!isLoggedIn || !mounted) return;
+    if (userProfile == null) {
+      await _loadUserProfile();
+      if (!mounted) return;
+    }
+
+    final selectedBoard = await _openPostBoardSheet();
+    if (selectedBoard == null || !mounted) return;
+
+    final boardId = (selectedBoard['id'] ?? '').toString();
+    final boardName = (selectedBoard['name'] ?? '').toString();
+    if (boardId.isEmpty || boardName.isEmpty) return;
+
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute<bool>(
+        builder: (context) => CommunityPostCreateSimpleScreen(
+          initialBoardId: boardId,
+          initialBoardName: boardName,
+        ),
+      ),
+    );
+    if (result == true || result == false) {
+      _refreshPosts();
+    }
   }
 
   // 아이콘 이름(String) → IconData 매핑
@@ -242,7 +440,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const MyPageScreen(),
+                                      builder: (context) =>
+                                          const MyPageScreen(),
                                     ),
                                   );
                                 },
@@ -253,7 +452,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                         // 사용자 프로필에서 photoURL 가져오기 (fallback 포함)
                                         final photoURL =
                                             userProfile!['photoURL'] ?? '';
-                                        
+
                                         return CircleAvatar(
                                           backgroundColor: Colors.grey[300],
                                           radius: 18,
@@ -269,8 +468,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     ),
                                     const SizedBox(width: 10),
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(displayName,
                                             style: const TextStyle(
@@ -292,11 +493,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                               onPressed: () async {
                                 // 등급 안내 고정 게시글로 이동
                                 try {
-                                  await _incrementViewCount(
-                                      _gradeGuidePostId,
+                                  await _incrementViewCount(_gradeGuidePostId,
                                       _gradeGuidePostDateString);
                                 } catch (_) {}
-                                
+
                                 Navigator.pop(context); // drawer 닫기
                                 await Navigator.push(
                                   context,
@@ -548,17 +748,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
                               CircleAvatar(
                                 radius: 14,
                                 backgroundColor: Colors.white,
-                                backgroundImage: userProfile!['photoURL'] != null &&
-                                    userProfile!['photoURL'].toString().isNotEmpty
-                                    ? NetworkImage(userProfile!['photoURL'])
-                                    : null,
+                                backgroundImage:
+                                    userProfile!['photoURL'] != null &&
+                                            userProfile!['photoURL']
+                                                .toString()
+                                                .isNotEmpty
+                                        ? NetworkImage(userProfile!['photoURL'])
+                                        : null,
                                 child: userProfile!['photoURL'] == null ||
-                                    userProfile!['photoURL'].toString().isEmpty
+                                        userProfile!['photoURL']
+                                            .toString()
+                                            .isEmpty
                                     ? const Icon(
-                                  Icons.person,
-                                  size: 20,
-                                  color: Colors.grey,
-                                )
+                                        Icons.person,
+                                        size: 20,
+                                        color: Colors.grey,
+                                      )
                                     : null,
                               ),
                             ],
@@ -592,7 +797,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CommunitySearchScreen(),
+                              builder: (context) =>
+                                  const CommunitySearchScreen(),
                             ),
                           );
                         } else if (value == 'view_toggle') {
@@ -620,7 +826,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           child: Row(
                             children: [
                               Icon(
-                                isCompactView ? Icons.view_module : Icons.view_list,
+                                isCompactView
+                                    ? Icons.view_module
+                                    : Icons.view_list,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -681,10 +889,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       : Builder(
                           builder: (context) {
                             final hasBestSection = _showBestSection;
-                            final loadingItemCount =
-                                _isLoadingMore ? 1 : 0;
-                            final baseCount =
-                                _posts.length + loadingItemCount;
+                            final loadingItemCount = _isLoadingMore ? 1 : 0;
+                            final baseCount = _posts.length + loadingItemCount;
                             final itemCount =
                                 baseCount + (hasBestSection ? 1 : 0);
 
@@ -755,27 +961,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   ),
                                   elevation: 1.5,
                                   child: InkWell(
-                                    borderRadius:
-                                        BorderRadius.circular(18),
-                                    onTap: () => _onPostTap(
-                                        post, adjustedIndex),
+                                    borderRadius: BorderRadius.circular(18),
+                                    onTap: () =>
+                                        _onPostTap(post, adjustedIndex),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(18),
+                                        borderRadius: BorderRadius.circular(18),
                                         color: Colors.white,
                                       ),
-                                      padding:
-                                          const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 14),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           // 프로필 영역 (프로필 이미지, 닉네임, 시간)
-                                          _buildCardAuthorRow(
-                                              post, createdAt),
+                                          _buildCardAuthorRow(post, createdAt),
                                           const SizedBox(height: 12),
 
                                           // 제목 (굵게) + 최신 키워드
@@ -783,20 +984,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                             children: [
                                               Expanded(
                                                 child: Text(
-                                                  post['title'] ??
-                                                      '제목 없음',
-                                                  style:
-                                                      const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight
-                                                            .bold,
+                                                  post['title'] ?? '제목 없음',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
                                                     fontSize: 17,
-                                                    color:
-                                                        Colors.black,
+                                                    color: Colors.black,
                                                   ),
                                                   maxLines: 2,
-                                                  overflow: TextOverflow
-                                                      .ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
@@ -808,67 +1004,50 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                             Text(
                                               plainText,
                                               style: const TextStyle(
-                                                fontWeight:
-                                                    FontWeight.normal,
+                                                fontWeight: FontWeight.normal,
                                                 fontSize: 14,
                                                 color: Colors.black54,
                                               ),
                                               maxLines: 1,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           const SizedBox(height: 12),
 
                                           // 조회수, 댓글, 좋아요
                                           Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 '조회 ${post['viewsCount'] ?? 0}회',
-                                                style:
-                                                    const TextStyle(
+                                                style: const TextStyle(
                                                   fontSize: 13,
                                                   color: Colors.black54,
                                                 ),
                                               ),
                                               Row(
                                                 children: [
-                                                  const Icon(
-                                                      Icons.comment,
+                                                  const Icon(Icons.comment,
                                                       size: 16,
-                                                      color: Colors
-                                                          .black54),
-                                                  const SizedBox(
-                                                      width: 4),
+                                                      color: Colors.black54),
+                                                  const SizedBox(width: 4),
                                                   Text(
                                                     '${post['commentCount'] ?? 0}',
-                                                    style:
-                                                        const TextStyle(
-                                                            fontSize:
-                                                                13,
-                                                            color: Colors
-                                                                .black54),
+                                                    style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.black54),
                                                   ),
-                                                  const SizedBox(
-                                                      width: 16),
+                                                  const SizedBox(width: 16),
                                                   const Icon(
-                                                      Icons
-                                                          .favorite_border,
+                                                      Icons.favorite_border,
                                                       size: 16,
-                                                      color: Colors
-                                                          .black54),
-                                                  const SizedBox(
-                                                      width: 4),
+                                                      color: Colors.black54),
+                                                  const SizedBox(width: 4),
                                                   Text(
                                                     '${post['likesCount'] ?? 0}',
-                                                    style:
-                                                        const TextStyle(
-                                                            fontSize:
-                                                                13,
-                                                            color: Colors
-                                                                .black54),
+                                                    style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.black54),
                                                   ),
                                                 ],
                                               ),
@@ -890,49 +1069,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
       floatingActionButton: (userProfile?['isBanned'] == true)
           ? null
           : (() {
-              final board = boards.firstWhere(
-                (b) => b['id'] == selectedBoardId,
-                orElse: () => {'_notFound':true},
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 92),
+                child: FloatingActionButton(
+                  onPressed: _openCreatePostFlow,
+                  elevation: 8,
+                  backgroundColor: Colors.white.withValues(alpha: 0.90),
+                  foregroundColor: const Color(0xFF74512D),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: const Icon(Icons.edit),
+                ),
               );
-              final fabEnabled = board == null ? true : (board['fabEnabled'] ?? true);
-              print("FloatingAction fabEnabled:$fabEnabled, selectedBoardId:$selectedBoardId");
-              final isAdmin = (userProfile?['roles'] ?? []).contains('admin');
-              if (fabEnabled || isAdmin) {
-                return FloatingActionButton(
-                  onPressed: () async {
-                    // 로그인 확인
-                    final isLoggedIn = await _checkLoginAndNavigate();
-                    if (!isLoggedIn) return;
-
-                    // final result = await Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => selectedBoardId != 'all'
-                    //         ? CommunityPostCreateScreen(
-                    //       initialBoardId: selectedBoardId,
-                    //       initialBoardName: selectedBoardName,
-                    //     )
-                    //         : const CommunityPostCreateScreen(),
-                    //   ),
-                    // );
-                    final result = await Navigator.pushNamed(
-                      context,
-                      '/community/create_v3',
-                      arguments: {
-                        'initialBoardId': selectedBoardId != 'all' ? selectedBoardId : null,
-                        'initialBoardName': selectedBoardId != 'all' ? selectedBoardName : null,
-                      },
-                    );
-                    if (result == true || result == false) {
-                      _refreshPosts();
-                    }
-                  },
-                  backgroundColor: const Color(0xFF74512D),
-                  child: const Icon(Icons.edit, color: Colors.white),
-                );
-              } else {
-                return null;
-              }
             })(),
     );
   }
@@ -945,17 +1098,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
         _isScrolling = true;
       });
     }
-    
+
     // 기존 타이머 취소
     _scrollTimer?.cancel();
-    
+
     // 스크롤 멈춤 감지 (300ms 후)
     _scrollTimer = Timer(const Duration(milliseconds: 300), () {
       _safeSetState(() {
         _isScrolling = false;
       });
     });
-    
+
     // 무한 스크롤 로직
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
@@ -1020,8 +1173,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
       // meta에 저장된 순서를 유지하도록 정렬
       final docs = snapshot.docs.toList()
-        ..sort((a, b) =>
-            postIds.indexOf(a.id).compareTo(postIds.indexOf(b.id)));
+        ..sort(
+            (a, b) => postIds.indexOf(a.id).compareTo(postIds.indexOf(b.id)));
 
       final filteredDocs = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
@@ -1176,16 +1329,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // HTML 태그 제거 (<br> 태그 전까지만 추출)
   String _removeHtmlTags(String htmlString) {
     if (htmlString.isEmpty) return '';
-    
+
     // <br> 태그가 나오기 전까지의 HTML만 추출
-    String beforeBr = htmlString.split(RegExp(r'<br\s*/?>', caseSensitive: false))[0];
-    
+    String beforeBr =
+        htmlString.split(RegExp(r'<br\s*/?>', caseSensitive: false))[0];
+
     // HTML 태그 제거
     String cleaned = beforeBr
         .replaceAll(RegExp(r'<[^>]*>'), '') // 모든 HTML 태그 제거
         .replaceAll(RegExp(r'&[^;]+;'), '') // HTML 엔티티 제거
         .trim();
-    
+
     return cleaned;
   }
 
@@ -1193,9 +1347,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
   String? _extractFirstImageUrl(String htmlString) {
     if (htmlString.isEmpty) return null;
 
-    final imgTag = RegExp('<img[^>]+src=["\']([^"\']+)["\']',
-            caseSensitive: false)
-        .firstMatch(htmlString);
+    final imgTag =
+        RegExp('<img[^>]+src=["\']([^"\']+)["\']', caseSensitive: false)
+            .firstMatch(htmlString);
     if (imgTag != null && imgTag.groupCount >= 1) {
       return imgTag.group(1);
     }
@@ -1291,7 +1445,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1332,7 +1487,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 12),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('확인', style: TextStyle(fontSize: 16)),
@@ -1378,7 +1534,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   /// 커뮤니티 알림 버튼 + 뱃지 (실시간 업데이트)
   Widget _buildCommunityNotificationButton() {
     final user = AuthService.currentUser;
-    
+
     // 로그인하지 않은 사용자는 알림 버튼만 표시 (뱃지 없음)
     if (user == null) {
       return InkWell(
@@ -1391,7 +1547,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const CommunityNotificationHistoryScreen(),
+                builder: (context) =>
+                    const CommunityNotificationHistoryScreen(),
               ),
             );
           }
@@ -1422,7 +1579,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const CommunityNotificationHistoryScreen(),
+                builder: (context) =>
+                    const CommunityNotificationHistoryScreen(),
               ),
             );
           },
@@ -1434,7 +1592,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
               alignment: Alignment.center,
               children: [
                 Icon(
-                  unreadCount > 0 ? Icons.notifications : Icons.notifications_outlined,
+                  unreadCount > 0
+                      ? Icons.notifications
+                      : Icons.notifications_outlined,
                   color: Colors.white,
                 ),
                 // 읽지 않은 알림 뱃지
@@ -1473,7 +1633,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   // 간단뷰 아이템 위젯
-  Widget _buildCompactListItem(Map<String, dynamic> post, DateTime createdAt, int index) {
+  Widget _buildCompactListItem(
+      Map<String, dynamic> post, DateTime createdAt, int index) {
     return Column(
       children: [
         Material(
@@ -1554,7 +1715,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           color: Colors.black45,
                         ),
                       ),
-                      const Icon(Icons.comment, size: 12, color: Colors.black45),
+                      const Icon(Icons.comment,
+                          size: 12, color: Colors.black45),
                       const SizedBox(width: 2),
                       Text(
                         '${post['commentCount'] ?? 0}',
@@ -1570,7 +1732,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           color: Colors.black45,
                         ),
                       ),
-                      const Icon(Icons.favorite_border, size: 12, color: Colors.black45),
+                      const Icon(Icons.favorite_border,
+                          size: 12, color: Colors.black45),
                       const SizedBox(width: 2),
                       Text(
                         '${post['likesCount'] ?? 0}',
@@ -1628,10 +1791,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
               final doc = _bestPosts[index];
               final data = doc.data() as Map<String, dynamic>;
               final createdAt =
-                  (data['createdAt'] as Timestamp?)?.toDate() ??
-                      DateTime.now();
-              final imageUrl =
-                  _extractFirstImageUrl(data['contentHtml'] ?? '');
+                  (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+              final imageUrl = _extractFirstImageUrl(data['contentHtml'] ?? '');
 
               return GestureDetector(
                 onTap: () => _openPostDocument(doc),
@@ -1698,8 +1859,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      data['author']?['displayName'] ??
-                                          '익명',
+                                      data['author']?['displayName'] ?? '익명',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -1736,12 +1896,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 스카이 이펙트 미리보기 위젯 (캐시 최적화)
   Widget _buildSkyEffectPreview(String? effectId) {
     if (effectId == null || effectId.isEmpty) return const SizedBox.shrink();
-    
+
     // 캐시에서 먼저 확인
     if (_effectCache.containsKey(effectId)) {
       final cachedData = _effectCache[effectId]!;
       final lottieUrl = cachedData['lottieUrl'] as String?;
-      
+
       if (lottieUrl != null && lottieUrl.isNotEmpty) {
         return Lottie.network(
           lottieUrl,
@@ -1756,17 +1916,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
           // 에러 처리
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+            return const Icon(Icons.auto_awesome,
+                color: Color(0xFF74512D), size: 12);
           },
         );
       } else {
-        return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+        return const Icon(Icons.auto_awesome,
+            color: Color(0xFF74512D), size: 12);
       }
     }
-    
+
     // 캐시에 없으면 Firestore에서 로드
     return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
+      future:
+          FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
@@ -1784,36 +1947,39 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ),
           );
         }
-        
+
         if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+          return const Icon(Icons.auto_awesome,
+              color: Color(0xFF74512D), size: 12);
         }
-        
+
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final lottieUrl = data['lottieUrl'] as String?;
-        
+
         // 캐시에 저장
         _effectCache[effectId] = data;
-        
+
         if (lottieUrl != null && lottieUrl.isNotEmpty) {
-                      return Lottie.network(
-              lottieUrl,
-              width: 20,
-              height: 20,
-              fit: BoxFit.contain,
-              repeat: true,
-              animate: !_isScrolling, // 스크롤 중일 때는 애니메이션 멈춤
-              // 캐싱 옵션 추가
-              options: LottieOptions(
-                enableMergePaths: false, // 성능 최적화
-              ),
-              // 에러 처리
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
-              },
-            );
+          return Lottie.network(
+            lottieUrl,
+            width: 20,
+            height: 20,
+            fit: BoxFit.contain,
+            repeat: true,
+            animate: !_isScrolling, // 스크롤 중일 때는 애니메이션 멈춤
+            // 캐싱 옵션 추가
+            options: LottieOptions(
+              enableMergePaths: false, // 성능 최적화
+            ),
+            // 에러 처리
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(Icons.auto_awesome,
+                  color: Color(0xFF74512D), size: 12);
+            },
+          );
         } else {
-          return const Icon(Icons.auto_awesome, color: Color(0xFF74512D), size: 12);
+          return const Icon(Icons.auto_awesome,
+              color: Color(0xFF74512D), size: 12);
         }
       },
     );
@@ -1821,11 +1987,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   // 카드 작성자 Row를 반드시 함수로 분리해서 사용하도록 수정합니다.
   Widget _buildCardAuthorRow(Map<String, dynamic> post, DateTime createdAt) {
-    final photoURL = post['author']?['photoURL'] ?? post['author']?['profileImageUrl'] ?? '';
+    final photoURL =
+        post['author']?['photoURL'] ?? post['author']?['profileImageUrl'] ?? '';
     final displayName = post['author']['displayName'] ?? '익명';
     final isRecent = DateTime.now().difference(createdAt).inHours < 2;
-    final hasSkyEffect = post['author']?['currentSkyEffect'] != null && 
-                        (post['author']['currentSkyEffect'] as String).isNotEmpty;
+    final hasSkyEffect = post['author']?['currentSkyEffect'] != null &&
+        (post['author']['currentSkyEffect'] as String).isNotEmpty;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1836,15 +2003,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
             CircleAvatar(
               backgroundColor: Colors.grey[300],
               radius: 16,
-              backgroundImage: photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
-              child: photoURL.isEmpty ? const Icon(Icons.person, color: Colors.black54, size: 18) : null,
+              backgroundImage:
+                  photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+              child: photoURL.isEmpty
+                  ? const Icon(Icons.person, color: Colors.black54, size: 18)
+                  : null,
             ),
             SizedBox(width: hasSkyEffect ? 4 : 8), // 스카이 이펙트가 있으면 4, 없으면 8
             if (hasSkyEffect)
               SizedBox(
                 width: 24,
                 height: 24,
-                child: _buildSkyEffectPreview(post['author']['currentSkyEffect']),
+                child:
+                    _buildSkyEffectPreview(post['author']['currentSkyEffect']),
               ),
             if (hasSkyEffect) const SizedBox(width: 4), // 스카이 이펙트가 있을 때만 추가 간격
             Text(
