@@ -16,6 +16,12 @@ import 'community_board_select_screen.dart';
 import 'community_post_create_simple_screen.dart';
 import 'login_screen.dart';
 
+const Color _chatBackgroundColor = Color(0xFFD2867D);
+const Color _chatBubbleColor = Colors.white;
+const Color _chatTextColor = Color(0xFF111111);
+const Color _chatSubTextColor = Color(0xFF4B3A38);
+const Color _chatComposerFillColor = Color(0xFFF2F2F2);
+
 class CommunityChatScreen extends StatefulWidget {
   const CommunityChatScreen({
     super.key,
@@ -531,22 +537,25 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F1F5),
+      backgroundColor: _chatBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _chatBackgroundColor,
         surfaceTintColor: Colors.transparent,
-        elevation: 0.6,
+        elevation: 0,
+        toolbarHeight: 56,
+        iconTheme: const IconThemeData(color: _chatTextColor, size: 27),
         leading: _isSelectionMode
             ? IconButton(
                 onPressed: _clearSelection,
-                icon: const Icon(Icons.close_rounded, color: Colors.black),
+                icon: const Icon(Icons.close_rounded),
               )
             : null,
         title: Text(
           _isSelectionMode ? '${_selectedMessageIds.length}개 선택' : '채팅',
           style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w900,
+            color: _chatTextColor,
+            fontSize: 21,
+            fontWeight: FontWeight.w800,
           ),
         ),
         actions: [
@@ -561,7 +570,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.report_outlined, color: Colors.black),
+                  : const Icon(Icons.report_outlined),
             ),
             TextButton.icon(
               onPressed: (_isPromoting || _isReporting)
@@ -575,12 +584,12 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                     )
                   : const Icon(Icons.edit_note_rounded),
               label: const Text('게시글로 정리'),
-              style: TextButton.styleFrom(foregroundColor: Colors.black),
+              style: TextButton.styleFrom(foregroundColor: _chatTextColor),
             ),
           ] else
             IconButton(
               onPressed: _loadInitialMessages,
-              icon: const Icon(Icons.refresh_rounded, color: Colors.black),
+              icon: const Icon(Icons.refresh_rounded),
             ),
         ],
       ),
@@ -617,7 +626,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     final showLoadMore = _hasMore || (!_isAdmin && _messages.length >= 150);
     return ListView.builder(
       reverse: true,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       itemCount: _messages.length + (showLoadMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _messages.length) {
@@ -676,7 +685,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
 
   Widget _buildComposer() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFE0E0E0))),
@@ -688,52 +697,77 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              IconButton(
-                onPressed: (_isBanned || _isSending) ? null : _pickImages,
-                icon: const Icon(Icons.image_outlined),
-                color: Colors.black,
+              SizedBox.square(
+                dimension: 40,
+                child: IconButton(
+                  onPressed: (_isBanned || _isSending) ? null : _pickImages,
+                  icon: const Icon(Icons.image_outlined),
+                  color: _chatTextColor,
+                  disabledColor: Colors.black26,
+                  iconSize: 24,
+                  padding: EdgeInsets.zero,
+                ),
               ),
+              const SizedBox(width: 6),
               Expanded(
                 child: TextField(
                   controller: _textController,
                   enabled: !_isBanned && !_isSending,
                   minLines: 1,
-                  maxLines: 4,
+                  maxLines: 3,
                   maxLength: ChatService.maxTextLength,
+                  style: const TextStyle(
+                    color: _chatTextColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
                   decoration: InputDecoration(
                     hintText: _isBanned ? '이용이 제한된 계정입니다.' : '메시지를 입력하세요',
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF9C9C9C),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                     counterText: '',
+                    isDense: true,
                     filled: true,
-                    fillColor: const Color(0xFFF4F4F4),
+                    fillColor: _chatComposerFillColor,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 11,
+                      vertical: 9,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       borderSide: BorderSide.none,
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
-              IconButton.filled(
-                onPressed: (_isBanned || _isSending) ? null : _sendMessage,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.black26,
-                  foregroundColor: Colors.white,
+              SizedBox.square(
+                dimension: 40,
+                child: IconButton.filled(
+                  onPressed: (_isBanned || _isSending) ? null : _sendMessage,
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFD9D9D9),
+                    disabledBackgroundColor: const Color(0xFFE9E9E9),
+                    foregroundColor: _chatTextColor,
+                    disabledForegroundColor: Colors.black26,
+                    padding: EdgeInsets.zero,
+                  ),
+                  iconSize: 22,
+                  icon: _isSending
+                      ? const SizedBox(
+                          width: 17,
+                          height: 17,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: _chatTextColor,
+                          ),
+                        )
+                      : const Icon(Icons.arrow_upward_rounded),
                 ),
-                icon: _isSending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.arrow_upward_rounded),
               ),
             ],
           ),
@@ -823,12 +857,10 @@ class _MessageBubble extends StatelessWidget {
     final time = message.createdAt == null
         ? ''
         : DateFormat('HH:mm').format(message.createdAt!);
-    final bubbleColor = isMine ? Colors.black : Colors.white;
-    final textColor = isMine ? Colors.white : Colors.black;
-    final maxBubbleWidth = MediaQuery.of(context).size.width * 0.66;
+    final maxBubbleWidth = MediaQuery.of(context).size.width * 0.68;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -841,7 +873,7 @@ class _MessageBubble extends StatelessWidget {
             if (selectionMode && !isMine) _buildSelectionMark(),
             if (!isMine) ...[
               _MessageAvatar(name: name, photoUrl: photoUrl),
-              const SizedBox(width: 7),
+              const SizedBox(width: 6),
             ],
             Flexible(
               child: Column(
@@ -850,7 +882,7 @@ class _MessageBubble extends StatelessWidget {
                 children: [
                   Padding(
                     padding:
-                        const EdgeInsets.only(left: 4, right: 4, bottom: 4),
+                        const EdgeInsets.only(left: 3, right: 3, bottom: 3),
                     child: _MessageAuthorLabel(
                       name: name,
                       displayGrade: displayGrade,
@@ -871,13 +903,10 @@ class _MessageBubble extends StatelessWidget {
                     ),
                     child: Container(
                       constraints: BoxConstraints(maxWidth: maxBubbleWidth),
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                       decoration: BoxDecoration(
-                        color: bubbleColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: isMine
-                            ? null
-                            : Border.all(color: const Color(0xFFE3E3E3)),
+                        color: _chatBubbleColor,
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -885,15 +914,15 @@ class _MessageBubble extends StatelessWidget {
                           if (message.hasText)
                             Text(
                               message.text,
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                height: 1.34,
+                              style: const TextStyle(
+                                color: _chatTextColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                height: 1.28,
                               ),
                             ),
                           if (message.hasImages) ...[
-                            if (message.hasText) const SizedBox(height: 8),
+                            if (message.hasText) const SizedBox(height: 7),
                             _MessageImageGrid(
                               urls: message.imageUrls,
                               onOpenImages: onOpenImages,
@@ -909,9 +938,9 @@ class _MessageBubble extends StatelessWidget {
                       child: Text(
                         time,
                         style: const TextStyle(
-                          color: Colors.black38,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          color: _chatSubTextColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -919,7 +948,7 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
             if (isMine) ...[
-              const SizedBox(width: 7),
+              const SizedBox(width: 6),
               _MessageAvatar(name: name, photoUrl: photoUrl),
             ],
             if (selectionMode && isMine) _buildSelectionMark(),

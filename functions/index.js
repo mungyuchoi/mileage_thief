@@ -244,6 +244,12 @@ const CARD_STATUSES = new Set([
 ]);
 const CARD_GORILLA_API_BASE = "https://api.card-gorilla.com:8080/v1";
 const CARD_IMAGE_BUCKET = "mileagethief.firebasestorage.app";
+const CARD_GORILLA_MAX_IMPORT_ID = 100000;
+const CARD_SOURCE_SEARCH_CACHE_MS = 10 * 60 * 1000;
+let cardSourceSearchCache = {
+  fetchedAtMs: 0,
+  items: null,
+};
 
 /**
  * 숫자형 값을 안전하게 number로 변환
@@ -598,7 +604,11 @@ function cardHash(value) {
  * @return {string|null}
  */
 function normalizeCardImageUrl(value) {
-  const text = asOptionalString(value);
+  let rawValue = value;
+  if (value && typeof value === "object") {
+    rawValue = value.url || value.path || value.src;
+  }
+  const text = asOptionalString(rawValue);
   if (!text) {
     return null;
   }
@@ -802,6 +812,202 @@ function normalizeCardGorillaTopBenefits(value) {
       logoUrl: normalizeCardImageUrl(item.logo_img),
     };
   }).filter((item) => item.title || item.value);
+}
+
+/**
+ * 카드 검색용 문자열을 비교하기 쉬운 형태로 변환
+ * @param {unknown} value
+ * @return {string}
+ */
+function normalizeCardSearchText(value) {
+  return String(value || "")
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+}
+
+/**
+ * 검색 대상 카드에서 후보 비교 텍스트 구성
+ * @param {Object} item
+ * @return {string}
+ */
+function cardSourceCandidateText(item) {
+  const corp = item.corp && typeof item.corp === "object" ?
+    item.corp :
+    {};
+  const benefits = normalizeCardGorillaTopBenefits(item.top_benefit)
+      .map((benefit) => [benefit.title, benefit.value].filter(Boolean))
+      .flat()
+      .join(" ");
+  return normalizeCardSearchText([
+    item.idx,
+    item.cid,
+    item.name,
+    item.corp_txt,
+    corp.name,
+    item.cate_txt,
+    item.brand_txt,
+    item.annual_fee_basic,
+    benefits,
+  ].filter(Boolean).join(" "));
+}
+
+/**
+ * 카드 후보 검색 점수 계산
+ * @param {string} queryText
+ * @param {Object} item
+ * @return {number}
+ */
+function scoreCardSourceCandidate(queryText, item) {
+  const normalizedQuery = normalizeCardSearchText(queryText);
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  const queryTerms = normalizedQuery.split(" ").filter(Boolean);
+  const haystack = cardSourceCandidateText(item);
+  const compactHaystack = haystack.replace(/\s+/g, "");
+  const nameText = normalizeCardSearchText(item.name);
+  const compactName = nameText.replace(/\s+/g, "");
+  let score = 0;
+
+  queryTerms.forEach((term) => {
+    const compactTerm = term.replace(/\s+/g, "");
+    if (haystack.split(" ").includes(term)) {
+      score += 4;
+    }
+    if (haystack.includes(term)) {
+      score += 2;
+    }
+    if (compactHaystack.includes(compactTerm)) {
+      score += 2;
+    }
+    if (nameText.includes(term)) {
+      score += 5;
+    }
+    if (compactName.includes(compactTerm)) {
+      score += 5;
+    }
+  });
+
+  if (nameText.startsWith(normalizedQuery)) {
+    score += 8;
+  }
+  if (compactName.startsWith(normalizedQuery.replace(/\s+/g, ""))) {
+    score += 6;
+  }
+  return score;
+}
+
+/**
+ * 카드고릴라 검색 목록을 가져오고 짧게 캐시한다.
+ * @return {Promise<Array<Object>>}
+ */
+async function fetchCardSourceSearchItems() {
+  const nowMs = Date.now();
+  if (
+    cardSourceSearchCache.items &&
+    nowMs - cardSourceSearchCache.fetchedAtMs < CARD_SOURCE_SEARCH_CACHE_MS
+  ) {
+    return cardSourceSearchCache.items;
+  }
+
+  const response = await globalThis.fetch(
+      `${CARD_GORILLA_API_BASE}/cards/search?p=1&perPage=2000`,
+  );
+  if (!response.ok) {
+    throw new HttpsError("unavailable", "카드 후보 검색에 실패했습니다.");
+  }
+  const payload = await response.json();
+  const items = Array.isArray(payload) ? payload : payload.data || [];
+  cardSourceSearchCache = {
+    fetchedAtMs: nowMs,
+    items,
+  };
+  return items;
+}
+
+/**
+ * 원본 카드 목록 item을 앱 표시용 후보로 축약한다.
+ * @param {Object} item
+ * @param {number} score
+ * @return {Object|null}
+ */
+function normalizeCardSourceCandidate(item, score) {
+  const idx = asIdString(item.idx || item.no || item.cid);
+  const name = asOptionalString(item.name);
+  if (!idx || !name) {
+    return null;
+  }
+  const corp = item.corp && typeof item.corp === "object" ?
+    item.corp :
+    {};
+  const issuerName =
+    asOptionalString(item.corp_txt) ||
+    asOptionalString(corp.name) ||
+    "카드사 미입력";
+  const previousMonthSpend = asOptionalNumber(item.pre_month_money);
+
+  return {
+    sourceCardId: idx,
+    name,
+    issuerName,
+    cardType: normalizeCardGorillaCardType(item.cate),
+    cardTypeLabel: asOptionalString(item.cate_txt) ||
+      (normalizeCardGorillaCardType(item.cate) === "check" ? "체크" : "신용"),
+    status: normalizeCardGorillaStatus(item),
+    annualFeeSummary: asOptionalString(item.annual_fee_basic),
+    previousMonthSpendSummary: previousMonthSpend ?
+      `${Math.round(previousMonthSpend).toLocaleString("ko-KR")}원` :
+      null,
+    imageUrl: normalizeCardImageUrl(item.card_img),
+    primaryBenefits: normalizeCardGorillaTopBenefits(item.top_benefit)
+        .slice(0, 5),
+    score,
+  };
+}
+
+/**
+ * 카드고릴라 카드사 목록을 동기화하고 idx->name 맵을 반환한다.
+ * @return {Promise<Map<string, string>>}
+ */
+async function syncCardGorillaIssuers() {
+  const issuerNameByIdx = new Map();
+  const issuerResponse = await globalThis.fetch(
+      `${CARD_GORILLA_API_BASE}/card_corps`,
+  );
+  if (!issuerResponse.ok) {
+    return issuerNameByIdx;
+  }
+
+  const issuerPayload = await issuerResponse.json();
+  const issuers = Array.isArray(issuerPayload) ?
+    issuerPayload :
+    issuerPayload.data || [];
+  const batch = admin.firestore().batch();
+  let writeCount = 0;
+  issuers.forEach((item) => {
+    const normalized = normalizeCardGorillaIssuer(item);
+    if (!normalized) {
+      return;
+    }
+    const idx = normalized.data.sourceRefs.cardGorilla.idx;
+    issuerNameByIdx.set(idx, normalized.data.nameKo);
+    batch.set(
+        cardCatalogRef()
+            .collection("cardIssuers")
+            .doc(normalized.issuerId),
+        normalized.data,
+        {merge: true},
+    );
+    writeCount += 1;
+  });
+  if (writeCount > 0) {
+    await batch.commit();
+  }
+  return issuerNameByIdx;
 }
 
 /**
@@ -3175,6 +3381,492 @@ exports.rollbackCardRevision = onCall({
 });
 
 /**
+ * 사용자가 앱 안에서 요청할 수 있는 카드 후보를 검색한다.
+ */
+exports.searchCardSourceCandidates = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 120,
+  memory: "512MiB",
+}, async (request) => {
+  requireAuthUid(request);
+  const query = asOptionalString((request.data || {}).query) || "";
+  const limit = Math.min(
+      30,
+      Math.max(1, asOptionalNumber((request.data || {}).limit) || 15),
+  );
+  if (normalizeCardSearchText(query).length < 2) {
+    return {
+      query,
+      candidates: [],
+    };
+  }
+
+  const items = await fetchCardSourceSearchItems();
+  const candidates = items
+      .map((item) => {
+        const score = scoreCardSourceCandidate(query, item);
+        return {item, score};
+      })
+      .filter(({score}) => score > 0)
+      .sort((left, right) => {
+        if (right.score !== left.score) {
+          return right.score - left.score;
+        }
+        const leftIdx = Number(left.item.idx || left.item.no || 0);
+        const rightIdx = Number(right.item.idx || right.item.no || 0);
+        return rightIdx - leftIdx;
+      })
+      .slice(0, limit)
+      .map(({item, score}) => normalizeCardSourceCandidate(item, score))
+      .filter(Boolean);
+
+  return {
+    query,
+    candidates,
+  };
+});
+
+/**
+ * 사용자가 카드 정보 가져오기 요청을 생성한다.
+ */
+exports.createCardSourceRequest = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 60,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const sourceCardId = asIdString(data.sourceCardId);
+  const query = asOptionalString(data.query) || "";
+  if (!sourceCardId) {
+    throw new HttpsError("invalid-argument", "카드를 선택해주세요.");
+  }
+
+  const response = await globalThis.fetch(
+      `${CARD_GORILLA_API_BASE}/cards/${sourceCardId}`,
+  );
+  if (response.status === 404) {
+    throw new HttpsError("not-found", "선택한 카드 정보를 찾을 수 없습니다.");
+  }
+  if (!response.ok) {
+    throw new HttpsError("unavailable", "카드 정보를 확인하지 못했습니다.");
+  }
+
+  const source = await response.json();
+  if (!source || !source.idx) {
+    throw new HttpsError("not-found", "선택한 카드 정보를 찾을 수 없습니다.");
+  }
+
+  const candidate = normalizeCardSourceCandidate(source, 0);
+  if (!candidate) {
+    throw new HttpsError("invalid-argument", "카드 정보가 올바르지 않습니다.");
+  }
+
+  const cardId = `cg_${sourceCardId}`;
+  const productDoc = await cardCatalogRef()
+      .collection("cardProducts")
+      .doc(cardId)
+      .get();
+  const requestRef = cardCatalogRef().collection("cardRequests").doc();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await requestRef.set({
+    status: "pending",
+    requesterUid: uid,
+    query: query.slice(0, 200),
+    candidate,
+    existingCardId: productDoc.exists ? cardId : null,
+    sourceType: "cardGorilla",
+    sourceRefs: {
+      cardGorilla: {
+        idx: sourceCardId,
+        apiUrl: `${CARD_GORILLA_API_BASE}/cards/${sourceCardId}`,
+        detailUrl:
+          `https://www.card-gorilla.com/card/detail/${sourceCardId}`,
+      },
+    },
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return {
+    requestId: requestRef.id,
+    status: "pending",
+    existingCardId: productDoc.exists ? cardId : null,
+  };
+});
+
+/**
+ * 관리자가 카드 요청을 실제 카드 DB로 가져온다.
+ */
+exports.importRequestedCard = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 180,
+  memory: "1GiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+
+  const requestId = asIdString((request.data || {}).requestId);
+  if (!requestId) {
+    throw new HttpsError("invalid-argument", "requestId는 필수입니다.");
+  }
+
+  const requestRef = cardCatalogRef().collection("cardRequests").doc(requestId);
+  const requestDoc = await requestRef.get();
+  if (!requestDoc.exists) {
+    throw new HttpsError("not-found", "카드 요청을 찾을 수 없습니다.");
+  }
+  const requestData = requestDoc.data() || {};
+  if (requestData.status === "imported" && requestData.importedCardId) {
+    return {
+      requestId,
+      cardId: requestData.importedCardId,
+      alreadyImported: true,
+    };
+  }
+
+  const sourceRefs = requestData.sourceRefs || {};
+  const sourceCardId = asIdString(
+      sourceRefs.cardGorilla && sourceRefs.cardGorilla.idx,
+  ) || asIdString(requestData.candidate && requestData.candidate.sourceCardId);
+  if (!sourceCardId) {
+    throw new HttpsError(
+        "failed-precondition",
+        "요청에 가져올 카드 정보가 없습니다.",
+    );
+  }
+
+  const runRef = cardCatalogRef().collection("cardImportRuns").doc();
+  const runId = runRef.id;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await runRef.set({
+    sourceType: "cardGorilla",
+    status: "running",
+    mode: "request",
+    requestId,
+    sourceCardId,
+    actorUid: uid,
+    startedAt: now,
+  });
+
+  try {
+    const issuerNameByIdx = await syncCardGorillaIssuers();
+    const response = await globalThis.fetch(
+        `${CARD_GORILLA_API_BASE}/cards/${sourceCardId}`,
+    );
+    if (response.status === 404) {
+      throw new HttpsError("not-found", "카드 정보를 찾을 수 없습니다.");
+    }
+    if (!response.ok) {
+      throw new HttpsError("unavailable", "카드 정보를 가져오지 못했습니다.");
+    }
+
+    const source = await response.json();
+    if (!source || !source.idx) {
+      throw new HttpsError("not-found", "카드 정보를 찾을 수 없습니다.");
+    }
+
+    const cardId = await upsertCardGorillaProduct({
+      uid,
+      runId,
+      source,
+      issuerNameByIdx,
+    });
+
+    await runRef.update({
+      status: "completed",
+      importedCardIds: [cardId],
+      counts: {
+        requested: 1,
+        success: 1,
+        notFound: 0,
+        failed: 0,
+      },
+      finishedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    await requestRef.update({
+      status: "imported",
+      importedCardId: cardId,
+      reviewedByUid: uid,
+      reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+      importRunId: runId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      requestId,
+      cardId,
+      runId,
+      alreadyImported: false,
+    };
+  } catch (error) {
+    await runRef.update({
+      status: "failed",
+      error: error.message,
+      finishedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    logger.error("Requested card import failed", {
+      requestId,
+      sourceCardId,
+      message: error.message,
+    });
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", "카드 요청 처리에 실패했습니다.");
+  }
+});
+
+/**
+ * 관리자가 카드 요청을 반려한다.
+ */
+exports.rejectCardSourceRequest = onCall({
+  region: CARD_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+
+  const requestId = asIdString((request.data || {}).requestId);
+  const note = asOptionalString((request.data || {}).note);
+  if (!requestId) {
+    throw new HttpsError("invalid-argument", "requestId는 필수입니다.");
+  }
+
+  const requestRef = cardCatalogRef().collection("cardRequests").doc(requestId);
+  const requestDoc = await requestRef.get();
+  if (!requestDoc.exists) {
+    throw new HttpsError("not-found", "카드 요청을 찾을 수 없습니다.");
+  }
+
+  await requestRef.update({
+    status: "rejected",
+    reviewedByUid: uid,
+    reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+    reviewNote: note,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    requestId,
+    status: "rejected",
+  };
+});
+
+/**
+ * 카드 상세 댓글/대댓글을 추가한다.
+ */
+exports.addCardProductComment = onCall({
+  region: CARD_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const cardId = asIdString(data.cardId);
+  const parentCommentId = asIdString(data.parentCommentId);
+  const body = requireCardText(data.body, "댓글");
+
+  if (!cardId) {
+    throw new HttpsError("invalid-argument", "cardId는 필수입니다.");
+  }
+
+  const productRef = cardCatalogRef().collection("cardProducts").doc(cardId);
+  const commentsRef = productRef.collection("comments");
+  const commentRef = commentsRef.doc();
+  const parentRef = parentCommentId ? commentsRef.doc(parentCommentId) : null;
+  const userRef = admin.firestore().collection("users").doc(uid);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await admin.firestore().runTransaction(async (transaction) => {
+    const productDoc = await transaction.get(productRef);
+    if (!productDoc.exists) {
+      throw new HttpsError("not-found", "카드 정보를 찾을 수 없습니다.");
+    }
+
+    let parentData = null;
+    if (parentRef) {
+      const parentDoc = await transaction.get(parentRef);
+      if (!parentDoc.exists || parentDoc.data().isDeleted === true) {
+        throw new HttpsError("not-found", "원댓글을 찾을 수 없습니다.");
+      }
+      parentData = parentDoc.data() || {};
+      if (parentData.parentCommentId) {
+        throw new HttpsError(
+            "invalid-argument",
+            "대댓글에는 답글을 달 수 없습니다.",
+        );
+      }
+    }
+
+    const userDoc = await transaction.get(userRef);
+    const userData = userDoc.data() || {};
+    const isAdmin = hasAdminRole(userData.roles);
+    const displayName =
+      asOptionalString(userData.displayName) ||
+      asOptionalString(request.auth.token && request.auth.token.name) ||
+      "익명";
+
+    transaction.set(commentRef, {
+      cardId,
+      parentCommentId: parentCommentId || null,
+      body: body.slice(0, 2000),
+      author: {
+        uid,
+        displayName,
+        photoURL: asOptionalString(userData.photoURL) ||
+          asOptionalString(request.auth.token && request.auth.token.picture),
+        displayGrade: isAdmin ?
+          "★★★" :
+          asOptionalString(userData.displayGrade) || "이코노미 Lv.1",
+        isAdmin,
+      },
+      replyCount: 0,
+      isDeleted: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    transaction.update(productRef, {
+      commentsCount: admin.firestore.FieldValue.increment(1),
+      lastCommentAt: now,
+    });
+
+    if (parentRef) {
+      transaction.update(parentRef, {
+        replyCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: now,
+      });
+    }
+  });
+
+  return {
+    cardId,
+    commentId: commentRef.id,
+    parentCommentId: parentCommentId || null,
+  };
+});
+
+/**
+ * 카드 상세 좋아요를 토글한다.
+ */
+exports.toggleCardProductLike = onCall({
+  region: CARD_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const cardId = asIdString((request.data || {}).cardId);
+  if (!cardId) {
+    throw new HttpsError("invalid-argument", "cardId는 필수입니다.");
+  }
+
+  const productRef = cardCatalogRef().collection("cardProducts").doc(cardId);
+  const likeRef = productRef.collection("likes").doc(uid);
+  const userRef = admin.firestore().collection("users").doc(uid);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  return admin.firestore().runTransaction(async (transaction) => {
+    const productDoc = await transaction.get(productRef);
+    if (!productDoc.exists) {
+      throw new HttpsError("not-found", "카드 정보를 찾을 수 없습니다.");
+    }
+
+    const likeDoc = await transaction.get(likeRef);
+    const currentLikes = Math.max(0, Number(
+        (productDoc.data() || {}).likesCount || 0,
+    ));
+
+    if (likeDoc.exists) {
+      const nextLikes = Math.max(0, currentLikes - 1);
+      transaction.delete(likeRef);
+      transaction.update(productRef, {
+        likesCount: nextLikes,
+        updatedLikeAt: now,
+      });
+      return {
+        cardId,
+        liked: false,
+        likesCount: nextLikes,
+      };
+    }
+
+    const userDoc = await transaction.get(userRef);
+    const userData = userDoc.data() || {};
+    const isAdmin = hasAdminRole(userData.roles);
+    const nextLikes = currentLikes + 1;
+    transaction.set(likeRef, {
+      cardId,
+      uid,
+      author: {
+        uid,
+        displayName: asOptionalString(userData.displayName) || "익명",
+        photoURL: asOptionalString(userData.photoURL),
+        displayGrade: isAdmin ?
+          "★★★" :
+          asOptionalString(userData.displayGrade) || "이코노미 Lv.1",
+        isAdmin,
+      },
+      createdAt: now,
+    });
+    transaction.update(productRef, {
+      likesCount: nextLikes,
+      updatedLikeAt: now,
+    });
+
+    return {
+      cardId,
+      liked: true,
+      likesCount: nextLikes,
+    };
+  });
+});
+
+/**
+ * 카드 상세 조회수를 1 증가시킨다.
+ */
+exports.incrementCardProductView = onCall({
+  region: CARD_REGION,
+}, async (request) => {
+  const cardId = asIdString((request.data || {}).cardId);
+  if (!cardId) {
+    throw new HttpsError("invalid-argument", "cardId는 필수입니다.");
+  }
+
+  const productRef = cardCatalogRef().collection("cardProducts").doc(cardId);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const uid = request.auth && request.auth.uid ? request.auth.uid : null;
+
+  return admin.firestore().runTransaction(async (transaction) => {
+    const productDoc = await transaction.get(productRef);
+    if (!productDoc.exists) {
+      throw new HttpsError("not-found", "카드 정보를 찾을 수 없습니다.");
+    }
+
+    const currentViews = Math.max(0, Number(
+        (productDoc.data() || {}).viewsCount || 0,
+    ));
+    const nextViews = currentViews + 1;
+    transaction.update(productRef, {
+      viewsCount: nextViews,
+      lastViewedAt: now,
+    });
+
+    if (uid) {
+      transaction.set(
+          productRef.collection("views").doc(uid),
+          {
+            uid,
+            viewedAt: now,
+            viewCount: admin.firestore.FieldValue.increment(1),
+          },
+          {merge: true},
+      );
+    }
+
+    return {
+      cardId,
+      viewsCount: nextViews,
+    };
+  });
+});
+
+/**
  * 관리자가 카드고릴라 카드 데이터를 배치로 수집한다.
  */
 exports.importCardGorillaCards = onCall({
@@ -3187,12 +3879,17 @@ exports.importCardGorillaCards = onCall({
 
   const data = request.data || {};
   const startId = Math.max(1, asOptionalNumber(data.startId) || 1);
-  const requestedEnd = asOptionalNumber(data.endId) || startId + 24;
-  const endId = Math.min(2497, requestedEnd);
+  const endId = Math.max(1, asOptionalNumber(data.endId) || startId + 24);
   if (endId < startId) {
     throw new HttpsError(
         "invalid-argument",
         "endId는 startId보다 크거나 같아야 합니다.",
+    );
+  }
+  if (endId > CARD_GORILLA_MAX_IMPORT_ID) {
+    throw new HttpsError(
+        "invalid-argument",
+        `endId는 ${CARD_GORILLA_MAX_IMPORT_ID} 이하로 입력해주세요.`,
     );
   }
   if (endId - startId + 1 > 50) {
@@ -3225,33 +3922,7 @@ exports.importCardGorillaCards = onCall({
   });
 
   try {
-    const issuerNameByIdx = new Map();
-    const issuerResponse = await globalThis.fetch(
-        `${CARD_GORILLA_API_BASE}/card_corps`,
-    );
-    if (issuerResponse.ok) {
-      const issuerPayload = await issuerResponse.json();
-      const issuers = Array.isArray(issuerPayload) ?
-        issuerPayload :
-        issuerPayload.data || [];
-      const batch = admin.firestore().batch();
-      issuers.forEach((item) => {
-        const normalized = normalizeCardGorillaIssuer(item);
-        if (!normalized) {
-          return;
-        }
-        const idx = normalized.data.sourceRefs.cardGorilla.idx;
-        issuerNameByIdx.set(idx, normalized.data.nameKo);
-        batch.set(
-            cardCatalogRef()
-                .collection("cardIssuers")
-                .doc(normalized.issuerId),
-            normalized.data,
-            {merge: true},
-        );
-      });
-      await batch.commit();
-    }
+    const issuerNameByIdx = await syncCardGorillaIssuers();
 
     for (let id = startId; id <= endId; id++) {
       const apiUrl = `${CARD_GORILLA_API_BASE}/cards/${id}`;
@@ -3318,7 +3989,7 @@ exports.importCardGorillaCards = onCall({
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", "카드고릴라 수집에 실패했습니다.");
+    throw new HttpsError("internal", "카드 정보 수집에 실패했습니다.");
   }
 });
 

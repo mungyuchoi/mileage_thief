@@ -9,7 +9,9 @@ import '../services/user_service.dart';
 import '../services/category_service.dart';
 import '../services/community_notification_history_service.dart';
 import '../utils/community_access_level.dart';
+import '../widgets/community_chat_floating_button.dart';
 import 'login_screen.dart';
+import 'community_chat_screen.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
 import 'community_search_screen.dart';
@@ -1214,19 +1216,37 @@ class _CommunityScreenState extends State<CommunityScreen> {
           : (() {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 92),
-                child: FloatingActionButton(
-                  onPressed: _openCreatePostFlow,
-                  elevation: 8,
-                  backgroundColor: Colors.white.withValues(alpha: 0.90),
-                  foregroundColor: const Color(0xFF74512D),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      width: 1.2,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CommunityChatFloatingButton(
+                      heroTag: 'communityChatFab',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CommunityChatScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  child: const Icon(Icons.edit),
+                    const SizedBox(height: 12),
+                    FloatingActionButton(
+                      heroTag: 'communityCreatePostFab',
+                      onPressed: _openCreatePostFlow,
+                      elevation: 8,
+                      backgroundColor: Colors.white.withValues(alpha: 0.90),
+                      foregroundColor: const Color(0xFF74512D),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: const Icon(Icons.edit),
+                    ),
+                  ],
                 ),
               );
             })(),

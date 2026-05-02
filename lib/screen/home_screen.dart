@@ -30,6 +30,7 @@ import 'useful_info_screen.dart';
 import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../widgets/segment_tab_bar.dart';
+import '../widgets/community_chat_floating_button.dart';
 import '../branch/card_manage.dart';
 import '../branch/card_step.dart';
 import '../branch/wheretobuy_manage.dart';
@@ -39,6 +40,7 @@ import 'gift/gift_sell_screen.dart';
 import 'branch/branch_step1.dart';
 import 'branch/branch_list_tab.dart';
 import 'admin_page_screen.dart';
+import 'community_chat_screen.dart';
 
 // NoticePopupDialog
 class NoticePopupDialog extends StatelessWidget {
@@ -884,6 +886,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _openCommunityChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CommunityChatScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_currentTab == _HomeTab.giftcard) {
@@ -1118,7 +1127,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             _buildFloatingBottomNav(),
           ],
         ),
-        floatingActionButton: null,
+        floatingActionButton: _currentTab == _HomeTab.usefulInfo
+            ? Padding(
+                padding: const EdgeInsets.only(bottom: 92),
+                child: CommunityChatFloatingButton(
+                  heroTag: 'guideCommunityChatFab',
+                  onPressed: _openCommunityChat,
+                ),
+              )
+            : null,
       ),
     );
   }

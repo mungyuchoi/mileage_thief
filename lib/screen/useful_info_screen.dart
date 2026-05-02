@@ -36,6 +36,8 @@ typedef _GuideAds = List<Map<String, dynamic>>;
 const String _chatQuickActionIconAsset = 'asset/icon/community_chat.png';
 const String _koreanAirQuickActionIconAsset = 'asset/icon/korean_air.png';
 const String _dealsQuickActionIconAsset = 'asset/icon/deals.png';
+const String _cardQuickActionIconAsset = 'asset/icon/card.png';
+const String _giftcardQuickActionIconAsset = 'asset/icon/giftcard.png';
 
 const Map<String, String> _boardNameById = {
   'question': '마일리지',
@@ -313,6 +315,29 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
           _QuickActionsSection(
             actions: [
               _QuickAction(
+                icon: Icons.credit_card_outlined,
+                assetIcon: _cardQuickActionIconAsset,
+                title: '카드',
+                subtitle: '혜택 DB',
+                onTap: () => _push(CardCatalogScreen(
+                  onRequireLogin: _openProfileTabForLogin,
+                )),
+              ),
+              _QuickAction(
+                icon: Icons.forum_outlined,
+                assetIcon: _chatQuickActionIconAsset,
+                title: '채팅',
+                subtitle: '실시간 정보',
+                onTap: () => _push(const CommunityChatScreen()),
+              ),
+              _QuickAction(
+                icon: Icons.card_giftcard,
+                assetIcon: _giftcardQuickActionIconAsset,
+                title: '상품권',
+                subtitle: '시세/지도',
+                onTap: widget.onOpenGiftcard,
+              ),
+              _QuickAction(
                 icon: Icons.flight_takeoff,
                 assetIcon: _dealsQuickActionIconAsset,
                 title: '특가',
@@ -325,25 +350,6 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                 title: '대한항공',
                 subtitle: '마일리지 검색',
                 onTap: () => _push(const SearchDanScreen()),
-              ),
-              _QuickAction(
-                icon: Icons.forum_outlined,
-                assetIcon: _chatQuickActionIconAsset,
-                title: '채팅',
-                subtitle: '실시간 정보',
-                onTap: () => _push(const CommunityChatScreen()),
-              ),
-              _QuickAction(
-                icon: Icons.card_giftcard,
-                title: '상품권',
-                subtitle: '시세/지도',
-                onTap: widget.onOpenGiftcard,
-              ),
-              _QuickAction(
-                icon: Icons.credit_card_outlined,
-                title: '카드',
-                subtitle: '혜택 DB',
-                onTap: () => _push(const CardCatalogScreen()),
               ),
               _QuickAction(
                 icon: Icons.shopping_cart_outlined,
@@ -576,6 +582,12 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
 
   void _push(Widget screen) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+  }
+
+  void _openProfileTabForLogin() {
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    widget.onOpenProfile();
   }
 
   Future<void> _openRadarProfileSheet() async {

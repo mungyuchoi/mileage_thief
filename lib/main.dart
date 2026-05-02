@@ -12,6 +12,7 @@ import 'screen/community_board_select_screen.dart';
 import 'screen/community_chat_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'screen/community_post_create_screen_v3.dart';
+import 'screen/card_catalog_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
@@ -198,8 +199,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           prefs.getBool('comment_like_notification') ?? true;
       break;
     case 'radar_match':
-      specificNotificationEnabled =
-          prefs.getBool('radar_notification') ?? true;
+      specificNotificationEnabled = prefs.getBool('radar_notification') ?? true;
       break;
   }
 
@@ -319,6 +319,13 @@ class _MyAppState extends State<MyApp> {
               as Map<String, dynamic>?;
           return CommunityChatScreen(
             roomId: args?['roomId']?.toString() ?? 'global',
+          );
+        },
+        '/card/detail': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+          return CardProductDetailScreen(
+            cardId: args?['cardId']?.toString() ?? '',
           );
         },
       },

@@ -118,6 +118,13 @@ class BranchService {
       return;
     }
 
+    final cardId = data['cardId']?.toString();
+    if (cardId != null && cardId.trim().isNotEmpty) {
+      debugPrint('실제 딥링크 클릭 감지 - 카드 상세로 이동: $cardId');
+      _navigateToCard(cardId.trim());
+      return;
+    }
+
     // 게시글 딥링크 처리
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
@@ -277,6 +284,13 @@ class BranchService {
     );
   }
 
+  void _navigateToCard(String cardId) {
+    navigatorKey.currentState?.pushNamed(
+      '/card/detail',
+      arguments: {'cardId': cardId},
+    );
+  }
+
   /// 콘테스트로 이동
   void _navigateToContest(String contestId) {
     if (navigatorKey.currentState != null) {
@@ -337,6 +351,50 @@ class BranchService {
       }
     } catch (e) {
       debugPrint('Branch 링크 생성 오류: $e');
+      return null;
+    }
+  }
+
+  /// 카드 상세 공유 링크 생성
+  Future<String?> createCardShareLink({
+    required String cardId,
+    String? title,
+    String? description,
+    String? imageUrl,
+  }) async {
+    try {
+      final buo = BranchUniversalObject(
+        canonicalIdentifier: 'card_$cardId',
+        title: title ?? '마일캐치 카드',
+        contentDescription: description ?? '마일캐치 카드 정보를 확인해보세요!',
+        imageUrl: imageUrl ?? '',
+        contentMetadata: BranchContentMetaData()
+          ..addCustomMetadata('cardId', cardId)
+          ..addCustomMetadata('destination', 'card')
+          ..addCustomMetadata('screen', 'card_detail')
+          ..addCustomMetadata('path', '/card/detail')
+          ..addCustomMetadata('linkValue', 'card:$cardId'),
+      );
+
+      final lp = BranchLinkProperties(
+        channel: 'card',
+        feature: 'sharing',
+        campaign: 'card_share',
+      );
+
+      final response = await FlutterBranchSdk.getShortUrl(
+        buo: buo,
+        linkProperties: lp,
+      );
+
+      if (response.success) {
+        debugPrint('Branch 카드 링크 생성 성공: ${response.result}');
+        return response.result;
+      }
+      debugPrint('Branch 카드 링크 생성 실패: ${response.errorMessage}');
+      return null;
+    } catch (e) {
+      debugPrint('Branch 카드 링크 생성 오류: $e');
       return null;
     }
   }

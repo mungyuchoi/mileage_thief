@@ -17,6 +17,9 @@ class CatalogCardProduct {
   final Map<String, dynamic> images;
   final Map<String, dynamic> quality;
   final int version;
+  final int likesCount;
+  final int commentsCount;
+  final int viewsCount;
   final String? createdByUid;
   final String? updatedByUid;
   final DateTime? createdAt;
@@ -38,6 +41,9 @@ class CatalogCardProduct {
     required this.images,
     required this.quality,
     required this.version,
+    required this.likesCount,
+    required this.commentsCount,
+    required this.viewsCount,
     required this.raw,
     this.issuerId,
     this.rewardProgram,
@@ -68,6 +74,9 @@ class CatalogCardProduct {
       images: _map(data['images']),
       quality: _map(data['quality']),
       version: _int(data['version'], fallback: 0),
+      likesCount: _int(data['likesCount']),
+      commentsCount: _int(data['commentsCount']),
+      viewsCount: _int(data['viewsCount']),
       createdByUid: _nullableString(data['createdByUid']),
       updatedByUid: _nullableString(data['updatedByUid']),
       createdAt: _date(data['createdAt']),
@@ -254,6 +263,65 @@ class CardRevisionChange {
       newValue: data['newValue'],
     );
   }
+}
+
+class CardProductComment {
+  final String id;
+  final String cardId;
+  final String? parentCommentId;
+  final String body;
+  final String authorUid;
+  final String displayName;
+  final String? photoURL;
+  final String displayGrade;
+  final bool isAdmin;
+  final bool isDeleted;
+  final int replyCount;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final Map<String, dynamic> raw;
+
+  const CardProductComment({
+    required this.id,
+    required this.cardId,
+    required this.body,
+    required this.authorUid,
+    required this.displayName,
+    required this.displayGrade,
+    required this.isAdmin,
+    required this.isDeleted,
+    required this.replyCount,
+    required this.raw,
+    this.parentCommentId,
+    this.photoURL,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory CardProductComment.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data() ?? <String, dynamic>{};
+    final author = _map(data['author']);
+    return CardProductComment(
+      id: doc.id,
+      cardId: _string(data['cardId']),
+      parentCommentId: _nullableString(data['parentCommentId']),
+      body: _string(data['body']),
+      authorUid: _string(author['uid']),
+      displayName: _string(author['displayName'], fallback: '익명'),
+      photoURL: _nullableString(author['photoURL']),
+      displayGrade: _string(author['displayGrade'], fallback: '이코노미 Lv.1'),
+      isAdmin: author['isAdmin'] == true,
+      isDeleted: data['isDeleted'] == true,
+      replyCount: _int(data['replyCount']),
+      createdAt: _date(data['createdAt']),
+      updatedAt: _date(data['updatedAt']),
+      raw: data,
+    );
+  }
+
+  bool get isReply => parentCommentId != null;
 }
 
 String displayValue(dynamic value) {
