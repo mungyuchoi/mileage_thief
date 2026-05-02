@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'ad_manage_screen.dart';
+import 'admin_insight_manage_screen.dart';
+import 'admin_report_manage_screen.dart';
+import 'card_catalog_screen.dart';
 import 'contest_manage_screen.dart';
 
 class AdminPageScreen extends StatefulWidget {
@@ -93,6 +96,36 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   children: [
                     _AdminMenuTile(
+                      title: '통계 대시보드',
+                      description: '사용자, 게시글, 신고, 콘테스트 현황을 한눈에 봅니다.',
+                      icon: Icons.dashboard_customize_outlined,
+                      onTap: () => _open(const AdminStatsDashboardScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '기간별 통계',
+                      description: '최근 7일, 30일, 90일 활동과 인기 게시판을 확인합니다.',
+                      icon: Icons.date_range_rounded,
+                      onTap: () => _open(const AdminPeriodStatsScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '인기 콘텐츠',
+                      description: '좋아요가 많은 커뮤니티 게시글을 순위로 확인합니다.',
+                      icon: Icons.trending_up_rounded,
+                      onTap: () => _open(const AdminPopularContentScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '사용자 관리',
+                      description: '사용자 활동 정보와 이용금지 상태를 관리합니다.',
+                      icon: Icons.groups_outlined,
+                      onTap: () => _open(const AdminUserManageScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '게시글 관리',
+                      description: '커뮤니티 게시글을 확인하고 숨김, 삭제 상태를 관리합니다.',
+                      icon: Icons.feed_outlined,
+                      onTap: () => _open(const AdminPostManageScreen()),
+                    ),
+                    _AdminMenuTile(
                       title: '광고 관리',
                       description: '앱 진입 BottomSheet 광고를 설정합니다.',
                       icon: Icons.campaign_outlined,
@@ -103,6 +136,18 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '콘테스트를 생성하고 관리합니다.',
                       icon: Icons.emoji_events_outlined,
                       onTap: () => _open(const ContestManageScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '신고 관리',
+                      description: '게시글, 댓글, 채팅 신고를 확인하고 처리합니다.',
+                      icon: Icons.report_gmailerrorred_outlined,
+                      onTap: () => _open(const AdminReportManageScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '카드 DB 관리',
+                      description: '공용 카드 정보와 수정 히스토리를 확인합니다.',
+                      icon: Icons.credit_card_outlined,
+                      onTap: () => _open(const CardCatalogScreen()),
                     ),
                   ],
                 ),

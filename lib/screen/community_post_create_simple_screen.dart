@@ -12,16 +12,25 @@ import '../services/auth_service.dart';
 import '../services/category_service.dart';
 import '../services/peanut_history_service.dart';
 import '../services/user_service.dart';
+import '../utils/community_access_level.dart';
 
 class CommunityPostCreateSimpleScreen extends StatefulWidget {
   const CommunityPostCreateSimpleScreen({
     super.key,
     required this.initialBoardId,
     required this.initialBoardName,
+    this.initialTitle,
+    this.initialContentHtml,
+    this.initialImageUrls = const <String>[],
+    this.sourceChat,
   });
 
   final String initialBoardId;
   final String initialBoardName;
+  final String? initialTitle;
+  final String? initialContentHtml;
+  final List<String> initialImageUrls;
+  final Map<String, dynamic>? sourceChat;
 
   @override
   State<CommunityPostCreateSimpleScreen> createState() =>
@@ -34,19 +43,31 @@ class _CommunityPostCreateSimpleScreenState
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _metaRouteController = TextEditingController();
+  final TextEditingController _metaCarrierController = TextEditingController();
+  final TextEditingController _metaCabinController = TextEditingController();
+  final TextEditingController _metaMilesController = TextEditingController();
+  final TextEditingController _metaTaxesController = TextEditingController();
+  final TextEditingController _metaCashController = TextEditingController();
+  final TextEditingController _metaCostController = TextEditingController();
+  final TextEditingController _metaGiftcardController = TextEditingController();
   final CategoryService _categoryService = CategoryService();
   final ImagePicker _imagePicker = ImagePicker();
   final List<XFile> _selectedImages = <XFile>[];
+  final List<String> _initialImageUrls = <String>[];
   final List<String> _links = <String>[];
   List<Map<String, dynamic>> _boards = <Map<String, dynamic>>[];
 
   bool _isPickingImages = false;
   bool _isSubmitting = false;
+  bool _structuredMetaExpanded = false;
+  String _structuredMetaType = '발권';
   String lateBoardId = '';
   String lateBoardName = '';
   String _authorName = '익명';
   String _authorPhotoUrl = '';
   Map<String, dynamic>? _userProfile;
+  CommunityAccessLevel? _selectedReadRestriction;
 
   String get _selectedBoardId => lateBoardId;
   String get _selectedBoardName => lateBoardName;
@@ -56,6 +77,15 @@ class _CommunityPostCreateSimpleScreenState
     super.initState();
     lateBoardId = widget.initialBoardId;
     lateBoardName = widget.initialBoardName;
+    final initialTitle = widget.initialTitle?.trim();
+    if (initialTitle != null && initialTitle.isNotEmpty) {
+      _titleController.text = initialTitle;
+    }
+    final initialContentHtml = widget.initialContentHtml?.trim();
+    if (initialContentHtml != null && initialContentHtml.isNotEmpty) {
+      _contentController.text = _plainTextFromHtml(initialContentHtml);
+    }
+    _initialImageUrls.addAll(widget.initialImageUrls);
     _loadAuthorProfile();
   }
 
@@ -63,6 +93,14 @@ class _CommunityPostCreateSimpleScreenState
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _metaRouteController.dispose();
+    _metaCarrierController.dispose();
+    _metaCabinController.dispose();
+    _metaMilesController.dispose();
+    _metaTaxesController.dispose();
+    _metaCashController.dispose();
+    _metaCostController.dispose();
+    _metaGiftcardController.dispose();
     super.dispose();
   }
 
@@ -95,6 +133,10 @@ class _CommunityPostCreateSimpleScreenState
   bool get _isAdmin {
     final roles = _userProfile?['roles'];
     return roles is List && roles.contains('admin');
+  }
+
+  bool get _canSetReadRestriction {
+    return CommunityAccessLevel.canSetRestriction(_userProfile);
   }
 
   Future<void> _ensureBoardsLoaded() async {
@@ -410,6 +452,84 @@ class _CommunityPostCreateSimpleScreenState
     });
   }
 
+  Future<void> _openReadRestrictionSheet() async {
+    if (!_canSetReadRestriction || _isSubmitting) return;
+
+    final levels = CommunityAccessLevel.selectableLevels(_userProfile);
+    final selectedRank = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  '열람 제한',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  _selectedReadRestriction == null
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: Colors.black,
+                ),
+                title: const Text(
+                  '전체 공개',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () => Navigator.of(context).pop(0),
+              ),
+              const Divider(height: 1),
+              ...levels.map((level) {
+                final isSelected = _selectedReadRestriction?.rank == level.rank;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    isSelected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: Colors.black,
+                  ),
+                  title: Text(
+                    '${level.label} 이상',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(context).pop(level.rank),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selectedRank == null) return;
+    if (!mounted) return;
+    setState(() {
+      _selectedReadRestriction = CommunityAccessLevel.fromRank(selectedRank);
+    });
+  }
+
   Future<void> _submitPost() async {
     if (_isSubmitting) return;
 
@@ -419,7 +539,9 @@ class _CommunityPostCreateSimpleScreenState
       _showToast('제목을 입력해주세요');
       return;
     }
-    if (content.isEmpty && _selectedImages.isEmpty) {
+    if (content.isEmpty &&
+        _selectedImages.isEmpty &&
+        _initialImageUrls.isEmpty) {
       _showToast('내용 또는 이미지를 추가해주세요');
       return;
     }
@@ -445,7 +567,7 @@ class _CommunityPostCreateSimpleScreenState
       final now = DateTime.now();
       final dateString = DateFormat('yyyyMMdd').format(now);
 
-      final imageUrls = <String>[];
+      final imageUrls = <String>[..._initialImageUrls];
       for (final image in _selectedImages) {
         final url = await FirebaseImageUploader.uploadImage(
           imageFile: File(image.path),
@@ -473,6 +595,11 @@ class _CommunityPostCreateSimpleScreenState
       );
       final roles = userProfile['roles'];
       final isAdmin = roles is List && roles.contains('admin');
+      final structuredMeta = _buildStructuredMeta();
+      final readRestriction =
+          CommunityAccessLevel.canSetRestriction(userProfile)
+              ? _selectedReadRestriction
+              : null;
 
       final postData = <String, dynamic>{
         'postId': postId,
@@ -495,9 +622,21 @@ class _CommunityPostCreateSimpleScreenState
         'isDeleted': false,
         'isHidden': false,
         'hiddenByReport': false,
+        'readRestriction': readRestriction?.toRestrictionMap() ??
+            CommunityAccessLevel.unrestrictedMap(),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
+      if (widget.sourceChat != null) {
+        postData['sourceChat'] = <String, dynamic>{
+          ...widget.sourceChat!,
+          'promotedBy': widget.sourceChat!['promotedBy'] ?? currentUser.uid,
+          'promotedAt': FieldValue.serverTimestamp(),
+        };
+      }
+      if (structuredMeta != null) {
+        postData['structuredMeta'] = structuredMeta;
+      }
 
       final batch = FirebaseFirestore.instance.batch();
       final postRef = FirebaseFirestore.instance
@@ -618,6 +757,102 @@ class _CommunityPostCreateSimpleScreenState
   }
 
   String _escapeHtmlAttribute(String value) => _escapeHtml(value);
+
+  Map<String, dynamic>? _buildStructuredMeta() {
+    final hasTextValue = [
+      _metaRouteController,
+      _metaCarrierController,
+      _metaCabinController,
+      _metaMilesController,
+      _metaTaxesController,
+      _metaCashController,
+      _metaCostController,
+      _metaGiftcardController,
+    ].any((controller) => controller.text.trim().isNotEmpty);
+    if (!hasTextValue) return null;
+
+    final meta = <String, dynamic>{
+      'schemaVersion': 1,
+      'type': _structuredTypeKey,
+      'typeLabel': _structuredMetaType,
+      'createdFrom': 'community_simple_editor',
+    };
+
+    void putString(String key, TextEditingController controller) {
+      final value = controller.text.trim();
+      if (value.isNotEmpty) meta[key] = value;
+    }
+
+    void putInt(String key, TextEditingController controller) {
+      final value = _parseMetaInt(controller.text);
+      if (value != null) meta[key] = value;
+    }
+
+    void putDouble(String key, TextEditingController controller) {
+      final value = _parseMetaDouble(controller.text);
+      if (value != null) meta[key] = value;
+    }
+
+    putString('route', _metaRouteController);
+    putString('carrierOrHotel', _metaCarrierController);
+    putString('cabin', _metaCabinController);
+    putString('giftcardBrand', _metaGiftcardController);
+    putInt('miles', _metaMilesController);
+    putInt('taxes', _metaTaxesController);
+    putInt('cashPrice', _metaCashController);
+    putDouble('costPerMile', _metaCostController);
+    return meta;
+  }
+
+  String get _structuredTypeKey {
+    switch (_structuredMetaType) {
+      case '호텔':
+        return 'hotel';
+      case '상품권':
+        return 'giftcard';
+      case '발권':
+      default:
+        return 'ticketing';
+    }
+  }
+
+  int? _parseMetaInt(String value) {
+    final normalized = value.replaceAll(',', '').trim();
+    if (normalized.isEmpty) return null;
+    return int.tryParse(normalized);
+  }
+
+  double? _parseMetaDouble(String value) {
+    final normalized = value.replaceAll(',', '').trim();
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  String _plainTextFromHtml(String html) {
+    var text = html
+        .replaceAll(RegExp(r'<img[^>]*>', caseSensitive: false), '')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<p[^>]*>', caseSensitive: false), '')
+        .replaceAll(RegExp(r'<[^>]+>'), '');
+    text = text
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'");
+    return text
+        .split('\n')
+        .map((line) => line.trimRight())
+        .where((line) => line.trim().isNotEmpty)
+        .join('\n');
+  }
+
+  void _removeInitialImageAt(int index) {
+    if (index < 0 || index >= _initialImageUrls.length) return;
+    setState(() => _initialImageUrls.removeAt(index));
+  }
 
   void _removeImageAt(int index) {
     if (index < 0 || index >= _selectedImages.length) return;
@@ -766,6 +1001,10 @@ class _CommunityPostCreateSimpleScreenState
                 ),
                 const SizedBox(height: 14),
                 _buildBoardPill(),
+                if (_canSetReadRestriction) ...[
+                  const SizedBox(height: 10),
+                  _buildReadRestrictionButton(),
+                ],
                 const SizedBox(height: 14),
                 TextField(
                   controller: _titleController,
@@ -806,6 +1045,8 @@ class _CommunityPostCreateSimpleScreenState
                     border: InputBorder.none,
                   ),
                 ),
+                const SizedBox(height: 8),
+                _buildStructuredMetaSection(),
                 if (_links.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Wrap(
@@ -828,6 +1069,52 @@ class _CommunityPostCreateSimpleScreenState
                         onDeleted: () => _removeLink(link),
                       );
                     }).toList(),
+                  ),
+                ],
+                if (_initialImageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _initialImageUrls.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemBuilder: (context, index) {
+                      final imageUrl = _initialImageUrls[index];
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(imageUrl, fit: BoxFit.cover),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: InkWell(
+                              onTap: () => _removeInitialImageAt(index),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
                 if (_selectedImages.isNotEmpty) ...[
@@ -929,6 +1216,253 @@ class _CommunityPostCreateSimpleScreenState
             ),
             const Icon(Icons.expand_more_rounded, color: Colors.black54),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadRestrictionButton() {
+    final label = _selectedReadRestriction == null
+        ? '전체 공개'
+        : '${_selectedReadRestriction!.label} 이상';
+
+    return InkWell(
+      onTap: _openReadRestrictionSheet,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFD0D0D0), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _selectedReadRestriction == null
+                  ? Icons.lock_open_rounded
+                  : Icons.lock_rounded,
+              color: Colors.black,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              '열람 제한',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF555555),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.expand_more_rounded, color: Colors.black54),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStructuredMetaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 18, color: Color(0xFFE3E3E3)),
+        InkWell(
+          onTap: () => setState(
+            () => _structuredMetaExpanded = !_structuredMetaExpanded,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                const Icon(Icons.fact_check_outlined, color: Colors.black87),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '후기 메타',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _structuredMetaExpanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                  color: Colors.black54,
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ['발권', '호텔', '상품권'].map((type) {
+                  return ChoiceChip(
+                    label: Text(type),
+                    selected: _structuredMetaType == type,
+                    selectedColor: Colors.black,
+                    labelStyle: TextStyle(
+                      color: _structuredMetaType == type
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    onSelected: (_) {
+                      setState(() => _structuredMetaType = type);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              _buildMetaTextField(
+                controller: _metaRouteController,
+                label: _structuredMetaType == '호텔' ? '호텔/지역' : '노선',
+                hint: _structuredMetaType == '호텔' ? '파크하얏트 부산' : 'ICN-JFK',
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetaTextField(
+                      controller: _metaCarrierController,
+                      label: _structuredMetaType == '호텔'
+                          ? '호텔 체인'
+                          : _structuredMetaType == '상품권'
+                              ? '거래처'
+                              : '항공사',
+                      hint: _structuredMetaType == '발권' ? '대한항공' : '',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildMetaTextField(
+                      controller: _metaCabinController,
+                      label: _structuredMetaType == '호텔' ? '객실' : '좌석',
+                      hint: _structuredMetaType == '발권' ? '비즈니스' : '',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetaTextField(
+                      controller: _metaMilesController,
+                      label: _structuredMetaType == '호텔' ? '포인트' : '마일',
+                      hint: '62500',
+                      suffix: _structuredMetaType == '호텔' ? 'pt' : 'mile',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildMetaTextField(
+                      controller: _metaTaxesController,
+                      label: '세금/수수료',
+                      hint: '180000',
+                      suffix: '원',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetaTextField(
+                      controller: _metaCashController,
+                      label: '현금가',
+                      hint: '1500000',
+                      suffix: '원',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildMetaTextField(
+                      controller: _metaCostController,
+                      label: '원가',
+                      hint: '9.8',
+                      suffix: '원/마일',
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildMetaTextField(
+                controller: _metaGiftcardController,
+                label: '상품권/카드',
+                hint: '해피머니, 신한카드',
+              ),
+            ],
+          ),
+          crossFadeState: _structuredMetaExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 180),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetaTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    String? suffix,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        suffixText: suffix,
+        isDense: true,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFDADADA)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFDADADA)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.black, width: 1.3),
         ),
       ),
     );

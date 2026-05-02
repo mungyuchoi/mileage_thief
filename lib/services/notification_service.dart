@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import '../screen/radar_notification_screen.dart';
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -43,6 +45,13 @@ class NotificationService {
     'comment_like_notifications',
     '댓글 좋아요 알림',
     description: '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel radarChannel = AndroidNotificationChannel(
+    'radar_notifications',
+    '마일캐치 레이더 알림',
+    description: '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.',
     importance: Importance.high,
   );
 
@@ -116,6 +125,7 @@ class NotificationService {
       await androidImplementation.createNotificationChannel(postCommentChannel);
       await androidImplementation.createNotificationChannel(commentReplyChannel);
       await androidImplementation.createNotificationChannel(commentLikeChannel);
+      await androidImplementation.createNotificationChannel(radarChannel);
     }
   }
 
@@ -141,6 +151,9 @@ class NotificationService {
       case 'comment_like':
         specificNotificationEnabled = prefs.getBool('comment_like_notification') ?? true;
         break;
+      case 'radar_match':
+        specificNotificationEnabled = prefs.getBool('radar_notification') ?? true;
+        break;
     }
     
     if (specificNotificationEnabled) {
@@ -154,7 +167,6 @@ class NotificationService {
   /// 로컬 알림 생성
   void _showLocalNotification(RemoteMessage message) {
     final data = message.data;
-    final type = data['type'];
     final notificationTitle = data['notificationTitle'] ?? '알림';
     final notificationBody = data['notificationBody'] ?? '';
     
@@ -237,6 +249,12 @@ class NotificationService {
   /// 딥링크 처리
   void _handleDeepLink(Map<String, dynamic> data) {
     final type = data['type'];
+
+    if (type == 'radar_match') {
+      _navigateToRadarNotifications();
+      return;
+    }
+
     final postId = data['postId'];
     final date = data['date'];
     final boardId = data['boardId'] ?? 'free'; // 게시판 ID
@@ -265,6 +283,9 @@ class NotificationService {
       case 'comment_like':
         final commentId = data['commentId'];
         _navigateToPostDetailWithComment(postId, date, boardId, boardName, commentId);
+        break;
+      case 'radar_match':
+        _navigateToRadarNotifications();
         break;
       default:
         print('알 수 없는 알림 타입: $type');
@@ -299,6 +320,17 @@ class NotificationService {
           'boardName': boardName,
           'scrollToCommentId': commentId, // 댓글 스크롤용
         },
+      );
+    }
+  }
+
+  /// 레이더 알림함으로 이동
+  void _navigateToRadarNotifications() {
+    if (navigatorKey.currentState != null) {
+      navigatorKey.currentState!.push(
+        MaterialPageRoute(
+          builder: (_) => const RadarNotificationScreen(),
+        ),
       );
     }
   }
@@ -361,6 +393,8 @@ class NotificationService {
         return '대댓글 알림';
       case 'comment_like_notifications':
         return '댓글 좋아요 알림';
+      case 'radar_notifications':
+        return '마일캐치 레이더 알림';
       default:
         return '알림';
     }
@@ -377,6 +411,8 @@ class NotificationService {
         return '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.';
       case 'comment_like_notifications':
         return '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.';
+      case 'radar_notifications':
+        return '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.';
       default:
         return '알림';
     }

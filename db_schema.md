@@ -340,6 +340,7 @@ updatedAt timestamp 수정 시각(자동)
 | likesCount     | number   | 좋아요 수 |
 | commentCount   | number   | 댓글 수 |
 | reportsCount   | number   | 신고 수 |
+| readRestriction | map      | 읽기 제한 정보. 없거나 `enabled=false`이면 전체 공개 |
 | isDeleted      | boolean  | 삭제 여부 |
 | isHidden       | boolean  | 블라인드 여부 |
 | hiddenByReport | boolean  | 신고 누적 자동 블라인드 여부 |
@@ -361,6 +362,21 @@ updatedAt timestamp 수정 시각(자동)
 > - 프로필 사진 변경: author.photoURL 일괄 업데이트  
 > - 닉네임 변경: author.displayName 일괄 업데이트
 > - 읽기 성능 최적화를 위해 비정규화된 구조 사용
+
+#### ▶️ readRestriction 구조 상세
+```json
+{
+  "enabled": true,
+  "minRank": 2,
+  "minGrade": "economy",
+  "minLevel": 2,
+  "label": "이코노미 레벨2"
+}
+```
+
+> - 전체 공개: `{ "enabled": false, "minRank": 0, "label": "전체 공개" }`
+> - 등급 rank: 이코노미 Lv.1~5 = 1~5, 비즈니스 Lv.1~5 = 6~10, 퍼스트 Lv.1~2 = 11~12
+> - 작성 화면에서는 비즈니스 Lv.1 이상 또는 관리자만 이 값을 설정할 수 있습니다.
 
 ### 📂 서브컬렉션
 
@@ -589,5 +605,4 @@ dateId: YYYYMMDD (예: 20251019)
 - 뱃지, 칭호, 관리자 권한
 - 마이페이지에서 활동 기록 조회
 - 운영진 신고 처리/유저 제재 관리
-
 

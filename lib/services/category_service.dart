@@ -7,7 +7,7 @@ class CategoryService {
   CategoryService._internal();
 
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
-  
+
   // 캐시된 카테고리 데이터
   List<Map<String, dynamic>>? _cachedBoards;
   bool _isLoading = false;
@@ -30,10 +30,10 @@ class CategoryService {
     }
 
     _isLoading = true;
-    
+
     try {
       final snapshot = await _database.child('CATEGORIES').get();
-      
+
       if (snapshot.exists) {
         final List<dynamic> data = snapshot.value as List<dynamic>;
         _cachedBoards = data
@@ -86,6 +86,7 @@ class CategoryService {
     return const [
       {'id': 'question', 'name': '마일리지', 'group': '마일리지/혜택', 'description': '마일리지, 항공사 정책, 발권 문의 등', 'order': 1, 'icon': 'help_outline', 'fabEnabled': true},
       {'id': 'deal', 'name': '적립/카드 혜택', 'group': '마일리지/혜택', 'description': '상테크, 카드 추천, 이벤트 정보', 'order': 2, 'icon': 'card_giftcard', 'fabEnabled': true},
+      {'id': 'hot_deal', 'name': '핫딜', 'group': '마일리지/혜택', 'description': '항공권, 호텔, 여행 관련 핫딜 공유', 'order': 2.5, 'icon': 'local_fire_department', 'fabEnabled': true},
       {'id': 'seat_share', 'name': '좌석 공유', 'group': '마일리지/혜택', 'description': '좌석 오픈 알림, 취소표 공유', 'order': 3, 'icon': 'event_seat', 'fabEnabled': true},
       {'id': 'review', 'name': '항공 리뷰', 'group': '여행/리뷰', 'description': '라운지, 기내식, 좌석 후기 등', 'order': 4, 'icon': 'rate_review', 'fabEnabled': true},
       {'id': 'free', 'name': '자유게시판', 'group': '여행/리뷰', 'description': '일상, 후기, 질문 섞인 잡담', 'order': 5, 'icon': 'chat_bubble_outline', 'fabEnabled': true},
@@ -96,4 +97,4 @@ class CategoryService {
       {'id': 'notice', 'name': '운영 공지사항', 'group': '운영/소통', 'description': '관리자 공지, 업데이트 안내', 'order': 9, 'icon': 'campaign', 'fabEnabled': false},
     ];
   }
-} 
+}

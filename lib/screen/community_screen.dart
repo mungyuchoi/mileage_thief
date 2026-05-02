@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/category_service.dart';
 import '../services/community_notification_history_service.dart';
+import '../utils/community_access_level.dart';
 import 'login_screen.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
@@ -15,6 +16,18 @@ import 'community_search_screen.dart';
 import 'community_notification_history_screen.dart';
 import 'my_page_screen.dart';
 import 'contest_list_screen.dart';
+
+class _CommunityBoardTab {
+  const _CommunityBoardTab({
+    required this.boardId,
+    required this.label,
+    required this.boardName,
+  });
+
+  final String boardId;
+  final String label;
+  final String boardName;
+}
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({Key? key}) : super(key: key);
@@ -24,6 +37,7 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final CategoryService _categoryService = CategoryService();
   List<Map<String, dynamic>> boards = [];
   bool isLoadingBoards = true;
@@ -53,6 +67,69 @@ class _CommunityScreenState extends State<CommunityScreen> {
       'e466cdbe-2ab6-48c5-8060-c0950f6b84f6';
   static const String _gradeGuidePostDateString = '20250825';
   static const String _gradeGuideBoardId = 'notice';
+  static const double _drawerBottomScrollPadding = 168;
+
+  static const List<_CommunityBoardTab> _communityTabs = [
+    _CommunityBoardTab(
+      boardId: 'all',
+      label: '전체글',
+      boardName: '전체글',
+    ),
+    _CommunityBoardTab(
+      boardId: 'free',
+      label: '자유게시판',
+      boardName: '자유게시판',
+    ),
+    _CommunityBoardTab(
+      boardId: 'deal',
+      label: '적립/카드',
+      boardName: '적립/카드 혜택',
+    ),
+    _CommunityBoardTab(
+      boardId: 'hot_deal',
+      label: '핫딜',
+      boardName: '핫딜',
+    ),
+    _CommunityBoardTab(
+      boardId: 'question',
+      label: '마일리지',
+      boardName: '마일리지',
+    ),
+    _CommunityBoardTab(
+      boardId: 'seats',
+      label: '오늘의 좌석',
+      boardName: '오늘의 좌석',
+    ),
+    _CommunityBoardTab(
+      boardId: 'news',
+      label: '오늘의 뉴스',
+      boardName: '오늘의 뉴스',
+    ),
+    _CommunityBoardTab(
+      boardId: 'suggestion',
+      label: '건의사항',
+      boardName: '건의사항',
+    ),
+    _CommunityBoardTab(
+      boardId: 'notice',
+      label: '운영 공지사항',
+      boardName: '운영 공지사항',
+    ),
+  ];
+
+  static const Map<String, String> _fallbackBoardNames = {
+    'free': '자유게시판',
+    'deal': '적립/카드 혜택',
+    'hot_deal': '핫딜',
+    'question': '마일리지',
+    'seat_share': '좌석 공유',
+    'review': '항공 리뷰',
+    'seats': '오늘의 좌석',
+    'news': '오늘의 뉴스',
+    'error_report': '오류 신고',
+    'suggestion': '건의사항',
+    'notice': '운영 공지사항',
+  };
 
   // 초기 로딩 상태 관리
   bool _isInitialLoading = true;
@@ -375,16 +452,242 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool get _showBestSection =>
       selectedBoardId == 'all' && _bestPosts.isNotEmpty;
 
+  PreferredSizeWidget _buildCommunityAppBar() {
+    final photoURL = userProfile?['photoURL']?.toString() ?? '';
+
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      surfaceTintColor: Colors.white,
+      elevation: 0.5,
+      shadowColor: Colors.black.withValues(alpha: 0.12),
+      centerTitle: true,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.menu),
+        color: Colors.black,
+        tooltip: '게시판',
+        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      title: Text(
+        selectedBoardName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
+      actions: [
+        if (AuthService.currentUser != null && userProfile != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyPageScreen(),
+                  ),
+                );
+              },
+              child: CircleAvatar(
+                radius: 14,
+                backgroundColor: const Color(0xFFF1F1F1),
+                backgroundImage:
+                    photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+                child: photoURL.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        size: 18,
+                        color: Colors.grey,
+                      )
+                    : null,
+              ),
+            ),
+          ),
+        _buildCommunityNotificationButton(),
+        IconButton(
+          icon: const Icon(Icons.emoji_events),
+          color: Colors.black,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ContestListScreen(),
+              ),
+            );
+          },
+          tooltip: '콘테스트',
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.black),
+          iconSize: 22,
+          constraints: const BoxConstraints(minWidth: 40),
+          padding: EdgeInsets.zero,
+          color: Colors.white,
+          surfaceTintColor: Colors.white,
+          onSelected: (value) {
+            if (value == 'search') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CommunitySearchScreen(),
+                ),
+              );
+            } else if (value == 'view_toggle') {
+              setState(() {
+                isCompactView = !isCompactView;
+              });
+            }
+          },
+          itemBuilder: (BuildContext context) => [
+            const PopupMenuItem<String>(
+              value: 'search',
+              child: Row(
+                children: [
+                  Icon(Icons.search, size: 20, color: Colors.black),
+                  SizedBox(width: 8),
+                  Text(
+                    '검색',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'view_toggle',
+              child: Row(
+                children: [
+                  Icon(
+                    isCompactView ? Icons.view_module : Icons.view_list,
+                    size: 20,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isCompactView ? '카드뷰로 보기' : '간단뷰로 보기',
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _selectCommunityBoard(
+    String boardId,
+    String boardName, {
+    bool closeDrawer = false,
+  }) {
+    if (selectedBoardId == boardId) {
+      if (closeDrawer && mounted) {
+        Navigator.pop(context);
+      }
+      return;
+    }
+
+    setState(() {
+      selectedBoardId = boardId;
+      selectedBoardName = boardName;
+      _posts.clear();
+      _lastDocument = null;
+      _hasMoreData = true;
+      _isLoadingMore = false;
+      _isInitialLoading = true;
+    });
+
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    if (closeDrawer && mounted) {
+      Navigator.pop(context);
+    }
+
+    _loadInitialPosts();
+    _loadBestPostsIfNeeded();
+  }
+
+  Widget _buildCommunityTabs() {
+    return Container(
+      height: 56,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
+        ),
+      ),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        itemCount: _communityTabs.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 24),
+        itemBuilder: (context, index) {
+          return _buildCommunityTab(_communityTabs[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildCommunityTab(_CommunityBoardTab tab) {
+    final isSelected = selectedBoardId == tab.boardId;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => _selectCommunityBoard(tab.boardId, tab.label),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              tab.label,
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              style: TextStyle(
+                color: isSelected ? Colors.black : const Color(0xFF858585),
+                fontSize: 17,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 10),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              width: isSelected ? 32 : 0,
+              height: 3,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      key: _scaffoldKey,
+      backgroundColor: Colors.white,
+      appBar: _buildCommunityAppBar(),
       drawer: Drawer(
         child: Container(
           color: Colors.white,
           child: SafeArea(
             child: ListView(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(
+                bottom: _drawerBottomScrollPadding,
+              ),
               children: [
                 Container(
                   height: 64,
@@ -578,12 +881,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                     selected: selectedBoardId == 'all',
                     onTap: () {
-                      setState(() {
-                        selectedBoardId = 'all';
-                        selectedBoardName = '전체글';
-                      });
-                      Navigator.pop(context);
-                      _refreshPosts();
+                      _selectCommunityBoard(
+                        'all',
+                        '전체글',
+                        closeDrawer: true,
+                      );
                     },
                   ),
                 ),
@@ -671,12 +973,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             borderRadius: BorderRadius.circular(12)),
                         tileColor: Colors.transparent,
                         onTap: () {
-                          setState(() {
-                            selectedBoardId = boardId;
-                            selectedBoardName = board['name']!;
-                          });
-                          Navigator.pop(context);
-                          _refreshPosts();
+                          _selectCommunityBoard(
+                            boardId,
+                            board['name']!,
+                            closeDrawer: true,
+                          );
                         },
                       ),
                     );
@@ -689,161 +990,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       body: Column(
         children: [
-          // 카테고리/검색/공지 바
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFFFF8DC), Color(0xFF74512D)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.brown),
-                    onPressed: () {
-                      Scaffold.of(context).openDrawer();
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 8),
-                      child: Text(
-                        selectedBoardName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    // 프로필 이미지 (로그인 상태일 때만 표시)
-                    if (AuthService.currentUser != null && userProfile != null)
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MyPageScreen(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundColor: Colors.white,
-                                backgroundImage:
-                                    userProfile!['photoURL'] != null &&
-                                            userProfile!['photoURL']
-                                                .toString()
-                                                .isNotEmpty
-                                        ? NetworkImage(userProfile!['photoURL'])
-                                        : null,
-                                child: userProfile!['photoURL'] == null ||
-                                        userProfile!['photoURL']
-                                            .toString()
-                                            .isEmpty
-                                    ? const Icon(
-                                        Icons.person,
-                                        size: 20,
-                                        color: Colors.grey,
-                                      )
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    // 알림 버튼 + 뱃지
-                    _buildCommunityNotificationButton(),
-                    // 콘테스트 버튼
-                    IconButton(
-                      icon: const Icon(Icons.emoji_events, color: Colors.white),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ContestListScreen(),
-                          ),
-                        );
-                      },
-                      tooltip: '콘테스트',
-                    ),
-                    // 더보기 메뉴 (검색, 뷰 모드 토글 포함)
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, color: Colors.white),
-                      iconSize: 20,
-                      constraints: const BoxConstraints(minWidth: 40),
-                      padding: EdgeInsets.zero,
-                      color: Colors.white,
-                      onSelected: (value) {
-                        if (value == 'search') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const CommunitySearchScreen(),
-                            ),
-                          );
-                        } else if (value == 'view_toggle') {
-                          setState(() {
-                            isCompactView = !isCompactView;
-                          });
-                        }
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        PopupMenuItem<String>(
-                          value: 'search',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.search,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text('검색'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem<String>(
-                          value: 'view_toggle',
-                          child: Row(
-                            children: [
-                              Icon(
-                                isCompactView
-                                    ? Icons.view_module
-                                    : Icons.view_list,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(isCompactView ? '카드뷰로 보기' : '간단뷰로 보기'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // 본문 영역
+          _buildCommunityTabs(),
           Expanded(
             child: RefreshIndicator(
               color: const Color(0xFF74512D),
@@ -955,6 +1102,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       post, createdAt, adjustedIndex);
                                 }
 
+                                final readRestriction =
+                                    CommunityAccessLevel.restrictionFromPost(
+                                        post);
+
                                 return Card(
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(18),
@@ -1013,10 +1164,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                             ),
                                           const SizedBox(height: 12),
 
-                                          // 조회수, 댓글, 좋아요
+                                          // 조회수, 열람 제한, 댓글, 좋아요
                                           Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 '조회 ${post['viewsCount'] ?? 0}회',
@@ -1025,31 +1174,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   color: Colors.black54,
                                                 ),
                                               ),
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.comment,
-                                                      size: 16,
-                                                      color: Colors.black54),
-                                                  const SizedBox(width: 4),
-                                                  Text(
+                                              const Spacer(),
+                                              if (readRestriction != null) ...[
+                                                _buildReadRestrictionMeta(
+                                                  readRestriction,
+                                                  iconSize: 14,
+                                                  fontSize: 12,
+                                                ),
+                                                const SizedBox(width: 12),
+                                              ],
+                                              _buildPostStatMeta(
+                                                icon: Icons.comment,
+                                                value:
                                                     '${post['commentCount'] ?? 0}',
-                                                    style: const TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black54),
-                                                  ),
-                                                  const SizedBox(width: 16),
-                                                  const Icon(
-                                                      Icons.favorite_border,
-                                                      size: 16,
-                                                      color: Colors.black54),
-                                                  const SizedBox(width: 4),
-                                                  Text(
+                                              ),
+                                              const SizedBox(width: 12),
+                                              _buildPostStatMeta(
+                                                icon: Icons.favorite_border,
+                                                value:
                                                     '${post['likesCount'] ?? 0}',
-                                                    style: const TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black54),
-                                                  ),
-                                                ],
                                               ),
                                             ],
                                           ),
@@ -1360,10 +1503,72 @@ class _CommunityScreenState extends State<CommunityScreen> {
   String _getBoardName(String boardId) {
     try {
       return boards.firstWhere((board) => board['id'] == boardId)['name'] ??
+          _fallbackBoardNames[boardId] ??
           '알 수 없음';
     } catch (e) {
-      return '알 수 없음';
+      for (final tab in _communityTabs) {
+        if (tab.boardId == boardId) {
+          return tab.boardName;
+        }
+      }
+      return _fallbackBoardNames[boardId] ?? '알 수 없음';
     }
+  }
+
+  void _showAccessRestrictionToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.grey[850],
+      textColor: Colors.white,
+      fontSize: 16,
+    );
+  }
+
+  Widget _buildReadRestrictionMeta(
+    CommunityAccessLevel restriction, {
+    double iconSize = 15,
+    double fontSize = 12,
+    Color color = Colors.black54,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.lock_outline_rounded, size: iconSize, color: color),
+        const SizedBox(width: 3),
+        Text(
+          restriction.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: fontSize,
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPostStatMeta({
+    required IconData icon,
+    required String value,
+    double iconSize = 16,
+    double fontSize = 13,
+    Color color = Colors.black54,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: iconSize, color: color),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(fontSize: fontSize, color: color),
+        ),
+      ],
+    );
   }
 
   // 게시글 조회수 증가
@@ -1423,6 +1628,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
       if (result == true) {
         await _loadUserProfile();
       }
+      return;
+    }
+
+    if (userProfile == null) {
+      await _loadUserProfile();
+      if (!mounted) return;
+    }
+
+    final accessMessage =
+        CommunityAccessLevel.denialMessageForPost(post, userProfile);
+    if (accessMessage != null) {
+      _showAccessRestrictionToast(accessMessage);
       return;
     }
 
@@ -1532,7 +1749,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   /// 커뮤니티 알림 버튼 + 뱃지 (실시간 업데이트)
-  Widget _buildCommunityNotificationButton() {
+  Widget _buildCommunityNotificationButton({
+    Color iconColor = Colors.black,
+  }) {
     final user = AuthService.currentUser;
 
     // 로그인하지 않은 사용자는 알림 버튼만 표시 (뱃지 없음)
@@ -1553,13 +1772,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
             );
           }
         },
-        child: const SizedBox(
+        child: SizedBox(
           width: 48,
           height: 48,
           child: Center(
             child: Icon(
               Icons.notifications_outlined,
-              color: Colors.white,
+              color: iconColor,
             ),
           ),
         ),
@@ -1595,7 +1814,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   unreadCount > 0
                       ? Icons.notifications
                       : Icons.notifications_outlined,
-                  color: Colors.white,
+                  color: iconColor,
                 ),
                 // 읽지 않은 알림 뱃지
                 if (unreadCount > 0)
@@ -1635,6 +1854,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 간단뷰 아이템 위젯
   Widget _buildCompactListItem(
       Map<String, dynamic> post, DateTime createdAt, int index) {
+    final readRestriction = CommunityAccessLevel.restrictionFromPost(post);
+
     return Column(
       children: [
         Material(
@@ -1673,8 +1894,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // 2줄: displayName displayGrade | 조회수 | 댓글수 | 좋아요수
-                  Row(
+                  // 2줄: displayName displayGrade | 조회수 | 댓글수 | 좋아요수 | 제한
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    runSpacing: 3,
                     children: [
                       // displayName
                       Text(
@@ -1742,6 +1966,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           color: Colors.black45,
                         ),
                       ),
+                      if (readRestriction != null) ...[
+                        const Text(
+                          ' | ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black45,
+                          ),
+                        ),
+                        _buildReadRestrictionMeta(
+                          readRestriction,
+                          iconSize: 12,
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
+                      ],
                     ],
                   ),
                 ],

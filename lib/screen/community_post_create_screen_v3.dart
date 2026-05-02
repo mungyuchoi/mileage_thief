@@ -14,6 +14,7 @@ import '../community_editor/community_editor.dart';
 // any_link_preview는 상세 화면에서 사용. 작성 화면은 직접 메타데이터 파싱 사용
 import 'dart:io';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../utils/community_access_level.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
@@ -27,6 +28,7 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? dateString;
   final String? editTitle;
   final String? editContentHtml;
+  final dynamic editReadRestriction;
 
   const CommunityPostCreateScreenV3({
     Key? key,
@@ -38,6 +40,7 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
     this.dateString,
     this.editTitle,
     this.editContentHtml,
+    this.editReadRestriction,
   }) : super(key: key);
 
   @override
@@ -45,8 +48,11 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
       _CommunityPostCreateScreenV3State();
 }
 
-class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV3> {
+class _CommunityPostCreateScreenV3State
+    extends State<CommunityPostCreateScreenV3> {
   bool _isLoading = false;
+  Map<String, dynamic>? _userProfile;
+  CommunityAccessLevel? _selectedReadRestriction;
   // 임시 저장 키
   static const String _tempTitleKey = 'temp_post_title_v3';
   static const String _tempContentKey = 'temp_post_content_v3';
@@ -76,6 +82,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
     // 커뮤니티 에디터 컨트롤러 초기화
     _editorController = CommunityEditorController();
+    _selectedReadRestriction =
+        CommunityAccessLevel.fromRestriction(widget.editReadRestriction);
 
     // 초기 데이터 설정
     _editorController.initializeWithData(
@@ -129,6 +137,21 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     });
     // 초기 진입 시 deal 게시판이면 기본 타입을 설정
     // deal 보드 초기 타입 상태 설정 제거
+    _loadUserProfile();
+  }
+
+  bool get _canSetReadRestriction {
+    return CommunityAccessLevel.canSetRestriction(_userProfile);
+  }
+
+  Future<void> _loadUserProfile() async {
+    final currentUser = AuthService.currentUser;
+    if (currentUser == null) return;
+    final profile = await UserService.getUserFromFirestore(currentUser.uid);
+    if (!mounted) return;
+    setState(() {
+      _userProfile = profile;
+    });
   }
 
   bool _isDealBoard(String? boardId, String? boardName) {
@@ -137,34 +160,185 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
     return name.contains('적립') || name.contains('카드');
   }
 
+  Future<void> _openReadRestrictionSheet() async {
+    if (!_canSetReadRestriction || _isLoading) return;
+
+    final levels = CommunityAccessLevel.selectableLevels(_userProfile);
+    final selectedRank = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  '열람 제한',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  _selectedReadRestriction == null
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: Colors.black,
+                ),
+                title: const Text(
+                  '전체 공개',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () => Navigator.of(context).pop(0),
+              ),
+              const Divider(height: 1),
+              ...levels.map((level) {
+                final isSelected = _selectedReadRestriction?.rank == level.rank;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    isSelected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: Colors.black,
+                  ),
+                  title: Text(
+                    '${level.label} 이상',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(context).pop(level.rank),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selectedRank == null || !mounted) return;
+    setState(() {
+      _selectedReadRestriction = CommunityAccessLevel.fromRank(selectedRank);
+    });
+  }
+
+  Widget _buildReadRestrictionBar() {
+    final label = _selectedReadRestriction == null
+        ? '전체 공개'
+        : '${_selectedReadRestriction!.label} 이상';
+
+    return InkWell(
+      onTap: _openReadRestrictionSheet,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _selectedReadRestriction == null
+                  ? Icons.lock_open_rounded
+                  : Icons.lock_rounded,
+              color: Colors.black87,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              '열람 제한',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF555555),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.expand_more_rounded,
+              color: Colors.black54,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _ensureBranchesLoaded() async {
     if (_branchesLoading || _branches.isNotEmpty) return;
-    setState(() { _branchesLoading = true; });
+    setState(() {
+      _branchesLoading = true;
+    });
     try {
-      final snap = await FirebaseFirestore.instance.collection('branches').get();
+      final snap =
+          await FirebaseFirestore.instance.collection('branches').get();
       final List<Map<String, dynamic>> list = [];
       for (final d in snap.docs) {
         final data = d.data();
         list.add({
           'id': d.id,
           'name': (data['name'] as String?) ?? d.id,
-          'latitude': (data['latitude'] is num) ? (data['latitude'] as num).toDouble() : null,
-          'longitude': (data['longitude'] is num) ? (data['longitude'] as num).toDouble() : null,
+          'latitude': (data['latitude'] is num)
+              ? (data['latitude'] as num).toDouble()
+              : null,
+          'longitude': (data['longitude'] is num)
+              ? (data['longitude'] as num).toDouble()
+              : null,
         });
       }
       list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
-      setState(() { _branches = list; });
+      setState(() {
+        _branches = list;
+      });
     } catch (_) {
     } finally {
-      if (mounted) setState(() { _branchesLoading = false; });
+      if (mounted)
+        setState(() {
+          _branchesLoading = false;
+        });
     }
   }
 
   Future<void> _ensureGiftcardsLoaded() async {
     if (_giftcardsLoading || _giftcards.isNotEmpty) return;
-    setState(() { _giftcardsLoading = true; });
+    setState(() {
+      _giftcardsLoading = true;
+    });
     try {
-      final snap = await FirebaseFirestore.instance.collection('giftcards').get();
+      final snap =
+          await FirebaseFirestore.instance.collection('giftcards').get();
       final List<Map<String, dynamic>> list = [];
       for (final d in snap.docs) {
         final data = d.data();
@@ -174,10 +348,15 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         });
       }
       list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
-      setState(() { _giftcards = list; });
+      setState(() {
+        _giftcards = list;
+      });
     } catch (_) {
     } finally {
-      if (mounted) setState(() { _giftcardsLoading = false; });
+      if (mounted)
+        setState(() {
+          _giftcardsLoading = false;
+        });
     }
   }
 
@@ -197,19 +376,29 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('지점 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
+                  const Text('지점 선택',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87)),
                   const SizedBox(height: 8),
                   Expanded(
                     child: _branchesLoading
-                        ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2))
                         : ListView.separated(
                             itemCount: _branches.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
                             itemBuilder: (ctx, i) {
                               final b = _branches[i];
                               return ListTile(
-                                title: Text(b['name'] as String, style: const TextStyle(color: Colors.black)),
-                                subtitle: Text(b['id'] as String, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                                title: Text(b['name'] as String,
+                                    style:
+                                        const TextStyle(color: Colors.black)),
+                                subtitle: Text(b['id'] as String,
+                                    style: const TextStyle(
+                                        color: Colors.black54, fontSize: 12)),
                                 onTap: () {
                                   setState(() {
                                     _selectedBranchId = b['id'] as String?;
@@ -233,7 +422,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                       });
                       Navigator.pop(context);
                     },
-                    child: const Text('선택 해제', style: TextStyle(color: Colors.black87)),
+                    child: const Text('선택 해제',
+                        style: TextStyle(color: Colors.black87)),
                   ),
                 ],
               ),
@@ -259,24 +449,34 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('상품권', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
+                const Text('상품권',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87)),
                 const SizedBox(height: 8),
                 Expanded(
                   child: _giftcardsLoading
-                      ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : ListView.separated(
                           itemCount: _giftcards.length,
                           separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (ctx, i) {
                             final g = _giftcards[i];
                             return ListTile(
-                              title: Text(g['name'] as String, style: const TextStyle(color: Colors.black)),
-                              subtitle: Text(g['id'] as String, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                              title: Text(g['name'] as String,
+                                  style: const TextStyle(color: Colors.black)),
+                              subtitle: Text(g['id'] as String,
+                                  style: const TextStyle(
+                                      color: Colors.black54, fontSize: 12)),
                               onTap: () {
                                 setState(() {
-                                  if (index >= 0 && index < _tradeItems.length) {
+                                  if (index >= 0 &&
+                                      index < _tradeItems.length) {
                                     _tradeItems[index]['giftcardId'] = g['id'];
-                                    _tradeItems[index]['giftcardName'] = g['name'];
+                                    _tradeItems[index]['giftcardName'] =
+                                        g['name'];
                                   }
                                 });
                                 Navigator.pop(context);
@@ -295,7 +495,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                     });
                     Navigator.pop(context);
                   },
-                  child: const Text('선택 해제', style: TextStyle(color: Colors.black87)),
+                  child: const Text('선택 해제',
+                      style: TextStyle(color: Colors.black87)),
                 ),
               ],
             ),
@@ -325,15 +526,22 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  const Text('지도에서 위치 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
+                  const Text('지도에서 위치 선택',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87)),
                   const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        pickedAddress.isEmpty ? '지도를 탭하여 위치를 선택하세요' : pickedAddress,
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        pickedAddress.isEmpty
+                            ? '지도를 탭하여 위치를 선택하세요'
+                            : pickedAddress,
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -342,16 +550,26 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   const SizedBox(height: 4),
                   Expanded(
                     child: GoogleMap(
-                      initialCameraPosition: CameraPosition(target: LatLng(initLat, initLng), zoom: 14),
+                      initialCameraPosition: CameraPosition(
+                          target: LatLng(initLat, initLng), zoom: 14),
                       myLocationEnabled: false,
                       onTap: (latLng) async {
-                        setModalState(() { picked = latLng; });
-                        final addr = await _reverseGeocode(latLng.latitude, latLng.longitude);
-                        setModalState(() { pickedAddress = addr; });
+                        setModalState(() {
+                          picked = latLng;
+                        });
+                        final addr = await _reverseGeocode(
+                            latLng.latitude, latLng.longitude);
+                        setModalState(() {
+                          pickedAddress = addr;
+                        });
                       },
                       markers: picked == null
                           ? {}
-                          : { Marker(markerId: const MarkerId('picked'), position: picked!) },
+                          : {
+                              Marker(
+                                  markerId: const MarkerId('picked'),
+                                  position: picked!)
+                            },
                     ),
                   ),
                   Row(
@@ -359,7 +577,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('취소', style: TextStyle(color: Colors.black87)),
+                        child: const Text('취소',
+                            style: TextStyle(color: Colors.black87)),
                       ),
                       TextButton(
                         onPressed: () {
@@ -371,7 +590,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                           }
                           Navigator.pop(ctx);
                         },
-                        child: const Text('선택', style: TextStyle(color: Color(0xFF74512D), fontWeight: FontWeight.bold)),
+                        child: const Text('선택',
+                            style: TextStyle(
+                                color: Color(0xFF74512D),
+                                fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -387,15 +609,18 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
   Future<String> _reverseGeocode(double lat, double lng) async {
     try {
-      final uri = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=ko');
+      final uri = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=ko');
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 6);
       final req = await client.getUrl(uri);
-      req.headers.set(HttpHeaders.userAgentHeader, 'MileageThief/1.0 (reverse-geocode)');
+      req.headers.set(
+          HttpHeaders.userAgentHeader, 'MileageThief/1.0 (reverse-geocode)');
       final resp = await req.close();
       if (resp.statusCode != 200) return '';
       final body = await resp.transform(const Utf8Decoder()).join();
-      final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
+      final Map<String, dynamic> json =
+          jsonDecode(body) as Map<String, dynamic>;
       return (json['display_name'] as String?) ?? '';
     } catch (_) {
       return '';
@@ -429,7 +654,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 6);
       final request = await client.getUrl(uri);
-      request.headers.set(HttpHeaders.userAgentHeader, 'Mozilla/5.0 (Mobile; LinkPreview)');
+      request.headers.set(
+          HttpHeaders.userAgentHeader, 'Mozilla/5.0 (Mobile; LinkPreview)');
       final response = await request.close();
       if (response.statusCode != 200) return {};
       final contents = await response.transform(const Utf8Decoder()).join();
@@ -438,17 +664,29 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         final m = reg.firstMatch(contents);
         return m != null ? (m.group(1) ?? '').trim() : '';
       }
-      final title = pickMeta(r'<meta[^>]*property=["\"]og:title["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
-          .isNotEmpty ? pickMeta(r'<meta[^>]*property=["\"]og:title["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+
+      final title = pickMeta(
+                  r'<meta[^>]*property=["\"]og:title["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+              .isNotEmpty
+          ? pickMeta(
+              r'<meta[^>]*property=["\"]og:title["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
           : pickMeta(r'<title[^>]*>([^<]+)</title>');
-      final desc = pickMeta(r'<meta[^>]*property=["\"]og:description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
-          .isNotEmpty ? pickMeta(r'<meta[^>]*property=["\"]og:description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
-          : pickMeta(r'<meta[^>]*name=["\"]description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
-      String image = pickMeta(r'<meta[^>]*property=["\"]og:image["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
-      final site = pickMeta(r'<meta[^>]*property=["\"]og:site_name["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
+      final desc = pickMeta(
+                  r'<meta[^>]*property=["\"]og:description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+              .isNotEmpty
+          ? pickMeta(
+              r'<meta[^>]*property=["\"]og:description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>')
+          : pickMeta(
+              r'<meta[^>]*name=["\"]description["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
+      String image = pickMeta(
+          r'<meta[^>]*property=["\"]og:image["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
+      final site = pickMeta(
+          r'<meta[^>]*property=["\"]og:site_name["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>');
       // 상대 경로 이미지 보정
       if (image.isNotEmpty && !image.startsWith('http')) {
-        try { image = Uri.parse(url).resolve(image).toString(); } catch (_) {}
+        try {
+          image = Uri.parse(url).resolve(image).toString();
+        } catch (_) {}
       }
       return {
         'title': title,
@@ -562,7 +800,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       final hasBody = prefs.getBool(_tempHasContentKey) ?? false;
       final boardId = prefs.getString(_tempBoardIdKey);
       final boardName = prefs.getString(_tempBoardNameKey);
-      final has = title.isNotEmpty || hasBody || (boardId != null && boardName != null);
+      final has =
+          title.isNotEmpty || hasBody || (boardId != null && boardName != null);
       if (!has) return;
       final choice = await _showRestoreDraftSheet();
       if (choice == 'restore') {
@@ -617,7 +856,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
               children: [
                 const Text(
                   '이 게시글을 임시 저장할까요?',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -625,15 +867,23 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, 'cancel'),
-                      child: const Text('취소', style: TextStyle(color: Colors.black87, fontSize: 16)),
+                      child: const Text('취소',
+                          style:
+                              TextStyle(color: Colors.black87, fontSize: 16)),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, 'discard'),
-                      child: const Text('저장 안 함', style: TextStyle(color: Colors.black87, fontSize: 16)),
+                      child: const Text('저장 안 함',
+                          style:
+                              TextStyle(color: Colors.black87, fontSize: 16)),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, 'save'),
-                      child: const Text('저장', style: TextStyle(color: Color(0xFF74512D), fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: const Text('저장',
+                          style: TextStyle(
+                              color: Color(0xFF74512D),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
                     ),
                   ],
                 ),
@@ -664,7 +914,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
               children: [
                 const Text(
                   '임시 저장한 내용 불러오기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -677,12 +930,18 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, 'new'),
-                      child: const Text('새로 만들기', style: TextStyle(color: Colors.black87, fontSize: 16)),
+                      child: const Text('새로 만들기',
+                          style:
+                              TextStyle(color: Colors.black87, fontSize: 16)),
                     ),
                     Container(width: 1, height: 20, color: Colors.grey[300]),
                     TextButton(
                       onPressed: () => Navigator.pop(context, 'restore'),
-                      child: const Text('불러오기', style: TextStyle(color: Color(0xFF74512D), fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: const Text('불러오기',
+                          style: TextStyle(
+                              color: Color(0xFF74512D),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
                     ),
                   ],
                 ),
@@ -766,7 +1025,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       return;
     }
 
-    if (_editorController.postData.boardId == null || _editorController.postData.boardName == null) {
+    if (_editorController.postData.boardId == null ||
+        _editorController.postData.boardName == null) {
       Fluttertoast.showToast(
         msg: "게시판을 선택해주세요",
         toastLength: Toast.LENGTH_SHORT,
@@ -785,7 +1045,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
     try {
       // 저장 직전, 에디터 내 오토링크/프리뷰 반영을 강제 동기화
-      await _editorController.executeJS('try{ window.communityEditorAPI && window.communityEditorAPI.forceSync && window.communityEditorAPI.forceSync(); }catch(e){}');
+      await _editorController.executeJS(
+          'try{ window.communityEditorAPI && window.communityEditorAPI.forceSync && window.communityEditorAPI.forceSync(); }catch(e){}');
       // 1. 로그인 확인
       final currentUser = AuthService.currentUser;
       if (currentUser == null) {
@@ -804,7 +1065,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       }
 
       // 2. 사용자 정보 가져오기
-      final userProfile = await UserService.getUserFromFirestore(currentUser.uid);
+      final userProfile =
+          await UserService.getUserFromFirestore(currentUser.uid);
       if (userProfile == null) {
         _hideLoadingDialog();
         setState(() {
@@ -829,7 +1091,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
         dateString = widget.dateString!;
       } else {
         // 편집 중 미리 부여한 식별자가 있으면 재사용
-        if (_editorController.postData.postId != null && _editorController.postData.dateString != null) {
+        if (_editorController.postData.postId != null &&
+            _editorController.postData.dateString != null) {
           postId = _editorController.postData.postId!;
           dateString = _editorController.postData.dateString!;
         } else {
@@ -837,7 +1100,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           postId = uuid.v4();
           final now = DateTime.now();
           dateString = DateFormat('yyyyMMdd').format(now);
-          _editorController.setIdentifiers(postId: postId, dateString: dateString);
+          _editorController.setIdentifiers(
+              postId: postId, dateString: dateString);
         }
       }
 
@@ -845,6 +1109,10 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       Map<String, dynamic> postData;
       // 제목 가공에서 deal 프리픽스는 제거됨
       String finalTitle = _editorController.postData.title.trim();
+      final canSetReadRestriction =
+          CommunityAccessLevel.canSetRestriction(userProfile);
+      final readRestriction =
+          canSetReadRestriction ? _selectedReadRestriction : null;
 
       if (widget.isEditMode) {
         // 수정 모드에서는 HTML 처리
@@ -857,16 +1125,24 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'contentHtml': cleanedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
+        if (canSetReadRestriction) {
+          postData['readRestriction'] = readRestriction?.toRestrictionMap() ??
+              CommunityAccessLevel.unrestrictedMap();
+        }
         // dealType 저장 제거
       } else {
         // 새 게시글 모드에서는 HTML 처리
         // postNumber 할당: meta/postNumber 문서의 number 필드를 트랜잭션으로 +1
-        final int allocatedPostNumber = await FirebaseFirestore.instance.runTransaction((transaction) async {
-          final DocumentReference metaRef = FirebaseFirestore.instance.collection('meta').doc('postNumber');
+        final int allocatedPostNumber = await FirebaseFirestore.instance
+            .runTransaction((transaction) async {
+          final DocumentReference metaRef =
+              FirebaseFirestore.instance.collection('meta').doc('postNumber');
           final DocumentSnapshot snap = await transaction.get(metaRef);
-          final int current = (snap.exists ? ((snap.data() as Map<String, dynamic>?)?['number'] ?? 0) : 0) as int;
+          final int current = (snap.exists
+              ? ((snap.data() as Map<String, dynamic>?)?['number'] ?? 0)
+              : 0) as int;
           final int next = current + 1;
-          transaction.set(metaRef, { 'number': next }, SetOptions(merge: true));
+          transaction.set(metaRef, {'number': next}, SetOptions(merge: true));
           return next;
         });
         final String postNumberStr = allocatedPostNumber.toString();
@@ -884,7 +1160,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
             'uid': currentUser.uid,
             'displayName': userProfile['displayName'] ?? '익명',
             'photoURL': userProfile['photoURL'] ?? '',
-            'displayGrade': (userProfile['roles'] != null && (userProfile['roles'] as List).contains('admin'))
+            'displayGrade': (userProfile['roles'] != null &&
+                    (userProfile['roles'] as List).contains('admin'))
                 ? '★★★'
                 : (userProfile['displayGrade'] ?? '이코노미 Lv.1'),
             'currentSkyEffect': userProfile['currentSkyEffect'] ?? '',
@@ -896,6 +1173,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'isDeleted': false,
           'isHidden': false,
           'hiddenByReport': false,
+          'readRestriction': readRestriction?.toRestrictionMap() ??
+              CommunityAccessLevel.unrestrictedMap(),
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
@@ -942,9 +1221,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        final userRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid);
+        final userRef =
+            FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
         batch.update(userRef, {
           'postsCount': FieldValue.increment(1),
         });
@@ -959,9 +1237,7 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
       // 6. 성공 메시지
       Fluttertoast.showToast(
-        msg: widget.isEditMode
-            ? "게시글이 성공적으로 수정되었습니다"
-            : "게시글이 성공적으로 등록되었습니다",
+        msg: widget.isEditMode ? "게시글이 성공적으로 수정되었습니다" : "게시글이 성공적으로 등록되었습니다",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.grey[800],
@@ -971,7 +1247,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
       // 새 글 작성 시 땅콩 10개 추가
       if (!widget.isEditMode) {
         try {
-          final userData = await UserService.getUserFromFirestore(currentUser.uid);
+          final userData =
+              await UserService.getUserFromFirestore(currentUser.uid);
           final currentPeanut = userData?['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 10;
           await UserService.updatePeanutCount(currentUser.uid, newPeanut);
@@ -1002,7 +1279,6 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
       // 7. 화면 닫기
       Navigator.pop(context, widget.isEditMode ? true : false);
-
     } catch (e) {
       print('게시글 등록 오류: $e');
 
@@ -1068,7 +1344,8 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -1076,7 +1353,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                         Text(
                           _editorController.postData.boardName ?? '카테고리 선택',
                           style: TextStyle(
-                            color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
+                            color: _editorController.postData.boardName == null
+                                ? Colors.grey
+                                : Colors.black,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
@@ -1084,7 +1363,9 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                         const SizedBox(width: 4),
                         Icon(
                           Icons.keyboard_arrow_down,
-                          color: _editorController.postData.boardName == null ? Colors.grey : Colors.black,
+                          color: _editorController.postData.boardName == null
+                              ? Colors.grey
+                              : Colors.black,
                           size: 20,
                         ),
                       ],
@@ -1095,9 +1376,11 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
 
               // 등록 버튼
               TextButton(
-                onPressed: _isLoading ? null : () async {
-                  await _handleSubmit();
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        await _handleSubmit();
+                      },
                 child: Text(
                   _isLoading ? '등록 중...' : '등록',
                   style: TextStyle(
@@ -1123,6 +1406,11 @@ class _CommunityPostCreateScreenV3State extends State<CommunityPostCreateScreenV
                 // deal 토글 UI 제거됨
 
                 // 중간 안내/매장/지점/상품권 입력 섹션 제거됨
+                if (_canSetReadRestriction)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: _buildReadRestrictionBar(),
+                  ),
 
                 // 에디터 영역
                 Expanded(

@@ -9,6 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
 import 'services/branch_service.dart';
 import 'screen/community_board_select_screen.dart';
+import 'screen/community_chat_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'screen/community_post_create_screen_v3.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -21,30 +22,32 @@ final GlobalKey<NavigatorState> navigatorKey = NotificationService.navigatorKey;
 
 // 백그라운드 알림 생성 함수
 Future<void> _showBackgroundNotification(RemoteMessage message) async {
-  final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
-  
+  final FlutterLocalNotificationsPlugin localNotifications =
+      FlutterLocalNotificationsPlugin();
+
   // 로컬 알림 초기화
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/launcher_icon');
-  
+
   const DarwinInitializationSettings initializationSettingsIOS =
       DarwinInitializationSettings(
     requestAlertPermission: true,
     requestBadgePermission: true,
     requestSoundPermission: true,
   );
-  
+
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
     iOS: initializationSettingsIOS,
   );
-  
+
   await localNotifications.initialize(initializationSettings);
-  
+
   // 알림 채널 생성
-  final androidImplementation = localNotifications
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-  
+  final androidImplementation =
+      localNotifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
   if (androidImplementation != null) {
     await androidImplementation.createNotificationChannel(
       const AndroidNotificationChannel(
@@ -78,20 +81,27 @@ Future<void> _showBackgroundNotification(RemoteMessage message) async {
         importance: Importance.high,
       ),
     );
+    await androidImplementation.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'radar_notifications',
+        '마일캐치 레이더 알림',
+        description: '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.',
+        importance: Importance.high,
+      ),
+    );
   }
-  
+
   // 알림 데이터 추출
   final data = message.data;
-  final type = data['type'];
   final notificationTitle = data['notificationTitle'] ?? '알림';
   final notificationBody = data['notificationBody'] ?? '';
-  
+
   // 알림 타입에 따른 채널 ID 선택
   final channelId = data['channelId'] ?? 'post_like_notifications';
-  
+
   // 알림 ID 생성
   final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  
+
   // 알림 생성
   await localNotifications.show(
     notificationId,
@@ -127,6 +137,8 @@ String _getChannelName(String channelId) {
       return '대댓글 알림';
     case 'comment_like_notifications':
       return '댓글 좋아요 알림';
+    case 'radar_notifications':
+      return '마일캐치 레이더 알림';
     default:
       return '알림';
   }
@@ -143,6 +155,8 @@ String _getChannelDescription(String channelId) {
       return '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.';
     case 'comment_like_notifications':
       return '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.';
+    case 'radar_notifications':
+      return '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.';
     default:
       return '';
   }
@@ -152,39 +166,48 @@ String _getChannelDescription(String channelId) {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform);
     }
   } catch (e) {
-    print("Firebase initialization error in background handler: $e");
+    debugPrint("Firebase initialization error in background handler: $e");
   }
-  
-  print("Handling a background message: ${message.messageId}");
-  
+
+  debugPrint("Handling a background message: ${message.messageId}");
+
   // 개별 알림 설정 확인
   SharedPreferences prefs = await SharedPreferences.getInstance();
   final type = message.data['type'];
   bool specificNotificationEnabled = true;
-  
+
   switch (type) {
     case 'post_like':
-      specificNotificationEnabled = prefs.getBool('post_like_notification') ?? true;
+      specificNotificationEnabled =
+          prefs.getBool('post_like_notification') ?? true;
       break;
     case 'post_comment':
-      specificNotificationEnabled = prefs.getBool('post_comment_notification') ?? true;
+      specificNotificationEnabled =
+          prefs.getBool('post_comment_notification') ?? true;
       break;
     case 'comment_reply':
-      specificNotificationEnabled = prefs.getBool('comment_reply_notification') ?? true;
+      specificNotificationEnabled =
+          prefs.getBool('comment_reply_notification') ?? true;
       break;
     case 'comment_like':
-      specificNotificationEnabled = prefs.getBool('comment_like_notification') ?? true;
+      specificNotificationEnabled =
+          prefs.getBool('comment_like_notification') ?? true;
+      break;
+    case 'radar_match':
+      specificNotificationEnabled =
+          prefs.getBool('radar_notification') ?? true;
       break;
   }
-  
+
   if (!specificNotificationEnabled) {
-    print('$type 알림이 꺼져있어서 백그라운드 알림을 생성하지 않습니다.');
+    debugPrint('$type 알림이 꺼져있어서 백그라운드 알림을 생성하지 않습니다.');
     return;
   }
-  
+
   // 알림 생성
   await _showBackgroundNotification(message);
 }
@@ -192,9 +215,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
   } catch (e) {
-    print("Firebase already initialized: $e");
+    debugPrint("Firebase already initialized: $e");
   }
 
   // 백그라운드 메시지 핸들러는 항상 등록 (핸들러 내에서 설정값 확인)
@@ -263,9 +287,11 @@ class _MyAppState extends State<MyApp> {
       ],
       routes: {
         '/': (context) => const HomeScreen(),
-        '/community_board_select': (context) => const CommunityBoardSelectScreen(),
+        '/community_board_select': (context) =>
+            const CommunityBoardSelectScreen(),
         '/community/detail': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>;
           return CommunityDetailScreen(
             postId: args['postId'],
             dateString: args['dateString'],
@@ -275,7 +301,8 @@ class _MyAppState extends State<MyApp> {
           );
         },
         '/community/create_v3': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
           return CommunityPostCreateScreenV3(
             initialBoardId: args?['initialBoardId'],
             initialBoardName: args?['initialBoardName'],
@@ -284,6 +311,14 @@ class _MyAppState extends State<MyApp> {
             dateString: args?['dateString'],
             editTitle: args?['editTitle'],
             editContentHtml: args?['editContentHtml'],
+            editReadRestriction: args?['editReadRestriction'],
+          );
+        },
+        '/community/chat': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+          return CommunityChatScreen(
+            roomId: args?['roomId']?.toString() ?? 'global',
           );
         },
       },

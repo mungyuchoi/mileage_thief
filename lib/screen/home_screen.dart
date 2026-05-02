@@ -6,7 +6,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:mileage_thief/screen/login_screen.dart';
 import 'package:mileage_thief/screen/my_page_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -15,9 +14,9 @@ import 'package:url_launcher/url_launcher.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:settings_ui/settings_ui.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/auth_service.dart';
+import '../services/radar_service.dart';
 import '../services/user_service.dart';
 import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
@@ -26,7 +25,9 @@ import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
+import 'radar_notification_screen.dart';
 import 'useful_info_screen.dart';
+import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../widgets/segment_tab_bar.dart';
 import '../branch/card_manage.dart';
@@ -72,6 +73,217 @@ class NoticePopupDialog extends StatelessWidget {
   }
 }
 
+class _MileageSettingSection extends StatelessWidget {
+  const _MileageSettingSection({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        children: [
+          for (var index = 0; index < children.length; index++) ...[
+            children[index],
+            if (index != children.length - 1)
+              const Divider(
+                height: 8,
+                indent: 52,
+                color: Color(0xFFE9EBF0),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MileageSettingSectionLabel extends StatelessWidget {
+  const _MileageSettingSectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF7E8492),
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _MileageSettingActionTile extends StatelessWidget {
+  const _MileageSettingActionTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      minLeadingWidth: 32,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      leading: Icon(icon, color: const Color(0xFFAEB4C0)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Color(0xFF1D212C),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      subtitle: subtitle == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                subtitle!,
+                style: const TextStyle(
+                  color: Color(0xFF8A91A1),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Color(0xFFC0C5CF),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+class _MileageSettingSwitchTile extends StatelessWidget {
+  const _MileageSettingSwitchTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      minLeadingWidth: 32,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      leading: Icon(icon, color: const Color(0xFFAEB4C0)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Color(0xFF1D212C),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      trailing: Switch.adaptive(
+        value: value,
+        activeThumbColor: Colors.black,
+        activeTrackColor: Colors.black26,
+        onChanged: onChanged,
+      ),
+      onTap: () => onChanged(!value),
+    );
+  }
+}
+
+class _RadarNotificationAppBarButton extends StatelessWidget {
+  const _RadarNotificationAppBarButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return IconButton(
+        tooltip: '레이더 알림',
+        icon: const Icon(Icons.notifications_none_rounded, color: Colors.black),
+        onPressed: onTap,
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: RadarService.watchRadarSubscriptions(user.uid),
+      builder: (context, snapshot) {
+        final activeCount = (snapshot.data?.docs ?? const [])
+            .where((doc) => _isActiveRadarSubscription(doc.data()))
+            .length;
+        return IconButton(
+          tooltip: '레이더 알림',
+          onPressed: onTap,
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(Icons.notifications_none_rounded, color: Colors.black),
+              if (activeCount > 0)
+                Positioned(
+                  right: -7,
+                  top: -7,
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 17, minHeight: 17),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      activeCount > 9 ? '9+' : '$activeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static bool _isActiveRadarSubscription(Map<String, dynamic> data) {
+    if (data['pushEnabled'] == false || data['isActive'] == false) {
+      return false;
+    }
+    final expiresAt = data['expiresAt'];
+    if (expiresAt is Timestamp) {
+      return expiresAt.toDate().isAfter(DateTime.now());
+    }
+    return true;
+  }
+}
+
 class ForceUpdateDialog extends StatelessWidget {
   final String title;
   final String content;
@@ -113,6 +325,9 @@ enum _HomeTab {
   giftcard,
   profile,
 }
+
+const String _communityChatIconAsset =
+    'asset/icon/kakaotalk_sharing_btn_medium.png';
 
 class _HomeTabDestination {
   final String label;
@@ -526,9 +741,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         onPressed: _shareApp,
       ),
       IconButton(
-        icon: const Icon(Icons.chat, color: Colors.black),
+        icon: ClipOval(
+          child: Image.asset(
+            _communityChatIconAsset,
+            width: 30,
+            height: 30,
+            fit: BoxFit.cover,
+          ),
+        ),
         onPressed: _launchOpenChat,
       ),
+    ];
+  }
+
+  List<Widget> _buildGuideAppBarActions() {
+    return <Widget>[
+      _RadarNotificationAppBarButton(onTap: _openRadarNotificationScreen),
+      ..._buildDefaultAppBarActions(),
     ];
   }
 
@@ -639,6 +868,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => buildSettingsWidget()),
+    );
+  }
+
+  void _openRadarNotificationScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const RadarNotificationScreen()),
     );
   }
 
@@ -867,12 +1103,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Scaffold(
         extendBody: true,
         backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
-        appBar: _buildHomeAppBar(
-          showLogo: _currentTab != _HomeTab.community,
-          actions: _currentTab == _HomeTab.profile
-              ? _buildProfileAppBarActions()
-              : null,
-        ),
+        appBar: _currentTab == _HomeTab.community
+            ? null
+            : _buildHomeAppBar(
+                actions: _currentTab == _HomeTab.profile
+                    ? _buildProfileAppBarActions()
+                    : _currentTab == _HomeTab.usefulInfo
+                        ? _buildGuideAppBarActions()
+                        : null,
+              ),
         body: Stack(
           children: [
             Positioned.fill(child: _buildCurrentTabPage()),
@@ -944,209 +1183,189 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget buildSettingsWidget() {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          '설정',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
-      body: StreamBuilder<User?>(
-        stream: AuthService.authStateChanges,
-        builder: (context, snapshot) {
-          final user = snapshot.data;
+      backgroundColor: const Color(0xFFF0F1F5),
+      body: SafeArea(
+        child: StreamBuilder<User?>(
+          stream: AuthService.authStateChanges,
+          builder: (settingsContext, snapshot) {
+            final user = snapshot.data;
 
-          return FutureBuilder<Map<String, dynamic>?>(
-            future: user != null
-                ? UserService.getUserFromFirestore(user.uid)
-                : Future.value(null),
-            builder: (context, userSnapshot) {
-              final Map<String, dynamic>? userData = userSnapshot.data;
-              final bool isAdmin = _hasAdminAccess(userData?['roles']);
+            return FutureBuilder<Map<String, dynamic>?>(
+              future: user != null
+                  ? UserService.getUserFromFirestore(user.uid)
+                  : Future.value(null),
+              builder: (settingsContext, userSnapshot) {
+                final Map<String, dynamic>? userData = userSnapshot.data;
+                final bool isAdmin = _hasAdminAccess(userData?['roles']);
+                final versionDescription = _version == _latestVersion
+                    ? 'Version: $_version (최신버전입니다.)'
+                    : 'Version: $_version (최신버전이 아닙니다.)';
 
-              return SettingsList(
-                platform: DevicePlatform.iOS,
-                sections: [
-                  SettingsSection(
-                    title: const Text('알림 설정'),
-                    tiles: [
-                      SettingsTile.switchTile(
-                        initialValue: _postLikeNotification,
-                        onToggle: (bool value) {
-                          setPostLikeNotification(value);
-                          setState(() {
-                            _postLikeNotification = value;
-                          });
-                        },
-                        title: const Text('게시글 좋아요 알림'),
-                        leading: const Icon(Icons.thumb_up_outlined),
-                        activeSwitchColor: Colors.black54,
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 36),
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () =>
+                              Navigator.of(settingsContext).maybePop(),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Color(0xFF1A1D27),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Text(
+                          '설정',
+                          style: TextStyle(
+                            color: Color(0xFF1A1D27),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (isAdmin) ...[
+                      _MileageSettingSection(
+                        children: [
+                          _MileageSettingActionTile(
+                            icon: Icons.admin_panel_settings_outlined,
+                            title: '관리자 페이지',
+                            subtitle: '관리자 기능을 한곳에서 관리합니다.',
+                            onTap: () {
+                              Navigator.push(
+                                settingsContext,
+                                MaterialPageRoute(
+                                  builder: (_) => const AdminPageScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                      SettingsTile.switchTile(
-                        initialValue: _postCommentNotification,
-                        onToggle: (bool value) {
-                          setPostCommentNotification(value);
-                          setState(() {
-                            _postCommentNotification = value;
-                          });
-                        },
-                        title: const Text('게시글 댓글 알림'),
-                        leading: const Icon(Icons.comment_outlined),
-                        activeSwitchColor: Colors.black54,
-                      ),
-                      SettingsTile.switchTile(
-                        initialValue: _commentReplyNotification,
-                        onToggle: (bool value) {
-                          setCommentReplyNotification(value);
-                          setState(() {
-                            _commentReplyNotification = value;
-                          });
-                        },
-                        title: const Text('대댓글 알림'),
-                        leading: const Icon(Icons.reply_outlined),
-                        activeSwitchColor: Colors.black54,
-                      ),
-                      SettingsTile.switchTile(
-                        initialValue: _commentLikeNotification,
-                        onToggle: (bool value) {
-                          setCommentLikeNotification(value);
-                          setState(() {
-                            _commentLikeNotification = value;
-                          });
-                        },
-                        title: const Text('댓글 좋아요 알림'),
-                        leading: const Icon(Icons.favorite_border_outlined),
-                        activeSwitchColor: Colors.black54,
-                      ),
+                      const SizedBox(height: 10),
                     ],
-                  ),
-                  SettingsSection(
-                    title: const Text('계정'),
-                    tiles: [
-                      SettingsTile(
-                        onPressed: (context) => {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          )
-                        },
-                        title: Text(user == null ? '로그인' : '내 정보'),
-                        description: Text(
-                          user == null
+                    _MileageSettingSection(
+                      children: [
+                        _MileageSettingActionTile(
+                          icon: user == null
+                              ? Icons.login_rounded
+                              : Icons.account_circle_outlined,
+                          title: user == null ? '로그인' : '내 정보',
+                          subtitle: user == null
                               ? '로그인하여 땅콩을 클라우드에 저장하세요'
                               : '${user.displayName ?? user.email ?? "사용자"}님, 안녕하세요!',
-                        ),
-                        leading: Icon(
-                          user == null
-                              ? Icons.login
-                              : Icons.account_circle_outlined,
-                        ),
-                      ),
-                      SettingsTile(
-                        onPressed: (context) => {
-                          _launchMileageThief(AdHelper.mileageTheifMarketUrl)
-                        },
-                        title: const Text("스토어로 이동"),
-                        leading: const Icon(Icons.info_outline),
-                      ),
-                      SettingsTile(
-                        onPressed: (context) async {
-                          final info = await PackageInfo.fromPlatform();
-                          final deviceInfoPlugin = DeviceInfoPlugin();
-                          String os = '';
-                          String model = '';
-                          if (Platform.isAndroid) {
-                            final androidInfo =
-                                await deviceInfoPlugin.androidInfo;
-                            os = 'Android ${androidInfo.version.release}';
-                            model = androidInfo.model ?? '';
-                          } else if (Platform.isIOS) {
-                            final iosInfo = await deviceInfoPlugin.iosInfo;
-                            os = 'iOS ${iosInfo.systemVersion}';
-                            model = iosInfo.utsname.machine ?? '';
-                          }
-                          final body = Uri.encodeComponent(
-                            '문의내역:\n버전: ${info.version}\nOS: $os\n모델명: $model',
-                          );
-                          final uri = Uri.parse(
-                            'mailto:skylife927@gmail.com?subject=FAQ 문의&body=$body',
-                          );
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri);
-                          } else {
-                            Fluttertoast.showToast(
-                              msg: '이메일 앱을 열 수 없습니다.',
-                            );
-                          }
-                        },
-                        title: const Text('FAQ'),
-                        leading: const Icon(Icons.question_answer_outlined),
-                      ),
-                      if (isAdmin)
-                        SettingsTile(
-                          onPressed: (context) {
+                          onTap: () {
                             Navigator.push(
-                              context,
+                              settingsContext,
                               MaterialPageRoute(
-                                builder: (_) => const AdminPageScreen(),
+                                builder: (_) => const LoginScreen(),
                               ),
                             );
                           },
-                          title: const Text('관리자 페이지'),
-                          description: const Text(
-                            '관리자 기능을 한곳에서 관리합니다.',
+                        ),
+                        if (user != null)
+                          _MileageSettingActionTile(
+                            icon: Icons.report_gmailerrorred_outlined,
+                            title: '신고 내역',
+                            subtitle: '내가 접수한 신고 처리 상태를 확인합니다.',
+                            onTap: () {
+                              Navigator.push(
+                                settingsContext,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const UserReportHistoryScreen(),
+                                ),
+                              );
+                            },
                           ),
-                          leading:
-                              const Icon(Icons.admin_panel_settings_outlined),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const _MileageSettingSectionLabel('알림 설정'),
+                    const SizedBox(height: 6),
+                    _MileageSettingSection(
+                      children: [
+                        _MileageSettingSwitchTile(
+                          icon: Icons.thumb_up_outlined,
+                          title: '게시글 좋아요 알림',
+                          value: _postLikeNotification,
+                          onChanged: (value) {
+                            setPostLikeNotification(value);
+                            setState(() => _postLikeNotification = value);
+                          },
                         ),
-                      SettingsTile(
-                        onPressed: (context) => {
-                          _version == _latestVersion
-                              ? Fluttertoast.showToast(
-                                  msg: "최신버전입니다.",
-                                  gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 5,
-                                  backgroundColor: Colors.grey[800],
-                                  fontSize: 16,
-                                  textColor: Colors.white,
-                                  toastLength: Toast.LENGTH_SHORT,
-                                )
-                              : Fluttertoast.showToast(
-                                  msg: "최신버전이 아닙니다. 업데이트 부탁드립니다.",
-                                  gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 5,
-                                  backgroundColor: Colors.grey[800],
-                                  fontSize: 16,
-                                  textColor: Colors.white,
-                                  toastLength: Toast.LENGTH_SHORT,
-                                )
-                        },
-                        title: const Text('버전 정보'),
-                        description: Text(
-                          _version == _latestVersion
-                              ? 'Version: $_version (최신버전입니다.)'
-                              : 'Version: $_version (최신버전이 아닙니다.)',
+                        _MileageSettingSwitchTile(
+                          icon: Icons.comment_outlined,
+                          title: '게시글 댓글 알림',
+                          value: _postCommentNotification,
+                          onChanged: (value) {
+                            setPostCommentNotification(value);
+                            setState(() => _postCommentNotification = value);
+                          },
                         ),
-                        leading: const Icon(Icons.info_outline),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          );
-        },
+                        _MileageSettingSwitchTile(
+                          icon: Icons.reply_outlined,
+                          title: '대댓글 알림',
+                          value: _commentReplyNotification,
+                          onChanged: (value) {
+                            setCommentReplyNotification(value);
+                            setState(() => _commentReplyNotification = value);
+                          },
+                        ),
+                        _MileageSettingSwitchTile(
+                          icon: Icons.favorite_border_outlined,
+                          title: '댓글 좋아요 알림',
+                          value: _commentLikeNotification,
+                          onChanged: (value) {
+                            setCommentLikeNotification(value);
+                            setState(() => _commentLikeNotification = value);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _MileageSettingSection(
+                      children: [
+                        _MileageSettingActionTile(
+                          icon: Icons.storefront_outlined,
+                          title: '스토어로 이동',
+                          onTap: () {
+                            _launchMileageThief();
+                          },
+                        ),
+                        _MileageSettingActionTile(
+                          icon: Icons.question_answer_outlined,
+                          title: 'FAQ',
+                          onTap: () => _showFaqContactSheet(settingsContext),
+                        ),
+                        _MileageSettingActionTile(
+                          icon: Icons.info_outline,
+                          title: '버전 정보',
+                          subtitle: versionDescription,
+                          onTap: () {
+                            Fluttertoast.showToast(
+                              msg: _version == _latestVersion
+                                  ? '최신버전입니다.'
+                                  : '최신버전이 아닙니다. 업데이트 부탁드립니다.',
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 5,
+                              backgroundColor: Colors.grey[800],
+                              fontSize: 16,
+                              textColor: Colors.white,
+                              toastLength: Toast.LENGTH_SHORT,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1166,6 +1385,135 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await launch(url);
     } else {
       throw 'Could not launch $url';
+    }
+  }
+
+  void _showFaqContactSheet(BuildContext settingsContext) {
+    showModalBottomSheet<void>(
+      context: settingsContext,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD5D9E2),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'FAQ',
+                    style: TextStyle(
+                      color: Color(0xFF1D212C),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  leading: const Icon(
+                    Icons.email_outlined,
+                    color: Color(0xFFAEB4C0),
+                  ),
+                  title: const Text(
+                    '이메일 문의',
+                    style: TextStyle(
+                      color: Color(0xFF1D212C),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFFC0C5CF),
+                  ),
+                  onTap: () async {
+                    Navigator.of(sheetContext).pop();
+                    await _launchFaqEmail();
+                  },
+                ),
+                const Divider(height: 1, color: Color(0xFFE9EBF0)),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  leading: const Icon(
+                    Icons.rate_review_outlined,
+                    color: Color(0xFFAEB4C0),
+                  ),
+                  title: const Text(
+                    '리뷰 남기기',
+                    style: TextStyle(
+                      color: Color(0xFF1D212C),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFFC0C5CF),
+                  ),
+                  onTap: () async {
+                    Navigator.of(sheetContext).pop();
+                    await _launchMileageThief();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _launchFaqEmail() async {
+    final body = Uri.encodeComponent(await _buildFaqEmailBody());
+    final subject = Uri.encodeComponent('FAQ 문의');
+    final uri = Uri.parse(
+      'mailto:skylife927@gmail.com?subject=$subject&body=$body',
+    );
+
+    if (!await _tryLaunchExternal(uri)) {
+      Fluttertoast.showToast(msg: '이메일 앱을 열 수 없습니다.');
+    }
+  }
+
+  Future<String> _buildFaqEmailBody() async {
+    final info = await PackageInfo.fromPlatform();
+    final deviceInfoPlugin = DeviceInfoPlugin();
+    String os = Platform.operatingSystem;
+    String model = '';
+
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfoPlugin.androidInfo;
+      os = 'Android ${androidInfo.version.release}';
+      model = androidInfo.model;
+    } else if (Platform.isIOS) {
+      final iosInfo = await deviceInfoPlugin.iosInfo;
+      os = 'iOS ${iosInfo.systemVersion}';
+      model = iosInfo.utsname.machine;
+    }
+
+    return '문의내역:\n버전: ${info.version}\nOS: $os\n모델명: $model';
+  }
+
+  Future<bool> _tryLaunchExternal(Uri uri) async {
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -1271,19 +1619,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  _launchMileageThief(String mileageTheifMarketUrl) async {
-    String appLink;
-    if (Platform.isAndroid) {
-      appLink =
-          'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief';
-    } else {
-      appLink = 'https://apps.apple.com/app/myapp/6446247689';
+  Future<void> _launchMileageThief() async {
+    final primaryUri = Platform.isAndroid
+        ? Uri.parse('market://details?id=com.mungyu.mileage_thief')
+        : Uri.parse('https://apps.apple.com/app/id6446247689');
+    final fallbackUri = Platform.isAndroid
+        ? Uri.parse(
+            'https://play.google.com/store/apps/details?id=com.mungyu.mileage_thief',
+          )
+        : primaryUri;
+
+    if (await _tryLaunchExternal(primaryUri)) {
+      return;
+    }
+    if (fallbackUri != primaryUri && await _tryLaunchExternal(fallbackUri)) {
+      return;
     }
 
-    if (await canLaunch(appLink)) {
-      await launch(appLink);
-    } else {
-      throw '마켓을 열 수 없습니다: $appLink';
-    }
+    Fluttertoast.showToast(msg: '스토어를 열 수 없습니다.');
   }
 }

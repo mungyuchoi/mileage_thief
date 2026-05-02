@@ -14,18 +14,28 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/radar_item_model.dart';
+import '../services/branch_service.dart';
 import '../services/category_service.dart';
-import 'branch/branch_detail_screen.dart';
+import '../services/radar_service.dart';
+import 'cancellation_notification_screen.dart';
+import 'card_catalog_screen.dart';
+import 'community_chat_screen.dart';
 import 'community_detail_screen.dart';
 import 'dan_screen.dart';
 import 'deals/deals_screen.dart';
 import 'deals/flight_deals_screen.dart';
+import 'deals/hotel_deals_screen.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 
 typedef _PostDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>;
 typedef _BoardDocs = List<Map<String, dynamic>>;
 typedef _GuideAds = List<Map<String, dynamic>>;
+
+const String _chatQuickActionIconAsset = 'asset/icon/community_chat.png';
+const String _koreanAirQuickActionIconAsset = 'asset/icon/korean_air.png';
+const String _dealsQuickActionIconAsset = 'asset/icon/deals.png';
 
 const Map<String, String> _boardNameById = {
   'question': '마일리지',
@@ -160,6 +170,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   Future<_PostDocs> _noticePostsFuture = Future.value(const []);
   Future<_BoardDocs> _boardsFuture = Future.value(const []);
   Future<_GuideAds> _guideAdsFuture = Future.value(const []);
+  Future<RadarTravelProfile> _radarProfileFuture =
+      Future.value(RadarTravelProfile.defaults());
+  Future<List<RadarItem>> _radarItemsFuture = Future.value(const []);
+  Future<double?> _radarAverageCostFuture = Future.value(null);
 
   @override
   void initState() {
@@ -218,11 +232,12 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       _fetchGuideAds,
       force: force,
     );
+    _loadRadar(force: force);
   }
 
   Future<void> _refresh() async {
     setState(() => _loadSections(force: true));
-    await Future.wait([
+    await Future.wait<dynamic>([
       _bestPostsFuture,
       _popularPostsFuture,
       _newsPostsFuture,
@@ -233,7 +248,31 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       _noticePostsFuture,
       _boardsFuture,
       _guideAdsFuture,
+      _radarProfileFuture,
+      _radarItemsFuture,
+      _radarAverageCostFuture,
     ]);
+  }
+
+  void _loadRadar({bool force = false}) {
+    _radarProfileFuture = _cached(
+      'radarProfile',
+      RadarService.getTravelProfile,
+      force: force,
+    );
+    _radarAverageCostFuture = _cached(
+      'radarAverageCost',
+      RadarService.loadAverageCostPerMile,
+      force: force,
+    );
+    _radarItemsFuture = _cached(
+      'radarItems',
+      () async {
+        final profile = await _radarProfileFuture;
+        return RadarService.loadRadarItems(profile: profile);
+      },
+      force: force,
+    );
   }
 
   Future<T> _cached<T>(
@@ -261,25 +300,50 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             initialAds: _UsefulInfoMemoryCache.peek<_GuideAds>('guideAds'),
             onTapAd: _handleAdTap,
           ),
+          _RadarSection(
+            profileFuture: _radarProfileFuture,
+            itemsFuture: _radarItemsFuture,
+            onRefresh: () => setState(() => _loadRadar(force: true)),
+            onEditProfile: _openRadarProfileSheet,
+            onTapItem: _handleRadarTap,
+            onShareItem: _openRadarShareSheet,
+            onSubscribe: _saveRadarSubscription,
+            onCalculate: _openRadarValueCalculator,
+          ),
           _QuickActionsSection(
             actions: [
               _QuickAction(
                 icon: Icons.flight_takeoff,
+                assetIcon: _dealsQuickActionIconAsset,
                 title: '특가',
                 subtitle: '항공권/호텔',
                 onTap: () => _push(const DealsScreen()),
               ),
               _QuickAction(
                 icon: Icons.airplane_ticket_outlined,
+                assetIcon: _koreanAirQuickActionIconAsset,
                 title: '대한항공',
                 subtitle: '마일리지 검색',
                 onTap: () => _push(const SearchDanScreen()),
+              ),
+              _QuickAction(
+                icon: Icons.forum_outlined,
+                assetIcon: _chatQuickActionIconAsset,
+                title: '채팅',
+                subtitle: '실시간 정보',
+                onTap: () => _push(const CommunityChatScreen()),
               ),
               _QuickAction(
                 icon: Icons.card_giftcard,
                 title: '상품권',
                 subtitle: '시세/지도',
                 onTap: widget.onOpenGiftcard,
+              ),
+              _QuickAction(
+                icon: Icons.credit_card_outlined,
+                title: '카드',
+                subtitle: '혜택 DB',
+                onTap: () => _push(const CardCatalogScreen()),
               ),
               _QuickAction(
                 icon: Icons.shopping_cart_outlined,
@@ -514,6 +578,127 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
+  Future<void> _openRadarProfileSheet() async {
+    final initial = await _radarProfileFuture.catchError(
+      (_) => RadarTravelProfile.defaults(),
+    );
+    if (!mounted) return;
+
+    final profile = await showModalBottomSheet<RadarTravelProfile>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _RadarProfileSheet(initial: initial),
+    );
+    if (profile == null || !mounted) return;
+
+    try {
+      await RadarService.saveTravelProfile(profile);
+      if (!mounted) return;
+      setState(() => _loadRadar(force: true));
+      Fluttertoast.showToast(msg: '레이더 조건을 저장했습니다.');
+    } on StateError {
+      Fluttertoast.showToast(msg: '로그인 후 레이더 조건을 저장할 수 있습니다.');
+    } catch (_) {
+      Fluttertoast.showToast(msg: '레이더 조건 저장에 실패했습니다.');
+    }
+  }
+
+  Future<void> _handleRadarTap(RadarItem item) async {
+    if (item.itemType == RadarItemType.valueCalculator) {
+      await _openRadarValueCalculator(item);
+      return;
+    }
+
+    final link = item.deepLink.trim();
+    final uri = Uri.tryParse(link);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    switch (item.itemType) {
+      case RadarItemType.flightDeal:
+        _push(const FlightDealsScreen());
+        break;
+      case RadarItemType.hotelDeal:
+        _push(const HotelDealsScreen());
+        break;
+      case RadarItemType.giftcard:
+        widget.onOpenGiftcard();
+        break;
+      case RadarItemType.cancelAlert:
+      case RadarItemType.mileageSeat:
+        _push(const CancellationNotificationScreen());
+        break;
+      case RadarItemType.benefitNews:
+        _openRadarPost(item);
+        break;
+      default:
+        widget.onOpenCommunity();
+        break;
+    }
+  }
+
+  void _openRadarPost(RadarItem item) {
+    final postId = item.payload['postId']?.toString() ?? '';
+    final boardId = item.payload['boardId']?.toString() ?? 'free';
+    final boardName = item.payload['boardName']?.toString() ?? '커뮤니티';
+    final dateString = item.payload['dateString']?.toString() ?? '';
+    if (postId.isEmpty || dateString.isEmpty) {
+      widget.onOpenCommunity();
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CommunityDetailScreen(
+          postId: postId,
+          boardId: boardId,
+          boardName: boardName,
+          dateString: dateString,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openRadarValueCalculator(RadarItem item) async {
+    final averageCost = item.costPerMile ??
+        await _radarAverageCostFuture.catchError((_) => null);
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _RadarValueCalculatorSheet(
+        item: item,
+        averageCostPerMile: averageCost,
+      ),
+    );
+  }
+
+  Future<void> _openRadarShareSheet(RadarItem item) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _RadarShareSheet(item: item),
+    );
+  }
+
+  Future<void> _saveRadarSubscription(RadarItem item) async {
+    try {
+      await RadarService.saveRadarSubscription(item);
+      Fluttertoast.showToast(msg: '레이더 알림 조건을 저장했습니다.');
+    } on StateError {
+      Fluttertoast.showToast(msg: '로그인 후 레이더 알림을 저장할 수 있습니다.');
+    } catch (_) {
+      Fluttertoast.showToast(msg: '레이더 알림 저장에 실패했습니다.');
+    }
+  }
+
   void _handleAdTap(Map<String, dynamic> ad) {
     final linkType = (ad['linkType'] as String?) ?? 'web';
     final linkValue = (ad['linkValue'] as String?) ?? '';
@@ -525,10 +710,14 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       return;
     }
 
-    if (linkType == 'deeplink' && linkValue.startsWith('branch:')) {
-      final branchId = linkValue.substring('branch:'.length);
-      if (branchId.isEmpty) return;
-      _push(BranchDetailScreen(branchId: branchId));
+    if (linkType == 'deeplink') {
+      final handled = BranchService().openInternalDeepLinkValue(
+        linkValue,
+        context: context,
+      );
+      if (!handled) {
+        Fluttertoast.showToast(msg: '지원하지 않는 딥링크입니다.');
+      }
     }
   }
 }
@@ -681,24 +870,441 @@ class _GuideAdBannerCarouselState extends State<_GuideAdBannerCarousel> {
                 );
               },
             ),
-            Positioned(
-              right: 14,
-              bottom: 12,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.36),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '${_currentPage + 1}/${widget.ads.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+            if (widget.ads.length > 1)
+              Positioned(
+                right: 14,
+                bottom: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.36),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${_currentPage + 1}/${widget.ads.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RadarSection extends StatelessWidget {
+  final Future<RadarTravelProfile> profileFuture;
+  final Future<List<RadarItem>> itemsFuture;
+  final VoidCallback onRefresh;
+  final VoidCallback onEditProfile;
+  final ValueChanged<RadarItem> onTapItem;
+  final ValueChanged<RadarItem> onShareItem;
+  final ValueChanged<RadarItem> onSubscribe;
+  final ValueChanged<RadarItem> onCalculate;
+
+  const _RadarSection({
+    required this.profileFuture,
+    required this.itemsFuture,
+    required this.onRefresh,
+    required this.onEditProfile,
+    required this.onTapItem,
+    required this.onShareItem,
+    required this.onSubscribe,
+    required this.onCalculate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionShell(
+      title: '마일캐치 레이더',
+      icon: Icons.radar_outlined,
+      child: FutureBuilder<RadarTravelProfile>(
+        future: profileFuture,
+        initialData: RadarTravelProfile.defaults(),
+        builder: (context, profileSnapshot) {
+          final profile = profileSnapshot.data ?? RadarTravelProfile.defaults();
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE1E7EF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F0FE),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.radar_outlined,
+                        color: Color(0xFF1A56DB),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '오늘 잡을 액션',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            profile.summary,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _RadarIconButton(
+                      icon: Icons.refresh_rounded,
+                      tooltip: '새로고침',
+                      onTap: onRefresh,
+                    ),
+                    const SizedBox(width: 6),
+                    _RadarIconButton(
+                      icon: Icons.tune_rounded,
+                      tooltip: '조건',
+                      onTap: onEditProfile,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                FutureBuilder<List<RadarItem>>(
+                  future: itemsFuture,
+                  builder: (context, snapshot) {
+                    final items = snapshot.data ?? const <RadarItem>[];
+                    if (items.isEmpty &&
+                        snapshot.connectionState == ConnectionState.waiting) {
+                      return const _RadarLoadingStrip();
+                    }
+                    if (items.isEmpty) {
+                      return _RadarEmptyState(onRefresh: onRefresh);
+                    }
+                    return SizedBox(
+                      height: 232,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return _RadarItemCard(
+                            item: item,
+                            onTap: () => onTapItem(item),
+                            onShare: () => onShareItem(item),
+                            onSubscribe: () => onSubscribe(item),
+                            onCalculate: () => onCalculate(item),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RadarItemCard extends StatelessWidget {
+  final RadarItem item;
+  final VoidCallback onTap;
+  final VoidCallback onShare;
+  final VoidCallback onSubscribe;
+  final VoidCallback onCalculate;
+
+  const _RadarItemCard({
+    required this.item,
+    required this.onTap,
+    required this.onShare,
+    required this.onSubscribe,
+    required this.onCalculate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _radarAccentColor(item.itemType);
+    final metrics = [
+      item.priceLabel,
+      item.milesLabel,
+      item.costPerMileLabel ?? item.cashValueLabel,
+      if (item.urgency.isNotEmpty) item.urgency,
+    ].whereType<String>().take(3).toList();
+    final canSubscribe = item.itemType != RadarItemType.valueCalculator;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 252,
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _radarIcon(item.itemType),
+                      color: accent,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      item.typeLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    item.updatedAtLabel,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                item.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.16,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              if (item.subtitle.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  item.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                item.reason,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.24,
+                  color: Color(0xFF334155),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: metrics
+                    .map((metric) => _RadarMetricChip(text: metric))
+                    .toList(),
+              ),
+              const SizedBox(height: 9),
+              Row(
+                children: [
+                  _RadarTextButton(
+                    icon: Icons.calculate_outlined,
+                    label: '계산',
+                    onTap: onCalculate,
+                  ),
+                  if (canSubscribe) ...[
+                    const SizedBox(width: 6),
+                    _RadarTextButton(
+                      icon: Icons.notifications_active_outlined,
+                      label: '알림',
+                      onTap: onSubscribe,
+                    ),
+                  ],
+                  const Spacer(),
+                  _RadarIconButton(
+                    icon: Icons.ios_share,
+                    tooltip: '공유',
+                    onTap: onShare,
+                    compact: true,
+                  ),
+                  const SizedBox(width: 4),
+                  _RadarIconButton(
+                    icon: Icons.arrow_forward_rounded,
+                    tooltip: '열기',
+                    onTap: onTap,
+                    compact: true,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadarMetricChip extends StatelessWidget {
+  final String text;
+
+  const _RadarMetricChip({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF334155),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadarIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool compact;
+
+  const _RadarIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = compact ? 30.0 : 34.0;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Icon(icon, size: compact ? 17 : 19, color: Colors.black87),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadarTextButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _RadarTextButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111827),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 15),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ],
@@ -706,6 +1312,894 @@ class _GuideAdBannerCarouselState extends State<_GuideAdBannerCarousel> {
       ),
     );
   }
+}
+
+class _RadarLoadingStrip extends StatelessWidget {
+  const _RadarLoadingStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 116,
+      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+    );
+  }
+}
+
+class _RadarEmptyState extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _RadarEmptyState({required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.radar_outlined, color: Color(0xFF64748B)),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              '아직 잡힌 레이더 카드가 없습니다.',
+              style: TextStyle(
+                color: Color(0xFF475569),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onRefresh,
+            child: const Text('새로고침'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarProfileSheet extends StatefulWidget {
+  final RadarTravelProfile initial;
+
+  const _RadarProfileSheet({required this.initial});
+
+  @override
+  State<_RadarProfileSheet> createState() => _RadarProfileSheetState();
+}
+
+class _RadarProfileSheetState extends State<_RadarProfileSheet> {
+  late final TextEditingController _airportsController;
+  late final TextEditingController _regionsController;
+  late final TextEditingController _dateFlexController;
+  late final TextEditingController _budgetController;
+  late final TextEditingController _koreanAirController;
+  late final TextEditingController _asianaController;
+  late bool _giftcardEnabled;
+  late Set<String> _cabins;
+
+  @override
+  void initState() {
+    super.initState();
+    _airportsController = TextEditingController(
+      text: widget.initial.homeAirports.join(', '),
+    );
+    _regionsController = TextEditingController(
+      text: widget.initial.targetRegions.join(', '),
+    );
+    _dateFlexController = TextEditingController(
+      text: widget.initial.dateFlexibility.toString(),
+    );
+    _budgetController = TextEditingController(
+      text: widget.initial.maxCashBudget?.toString() ?? '',
+    );
+    _koreanAirController = TextEditingController(
+      text: (widget.initial.mileageBalances['대한항공'] ?? 0).toString(),
+    );
+    _asianaController = TextEditingController(
+      text: (widget.initial.mileageBalances['아시아나'] ?? 0).toString(),
+    );
+    _giftcardEnabled = widget.initial.giftcardEnabled;
+    _cabins = widget.initial.preferredCabins.toSet();
+  }
+
+  @override
+  void dispose() {
+    _airportsController.dispose();
+    _regionsController.dispose();
+    _dateFlexController.dispose();
+    _budgetController.dispose();
+    _koreanAirController.dispose();
+    _asianaController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _RadarSheetFrame(
+      title: '레이더 조건',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _RadarSheetTextField(
+            controller: _airportsController,
+            label: '선호 출발 공항',
+            hint: 'ICN, GMP, PUS',
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '선호 좌석',
+            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: ['이코노미', '비즈니스', '퍼스트'].map((cabin) {
+              return FilterChip(
+                label: Text(cabin),
+                selected: _cabins.contains(cabin),
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _cabins.add(cabin);
+                    } else {
+                      _cabins.remove(cabin);
+                    }
+                  });
+                },
+                selectedColor: const Color(0xFFE8F0FE),
+                checkmarkColor: const Color(0xFF1A56DB),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          _RadarSheetTextField(
+            controller: _regionsController,
+            label: '관심 지역',
+            hint: '미주, 유럽, 일본',
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _dateFlexController,
+                  label: '날짜 유연성',
+                  hint: '90',
+                  keyboardType: TextInputType.number,
+                  suffix: '일',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _budgetController,
+                  label: '현금 예산',
+                  hint: '1500000',
+                  keyboardType: TextInputType.number,
+                  suffix: '원',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _koreanAirController,
+                  label: '대한항공',
+                  hint: '0',
+                  keyboardType: TextInputType.number,
+                  suffix: '마일',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _asianaController,
+                  label: '아시아나',
+                  hint: '0',
+                  keyboardType: TextInputType.number,
+                  suffix: '마일',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SwitchListTile(
+            value: _giftcardEnabled,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              '상품권/상테크 카드 포함',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            onChanged: (value) => setState(() => _giftcardEnabled = value),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                '조건 저장',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _save() {
+    final profile = RadarTravelProfile(
+      homeAirports: _commaList(_airportsController.text, fallback: ['ICN'])
+          .map((value) => value.toUpperCase())
+          .toList(),
+      preferredCabins:
+          _cabins.isEmpty ? ['비즈니스'] : _cabins.toList(growable: false),
+      targetRegions: _commaList(
+        _regionsController.text,
+        fallback: ['미주', '유럽', '일본'],
+      ),
+      dateFlexibility: _parseInt(_dateFlexController.text) ?? 90,
+      mileageBalances: {
+        '대한항공': _parseInt(_koreanAirController.text) ?? 0,
+        '아시아나': _parseInt(_asianaController.text) ?? 0,
+      },
+      maxCashBudget: _parseInt(_budgetController.text),
+      giftcardEnabled: _giftcardEnabled,
+    );
+    Navigator.of(context).pop(profile);
+  }
+}
+
+class _RadarValueCalculatorSheet extends StatefulWidget {
+  final RadarItem item;
+  final double? averageCostPerMile;
+
+  const _RadarValueCalculatorSheet({
+    required this.item,
+    required this.averageCostPerMile,
+  });
+
+  @override
+  State<_RadarValueCalculatorSheet> createState() =>
+      _RadarValueCalculatorSheetState();
+}
+
+class _RadarValueCalculatorSheetState
+    extends State<_RadarValueCalculatorSheet> {
+  late final TextEditingController _cashController;
+  late final TextEditingController _milesController;
+  late final TextEditingController _taxController;
+  late final TextEditingController _costController;
+
+  @override
+  void initState() {
+    super.initState();
+    _cashController = TextEditingController(
+      text: (widget.item.cashValue ?? widget.item.price)?.toString() ?? '',
+    );
+    _milesController = TextEditingController(
+      text: widget.item.miles?.toString() ?? '',
+    );
+    _taxController = TextEditingController();
+    _costController = TextEditingController(
+      text: (widget.averageCostPerMile ?? widget.item.costPerMile ?? 10)
+          .toStringAsFixed(1),
+    );
+  }
+
+  @override
+  void dispose() {
+    _cashController.dispose();
+    _milesController.dispose();
+    _taxController.dispose();
+    _costController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cash = _parseInt(_cashController.text) ?? 0;
+    final miles = _parseInt(_milesController.text) ?? 0;
+    final taxes = _parseInt(_taxController.text) ?? 0;
+    final cost = _parseDouble(_costController.text) ?? 0;
+    final valuePerMile = miles > 0 ? (cash - taxes) / miles : null;
+    final mileOutlay = miles > 0 ? (miles * cost + taxes).round() : null;
+    final difference = mileOutlay == null ? null : cash - mileOutlay;
+
+    return _RadarSheetFrame(
+      title: '발권 가치 계산기',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.item.title.isNotEmpty) ...[
+            Text(
+              widget.item.title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _cashController,
+                  label: '현금가',
+                  hint: '1500000',
+                  suffix: '원',
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _milesController,
+                  label: '필요 마일',
+                  hint: '62500',
+                  suffix: '마일',
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _taxController,
+                  label: '유류세/세금',
+                  hint: '180000',
+                  suffix: '원',
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _costController,
+                  label: '내 원가',
+                  hint: '10.0',
+                  suffix: '원/마일',
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _RadarCalculatorResult(
+            valuePerMile: valuePerMile,
+            mileOutlay: mileOutlay,
+            difference: difference,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarCalculatorResult extends StatelessWidget {
+  final double? valuePerMile;
+  final int? mileOutlay;
+  final int? difference;
+
+  const _RadarCalculatorResult({
+    required this.valuePerMile,
+    required this.mileOutlay,
+    required this.difference,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat('#,###');
+    final isBetter = (difference ?? 0) > 0;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '계산 결과',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+          ),
+          const SizedBox(height: 10),
+          _RadarResultRow(
+            label: '발권 가치',
+            value: valuePerMile == null
+                ? '-'
+                : '${valuePerMile!.toStringAsFixed(1)}원/마일',
+          ),
+          _RadarResultRow(
+            label: '마일 사용 원가',
+            value:
+                mileOutlay == null ? '-' : '${formatter.format(mileOutlay)}원',
+          ),
+          _RadarResultRow(
+            label: isBetter ? '현금가 대비 이득' : '현금가 대비 초과',
+            value: difference == null
+                ? '-'
+                : '${formatter.format(difference!.abs())}원',
+            color: isBetter ? const Color(0xFF047857) : const Color(0xFFB91C1C),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarResultRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _RadarResultRow({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? Colors.black,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarShareSheet extends StatefulWidget {
+  final RadarItem item;
+
+  const _RadarShareSheet({required this.item});
+
+  @override
+  State<_RadarShareSheet> createState() => _RadarShareSheetState();
+}
+
+class _RadarShareSheetState extends State<_RadarShareSheet> {
+  final GlobalKey _captureKey = GlobalKey();
+  bool _isSharing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RadarSheetFrame(
+      title: '공유 카드',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: RepaintBoundary(
+              key: _captureKey,
+              child: _RadarShareCard(item: widget.item),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: _isSharing ? null : _share,
+            icon: _isSharing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.ios_share),
+            label: Text(_isSharing ? '공유 준비 중' : '이미지와 텍스트 공유'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _share() async {
+    setState(() => _isSharing = true);
+    try {
+      final boundary = _captureKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final bytes = byteData?.buffer.asUint8List();
+      if (bytes == null) return;
+
+      final dir = await getTemporaryDirectory();
+      final fileName =
+          'milecatch_radar_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png';
+      final file =
+          await File('${dir.path}/$fileName').writeAsBytes(bytes, flush: true);
+      await SharePlus.instance.share(
+        ShareParams(
+          text: widget.item.shareText,
+          files: [XFile(file.path)],
+        ),
+      );
+    } catch (_) {
+      Fluttertoast.showToast(msg: '공유 카드를 만들지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
+  }
+}
+
+class _RadarShareCard extends StatelessWidget {
+  final RadarItem item;
+
+  const _RadarShareCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat('#,###');
+    return Container(
+      width: 320,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(_radarIcon(item.itemType), color: Colors.black, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  item.typeLabel,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF334155),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const Text(
+                'MileCatch',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            item.title,
+            style: const TextStyle(
+              fontSize: 22,
+              height: 1.12,
+              color: Colors.black,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (item.subtitle.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              item.subtitle,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF475569),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          _RadarShareLine(label: '노선', value: item.route),
+          _RadarShareLine(label: '일정', value: item.dateRange),
+          if (item.miles != null)
+            _RadarShareLine(
+              label: '필요 마일',
+              value: '${formatter.format(item.miles)}마일',
+            ),
+          if (item.price != null)
+            _RadarShareLine(
+              label: '가격',
+              value: '${formatter.format(item.price)}원',
+            ),
+          if (item.cashValue != null)
+            _RadarShareLine(
+              label: '현금가',
+              value: '${formatter.format(item.cashValue)}원',
+            ),
+          if (item.costPerMile != null)
+            _RadarShareLine(
+              label: '기준 원가',
+              value: '${item.costPerMile!.toStringAsFixed(1)}원/마일',
+            ),
+          const SizedBox(height: 12),
+          Text(
+            item.reason,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.28,
+              color: Color(0xFF334155),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '출처 ${item.source} · 갱신 ${item.updatedAtLabel}',
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF94A3B8),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarShareLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _RadarShareLine({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 64,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarSheetFrame extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _RadarSheetFrame({
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 46,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1D5DB),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                child,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadarSheetTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final String? suffix;
+  final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+
+  const _RadarSheetTextField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    this.suffix,
+    this.keyboardType,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        suffixText: suffix,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.black, width: 1.4),
+        ),
+      ),
+    );
+  }
+}
+
+IconData _radarIcon(String itemType) {
+  switch (itemType) {
+    case RadarItemType.mileageSeat:
+      return Icons.airline_seat_recline_extra;
+    case RadarItemType.cancelAlert:
+      return Icons.notifications_active_outlined;
+    case RadarItemType.flightDeal:
+      return Icons.flight_takeoff;
+    case RadarItemType.hotelDeal:
+      return Icons.hotel_outlined;
+    case RadarItemType.giftcard:
+      return Icons.card_giftcard;
+    case RadarItemType.valueCalculator:
+      return Icons.calculate_outlined;
+    case RadarItemType.benefitNews:
+    default:
+      return Icons.newspaper_outlined;
+  }
+}
+
+Color _radarAccentColor(String itemType) {
+  switch (itemType) {
+    case RadarItemType.flightDeal:
+      return const Color(0xFF2563EB);
+    case RadarItemType.hotelDeal:
+      return const Color(0xFF7C3AED);
+    case RadarItemType.giftcard:
+      return const Color(0xFFB45309);
+    case RadarItemType.cancelAlert:
+    case RadarItemType.mileageSeat:
+      return const Color(0xFFDC2626);
+    case RadarItemType.valueCalculator:
+      return const Color(0xFF047857);
+    case RadarItemType.benefitNews:
+    default:
+      return const Color(0xFF475569);
+  }
+}
+
+List<String> _commaList(String value, {required List<String> fallback}) {
+  final list = value
+      .split(',')
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toList();
+  return list.isEmpty ? fallback : list;
+}
+
+int? _parseInt(String value) {
+  final normalized = value.replaceAll(',', '').trim();
+  if (normalized.isEmpty) return null;
+  return int.tryParse(normalized);
+}
+
+double? _parseDouble(String value) {
+  final normalized = value.replaceAll(',', '').trim();
+  if (normalized.isEmpty) return null;
+  return double.tryParse(normalized);
 }
 
 class _QuickActionsSection extends StatelessWidget {
@@ -746,19 +2240,29 @@ class _QuickActionsSection extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF5F1EC),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        action.icon,
-                        color: const Color(0xFF74512D),
-                        size: 19,
-                      ),
-                    ),
+                    action.assetIcon == null
+                        ? Container(
+                            width: 34,
+                            height: 34,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF5F1EC),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              action.icon,
+                              color: const Color(0xFF74512D),
+                              size: 19,
+                            ),
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              action.assetIcon!,
+                              width: 34,
+                              height: 34,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                     const SizedBox(height: 6),
                     Text(
                       action.title,
@@ -2825,12 +4329,14 @@ class _EmptySectionText extends StatelessWidget {
 
 class _QuickAction {
   final IconData icon;
+  final String? assetIcon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _QuickAction({
     required this.icon,
+    this.assetIcon,
     required this.title,
     required this.subtitle,
     required this.onTap,

@@ -13,7 +13,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 ///  - title: String
 ///  - imageUrl: String
 ///  - linkType: 'web' | 'deeplink'
-///  - linkValue: String (web URL 또는 딥링크 문자열)
+///  - linkValue: String (web URL 또는 딥링크 문자열, 예: chat, chat:global)
 ///  - isActive: bool
 ///  - startAt: Timestamp
 ///  - endAt: Timestamp
@@ -207,7 +207,8 @@ class _AdManageScreenState extends State<AdManageScreen> {
                                         const SizedBox(width: 8),
                                         Switch(
                                           value: isActive,
-                                          activeColor: const Color(0xFF74512D),
+                                          activeThumbColor:
+                                              const Color(0xFF74512D),
                                           onChanged: (value) async {
                                             await doc.reference.update(
                                               <String, dynamic>{
@@ -438,7 +439,8 @@ class _AdManageScreenState extends State<AdManageScreen> {
 
                 String imageUrl = existingImageUrl ?? '';
 
-                if (selectedImageFile != null) {
+                final imageFileToUpload = selectedImageFile;
+                if (imageFileToUpload != null) {
                   FirebaseStorage storage;
                   if (Platform.isIOS) {
                     storage = FirebaseStorage.instanceFor(
@@ -453,7 +455,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                   final String storagePath = 'bottom_sheet_ads/$fileName';
 
                   final Reference ref = storage.ref().child(storagePath);
-                  final UploadTask uploadTask = ref.putFile(selectedImageFile!);
+                  final UploadTask uploadTask = ref.putFile(imageFileToUpload);
                   final TaskSnapshot snapshot = await uploadTask;
                   if (snapshot.state == TaskState.success) {
                     imageUrl = await snapshot.ref.getDownloadURL();
@@ -535,7 +537,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: linkType,
+                            initialValue: linkType,
                             decoration: const InputDecoration(
                               labelText: '링크 타입',
                               border: OutlineInputBorder(),
@@ -567,7 +569,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                       decoration: InputDecoration(
                         labelText: linkType == 'web'
                             ? '웹 URL (https://...)'
-                            : '딥링크 값 (예: branch:jungang)',
+                            : '딥링크 값 (예: chat, chat:global, branch:jungang)',
                         labelStyle: const TextStyle(color: Colors.black54),
                         border: const OutlineInputBorder(),
                       ),
@@ -616,7 +618,7 @@ class _AdManageScreenState extends State<AdManageScreen> {
                       children: [
                         Switch(
                           value: isActive,
-                          activeColor: const Color(0xFF74512D),
+                          activeThumbColor: const Color(0xFF74512D),
                           onChanged: (value) {
                             setStateDialog(() {
                               isActive = value;
@@ -648,18 +650,19 @@ class _AdManageScreenState extends State<AdManageScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: Builder(
                               builder: (context) {
-                                if (selectedImageFile != null) {
+                                final previewFile = selectedImageFile;
+                                if (previewFile != null) {
                                   return Image.file(
-                                    selectedImageFile!,
+                                    previewFile,
                                     width: 80,
                                     height: 80,
                                     fit: BoxFit.cover,
                                   );
                                 }
                                 if (existingImageUrl != null &&
-                                    existingImageUrl!.isNotEmpty) {
+                                    existingImageUrl.isNotEmpty) {
                                   return Image.network(
-                                    existingImageUrl!,
+                                    existingImageUrl,
                                     width: 80,
                                     height: 80,
                                     fit: BoxFit.cover,
