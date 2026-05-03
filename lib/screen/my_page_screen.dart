@@ -93,6 +93,8 @@ class _MyPageScreenState extends State<MyPageScreen>
 
   BannerAd? _myPageBannerAd;
   bool _isMyPageBannerAdLoaded = false;
+  // 내 카드 영역은 추후 재검토를 위해 프로필 탭에서 숨김 처리.
+  bool get _shouldShowMyCardSection => false;
 
   // 광고 관리 관련 변수
   bool _isAdRemovalActive = false;
@@ -1921,9 +1923,11 @@ class _MyPageScreenState extends State<MyPageScreen>
                       // 스카이 이펙트 영역
                       _buildSkyEffectSection(),
                       const SizedBox(height: 8),
-                      // 내 카드 관리 영역
-                      _buildMyCardSection(),
-                      const SizedBox(height: 8),
+                      if (_shouldShowMyCardSection) ...[
+                        // 내 카드 관리 영역
+                        _buildMyCardSection(),
+                        const SizedBox(height: 8),
+                      ],
                       // 광고 하이라이트 안내
                       if (_showAdHighlight) _buildAdHighlightBanner(),
                       if (_showAdHighlight) const SizedBox(height: 8),

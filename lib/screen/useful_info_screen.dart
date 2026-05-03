@@ -2335,6 +2335,9 @@ const Map<String, String> _giftcardRateDefaultNames = {
 
 const double _giftcardRateNameColumnWidth = 76;
 const double _giftcardRateBranchColumnWidth = 84;
+const double _giftcardRateColumnWidthStep = 8;
+const double _giftcardRateColumnWidthMinDelta = -16;
+const double _giftcardRateColumnWidthMaxDelta = 56;
 
 String _compactGiftcardRateName(String name) {
   return name.replaceAll('상품권', '').trim();
@@ -2357,6 +2360,35 @@ class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
   late Future<_GiftcardRateTableData> _future;
   bool _isExporting = false;
   bool _isRefreshing = false;
+  double _tableColumnWidthDelta = 0;
+
+  bool get _canShrinkTable =>
+      _tableColumnWidthDelta > _giftcardRateColumnWidthMinDelta;
+
+  bool get _canExpandTable =>
+      _tableColumnWidthDelta < _giftcardRateColumnWidthMaxDelta;
+
+  void _shrinkTableColumns() {
+    if (!_canShrinkTable) return;
+    setState(() {
+      _tableColumnWidthDelta =
+          (_tableColumnWidthDelta - _giftcardRateColumnWidthStep)
+              .clamp(_giftcardRateColumnWidthMinDelta,
+                  _giftcardRateColumnWidthMaxDelta)
+              .toDouble();
+    });
+  }
+
+  void _expandTableColumns() {
+    if (!_canExpandTable) return;
+    setState(() {
+      _tableColumnWidthDelta =
+          (_tableColumnWidthDelta + _giftcardRateColumnWidthStep)
+              .clamp(_giftcardRateColumnWidthMinDelta,
+                  _giftcardRateColumnWidthMaxDelta)
+              .toDouble();
+    });
+  }
 
   @override
   void initState() {
@@ -2694,7 +2726,10 @@ class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
               RepaintBoundary(
                 key: _captureKey,
                 child: _GiftcardRateTableFrame(
-                  child: _GiftcardRateTable(data: data),
+                  child: _GiftcardRateTable(
+                    data: data,
+                    columnWidthDelta: _tableColumnWidthDelta,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -2712,7 +2747,24 @@ class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
                     tooltip: '편집',
                     onTap: _openEditScreen,
                   ),
-                  const Spacer(),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _GiftcardRateActionButton(
+                          icon: Icons.add,
+                          tooltip: '표 넓히기',
+                          onTap: _canExpandTable ? _expandTableColumns : null,
+                        ),
+                        const SizedBox(width: 8),
+                        _GiftcardRateActionButton(
+                          icon: Icons.remove,
+                          tooltip: '표 줄이기',
+                          onTap: _canShrinkTable ? _shrinkTableColumns : null,
+                        ),
+                      ],
+                    ),
+                  ),
                   _GiftcardRateActionButton(
                     icon: Icons.ios_share,
                     tooltip: '공유',
@@ -2762,14 +2814,20 @@ class _GiftcardRateTableFrame extends StatelessWidget {
 
 class _GiftcardRateTable extends StatelessWidget {
   final _GiftcardRateTableData data;
+  final double columnWidthDelta;
 
-  const _GiftcardRateTable({required this.data});
+  const _GiftcardRateTable({
+    required this.data,
+    required this.columnWidthDelta,
+  });
 
   @override
   Widget build(BuildContext context) {
     final timestamp = DateFormat('yyyy.MM.dd HH:mm').format(data.fetchedAt);
-    final tableWidth = _giftcardRateNameColumnWidth +
-        (data.branches.length * _giftcardRateBranchColumnWidth);
+    final nameColumnWidth = _giftcardRateNameColumnWidth + columnWidthDelta;
+    final branchColumnWidth = _giftcardRateBranchColumnWidth + columnWidthDelta;
+    final tableWidth =
+        nameColumnWidth + (data.branches.length * branchColumnWidth);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2802,6 +2860,8 @@ class _GiftcardRateTable extends StatelessWidget {
                 _GiftcardRateTableRow(
                   isHeader: true,
                   label: '상품권',
+                  nameColumnWidth: nameColumnWidth,
+                  branchColumnWidth: branchColumnWidth,
                   branchCells: [
                     for (final branch in data.branches) branch.name,
                   ],
@@ -2813,6 +2873,8 @@ class _GiftcardRateTable extends StatelessWidget {
                           _giftcardRateDefaultNames[giftcardId] ??
                           giftcardId,
                     ),
+                    nameColumnWidth: nameColumnWidth,
+                    branchColumnWidth: branchColumnWidth,
                     branchCells: [
                       for (final branch in data.branches)
                         data.cells[giftcardId]?[branch.id]?.displayText ?? '-',
@@ -2831,11 +2893,15 @@ class _GiftcardRateTableRow extends StatelessWidget {
   final bool isHeader;
   final String label;
   final List<String> branchCells;
+  final double nameColumnWidth;
+  final double branchColumnWidth;
 
   const _GiftcardRateTableRow({
     this.isHeader = false,
     required this.label,
     required this.branchCells,
+    required this.nameColumnWidth,
+    required this.branchColumnWidth,
   });
 
   @override
@@ -2853,14 +2919,14 @@ class _GiftcardRateTableRow extends StatelessWidget {
         children: [
           _GiftcardRateTableCell(
             text: label,
-            width: _giftcardRateNameColumnWidth,
+            width: nameColumnWidth,
             isHeader: isHeader,
             alignLeft: true,
           ),
           for (final cell in branchCells)
             _GiftcardRateTableCell(
               text: cell,
-              width: _giftcardRateBranchColumnWidth,
+              width: branchColumnWidth,
               isHeader: isHeader,
             ),
         ],

@@ -89,10 +89,14 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
           _faceValueOptions.contains(faceValue) ? faceValue : 100000;
       _faceValueController.text = _selectedFaceValue.toString();
       _qtyController.text = ((data['qty'] as num?)?.toInt() ?? 1).toString();
-      _buyUnitController.text =
-          ((data['buyUnit'] as num?)?.toInt() ?? 0).toString();
-      _discountController.text =
-          ((data['discount'] as num?)?.toDouble() ?? 0).toString();
+      final buyUnit = ((data['buyUnit'] as num?)?.toInt() ?? 0);
+      _buyUnitController.text = buyUnit.toString();
+      _discountController.text = _formatDiscount(
+        _discountFromBuyUnit(
+          faceValue: _selectedFaceValue ?? 0,
+          buyUnit: buyUnit,
+        ),
+      );
       _memoController.text = (data['memo'] as String?) ?? '';
     });
   }
@@ -190,6 +194,43 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value.replaceAll(',', '')) ?? 0;
     return 0;
+  }
+
+  double _discountFromBuyUnit({
+    required int faceValue,
+    required int buyUnit,
+  }) {
+    if (faceValue <= 0 || buyUnit <= 0) return 0;
+    return 100 * (1 - (buyUnit / faceValue));
+  }
+
+  String _formatDiscount(double discount) {
+    return discount.toStringAsFixed(2);
+  }
+
+  void _syncPriceInputsForFaceValueChange() {
+    final face = int.tryParse(
+            _faceValueController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        0;
+    if (face <= 0) return;
+
+    _updatingPriceInputs = true;
+    try {
+      if (_priceInputMode == 'discount') {
+        final disc = double.tryParse(_discountController.text);
+        if (disc == null) return;
+        _buyUnitController.text = (face * (1 - disc / 100)).round().toString();
+      } else {
+        final unit = int.tryParse(
+            _buyUnitController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+        if (unit == null) return;
+        _discountController.text = _formatDiscount(
+          _discountFromBuyUnit(faceValue: face, buyUnit: unit),
+        );
+      }
+    } finally {
+      _updatingPriceInputs = false;
+    }
   }
 
   DateTime? _asDate(dynamic value) {
@@ -308,7 +349,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         _asInt(_faceValueController.text.replaceAll(RegExp(r'[^0-9]'), ''));
     final buyUnit =
         _asInt(_buyUnitController.text.replaceAll(RegExp(r'[^0-9]'), ''));
-    final discount = _asDouble(_discountController.text);
+    final discount = _discountFromBuyUnit(
+      faceValue: faceValue,
+      buyUnit: buyUnit,
+    );
     final qty = _asInt(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), ''));
     return {
       'giftcardId': _selectedGiftcardId,
@@ -319,7 +363,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       'qty': qty,
       'priceInputMode': _priceInputMode,
       'buyUnit': buyUnit,
-      'discount': double.parse(discount.toStringAsFixed(2)),
+      'discount': double.parse(_formatDiscount(discount)),
       'memo': _memoController.text.trim(),
       'buyDate': Timestamp.fromDate(_buyDate),
     };
@@ -546,6 +590,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       _faceValueController.text = (faceValue > 0 ? faceValue : 0).toString();
       _buyUnitController.text = (buyUnit >= 0 ? buyUnit : 0).toString();
       _discountController.text = discount.toStringAsFixed(2);
+      _syncPriceInputsForFaceValueChange();
       _memoController.text = memo;
       _updatingPriceInputs = false;
     });
@@ -769,8 +814,9 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     final unit =
         int.tryParse(_buyUnitController.text.replaceAll(RegExp(r'[^0-9]'), ''));
     if (unit == null || face == 0) return;
-    final disc = 100 * (1 - (unit / face));
-    final str = disc.toStringAsFixed(2);
+    final str = _formatDiscount(
+      _discountFromBuyUnit(faceValue: face, buyUnit: unit),
+    );
     if (_discountController.text != str) {
       _discountController.removeListener(_onDiscountChanged);
       _updatingPriceInputs = true;
@@ -859,7 +905,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     final buyUnit = int.tryParse(
             _buyUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
         0;
-    final discount = double.tryParse(_discountController.text) ?? 0;
+    final discount = _discountFromBuyUnit(
+      faceValue: faceValue,
+      buyUnit: buyUnit,
+    );
     final qty =
         int.tryParse(_qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
             0;
@@ -899,7 +948,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         'buyDate': Timestamp.fromDate(_buyDate),
         'payType': _payType,
         'buyUnit': buyUnit,
-        'discount': double.parse(discount.toStringAsFixed(2)),
+        'discount': double.parse(_formatDiscount(discount)),
         'qty': qty,
         'cardId': _selectedCardId,
         'mileRuleUsedPerMileKRW': milePerKRW,
@@ -1505,6 +1554,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                                     _selectedFaceValue = value;
                                     _faceValueController.text =
                                         value.toString();
+                                    _syncPriceInputsForFaceValueChange();
                                   });
                                 }
                               },

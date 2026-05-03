@@ -1,0 +1,409 @@
+{
+  "id": "mt6HglOh7wQzQ5HxcLpGStpjU0J3",
+  "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3",
+  "data": {
+    "peanutCountLimit": 3,
+    "joinedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-18T02:13:45.199000+00:00"
+    },
+    "photoURLChangeCount": 0,
+    "createdAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-18T02:13:45.199000+00:00"
+    },
+    "fcmToken": "dZmlRITRCUpXkZbN2EjiMq:APA91bF_zYMwzhGMmZkEzztLYOvrYQGYxulzZSzqKU6PRfSLKNcFbSqlp8bYpfMqxTKb69k-9XsQr0EAwaKqmSoEXLikXr6dFBvMaUBKdQPQALwr73DMRlU",
+    "uid": "mt6HglOh7wQzQ5HxcLpGStpjU0J3",
+    "followerCount": 0,
+    "email": "jjw97226@gmail.com",
+    "postsCount": 0,
+    "followingCount": 0,
+    "displayNameEnable": true,
+    "lastLoginAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-18T02:13:45.199000+00:00"
+    },
+    "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJ2rYKRsgtkYpJnOiRuBL4MihFCcbce95W3U8f5TzNLyArMXrc=s96-c",
+    "photoURLEnable": true,
+    "displayGrade": "이코노미 Lv.1",
+    "ranking_agree": true,
+    "likesReceived": 0,
+    "hasGift": true,
+    "commentCount": 0,
+    "gradeLevel": 1,
+    "gradeUpdatedAt": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-18T02:13:45.199000+00:00"
+    },
+    "displayNameChangeCount": 0,
+    "displayName": "케이팬1호",
+    "isBanned": false,
+    "roles": [
+      "user"
+    ],
+    "ownedEffects": [],
+    "currentSkyEffect": null,
+    "grade": "이코노미",
+    "hideBottomSheetAdUntil": {
+      "__type__": "DatetimeWithNanoseconds",
+      "value": "2026-04-26T08:29:25.843482+00:00"
+    },
+    "peanutCount": 3,
+    "likesCount": 0
+  },
+  "subcollections": {
+    "cards": [
+      {
+        "id": "bc_goat",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/bc_goat",
+        "data": {
+          "creditPerMileKRW": 99999999999999,
+          "memo": "바로BC GOAT",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-18T04:18:45.476000+00:00"
+          },
+          "name": "BC",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "hana_clubsk",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/hana_clubsk",
+        "data": {
+          "creditPerMileKRW": 999999999999999,
+          "memo": "클럽sk",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:33:40.094000+00:00"
+          },
+          "name": "하나",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "hyundai_himartm",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/hyundai_himartm",
+        "data": {
+          "creditPerMileKRW": 9999999999999999,
+          "memo": "현대 하이마트M",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:34:09.640000+00:00"
+          },
+          "name": "현대",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "ibk_kpass",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/ibk_kpass",
+        "data": {
+          "creditPerMileKRW": 999999999999,
+          "memo": "IBK기업은행 K패스",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:35:39.758000+00:00"
+          },
+          "name": "IBK기업",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lotte_skypass",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/lotte_skypass",
+        "data": {
+          "creditPerMileKRW": 1000,
+          "memo": "롯스패",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-18T04:17:05.821000+00:00"
+          },
+          "name": "롯데",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "samsung_mile",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/samsung_mile",
+        "data": {
+          "creditPerMileKRW": 1000,
+          "memo": "삼앤마",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:54:48.191000+00:00"
+          },
+          "name": "삼성",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "woori_cardofpoint2",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/cards/woori_cardofpoint2",
+        "data": {
+          "creditPerMileKRW": 99999999999999,
+          "memo": "카정포2",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:38:45.668000+00:00"
+          },
+          "name": "우리",
+          "checkPerMileKRW": 0
+        },
+        "subcollections": {}
+      }
+    ],
+    "gift_templates": [
+      {
+        "id": "LYkTtXrn9k6MU6hTpo5W",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/gift_templates/LYkTtXrn9k6MU6hTpo5W",
+        "data": {
+          "lastUsedAt": null,
+          "useCount": 0,
+          "nameLower": "삼카 신세계 3장",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T10:04:33.129000+00:00"
+          },
+          "dateMode": "manual",
+          "name": "삼카 신세계 3장",
+          "version": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T10:04:33.129000+00:00"
+          },
+          "pinned": false,
+          "payload": {
+            "buyUnit": 97800,
+            "priceInputMode": "buyUnit",
+            "faceValue": 100000,
+            "whereToBuyId": "gmarket",
+            "payType": "신용",
+            "buyDate": {
+              "__type__": "DatetimeWithNanoseconds",
+              "value": "2026-04-30T15:00:00+00:00"
+            },
+            "qty": 5,
+            "discount": 80.44,
+            "cardId": "samsung_mile",
+            "memo": "",
+            "giftcardId": "shinsegae"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "m7E33vPEhPXFRWLRffvi",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/gift_templates/m7E33vPEhPXFRWLRffvi",
+        "data": {
+          "lastUsedAt": null,
+          "useCount": 0,
+          "nameLower": "삼카 신세계 2장",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T10:04:17.230000+00:00"
+          },
+          "dateMode": "manual",
+          "name": "삼카 신세계 2장",
+          "version": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T10:04:17.230000+00:00"
+          },
+          "pinned": false,
+          "payload": {
+            "buyUnit": 97800,
+            "priceInputMode": "buyUnit",
+            "faceValue": 100000,
+            "whereToBuyId": "gmarket",
+            "payType": "신용",
+            "buyDate": {
+              "__type__": "DatetimeWithNanoseconds",
+              "value": "2026-05-03T09:37:46.901785+00:00"
+            },
+            "qty": 2,
+            "discount": 2.2,
+            "cardId": "samsung_mile",
+            "memo": "이마트",
+            "giftcardId": "shinsegae"
+          }
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "wvKUXt5GZwbDz53tpvUO",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/gift_templates/wvKUXt5GZwbDz53tpvUO",
+        "data": {
+          "lastUsedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:59:33.131000+00:00"
+          },
+          "useCount": 1,
+          "dateMode": "manual",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T10:04:01.567000+00:00"
+          },
+          "nameLower": "우리 신세계 5장",
+          "name": "우리 신세계 5장",
+          "version": 1,
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:59:27.969000+00:00"
+          },
+          "pinned": false,
+          "payload": {
+            "buyUnit": 97800,
+            "priceInputMode": "buyUnit",
+            "faceValue": 100000,
+            "whereToBuyId": "gmarket",
+            "payType": "신용",
+            "buyDate": {
+              "__type__": "DatetimeWithNanoseconds",
+              "value": "2026-05-03T09:38:49.026209+00:00"
+            },
+            "qty": 5,
+            "discount": 2.2,
+            "cardId": "woori_cardofpoint2",
+            "memo": "",
+            "giftcardId": "shinsegae"
+          }
+        },
+        "subcollections": {}
+      }
+    ],
+    "lots": [
+      {
+        "id": "lot_1777801065000",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/lots/lot_1777801065000",
+        "data": {
+          "buyUnit": 97800,
+          "faceValue": 100000,
+          "payType": "신용",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-04-30T15:00:00+00:00"
+          },
+          "discount": 80.44,
+          "mileRuleUsedPerMileKRW": 1000,
+          "memo": "",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:37:45.149000+00:00"
+          },
+          "giftcardId": "shinsegae",
+          "whereToBuyId": "gmarket",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:37:45.149000+00:00"
+          },
+          "qty": 5,
+          "cardId": "samsung_mile",
+          "status": "open",
+          "miles": 489
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1777801088092",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/lots/lot_1777801088092",
+        "data": {
+          "buyUnit": 97800,
+          "faceValue": 100000,
+          "payType": "신용",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:37:46.901785+00:00"
+          },
+          "discount": 2.2,
+          "mileRuleUsedPerMileKRW": 1000,
+          "memo": "이마트",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:38:08.244000+00:00"
+          },
+          "giftcardId": "shinsegae",
+          "whereToBuyId": "gmarket",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:38:08.244000+00:00"
+          },
+          "qty": 2,
+          "cardId": "samsung_mile",
+          "status": "open",
+          "miles": 196
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "lot_1777801139327",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/lots/lot_1777801139327",
+        "data": {
+          "buyUnit": 97800,
+          "faceValue": 100000,
+          "payType": "신용",
+          "buyDate": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:38:49.026209+00:00"
+          },
+          "discount": 2.2,
+          "mileRuleUsedPerMileKRW": 99999999999999,
+          "memo": "",
+          "createdAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:38:59.452000+00:00"
+          },
+          "giftcardId": "shinsegae",
+          "whereToBuyId": "gmarket",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:38:59.452000+00:00"
+          },
+          "qty": 5,
+          "cardId": "woori_cardofpoint2",
+          "status": "open",
+          "miles": 0
+        },
+        "subcollections": {}
+      }
+    ],
+    "where_to_buy": [
+      {
+        "id": "gmarket",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/where_to_buy/gmarket",
+        "data": {
+          "memo": "지마켓",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:36:11.942000+00:00"
+          },
+          "name": "지마켓"
+        },
+        "subcollections": {}
+      },
+      {
+        "id": "thingsharp",
+        "path": "users/mt6HglOh7wQzQ5HxcLpGStpjU0J3/where_to_buy/thingsharp",
+        "data": {
+          "memo": "롯데카드 띵샵",
+          "updatedAt": {
+            "__type__": "DatetimeWithNanoseconds",
+            "value": "2026-05-03T09:35:58.928000+00:00"
+          },
+          "name": "띵샵"
+        },
+        "subcollections": {}
+      }
+    ]
+  },
+  "backupMeta": {
+    "userId": "mt6HglOh7wQzQ5HxcLpGStpjU0J3",
+    "safeFileName": "mt6HglOh7wQzQ5HxcLpGStpjU0J3.json"
+  }
+}

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/card_product_model.dart';
 import '../services/branch_service.dart';
 import '../services/card_catalog_service.dart';
+import 'user_profile_screen.dart';
 
 const Color _cardInk = Color(0xFF111827);
 const Color _cardLine = Color(0xFFE5E7EB);
@@ -1200,6 +1201,7 @@ class CardRevisionHistoryScreen extends StatefulWidget {
 
 class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
   final CardCatalogService _service = CardCatalogService();
+  final Map<String, Future<_RevisionActorProfile?>> _actorProfileFutures = {};
   bool _rollingBack = false;
 
   @override
@@ -1244,7 +1246,9 @@ class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
               final revision = revisions[index];
               return _RevisionTile(
                 revision: revision,
+                actorProfileFuture: _actorProfileFuture(revision.actorUid),
                 onTap: () => _showRevision(revision),
+                onActorTap: _openActorProfile,
                 onRollback: revision.action == 'create' || _rollingBack
                     ? null
                     : () => _rollback(revision),
@@ -1256,7 +1260,54 @@ class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
     );
   }
 
+  Future<_RevisionActorProfile?> _actorProfileFuture(String? uid) {
+    final actorUid = uid?.trim() ?? '';
+    if (actorUid.isEmpty) return Future.value(null);
+
+    return _actorProfileFutures.putIfAbsent(actorUid, () async {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(actorUid)
+          .get();
+      final data = doc.data();
+      if (!doc.exists || data == null) {
+        return const _RevisionActorProfile(
+          displayName: '사용자 정보 없음',
+          exists: false,
+        );
+      }
+
+      final displayName = _firstNonEmpty([
+        data['displayName'],
+        data['nickname'],
+        data['name'],
+      ]);
+      final photoUrl = _emptyToNull(_firstNonEmpty([
+        data['photoURL'],
+        data['photoUrl'],
+        data['profileImageUrl'],
+        data['profileImageURL'],
+      ]));
+
+      return _RevisionActorProfile(
+        displayName: displayName.isEmpty ? '이름 없는 사용자' : displayName,
+        photoUrl: photoUrl,
+      );
+    });
+  }
+
+  void _openActorProfile(String uid) {
+    final actorUid = uid.trim();
+    if (actorUid.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UserProfileScreen(userUid: actorUid),
+      ),
+    );
+  }
+
   Future<void> _showRevision(CardProductRevision revision) async {
+    final actorUid = revision.actorUid?.trim() ?? '';
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -1269,9 +1320,18 @@ class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
-            Text(
-              '수정자: ${revision.actorUid ?? '-'}',
-              style: const TextStyle(color: Color(0xFF7E8492)),
+            _RevisionActorSummary(
+              actorUid: actorUid,
+              profileFuture: _actorProfileFuture(actorUid),
+              leadingLabel: '수정자',
+              onTap: actorUid.isEmpty
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _openActorProfile(actorUid);
+                      });
+                    },
             ),
             const SizedBox(height: 14),
             for (final change in revision.changes)
@@ -2333,18 +2393,23 @@ class _EditPanel extends StatelessWidget {
 
 class _RevisionTile extends StatelessWidget {
   final CardProductRevision revision;
+  final Future<_RevisionActorProfile?> actorProfileFuture;
   final VoidCallback onTap;
+  final ValueChanged<String> onActorTap;
   final VoidCallback? onRollback;
 
   const _RevisionTile({
     required this.revision,
+    required this.actorProfileFuture,
     required this.onTap,
+    required this.onActorTap,
     required this.onRollback,
   });
 
   @override
   Widget build(BuildContext context) {
     final firstChanges = revision.changes.take(3).map((c) => c.path).join(', ');
+    final actorUid = revision.actorUid?.trim() ?? '';
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(8),
@@ -2385,13 +2450,183 @@ class _RevisionTile extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_dateText(revision.createdAt)} · ${revision.actorUid ?? '-'}',
+                _dateText(revision.createdAt),
                 style: const TextStyle(color: Color(0xFF8A91A1), fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              _RevisionActorSummary(
+                actorUid: actorUid,
+                profileFuture: actorProfileFuture,
+                dense: true,
+                onTap: actorUid.isEmpty ? null : () => onActorTap(actorUid),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RevisionActorProfile {
+  final String displayName;
+  final String? photoUrl;
+  final bool exists;
+
+  const _RevisionActorProfile({
+    required this.displayName,
+    this.photoUrl,
+    this.exists = true,
+  });
+}
+
+class _RevisionActorSummary extends StatelessWidget {
+  final String? actorUid;
+  final Future<_RevisionActorProfile?> profileFuture;
+  final VoidCallback? onTap;
+  final bool dense;
+  final String? leadingLabel;
+
+  const _RevisionActorSummary({
+    required this.actorUid,
+    required this.profileFuture,
+    this.onTap,
+    this.dense = false,
+    this.leadingLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = actorUid?.trim() ?? '';
+    return FutureBuilder<_RevisionActorProfile?>(
+      future: profileFuture,
+      builder: (context, snapshot) {
+        final loading = uid.isNotEmpty &&
+            snapshot.connectionState == ConnectionState.waiting;
+        final profile = snapshot.data;
+        final displayName =
+            loading ? '사용자 확인 중' : (profile?.displayName ?? '수정자 정보 없음');
+        final subtitle = loading
+            ? '프로필을 불러오는 중'
+            : uid.isEmpty
+                ? '수정자 정보 없음'
+                : profile?.exists == false
+                    ? '사용자 정보 없음'
+                    : '프로필 보기';
+        final photoUrl = loading ? null : profile?.photoUrl;
+        final canOpenProfile =
+            uid.isNotEmpty && onTap != null && profile?.exists != false;
+
+        final content = Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: dense ? 0 : 10,
+            vertical: dense ? 0 : 8,
+          ),
+          child: Row(
+            children: [
+              _RevisionActorAvatar(
+                photoUrl: photoUrl,
+                loading: loading,
+                size: dense ? 30 : 38,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (leadingLabel != null) ...[
+                      Text(
+                        leadingLabel!,
+                        style: const TextStyle(
+                          color: Color(0xFF8A91A1),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _cardInk,
+                        fontSize: dense ? 13 : 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: canOpenProfile
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFF8A91A1),
+                        fontSize: dense ? 11 : 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (canOpenProfile)
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Color(0xFF9CA3AF),
+                ),
+            ],
+          ),
+        );
+
+        if (!canOpenProfile) return content;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: content,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RevisionActorAvatar extends StatelessWidget {
+  final String? photoUrl;
+  final bool loading;
+  final double size;
+
+  const _RevisionActorAvatar({
+    required this.photoUrl,
+    required this.loading,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = photoUrl?.trim() ?? '';
+    return CircleAvatar(
+      radius: size / 2,
+      backgroundColor: const Color(0xFFEFF3F8),
+      backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+      child: imageUrl.isNotEmpty
+          ? null
+          : loading
+              ? SizedBox(
+                  width: size * 0.45,
+                  height: size * 0.45,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  Icons.person_outline,
+                  size: size * 0.56,
+                  color: const Color(0xFF6B7280),
+                ),
     );
   }
 }
