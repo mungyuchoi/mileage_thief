@@ -25,13 +25,13 @@ import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_info_screen.dart';
+import 'my_card_dashboard_screen.dart';
 import 'radar_notification_screen.dart';
 import 'useful_info_screen.dart';
 import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../widgets/segment_tab_bar.dart';
 import '../widgets/community_chat_floating_button.dart';
-import '../branch/card_manage.dart';
 import '../branch/card_step.dart';
 import '../branch/wheretobuy_manage.dart';
 import '../branch/wheretobuy_step.dart';
@@ -555,6 +555,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final GlobalKey<State<GiftcardInfoScreen>> _giftcardInfoKey =
       GlobalKey<State<GiftcardInfoScreen>>();
   late TabController _giftcardTabController; // 상품권 탭 전용 TabController
+  String _communityInitialBoardId = 'all';
+  String _communityInitialBoardName = '전체글';
 
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
@@ -571,6 +573,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _selectHomeTab(_HomeTab tab) {
     setState(() {
       _currentTab = tab;
+    });
+  }
+
+  void _openCommunityTab({String? boardId, String? boardName}) {
+    final nextBoardId =
+        boardId?.trim().isNotEmpty == true ? boardId!.trim() : 'all';
+    final nextBoardName = boardName?.trim().isNotEmpty == true
+        ? boardName!.trim()
+        : nextBoardId == 'all'
+            ? '전체글'
+            : nextBoardId;
+
+    setState(() {
+      _communityInitialBoardId = nextBoardId;
+      _communityInitialBoardName = nextBoardName;
+      _currentTab = _HomeTab.community;
     });
   }
 
@@ -704,8 +722,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _selectTab(int index) {
+    final nextTab = _HomeTab.values[index];
     setState(() {
-      _currentTab = _HomeTab.values[index];
+      if (nextTab == _HomeTab.community) {
+        _communityInitialBoardId = 'all';
+        _communityInitialBoardName = '전체글';
+      }
+      _currentTab = nextTab;
     });
   }
 
@@ -796,14 +819,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             color: Colors.white,
             onSelected: (value) async {
               if (value == 'manage_cards') {
-                await Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const CardManagePage()));
+                await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const MyCardDashboardScreen()));
               }
             },
             itemBuilder: (context) => const [
               PopupMenuItem(
                 value: 'manage_cards',
-                child: Text('카드 관리'),
+                child: Text('내 카드'),
               ),
             ],
           );
@@ -826,7 +851,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     await Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const CardManagePage()));
+                            builder: (_) => const MyCardDashboardScreen()));
                     break;
                   case 'manage_where_to_buy':
                     await Navigator.push(
@@ -839,7 +864,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'manage_cards',
-                  child: Text('카드 관리'),
+                  child: Text('내 카드'),
                 ),
                 if (hasWhereToBuy)
                   const PopupMenuItem(
@@ -893,6 +918,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  void _setGiftcardScrolling(bool isScrolling) {
+    if (_isScrolling == isScrolling) return;
+    setState(() {
+      _isScrolling = isScrolling;
+    });
+  }
+
+  bool _handleGiftcardScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification ||
+        notification is ScrollUpdateNotification) {
+      _setGiftcardScrolling(true);
+    } else if (notification is ScrollEndNotification) {
+      _setGiftcardScrolling(false);
+    }
+    return false;
+  }
+
+  Widget _buildGiftcardPrimaryTabBar() {
+    return Container(
+      color: Colors.white,
+      child: SegmentTabBar(
+        controller: _giftcardTabController,
+        labels: const ['정보', '지도', '시세', '지점'],
+        margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_currentTab == _HomeTab.giftcard) {
@@ -913,36 +966,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           body: Stack(
             children: [
               Positioned.fill(
-                child: Column(
-                  children: [
-                    Container(
-                      color: Colors.white,
-                      child: SegmentTabBar(
-                        controller: _giftcardTabController,
-                        labels: const ['정보', '지도', '시세', '지점'],
-                        margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                      ),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _handleGiftcardScrollNotification,
+                  child: NestedScrollView(
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                      SliverToBoxAdapter(child: _buildGiftcardPrimaryTabBar()),
+                    ],
+                    body: TabBarView(
+                      controller: _giftcardTabController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        GiftcardInfoScreen(
+                          key: _giftcardInfoKey,
+                          onScrollChanged: _setGiftcardScrolling,
+                        ),
+                        GiftcardMapScreen(),
+                        const GiftcardRatesTab(),
+                        const BranchListTab(),
+                      ],
                     ),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _giftcardTabController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          GiftcardInfoScreen(
-                            key: _giftcardInfoKey,
-                            onScrollChanged: (isScrolling) {
-                              setState(() {
-                                _isScrolling = isScrolling;
-                              });
-                            },
-                          ),
-                          GiftcardMapScreen(),
-                          const GiftcardRatesTab(),
-                          const BranchListTab(),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               if (_giftFabOpen)
@@ -1158,10 +1201,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildCurrentTabPage() {
     switch (_currentTab) {
       case _HomeTab.community:
-        return const CommunityScreen();
+        return CommunityScreen(
+          initialBoardId: _communityInitialBoardId,
+          initialBoardName: _communityInitialBoardName,
+        );
       case _HomeTab.usefulInfo:
         return UsefulInfoScreen(
-          onOpenCommunity: () => _selectHomeTab(_HomeTab.community),
+          onOpenCommunity: _openCommunityTab,
           onOpenGiftcard: () => _selectHomeTab(_HomeTab.giftcard),
           onOpenProfile: () => _selectHomeTab(_HomeTab.profile),
         );

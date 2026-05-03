@@ -32,7 +32,14 @@ class _CommunityBoardTab {
 }
 
 class CommunityScreen extends StatefulWidget {
-  const CommunityScreen({Key? key}) : super(key: key);
+  const CommunityScreen({
+    super.key,
+    this.initialBoardId = 'all',
+    this.initialBoardName,
+  });
+
+  final String initialBoardId;
+  final String? initialBoardName;
 
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
@@ -108,6 +115,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
       boardName: '오늘의 뉴스',
     ),
     _CommunityBoardTab(
+      boardId: 'aeroroute_news',
+      label: 'AeroRoutes',
+      boardName: 'AeroRoutes',
+    ),
+    _CommunityBoardTab(
+      boardId: 'secretflying_news',
+      label: 'SecretFlying',
+      boardName: 'SecretFlying',
+    ),
+    _CommunityBoardTab(
+      boardId: 'workingholiday_news',
+      label: '워킹홀리데이',
+      boardName: '워킹홀리데이',
+    ),
+    _CommunityBoardTab(
       boardId: 'suggestion',
       label: '건의사항',
       boardName: '건의사항',
@@ -128,6 +150,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
     'review': '항공 리뷰',
     'seats': '오늘의 좌석',
     'news': '오늘의 뉴스',
+    'aeroroute_news': 'AeroRoutes',
+    'secretflying_news': 'SecretFlying',
+    'workingholiday_news': '워킹홀리데이',
     'error_report': '오류 신고',
     'suggestion': '건의사항',
     'notice': '운영 공지사항',
@@ -148,14 +173,65 @@ class _CommunityScreenState extends State<CommunityScreen> {
     setState(fn);
   }
 
+  String _normalizedInitialBoardId() {
+    final boardId = widget.initialBoardId.trim();
+    return boardId.isEmpty ? 'all' : boardId;
+  }
+
+  String _initialBoardName(String boardId) {
+    final boardName = widget.initialBoardName?.trim();
+    if (boardName != null && boardName.isNotEmpty) return boardName;
+    if (boardId == 'all') return '전체글';
+    return _fallbackBoardNames[boardId] ?? boardId;
+  }
+
+  void _applyInitialBoardSelection({required bool reload}) {
+    final boardId = _normalizedInitialBoardId();
+    final boardName = _initialBoardName(boardId);
+
+    if (!reload) {
+      selectedBoardId = boardId;
+      selectedBoardName = boardName;
+      return;
+    }
+
+    if (selectedBoardId == boardId && selectedBoardName == boardName) return;
+
+    setState(() {
+      selectedBoardId = boardId;
+      selectedBoardName = boardName;
+      _posts.clear();
+      _lastDocument = null;
+      _hasMoreData = true;
+      _isLoadingMore = false;
+      _isInitialLoading = true;
+    });
+
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    _loadInitialPosts();
+    _loadBestPostsIfNeeded();
+  }
+
   @override
   void initState() {
     super.initState();
+    _applyInitialBoardSelection(reload: false);
     _loadUserProfile();
     _loadBoards();
     _loadInitialPosts();
     _loadBestPostsIfNeeded();
     _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant CommunityScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialBoardId != widget.initialBoardId ||
+        oldWidget.initialBoardName != widget.initialBoardName) {
+      _applyInitialBoardSelection(reload: true);
+    }
   }
 
   @override
@@ -439,6 +515,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
     'newspaper_outlined': Icons.newspaper_outlined,
     'airline_seat_recline_extra': Icons.airline_seat_recline_extra,
     'local_fire_department': Icons.local_fire_department,
+    'public': Icons.public,
+    'work_outline': Icons.work_outline,
   };
 
   IconData getBoardIcon(String? iconName) {
@@ -464,7 +542,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       surfaceTintColor: Colors.white,
       elevation: 0.5,
       shadowColor: Colors.black.withValues(alpha: 0.12),
-      centerTitle: true,
+      centerTitle: false,
       titleSpacing: 0,
       leading: IconButton(
         icon: const Icon(Icons.menu),

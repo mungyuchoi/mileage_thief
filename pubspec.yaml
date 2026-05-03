@@ -45,6 +45,7 @@ dependencies:
   image_picker: ^1.1.2
   firebase_storage: ^12.4.7
   flutter_html: ^3.0.0
+  flutter_svg: ^2.2.0
   video_player: ^2.8.6
   video_thumbnail: ^0.5.3
   flutter_branch_sdk: ^8.5.0
@@ -76,6 +77,7 @@ flutter:
     - asset/img/naver_login/
     - asset/img/kakao_login/
     - asset/icon/
+    - asset/icon/card_benefits/
 
   fonts:
     - family: Ssuk

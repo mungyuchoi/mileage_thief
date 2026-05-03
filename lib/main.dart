@@ -8,11 +8,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
 import 'services/branch_service.dart';
+import 'services/share_intent_service.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_chat_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'screen/community_post_create_screen_v3.dart';
 import 'screen/card_catalog_screen.dart';
+import 'screen/my_card_dashboard_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
@@ -254,6 +256,11 @@ class _MyAppState extends State<MyApp> {
     // 프레임 이후에 무거운 초기화 실행 (앱 진입 지연 방지)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
+        await ShareIntentService.initialize();
+      } catch (e) {
+        debugPrint('ShareIntentService init error: $e');
+      }
+      try {
         await NotificationService().initialize();
         NotificationService().setupTokenRefresh();
       } catch (e) {
@@ -312,6 +319,12 @@ class _MyAppState extends State<MyApp> {
             editTitle: args?['editTitle'],
             editContentHtml: args?['editContentHtml'],
             editReadRestriction: args?['editReadRestriction'],
+            sharedText: args?['sharedText'],
+            sharedSubject: args?['sharedSubject'],
+            sharedImagePaths: (args?['sharedImagePaths'] as List?)
+                    ?.whereType<String>()
+                    .toList() ??
+                const <String>[],
           );
         },
         '/community/chat': (context) {
@@ -321,6 +334,9 @@ class _MyAppState extends State<MyApp> {
             roomId: args?['roomId']?.toString() ?? 'global',
           );
         },
+        '/cards': (context) => const CardCatalogScreen(),
+        '/card': (context) => const CardCatalogScreen(),
+        '/my-cards': (context) => const MyCardDashboardScreen(),
         '/card/detail': (context) {
           final args = ModalRoute.of(context)?.settings.arguments
               as Map<String, dynamic>?;

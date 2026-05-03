@@ -1374,6 +1374,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     );
   }
 
+  Widget _buildInfoSegmentTabBar({bool insideHorizontalPadding = false}) {
+    return SegmentTabBar(
+      controller: _tabController,
+      labels: const ['대시보드', '달력', '일일', '랭킹'],
+      margin: insideHorizontalPadding
+          ? const EdgeInsets.fromLTRB(0, 10, 0, 6)
+          : const EdgeInsets.fromLTRB(16, 10, 16, 6),
+    );
+  }
+
   Widget _buildDashboard() {
     final sumBuy = _sumBuy();
     final sumSell = _sumSell();
@@ -1411,6 +1421,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           children: [
+            _buildInfoSegmentTabBar(insideHorizontalPadding: true),
             // 월 헤더: "YYYY년도 MM월"  |  "MM월 ▼" 필터 버튼
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -2501,195 +2512,192 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         ? (byDay[_selectedDay!] ?? [])
         : const <Map<String, dynamic>>[];
 
-    return Column(
-      children: [
-        TableCalendar(
-          firstDay: DateTime(2020),
-          lastDay: DateTime(2100),
-          focusedDay: _focusedDay,
-          locale: 'ko_KR',
-          selectedDayPredicate: (day) =>
-              _selectedDay != null &&
-              day.year == _selectedDay!.year &&
-              day.month == _selectedDay!.month &&
-              day.day == _selectedDay!.day,
-          calendarStyle: const CalendarStyle(
-              todayDecoration: BoxDecoration(
-                  color: Color(0x2074512D), shape: BoxShape.circle)),
-          headerStyle: const HeaderStyle(
-              formatButtonVisible: false, titleCentered: true),
-          // 달(페이지)이 변경될 때마다 해당 월 기준으로 캘린더 전용 데이터를 다시 로드
-          onPageChanged: (focused) {
-            setState(() {
-              _focusedDay = focused;
-            });
-            _loadCalendarMonth(DateTime(focused.year, focused.month));
-          },
-          onDaySelected: (selected, focused) {
-            setState(() {
-              _selectedDay =
-                  DateTime(selected.year, selected.month, selected.day);
-              _focusedDay = focused;
-            });
-          },
-          eventLoader: (day) =>
-              byDay[DateTime(day.year, day.month, day.day)] ?? [],
-          calendarBuilders: CalendarBuilders(
-            markerBuilder: (context, date, events) {
-              if (events.isEmpty) return const SizedBox.shrink();
-              final widgets = <Widget>[];
-              final list = events.take(3).toList();
-              for (final e in list) {
-                final Map<String, dynamic>? m =
-                    e is Map<String, dynamic> ? e : null;
-                final bool isSale = (m?['type'] == 'sale');
-                widgets.add(Container(
-                  width: 6,
-                  height: 6,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isSale ? Colors.blueAccent : Colors.redAccent,
-                    shape: BoxShape.circle,
-                  ),
-                ));
-              }
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: widgets,
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              if (notification is ScrollUpdateNotification) {
-                if (!_isCalendarScrolling) {
-                  _isCalendarScrolling = true;
-                  widget.onScrollChanged?.call(true);
-                }
-              } else if (notification is ScrollEndNotification) {
-                if (_isCalendarScrolling) {
-                  _isCalendarScrolling = false;
-                  widget.onScrollChanged?.call(false);
-                }
-              }
-              return false;
-            },
-            child: RefreshIndicator(
-              // 캘린더 탭에서는 현재 보고 있는 월(_calendarMonth) 기준으로만 새로고침
-              onRefresh: () => _loadCalendarMonth(_calendarMonth),
-              color: const Color(0xFF74512D),
-              backgroundColor: Colors.white,
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                itemCount: selectedItems.length + 1, // 광고를 위한 +1
-                itemBuilder: (context, index) {
-                  // 첫 번째 아이템은 광고
-                  if (index == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: _GiftBanner(
-                          adUnitId: AdHelper.giftCalendarBannerAdUnitId),
-                    );
-                  }
-                  // 나머지는 선택된 날짜의 아이템들
-                  final m = selectedItems[index - 1];
-                  final isSale = m['type'] == 'sale';
-                  final ts = isSale ? m['sellDate'] : m['buyDate'];
-                  final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
-                  final brand = (m['giftcardId'] as String?) ?? '';
-                  final qty = _asInt(m['qty']);
-                  final String? memo = isSale ? null : (m['memo'] as String?);
+    final calendar = TableCalendar(
+      firstDay: DateTime(2020),
+      lastDay: DateTime(2100),
+      focusedDay: _focusedDay,
+      locale: 'ko_KR',
+      selectedDayPredicate: (day) =>
+          _selectedDay != null &&
+          day.year == _selectedDay!.year &&
+          day.month == _selectedDay!.month &&
+          day.day == _selectedDay!.day,
+      calendarStyle: const CalendarStyle(
+          todayDecoration:
+              BoxDecoration(color: Color(0x2074512D), shape: BoxShape.circle)),
+      headerStyle:
+          const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+      // 달(페이지)이 변경될 때마다 해당 월 기준으로 캘린더 전용 데이터를 다시 로드
+      onPageChanged: (focused) {
+        setState(() {
+          _focusedDay = focused;
+        });
+        _loadCalendarMonth(DateTime(focused.year, focused.month));
+      },
+      onDaySelected: (selected, focused) {
+        setState(() {
+          _selectedDay = DateTime(selected.year, selected.month, selected.day);
+          _focusedDay = focused;
+        });
+      },
+      eventLoader: (day) => byDay[DateTime(day.year, day.month, day.day)] ?? [],
+      calendarBuilders: CalendarBuilders(
+        markerBuilder: (context, date, events) {
+          if (events.isEmpty) return const SizedBox.shrink();
+          final widgets = <Widget>[];
+          final list = events.take(3).toList();
+          for (final e in list) {
+            final Map<String, dynamic>? m =
+                e is Map<String, dynamic> ? e : null;
+            final bool isSale = (m?['type'] == 'sale');
+            widgets.add(Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
+              decoration: BoxDecoration(
+                color: isSale ? Colors.blueAccent : Colors.redAccent,
+                shape: BoxShape.circle,
+              ),
+            ));
+          }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: widgets,
+          );
+        },
+      ),
+    );
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: GestureDetector(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2)),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                InfoPill(
-                                    text: isSale ? '판매' : '구매',
-                                    icon: isSale
-                                        ? Icons.attach_money_outlined
-                                        : Icons.shopping_cart_outlined,
-                                    filled: true),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '$brand $qty장',
-                                    style: const TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w700),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                if (isSale) ...[
-                                  InfoPill(
-                                      icon: Icons.sell_outlined,
-                                      text:
-                                          '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
-                                  InfoPill(
-                                      icon: Icons.trending_up_outlined,
-                                      text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
-                                  InfoPill(
-                                      icon: Icons.today_outlined, text: date),
-                                ] else ...[
-                                  InfoPill(
-                                      icon: Icons.payments_outlined,
-                                      text:
-                                          '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
-                                  InfoPill(
-                                      icon: Icons.credit_card_outlined,
-                                      text: '카드 ${m['cardId'] ?? ''}'),
-                                  InfoPill(
-                                      icon:
-                                          Icons.account_balance_wallet_outlined,
-                                      text: '${m['payType'] ?? ''}'),
-                                  InfoPill(
-                                      icon: Icons.today_outlined, text: date),
-                                  if (memo != null && memo.trim().isNotEmpty)
-                                    InfoPill(
-                                        icon: Icons.note_outlined, text: memo),
-                                ],
-                              ],
-                            ),
-                          ],
-                        ),
+    Widget itemTile(Map<String, dynamic> m) {
+      final isSale = m['type'] == 'sale';
+      final ts = isSale ? m['sellDate'] : m['buyDate'];
+      final date = ts is Timestamp ? _yMd.format(ts.toDate()) : '';
+      final brand = (m['giftcardId'] as String?) ?? '';
+      final qty = _asInt(m['qty']);
+      final String? memo = isSale ? null : (m['memo'] as String?);
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: GestureDetector(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black12),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    InfoPill(
+                        text: isSale ? '판매' : '구매',
+                        icon: isSale
+                            ? Icons.attach_money_outlined
+                            : Icons.shopping_cart_outlined,
+                        filled: true),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$brand $qty장',
+                        style: const TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.w700),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  );
-                },
-              ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (isSale) ...[
+                      InfoPill(
+                          icon: Icons.sell_outlined,
+                          text: '판매가 ${_fmtWon(m['sellUnit'] ?? 0)}'),
+                      InfoPill(
+                          icon: Icons.trending_up_outlined,
+                          text: '손익 ${_fmtWon(m['profit'] ?? 0)}'),
+                      InfoPill(icon: Icons.today_outlined, text: date),
+                    ] else ...[
+                      InfoPill(
+                          icon: Icons.payments_outlined,
+                          text: '매입가 ${_fmtWon(m['buyUnit'] ?? 0)}'),
+                      InfoPill(
+                          icon: Icons.credit_card_outlined,
+                          text: '카드 ${m['cardId'] ?? ''}'),
+                      InfoPill(
+                          icon: Icons.account_balance_wallet_outlined,
+                          text: '${m['payType'] ?? ''}'),
+                      InfoPill(icon: Icons.today_outlined, text: date),
+                      if (memo != null && memo.trim().isNotEmpty)
+                        InfoPill(icon: Icons.note_outlined, text: memo),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      );
+    }
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          if (!_isCalendarScrolling) {
+            _isCalendarScrolling = true;
+            widget.onScrollChanged?.call(true);
+          }
+        } else if (notification is ScrollEndNotification) {
+          if (_isCalendarScrolling) {
+            _isCalendarScrolling = false;
+            widget.onScrollChanged?.call(false);
+          }
+        }
+        return false;
+      },
+      child: RefreshIndicator(
+        // 캘린더 탭에서는 현재 보고 있는 월(_calendarMonth) 기준으로만 새로고침
+        onRefresh: () => _loadCalendarMonth(_calendarMonth),
+        color: const Color(0xFF74512D),
+        backgroundColor: Colors.white,
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 100),
+          itemCount: selectedItems.length + 3,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return _buildInfoSegmentTabBar();
+            }
+            if (index == 1) {
+              return Column(
+                children: [
+                  calendar,
+                  const SizedBox(height: 8),
+                ],
+              );
+            }
+            if (index == 2) {
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child:
+                    _GiftBanner(adUnitId: AdHelper.giftCalendarBannerAdUnitId),
+              );
+            }
+            return itemTile(selectedItems[index - 3]);
+          },
+        ),
+      ),
     );
   }
 
@@ -3379,103 +3387,95 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       filterGiftcardIds: _selectedGiftcardIdsForDaily,
     );
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: _showDailyFilterDialog,
-                icon: const Icon(Icons.filter_list,
-                    color: Colors.black, size: 18),
-                label: Text(
-                  _selectedGiftcardIdsForDaily.isEmpty
-                      ? '전체 ▼'
-                      : '${_selectedGiftcardIdsForDaily.length}개 선택 ▼',
-                  style: const TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.w600),
-                ),
-                style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: const BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                if (notification is ScrollUpdateNotification) {
-                  if (!_isDailyListScrolling) {
-                    _isDailyListScrolling = true;
-                    widget.onScrollChanged?.call(true);
-                  }
-                } else if (notification is ScrollEndNotification) {
-                  if (_isDailyListScrolling) {
-                    _isDailyListScrolling = false;
-                    widget.onScrollChanged?.call(false);
-                  }
-                }
-                return false;
-              },
-              child: RefreshIndicator(
-                onRefresh: _load,
-                color: const Color(0xFF74512D),
-                backgroundColor: Colors.white,
-                child: GiftcardDailyLedger(
-                  groups: groups,
-                  wonFormat: _won,
-                  dayFormat: _yMd,
-                  onEdit: (entry) async {
-                    await _confirmAndConsumePeanutsThen(() async {
-                      if (entry.type == GiftcardLedgerEntryType.buy) {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  GiftBuyScreen(editLotId: entry.id)),
-                        );
-                      } else {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  GiftSellScreen(editSaleId: entry.id)),
-                        );
-                      }
-                      if (mounted) _load();
-                    }, cost: 20);
-                  },
-                  onDelete: (entry) async {
-                    if (entry.type == GiftcardLedgerEntryType.buy) {
-                      await _confirmAndDeleteLot(
-                          Map<String, dynamic>.from(entry.raw),
-                          cost: 20);
-                    } else {
-                      await _confirmAndDeleteSale(
-                          Map<String, dynamic>.from(entry.raw),
-                          cost: 20);
-                    }
-                  },
-                  onSaveTemplate: (entry) => _saveBuyEntryAsTemplate(entry),
-                  onTradeToggle: (entry, trade) async {
-                    await _updateTradeStatus(entry.id, trade);
-                  },
-                ),
+    final filterHeader = Padding(
+      padding: const EdgeInsets.fromLTRB(0, 6, 0, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton.icon(
+            onPressed: _showDailyFilterDialog,
+            icon: const Icon(Icons.filter_list, color: Colors.black, size: 18),
+            label: Text(
+              _selectedGiftcardIdsForDaily.isEmpty
+                  ? '전체 ▼'
+                  : '${_selectedGiftcardIdsForDaily.length}개 선택 ▼',
+              style: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.w600),
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: Colors.black26),
               ),
             ),
           ),
+        ],
+      ),
+    );
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          if (!_isDailyListScrolling) {
+            _isDailyListScrolling = true;
+            widget.onScrollChanged?.call(true);
+          }
+        } else if (notification is ScrollEndNotification) {
+          if (_isDailyListScrolling) {
+            _isDailyListScrolling = false;
+            widget.onScrollChanged?.call(false);
+          }
+        }
+        return false;
+      },
+      child: RefreshIndicator(
+        onRefresh: _load,
+        color: const Color(0xFF74512D),
+        backgroundColor: Colors.white,
+        child: GiftcardDailyLedger(
+          groups: groups,
+          wonFormat: _won,
+          dayFormat: _yMd,
+          headers: [
+            _buildInfoSegmentTabBar(insideHorizontalPadding: true),
+            filterHeader,
+          ],
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          physics: const AlwaysScrollableScrollPhysics(),
+          onEdit: (entry) async {
+            await _confirmAndConsumePeanutsThen(() async {
+              if (entry.type == GiftcardLedgerEntryType.buy) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => GiftBuyScreen(editLotId: entry.id)),
+                );
+              } else {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => GiftSellScreen(editSaleId: entry.id)),
+                );
+              }
+              if (mounted) _load();
+            }, cost: 20);
+          },
+          onDelete: (entry) async {
+            if (entry.type == GiftcardLedgerEntryType.buy) {
+              await _confirmAndDeleteLot(Map<String, dynamic>.from(entry.raw),
+                  cost: 20);
+            } else {
+              await _confirmAndDeleteSale(Map<String, dynamic>.from(entry.raw),
+                  cost: 20);
+            }
+          },
+          onSaveTemplate: (entry) => _saveBuyEntryAsTemplate(entry),
+          onTradeToggle: (entry, trade) async {
+            await _updateTradeStatus(entry.id, trade);
+          },
         ),
-      ],
+      ),
     );
   }
 
@@ -3582,166 +3582,182 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         ? DateFormat('yyyy.MM.dd HH:mm').format(_rankingUpdatedAt!)
         : '';
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final rankingHeader = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          const Text('사용자 랭킹',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          if (updateTimeText.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Text(
+              updateTimeText,
+              style: const TextStyle(color: Colors.black54, fontSize: 12),
+            ),
+          ],
+          const Spacer(),
+          Text('${_userRankings.length}명',
+              style: const TextStyle(color: Colors.black54, fontSize: 12)),
+        ],
+      ),
+    );
+
+    Widget rankingRow(int index) {
+      final Map<String, dynamic> u = _userRankings[index];
+      final String uid = u['uid'] as String? ?? '';
+      final String name = _maskRankingName(u['displayName'] as String? ?? '익명');
+      final String? photo = u['photoUrl'] as String?;
+      final int total = (u['sellTotal'] as num?)?.toInt() ?? 0;
+
+      Color bg;
+      Color fg = Colors.white;
+      String label;
+      switch (index) {
+        case 0:
+          bg = const Color(0xFFFFD700);
+          label = '1';
+          break;
+        case 1:
+          bg = const Color(0xFFB0BEC5);
+          label = '2';
+          break;
+        case 2:
+          bg = const Color(0xFFCD7F32);
+          label = '3';
+          break;
+        default:
+          bg = Colors.grey.shade200;
+          fg = Colors.black87;
+          label = '${index + 1}';
+      }
+
+      return InkWell(
+        onTap: () {
+          if (uid.isNotEmpty) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UserProfileScreen(userUid: uid),
+              ),
+            );
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  const Text('사용자 랭킹',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  if (updateTimeText.isNotEmpty) ...[
-                    const SizedBox(width: 8),
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: bg,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: fg,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              CircleAvatar(
+                radius: 14,
+                backgroundImage: (photo != null && photo.isNotEmpty)
+                    ? NetworkImage(photo)
+                    : null,
+                child: (photo == null || photo.isEmpty)
+                    ? const Icon(Icons.person, size: 16)
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      updateTimeText,
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '총 ${_formatCurrency(total)}',
                       style:
                           const TextStyle(color: Colors.black54, fontSize: 12),
                     ),
                   ],
-                  const Spacer(),
-                  Text('${_userRankings.length}명',
-                      style:
-                          const TextStyle(color: Colors.black54, fontSize: 12)),
-                ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                _formatCurrency(total),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ],
           ),
         ),
-        Expanded(
-          child: _rankingLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
-                  ),
-                )
-              : _userRankings.isEmpty
-                  ? const Center(
-                      child: Text(
-                        '랭킹 데이터가 없습니다.',
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _userRankings.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final Map<String, dynamic> u = _userRankings[index];
-                        final String uid = u['uid'] as String? ?? '';
-                        final String name = _maskRankingName(
-                            u['displayName'] as String? ?? '익명');
-                        final String? photo = u['photoUrl'] as String?;
-                        final int total =
-                            (u['sellTotal'] as num?)?.toInt() ?? 0;
+      );
+    }
 
-                        Color bg;
-                        Color fg = Colors.white;
-                        String label;
-                        switch (index) {
-                          case 0:
-                            bg = const Color(0xFFFFD700);
-                            label = '1';
-                            break;
-                          case 1:
-                            bg = const Color(0xFFB0BEC5);
-                            label = '2';
-                            break;
-                          case 2:
-                            bg = const Color(0xFFCD7F32);
-                            label = '3';
-                            break;
-                          default:
-                            bg = Colors.grey.shade200;
-                            fg = Colors.black87;
-                            label = '${index + 1}';
-                        }
-
-                        return InkWell(
-                          onTap: () {
-                            if (uid.isNotEmpty) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      UserProfileScreen(userUid: uid),
-                                ),
-                              );
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 28,
-                                  height: 28,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: bg,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    label,
-                                    style: TextStyle(
-                                      color: fg,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundImage:
-                                      (photo != null && photo.isNotEmpty)
-                                          ? NetworkImage(photo)
-                                          : null,
-                                  child: (photo == null || photo.isEmpty)
-                                      ? const Icon(Icons.person, size: 16)
-                                      : null,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '총 ${_formatCurrency(total)}',
-                                        style: const TextStyle(
-                                          color: Colors.black54,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  _formatCurrency(total),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-        ),
-      ],
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          widget.onScrollChanged?.call(true);
+        } else if (notification is ScrollEndNotification) {
+          widget.onScrollChanged?.call(false);
+        }
+        return false;
+      },
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 100),
+        itemCount: _rankingLoading || _userRankings.isEmpty
+            ? 3
+            : _userRankings.length + 2,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildInfoSegmentTabBar();
+          }
+          if (index == 1) {
+            return rankingHeader;
+          }
+          if (_rankingLoading) {
+            return const SizedBox(
+              height: 220,
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                ),
+              ),
+            );
+          }
+          if (_userRankings.isEmpty) {
+            return const SizedBox(
+              height: 220,
+              child: Center(
+                child: Text(
+                  '랭킹 데이터가 없습니다.',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              ),
+            );
+          }
+          final rankIndex = index - 2;
+          return Column(
+            children: [
+              rankingRow(rankIndex),
+              if (rankIndex < _userRankings.length - 1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Divider(height: 1),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -3756,27 +3772,13 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     }
     return Container(
       color: Colors.white,
-      child: Column(
+      child: TabBarView(
+        controller: _tabController,
         children: [
-          SegmentTabBar(
-            controller: _tabController,
-            labels: const ['대시보드', '달력', '일일', '랭킹'],
-            margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-          ),
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildDashboard(),
-                  _buildCalendar(),
-                  _buildDaily(),
-                  _buildRanking(),
-                ],
-              ),
-            ),
-          ),
+          _buildDashboard(),
+          _buildCalendar(),
+          _buildDaily(),
+          _buildRanking(),
         ],
       ),
     );

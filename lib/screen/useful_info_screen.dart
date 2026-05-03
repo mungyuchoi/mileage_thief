@@ -32,6 +32,10 @@ import 'gift/gift_sell_screen.dart';
 typedef _PostDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>;
 typedef _BoardDocs = List<Map<String, dynamic>>;
 typedef _GuideAds = List<Map<String, dynamic>>;
+typedef OpenCommunityCallback = void Function({
+  String? boardId,
+  String? boardName,
+});
 
 const String _chatQuickActionIconAsset = 'asset/icon/community_chat.png';
 const String _koreanAirQuickActionIconAsset = 'asset/icon/korean_air.png';
@@ -142,7 +146,7 @@ class _UsefulInfoMemoryCache {
 }
 
 class UsefulInfoScreen extends StatefulWidget {
-  final VoidCallback onOpenCommunity;
+  final OpenCommunityCallback onOpenCommunity;
   final VoidCallback onOpenGiftcard;
   final VoidCallback onOpenProfile;
 
@@ -378,7 +382,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             future: _bestPostsFuture,
             initialPosts: _UsefulInfoMemoryCache.peek<_PostDocs>('bestPosts'),
             emptyText: '아직 베스트 게시글이 없습니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(),
             onTapPost: _openPost,
             showThumbnail: true,
           ),
@@ -389,7 +393,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             initialPosts:
                 _UsefulInfoMemoryCache.peek<_PostDocs>('popularPosts'),
             emptyText: '인기 게시글을 불러오지 못했습니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(),
             onTapPost: _openPost,
             showThumbnail: true,
           ),
@@ -400,7 +404,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             initialPosts:
                 _UsefulInfoMemoryCache.peek<_PostDocs>('aeroRoutesNewsPosts'),
             emptyText: 'AeroRoutes 뉴스가 준비되는 중입니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(
+              boardId: 'aeroroute_news',
+              boardName: 'AeroRoutes',
+            ),
             onTapPost: _openPost,
           ),
           _PostSection(
@@ -410,7 +417,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             initialPosts:
                 _UsefulInfoMemoryCache.peek<_PostDocs>('secretFlyingNewsPosts'),
             emptyText: 'SecretFlying 뉴스가 준비되는 중입니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(
+              boardId: 'secretflying_news',
+              boardName: 'SecretFlying',
+            ),
             onTapPost: _openPost,
           ),
           _PostSection(
@@ -421,7 +431,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
               'workingHolidayNewsPosts',
             ),
             emptyText: '워킹홀리데이 뉴스가 준비되는 중입니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(
+              boardId: 'workingholiday_news',
+              boardName: '워킹홀리데이',
+            ),
             onTapPost: _openPost,
           ),
           _PostSection(
@@ -430,7 +443,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             future: _newsPostsFuture,
             initialPosts: _UsefulInfoMemoryCache.peek<_PostDocs>('newsPosts'),
             emptyText: '등록된 뉴스가 없습니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(
+              boardId: 'news',
+              boardName: '오늘의 뉴스',
+            ),
             onTapPost: _openPost,
           ),
           _PostSection(
@@ -440,7 +456,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             initialPosts:
                 _UsefulInfoMemoryCache.peek<_PostDocs>('benefitPosts'),
             emptyText: '등록된 혜택 글이 없습니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(
+              boardId: 'deal',
+              boardName: '적립/카드 혜택',
+            ),
             onTapPost: _openPost,
           ),
           _FeatureLinkSection(
@@ -477,7 +496,10 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             future: _noticePostsFuture,
             initialPosts: _UsefulInfoMemoryCache.peek<_PostDocs>('noticePosts'),
             emptyText: '새 공지사항이 없습니다.',
-            onSeeAll: widget.onOpenCommunity,
+            onSeeAll: () => widget.onOpenCommunity(
+              boardId: 'notice',
+              boardName: '운영 공지사항',
+            ),
             onTapPost: _openPost,
           ),
         ],
@@ -3967,7 +3989,7 @@ class _PopularBoardSection extends StatelessWidget {
   final Future<_PostDocs> postsFuture;
   final _BoardDocs? initialBoards;
   final _PostDocs? initialPosts;
-  final VoidCallback onOpenCommunity;
+  final OpenCommunityCallback onOpenCommunity;
 
   const _PopularBoardSection({
     required this.title,
@@ -3984,7 +4006,7 @@ class _PopularBoardSection extends StatelessWidget {
     return _SectionShell(
       title: title,
       icon: icon,
-      onTapHeader: onOpenCommunity,
+      onTapHeader: () => onOpenCommunity(),
       child: FutureBuilder<List<Object>>(
         future: Future.wait<Object>([boardsFuture, postsFuture]),
         initialData: initialBoards != null && initialPosts != null
@@ -4017,7 +4039,10 @@ class _PopularBoardSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final board = popularBoards[index];
                 return InkWell(
-                  onTap: onOpenCommunity,
+                  onTap: () => onOpenCommunity(
+                    boardId: board.boardId,
+                    boardName: board.name,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
                     width: 136,

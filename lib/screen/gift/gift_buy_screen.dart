@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
+import '../../services/card_transaction_service.dart';
+
 class GiftBuyScreen extends StatefulWidget {
   final String? editLotId;
   const GiftBuyScreen({super.key, this.editLotId});
@@ -920,6 +922,11 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
         data['createdAt'] = FieldValue.serverTimestamp();
       }
       await lotsRef.doc(targetId).set(data, SetOptions(merge: true));
+      await CardTransactionService().upsertGiftLotTransaction(
+        uid: uid,
+        lotId: targetId,
+        lotData: Map<String, dynamic>.from(data),
+      );
 
       // status가 sold인 경우, 연결된 sales의 buyTotal도 업데이트
       if (status == 'sold' && widget.editLotId != null) {
@@ -1026,6 +1033,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
           .collection('lots')
           .doc(widget.editLotId)
           .delete();
+      await CardTransactionService().deleteGiftLotTransaction(
+        uid: uid,
+        lotId: widget.editLotId!,
+      );
       Fluttertoast.showToast(msg: '구매 내역이 삭제되었습니다.');
       if (mounted) Navigator.pop(context, true);
     } catch (e) {

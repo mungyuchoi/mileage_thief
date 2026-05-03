@@ -19,6 +19,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/image_compressor.dart';
 import '../screen/peanut_history_screen.dart';
 import '../utils/ad_removal_utils.dart';
+import '../services/card_transaction_service.dart';
+import 'my_card_dashboard_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
@@ -1575,6 +1577,137 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
   }
 
+  Widget _buildMyCardSection() {
+    final user = FirebaseAuth.instance.currentUser;
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyCardDashboardScreen()),
+        );
+        if (mounted) setState(() {});
+      },
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: user == null
+            ? _buildMyCardSectionBody(
+                title: '내 카드',
+                subtitle: '로그인하면 카드 실적과 예상 마일을 관리할 수 있습니다.',
+                trailing: '로그인 필요',
+              )
+            : FutureBuilder<CardDashboardData>(
+                future:
+                    CardTransactionService().loadDashboardData(uid: user.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _buildMyCardSectionBody(
+                      title: '내 카드',
+                      subtitle: '이번 달 카드 현황을 불러오는 중입니다.',
+                      trailing: '...',
+                    );
+                  }
+                  final data = snapshot.data;
+                  final summary = data?.summary;
+                  if (data == null || summary == null) {
+                    return _buildMyCardSectionBody(
+                      title: '내 카드',
+                      subtitle: '카드 실적과 예상 마일을 한곳에서 관리합니다.',
+                      trailing: '보기',
+                    );
+                  }
+                  final formatter = NumberFormat('#,###');
+                  final subtitle = data.cards.isEmpty
+                      ? '카드를 추가하면 상품권 구매와 수동 입력을 함께 집계합니다.'
+                      : '실적 ${formatter.format(summary.performanceAmountKRW)}원 · 예상 ${formatter.format(summary.rewardMiles)}마일';
+                  return _buildMyCardSectionBody(
+                    title: '내 카드',
+                    subtitle: subtitle,
+                    trailing: data.cards.isEmpty ? '카드 추가' : '이번 달 현황',
+                  );
+                },
+              ),
+      ),
+    );
+  }
+
+  Widget _buildMyCardSectionBody({
+    required String title,
+    required String subtitle,
+    required String trailing,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: const Color(0xFF74512D).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.credit_card_rounded,
+            color: Color(0xFF74512D),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[700],
+                  height: 1.25,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          trailing,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF74512D),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey[400],
+        ),
+      ],
+    );
+  }
+
   // 광고 관리 섹션 빌드
   Widget _buildAdManagementSection() {
     if (_isAdRemovalActive) {
@@ -1787,6 +1920,9 @@ class _MyPageScreenState extends State<MyPageScreen>
                       const SizedBox(height: 8),
                       // 스카이 이펙트 영역
                       _buildSkyEffectSection(),
+                      const SizedBox(height: 8),
+                      // 내 카드 관리 영역
+                      _buildMyCardSection(),
                       const SizedBox(height: 8),
                       // 광고 하이라이트 안내
                       if (_showAdHighlight) _buildAdHighlightBanner(),

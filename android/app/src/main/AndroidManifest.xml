@@ -62,6 +62,25 @@
                 <data android:scheme="milecatch" />
             </intent-filter>
 
+            <!-- KakaoTalk/Android share target: text and images -->
+            <intent-filter android:label="마일캐치에 공유">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <intent-filter android:label="마일캐치에 공유">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <intent-filter android:label="마일캐치에 공유">
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
             <!-- Flutter 기본 딥링크 비활성화 -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         </activity>

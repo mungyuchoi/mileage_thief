@@ -3,9 +3,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/card_product_model.dart';
 import '../services/branch_service.dart';
@@ -730,101 +732,61 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+    final issuerUrl = _cardIssuerUrl(product);
+    return Stack(
       children: [
-        _CardHeroImage(product: product, service: _service),
-        const SizedBox(height: 14),
-        _SectionPanel(
-          title: '기본 정보',
+        ListView(
+          padding:
+              EdgeInsets.fromLTRB(16, 16, 16, issuerUrl == null ? 28 : 112),
           children: [
-            _InfoRow(label: '카드사', value: product.issuerName),
-            _InfoRow(label: '카드 유형', value: product.cardTypeLabel),
-            _InfoRow(label: '상태', value: product.statusLabel),
-            _InfoRow(label: '마일리지', value: product.rewardProgram ?? '-'),
-            _InfoRow(label: '연회비', value: product.annualFeeSummary),
-            _InfoRow(label: '전월실적', value: product.previousMonthSpendSummary),
-            _InfoRow(label: '좋아요', value: '${product.likesCount}'),
-            _InfoRow(label: '조회수', value: '${product.viewsCount}'),
-            _InfoRow(label: '수정 시간', value: _dateText(product.updatedAt)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _SectionPanel(
-          title: '주요 혜택',
-          children: _valueList(product.primaryBenefits),
-        ),
-        const SizedBox(height: 12),
-        _SectionPanel(
-          title: '제외/유의 항목',
-          children: _valueList(product.exclusions),
-        ),
-        const SizedBox(height: 12),
-        _SectionPanel(
-          title: '상세 정보',
-          children: [
-            Text(
-              product.detailSummary.trim().isEmpty
-                  ? '아직 상세 정보가 없습니다.'
-                  : product.detailSummary,
-              style: const TextStyle(
-                color: Color(0xFF303544),
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-              ),
+            _CardHeroImage(product: product, service: _service),
+            const SizedBox(height: 12),
+            _CardFactsPanel(product: product),
+            const SizedBox(height: 12),
+            _BenefitsPanel(
+              title: '주요 혜택',
+              values: product.primaryBenefits,
+              emptyMessage: '아직 입력된 혜택 정보가 없습니다.',
+            ),
+            const SizedBox(height: 12),
+            _NoticePanel(values: product.exclusions),
+            const SizedBox(height: 12),
+            _DetailSummaryPanel(product: product),
+            _DetailSectionsList(
+              service: _service,
+              cardId: product.id,
+            ),
+            const SizedBox(height: 12),
+            _CardCommentsSection(
+              service: _service,
+              cardId: product.id,
+              onRequireLogin: widget.onRequireLogin,
             ),
           ],
         ),
-        _DetailSectionsList(
-          service: _service,
-          cardId: product.id,
-        ),
-        const SizedBox(height: 12),
-        _CardCommentsSection(
-          service: _service,
-          cardId: product.id,
-          onRequireLogin: widget.onRequireLogin,
-        ),
+        if (issuerUrl != null)
+          _IssuerFloatingButton(
+            onTap: () => _openIssuerUrl(issuerUrl),
+          ),
       ],
     );
   }
 
-  List<Widget> _valueList(List<dynamic> values) {
-    final visibleValues = values.map(displayValue).where((v) => v.isNotEmpty);
-    if (visibleValues.isEmpty) {
-      return const [
-        Text(
-          '아직 입력된 정보가 없습니다.',
-          style:
-              TextStyle(color: Color(0xFF7E8492), fontWeight: FontWeight.w600),
-        ),
-      ];
+  Future<void> _openIssuerUrl(String url) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null || !uri.hasScheme) {
+      Fluttertoast.showToast(msg: '카드사 링크를 열 수 없습니다.');
+      return;
     }
-    return visibleValues
-        .map((value) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 7),
-                    child: Icon(Icons.circle, size: 6, color: _cardInk),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      value,
-                      style: const TextStyle(
-                        color: Color(0xFF303544),
-                        height: 1.35,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ))
-        .toList(growable: false);
+    try {
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        Fluttertoast.showToast(msg: '카드사 링크를 열 수 없습니다.');
+      }
+    } catch (_) {
+      Fluttertoast.showToast(msg: '카드사 링크를 열 수 없습니다.');
+    }
   }
 
   Future<void> _openEdit(CatalogCardProduct product) async {
@@ -1439,21 +1401,30 @@ class _CatalogSearchHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _StatusChip(
-                  label: '최신순',
-                  selected: sortOrder == 'latest',
-                  onTap: () => onSortChanged('latest'),
-                ),
-                _StatusChip(
-                  label: '인기순',
-                  selected: sortOrder == 'popular',
-                  onTap: () => onSortChanged('popular'),
-                ),
-              ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _StatusChip(
+                    label: '최신순',
+                    selected: sortOrder == 'latest',
+                    onTap: () => onSortChanged('latest'),
+                    fontSize: 12,
+                    horizontalPadding: 14,
+                    verticalPadding: 8,
+                  ),
+                  _StatusChip(
+                    label: '인기순',
+                    selected: sortOrder == 'popular',
+                    onTap: () => onSortChanged('popular'),
+                    fontSize: 12,
+                    horizontalPadding: 14,
+                    verticalPadding: 8,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -1821,13 +1792,413 @@ class _CardHeroImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 196,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF0F1F4)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 184,
+            height: 184,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFF6F7FA),
+            ),
+            alignment: Alignment.center,
+            child: _CardImageBox(product: product, service: service, size: 150),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            product.name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _cardInk,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              height: 1.18,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            '${product.issuerName} · ${product.cardTypeLabel}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _cardMuted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _SmallPill(product.statusLabel),
+              if (product.rewardProgram != null)
+                _SmallPill(product.rewardProgram!),
+              _MetricPill(
+                icon: Icons.favorite_border_outlined,
+                value: product.likesCount,
+              ),
+              _MetricPill(
+                icon: Icons.visibility_outlined,
+                value: product.viewsCount,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CardFactsPanel extends StatelessWidget {
+  final CatalogCardProduct product;
+
+  const _CardFactsPanel({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionPanel(
+      title: '기본 정보',
+      children: [
+        _IconInfoRow(
+          iconAsset: _benefitIconAsset('카드사 ${product.issuerName}'),
+          label: '카드사',
+          value: product.issuerName,
+        ),
+        _IconInfoRow(
+          iconAsset: _benefitIconAsset(product.cardTypeLabel),
+          label: '카드 유형',
+          value: product.cardTypeLabel,
+        ),
+        _IconInfoRow(
+          iconAsset: 'asset/icon/card_benefits/default.svg',
+          label: '상태',
+          value: product.statusLabel,
+        ),
+        _IconInfoRow(
+          iconAsset: _benefitIconAsset(product.rewardProgram ?? '마일리지'),
+          label: '마일리지',
+          value: product.rewardProgram ?? '-',
+        ),
+        _IconInfoRow(
+          iconAsset: 'asset/icon/card_benefits/pay.svg',
+          label: '연회비',
+          value: product.annualFeeSummary,
+        ),
+        _IconInfoRow(
+          iconAsset: 'asset/icon/card_benefits/life.svg',
+          label: '전월실적',
+          value: product.previousMonthSpendSummary,
+        ),
+        _IconInfoRow(
+          iconAsset: 'asset/icon/card_benefits/default.svg',
+          label: '수정 시간',
+          value: _dateText(product.updatedAt),
+          compact: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _IconInfoRow extends StatelessWidget {
+  final String iconAsset;
+  final String label;
+  final String value;
+  final bool compact;
+
+  const _IconInfoRow({
+    required this.iconAsset,
+    required this.label,
+    required this.value,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: compact ? 6 : 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _BenefitIcon(asset: iconAsset, size: 28),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 74,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF8A91A1),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF252A36),
+                fontWeight: FontWeight.w900,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BenefitsPanel extends StatelessWidget {
+  final String title;
+  final List<dynamic> values;
+  final String emptyMessage;
+
+  const _BenefitsPanel({
+    required this.title,
+    required this.values,
+    required this.emptyMessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _benefitItems(values);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(2, 2, 2, 10),
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+        ),
+        if (items.isEmpty)
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFF0F1F4)),
+              ),
+              child: Text(
+                emptyMessage,
+                style: const TextStyle(
+                  color: _cardMuted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          )
+        else
+          for (final item in items) ...[
+            _BenefitRow(item: item),
+            const SizedBox(height: 8),
+          ],
+      ],
+    );
+  }
+}
+
+class _BenefitRow extends StatelessWidget {
+  final _BenefitDisplayItem item;
+
+  const _BenefitRow({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFF0F1F4)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _BenefitIcon(asset: item.iconAsset),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      color: _cardInk,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (item.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        color: Color(0xFF555C6B),
+                        height: 1.35,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoticePanel extends StatelessWidget {
+  final List<dynamic> values;
+
+  const _NoticePanel({required this.values});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _benefitItems(values);
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(2, 2, 2, 10),
+          child: Text(
+            '제외/유의 항목',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+        ),
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _BenefitRow(
+              item: _BenefitDisplayItem(
+                title: item.title,
+                description: item.description,
+                iconAsset: 'asset/icon/card_benefits/default.svg',
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DetailSummaryPanel extends StatelessWidget {
+  final CatalogCardProduct product;
+
+  const _DetailSummaryPanel({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = product.detailSummary.trim();
+    if (summary.isEmpty) return const SizedBox.shrink();
+    return _SectionPanel(
+      title: '상세 정보',
+      children: [
+        Text(
+          summary,
+          style: const TextStyle(
+            color: Color(0xFF303544),
+            height: 1.45,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BenefitIcon extends StatelessWidget {
+  final String asset;
+  final double size;
+
+  const _BenefitIcon({
+    required this.asset,
+    this.size = 34,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F7FA),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _cardLine),
       ),
       alignment: Alignment.center,
-      child: _CardImageBox(product: product, service: service, size: 150),
+      child: SvgPicture.asset(
+        asset,
+        width: size * 0.58,
+        height: size * 0.58,
+        colorFilter: const ColorFilter.mode(_cardMuted, BlendMode.srcIn),
+      ),
+    );
+  }
+}
+
+class _IssuerFloatingButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _IssuerFloatingButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: 14,
+      child: SafeArea(
+        top: false,
+        child: Material(
+          color: const Color(0xFFFFC84A),
+          borderRadius: BorderRadius.circular(8),
+          elevation: 8,
+          shadowColor: Colors.black.withValues(alpha: 0.18),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+              child: Row(
+                children: [
+                  Icon(Icons.language_outlined, color: Colors.black, size: 22),
+                  SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      '카드사 바로가기',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.black, size: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1960,47 +2331,6 @@ class _EditPanel extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 84,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF7E8492),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Color(0xFF252A36),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RevisionTile extends StatelessWidget {
   final CardProductRevision revision;
   final VoidCallback onTap;
@@ -2086,27 +2416,67 @@ class _DetailSectionsList extends StatelessWidget {
           children: [
             const SizedBox(height: 12),
             for (final section in sections) ...[
-              _SectionPanel(
-                title: section.title,
-                children: [
-                  if (section.body.isNotEmpty)
-                    Text(
-                      section.body,
-                      style: const TextStyle(
-                        color: Color(0xFF303544),
-                        height: 1.45,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )
-                  else
-                    Html(data: section.html),
-                ],
-              ),
+              _DetailSectionCard(section: section),
               const SizedBox(height: 12),
             ],
           ],
         );
       },
+    );
+  }
+}
+
+class _DetailSectionCard extends StatelessWidget {
+  final CardDetailSection section;
+
+  const _DetailSectionCard({required this.section});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFF0F1F4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _BenefitIcon(asset: _benefitIconAsset(section.title)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    section.title,
+                    style: const TextStyle(
+                      color: _cardInk,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (section.body.isNotEmpty)
+              Text(
+                section.body,
+                style: const TextStyle(
+                  color: Color(0xFF303544),
+                  height: 1.48,
+                  fontWeight: FontWeight.w700,
+                ),
+              )
+            else
+              Html(data: section.html),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -2317,30 +2687,33 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
             ),
           ),
         ],
-        TextField(
-          controller: _controller,
-          minLines: 1,
-          maxLines: 4,
-          maxLength: 2000,
-          decoration: InputDecoration(
-            counterText: '',
-            hintText: _replyTarget == null ? '댓글을 입력하세요' : '답글을 입력하세요',
-            filled: true,
-            fillColor: const Color(0xFFF4F5F7),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-            suffixIcon: IconButton(
-              tooltip: '등록',
-              icon: _sending
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send_outlined),
-              onPressed: _sending ? null : _send,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: TextField(
+            controller: _controller,
+            minLines: 1,
+            maxLines: 4,
+            maxLength: 2000,
+            decoration: InputDecoration(
+              counterText: '',
+              hintText: _replyTarget == null ? '댓글을 입력하세요' : '답글을 입력하세요',
+              filled: true,
+              fillColor: const Color(0xFFF4F5F7),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              suffixIcon: IconButton(
+                tooltip: '등록',
+                icon: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send_outlined),
+                onPressed: _sending ? null : _send,
+              ),
             ),
           ),
         ),
@@ -2547,11 +2920,17 @@ class _StatusChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final double fontSize;
+  final double horizontalPadding;
+  final double verticalPadding;
 
   const _StatusChip({
     required this.label,
     required this.selected,
     required this.onTap,
+    this.fontSize = 14,
+    this.horizontalPadding = 18,
+    this.verticalPadding = 10,
   });
 
   @override
@@ -2566,7 +2945,10 @@ class _StatusChip extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
             curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
             decoration: BoxDecoration(
               color: selected ? _cardInk : Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -2580,7 +2962,7 @@ class _StatusChip extends StatelessWidget {
               style: TextStyle(
                 color: selected ? Colors.white : const Color(0xFF4B5563),
                 fontWeight: FontWeight.w900,
-                fontSize: 14,
+                fontSize: fontSize,
               ),
             ),
           ),
@@ -2627,6 +3009,216 @@ class _EmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BenefitDisplayItem {
+  final String title;
+  final String description;
+  final String iconAsset;
+
+  const _BenefitDisplayItem({
+    required this.title,
+    required this.description,
+    required this.iconAsset,
+  });
+}
+
+List<_BenefitDisplayItem> _benefitItems(List<dynamic> values) {
+  return values
+      .map(_benefitItem)
+      .whereType<_BenefitDisplayItem>()
+      .toList(growable: false);
+}
+
+_BenefitDisplayItem? _benefitItem(dynamic value) {
+  var title = '';
+  var description = '';
+
+  if (value is Map) {
+    title = _firstNonEmpty([
+      value['title'],
+      value['label'],
+      value['name'],
+      value['category'],
+      value['group'],
+    ]);
+    description = _firstNonEmpty([
+      value['value'],
+      value['summary'],
+      value['description'],
+      value['detail'],
+      value['body'],
+    ]);
+  }
+
+  final text = displayValue(value);
+  if (title.isEmpty && text.isNotEmpty) {
+    final separator = RegExp(r'\s+[·ㆍ]\s+|[:：]');
+    final match = separator.firstMatch(text);
+    if (match == null) {
+      title = text.length > 14 ? text.substring(0, 14) : text;
+      description = text.length > 14 ? text : '';
+    } else {
+      title = text.substring(0, match.start).trim();
+      description = text.substring(match.end).trim();
+    }
+  }
+  if (description.isEmpty && text.isNotEmpty && title != text) {
+    description = text;
+  }
+  if (title.isEmpty && description.isEmpty) return null;
+
+  final searchable = '$title $description';
+  return _BenefitDisplayItem(
+    title: title.isEmpty ? '혜택' : title,
+    description: description,
+    iconAsset: _benefitIconAsset(searchable),
+  );
+}
+
+String _benefitIconAsset(String text) {
+  final value = text.toLowerCase();
+  if (value.contains('온라인') ||
+      value.contains('internet') ||
+      value.contains('디지털')) {
+    return 'asset/icon/card_benefits/online.svg';
+  }
+  if (value.contains('쇼핑') ||
+      value.contains('마트') ||
+      value.contains('백화점') ||
+      value.contains('쿠팡') ||
+      value.contains('g마켓') ||
+      value.contains('옥션')) {
+    return 'asset/icon/card_benefits/shopping.svg';
+  }
+  if (value.contains('간편') ||
+      value.contains('pay') ||
+      value.contains('페이') ||
+      value.contains('결제') ||
+      value.contains('청구')) {
+    return 'asset/icon/card_benefits/pay.svg';
+  }
+  if (value.contains('주유') || value.contains('충전') || value.contains('oil')) {
+    return 'asset/icon/card_benefits/fuel.svg';
+  }
+  if (value.contains('카페') || value.contains('커피') || value.contains('스타벅스')) {
+    return 'asset/icon/card_benefits/cafe.svg';
+  }
+  if (value.contains('항공') ||
+      value.contains('마일') ||
+      value.contains('여행') ||
+      value.contains('호텔') ||
+      value.contains('asiana') ||
+      value.contains('대한항공')) {
+    return 'asset/icon/card_benefits/travel.svg';
+  }
+  if (value.contains('택시') ||
+      value.contains('교통') ||
+      value.contains('버스') ||
+      value.contains('지하철')) {
+    return 'asset/icon/card_benefits/transport.svg';
+  }
+  if (value.contains('푸드') ||
+      value.contains('음식') ||
+      value.contains('외식') ||
+      value.contains('배달')) {
+    return 'asset/icon/card_benefits/food.svg';
+  }
+  if (value.contains('통신') ||
+      value.contains('휴대폰') ||
+      value.contains('mobile')) {
+    return 'asset/icon/card_benefits/telecom.svg';
+  }
+  if (value.contains('영화') || value.contains('티켓') || value.contains('문화')) {
+    return 'asset/icon/card_benefits/movie.svg';
+  }
+  if (value.contains('병원') || value.contains('약국') || value.contains('의료')) {
+    return 'asset/icon/card_benefits/medical.svg';
+  }
+  if (value.contains('생활') || value.contains('보험') || value.contains('세탁')) {
+    return 'asset/icon/card_benefits/life.svg';
+  }
+  return 'asset/icon/card_benefits/default.svg';
+}
+
+String? _cardIssuerUrl(CatalogCardProduct product) {
+  final raw = product.raw;
+  final direct = _firstUrl([
+    raw['applyUrl'],
+    raw['applicationUrl'],
+    raw['issuerUrl'],
+    raw['officialUrl'],
+    raw['homepageUrl'],
+    raw['productUrl'],
+    raw['cardUrl'],
+  ]);
+  if (direct != null) return direct;
+
+  for (final key in const [
+    'issuer',
+    'cardIssuer',
+    'cardCompany',
+    'official',
+    'application',
+  ]) {
+    final url = _urlFromValue(raw[key]);
+    if (url != null) return url;
+  }
+
+  final sourceRefs = raw['sourceRefs'];
+  if (sourceRefs is Map) {
+    for (final key in const [
+      'issuer',
+      'cardIssuer',
+      'cardCompany',
+      'official',
+      'application',
+    ]) {
+      final url = _urlFromValue(sourceRefs[key]);
+      if (url != null) return url;
+    }
+  }
+
+  return null;
+}
+
+String? _firstUrl(Iterable<dynamic> values) {
+  for (final value in values) {
+    final url = _urlFromValue(value);
+    if (url != null) return url;
+  }
+  return null;
+}
+
+String? _urlFromValue(dynamic value) {
+  if (value is String) {
+    final text = value.trim();
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      return text;
+    }
+  }
+  if (value is Map) {
+    return _firstUrl([
+      value['applyUrl'],
+      value['applicationUrl'],
+      value['issuerUrl'],
+      value['officialUrl'],
+      value['homepageUrl'],
+      value['productUrl'],
+      value['cardUrl'],
+      value['url'],
+      value['linkUrl'],
+    ]);
+  }
+  return null;
+}
+
+String _firstNonEmpty(Iterable<dynamic> values) {
+  for (final value in values) {
+    final text = displayValue(value);
+    if (text.isNotEmpty) return text;
+  }
+  return '';
 }
 
 bool _hasAdminAccess(dynamic roles) {

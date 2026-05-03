@@ -92,7 +92,8 @@ class GiftcardDailyLedgerMapper {
     required Map<String, Map<String, dynamic>> lotById,
     required Map<String, String> branchNames,
     required Map<String, String> whereToBuyNames,
-    required Map<String, Map<String, dynamic>> cards, // cardId -> {name, credit, check}
+    required Map<String, Map<String, dynamic>>
+        cards, // cardId -> {name, credit, check}
     required Set<String> filterGiftcardIds, // empty => all
   }) {
     final List<GiftcardLedgerEntry> entries = [];
@@ -102,7 +103,8 @@ class GiftcardDailyLedgerMapper {
       if (id.isEmpty) continue;
       final String giftcardId = (lot['giftcardId'] as String?) ?? '';
       if (giftcardId.isEmpty) continue;
-      if (filterGiftcardIds.isNotEmpty && !filterGiftcardIds.contains(giftcardId)) {
+      if (filterGiftcardIds.isNotEmpty &&
+          !filterGiftcardIds.contains(giftcardId)) {
         continue;
       }
       final DateTime dt = _toDateTime(lot['buyDate']);
@@ -110,10 +112,14 @@ class GiftcardDailyLedgerMapper {
       final int unit = _asInt(lot['buyUnit']);
       final double? discount = (lot['discount'] as num?)?.toDouble();
       final String cardId = (lot['cardId'] as String?) ?? '';
-      final String? cardName = (cards[cardId]?['name'] as String?) ?? (cardId.isEmpty ? null : cardId);
+      final String? cardName = (cards[cardId]?['name'] as String?) ??
+          (cardId.isEmpty ? null : cardId);
       final String? payType = (lot['payType'] as String?)?.trim();
       final String? whereToBuyId = lot['whereToBuyId'] as String?;
-      final String? whereToBuyName = (whereToBuyId == null || whereToBuyId.isEmpty) ? null : (whereToBuyNames[whereToBuyId] ?? whereToBuyId);
+      final String? whereToBuyName =
+          (whereToBuyId == null || whereToBuyId.isEmpty)
+              ? null
+              : (whereToBuyNames[whereToBuyId] ?? whereToBuyId);
       final String? memo = (lot['memo'] as String?)?.trim();
       final String status = (lot['status'] as String?) ?? 'open';
       final bool deletable = status == 'open';
@@ -153,7 +159,9 @@ class GiftcardDailyLedgerMapper {
       final int profit = _asInt(sale['profit']);
       final double? discount = (sale['discount'] as num?)?.toDouble();
       final String? branchId = sale['branchId'] as String?;
-      final String? branchName = (branchId == null || branchId.isEmpty) ? null : (branchNames[branchId] ?? branchId);
+      final String? branchName = (branchId == null || branchId.isEmpty)
+          ? null
+          : (branchNames[branchId] ?? branchId);
 
       String giftcardId = (sale['giftcardId'] as String?) ?? '';
       final String? lotId = sale['lotId'] as String?;
@@ -162,7 +170,8 @@ class GiftcardDailyLedgerMapper {
         giftcardId = (lot?['giftcardId'] as String?) ?? '';
       }
       if (giftcardId.isEmpty) continue;
-      if (filterGiftcardIds.isNotEmpty && !filterGiftcardIds.contains(giftcardId)) {
+      if (filterGiftcardIds.isNotEmpty &&
+          !filterGiftcardIds.contains(giftcardId)) {
         continue;
       }
       final String name = giftcardNames[giftcardId] ?? giftcardId;
@@ -199,12 +208,12 @@ class GiftcardDailyLedgerMapper {
 
     final days = byDay.keys.toList()..sort((a, b) => b.compareTo(a));
     return [
-      for (final d in days)
-        _buildGroup(d, byDay[d]!),
+      for (final d in days) _buildGroup(d, byDay[d]!),
     ];
   }
 
-  static GiftcardLedgerDayGroup _buildGroup(DateTime day, List<GiftcardLedgerEntry> entries) {
+  static GiftcardLedgerDayGroup _buildGroup(
+      DateTime day, List<GiftcardLedgerEntry> entries) {
     int sumBuy = 0;
     int sumSell = 0;
     int sumProfit = 0;
@@ -234,6 +243,9 @@ class GiftcardDailyLedger extends StatelessWidget {
   final void Function(GiftcardLedgerEntry entry) onDelete;
   final void Function(GiftcardLedgerEntry entry)? onSaveTemplate;
   final void Function(GiftcardLedgerEntry entry, bool trade)? onTradeToggle;
+  final List<Widget> headers;
+  final EdgeInsetsGeometry? padding;
+  final ScrollPhysics? physics;
 
   const GiftcardDailyLedger({
     super.key,
@@ -244,20 +256,41 @@ class GiftcardDailyLedger extends StatelessWidget {
     required this.onDelete,
     this.onSaveTemplate,
     this.onTradeToggle,
+    this.headers = const <Widget>[],
+    this.padding,
+    this.physics,
   });
 
   @override
   Widget build(BuildContext context) {
     if (groups.isEmpty) {
-      return const Center(
-        child: Text('데이터가 없습니다.', style: TextStyle(color: Colors.black54)),
+      return ListView(
+        physics: physics,
+        padding: padding,
+        children: [
+          ...headers,
+          const SizedBox(
+            height: 180,
+            child: Center(
+              child: Text(
+                '데이터가 없습니다.',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     return ListView.builder(
-      itemCount: _countItems(),
+      physics: physics,
+      padding: padding,
+      itemCount: headers.length + _countItems(),
       itemBuilder: (context, index) {
-        final item = _itemAt(index);
+        if (index < headers.length) {
+          return headers[index];
+        }
+        final item = _itemAt(index - headers.length);
         if (item is _DayHeaderItem) {
           return _DayHeaderRow(
             dayText: dayFormat.format(item.group.day),
@@ -346,17 +379,22 @@ class _DayHeaderRow extends StatelessWidget {
           Expanded(
             child: Text(
               dayText,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black),
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black),
             ),
           ),
           Text(
             '+${won.format(sumSell)}',
-            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+                color: Colors.blue, fontWeight: FontWeight.w800),
           ),
           const SizedBox(width: 10),
           Text(
             '-${won.format(sumBuy)}',
-            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w800),
+            style:
+                const TextStyle(color: Colors.red, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -395,29 +433,37 @@ class _LedgerEntryRow extends StatelessWidget {
       return s;
     }
 
-    Widget pill(String text, {IconData? icon}) => _MiniPill(text: text, icon: icon);
+    Widget pill(String text, {IconData? icon}) =>
+        _MiniPill(text: text, icon: icon);
 
     final pills = <Widget>[];
     if (isSell) {
-      pills.add(pill('판매가 ${won.format(entry.unitPrice)}원', icon: Icons.sell_outlined));
+      pills.add(pill('판매가 ${won.format(entry.unitPrice)}원',
+          icon: Icons.sell_outlined));
       if (entry.discount != null) {
-        pills.add(pill('할인율 ${fmtPercent(entry.discount!)}%', icon: Icons.percent));
+        pills.add(
+            pill('할인율 ${fmtPercent(entry.discount!)}%', icon: Icons.percent));
       }
-      pills.add(pill('손익 ${won.format(entry.profit)}원', icon: Icons.trending_up_outlined));
+      pills.add(pill('손익 ${won.format(entry.profit)}원',
+          icon: Icons.trending_up_outlined));
       pills.add(pill(entry.giftcardName, icon: Icons.card_giftcard_outlined));
       if (entry.branchName != null && entry.branchName!.isNotEmpty) {
         pills.add(pill(entry.branchName!, icon: Icons.store_outlined));
       }
     } else {
-      pills.add(pill('매입가 ${won.format(entry.unitPrice)}원', icon: Icons.payments_outlined));
+      pills.add(pill('매입가 ${won.format(entry.unitPrice)}원',
+          icon: Icons.payments_outlined));
       if (entry.discount != null) {
-        pills.add(pill('할인율 ${fmtPercent(entry.discount!)}%', icon: Icons.percent));
+        pills.add(
+            pill('할인율 ${fmtPercent(entry.discount!)}%', icon: Icons.percent));
       }
       if (entry.cardName != null && entry.cardName!.isNotEmpty) {
-        pills.add(pill('카드 ${entry.cardName!}', icon: Icons.credit_card_outlined));
+        pills.add(
+            pill('카드 ${entry.cardName!}', icon: Icons.credit_card_outlined));
       }
       if (entry.payType != null && entry.payType!.isNotEmpty) {
-        pills.add(pill(entry.payType!, icon: Icons.account_balance_wallet_outlined));
+        pills.add(
+            pill(entry.payType!, icon: Icons.account_balance_wallet_outlined));
       }
       if (entry.whereToBuyName != null && entry.whereToBuyName!.isNotEmpty) {
         pills.add(pill(entry.whereToBuyName!, icon: Icons.storefront_outlined));
@@ -460,23 +506,34 @@ class _LedgerEntryRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(typeText, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: typeColor)),
+              Text(typeText,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: typeColor)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '${entry.qty}장 · ${entry.giftcardName}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black),
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 '${isSell ? '+' : '-'}${won.format(entry.amount)}',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: amountColor),
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: amountColor),
               ),
               const SizedBox(width: 2),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 18, color: Colors.black54),
+                icon: const Icon(Icons.more_vert,
+                    size: 18, color: Colors.black54),
                 color: Colors.white,
                 surfaceTintColor: Colors.white,
                 shape: RoundedRectangleBorder(
@@ -504,12 +561,14 @@ class _LedgerEntryRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (entry.type == GiftcardLedgerEntryType.buy && onSaveTemplate != null)
+                  if (entry.type == GiftcardLedgerEntryType.buy &&
+                      onSaveTemplate != null)
                     const PopupMenuItem(
                       value: 'save_template',
                       child: Text(
                         '템플릿으로 저장',
-                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.w600),
                       ),
                     ),
                   PopupMenuItem(
@@ -564,7 +623,10 @@ class _MiniPill extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 220),
             child: Text(
               text,
-              style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -573,4 +635,3 @@ class _MiniPill extends StatelessWidget {
     );
   }
 }
-

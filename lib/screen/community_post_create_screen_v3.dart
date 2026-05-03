@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
@@ -14,6 +15,7 @@ import '../community_editor/community_editor.dart';
 // any_link_preview는 상세 화면에서 사용. 작성 화면은 직접 메타데이터 파싱 사용
 import 'dart:io';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import '../utils/community_access_level.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
@@ -29,6 +31,9 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? editTitle;
   final String? editContentHtml;
   final dynamic editReadRestriction;
+  final String? sharedText;
+  final String? sharedSubject;
+  final List<String> sharedImagePaths;
 
   const CommunityPostCreateScreenV3({
     Key? key,
@@ -41,6 +46,9 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
     this.editTitle,
     this.editContentHtml,
     this.editReadRestriction,
+    this.sharedText,
+    this.sharedSubject,
+    this.sharedImagePaths = const <String>[],
   }) : super(key: key);
 
   @override
@@ -75,6 +83,14 @@ class _CommunityPostCreateScreenV3State
   // 상품권 목록 로딩 상태
   List<Map<String, dynamic>> _giftcards = [];
   bool _giftcardsLoading = false;
+  bool _sharedImagesInserted = false;
+
+  bool get _hasSharedContent {
+    if (widget.isEditMode) return false;
+    return (widget.sharedText?.trim().isNotEmpty ?? false) ||
+        (widget.sharedSubject?.trim().isNotEmpty ?? false) ||
+        widget.sharedImagePaths.isNotEmpty;
+  }
 
   @override
   void initState() {
@@ -85,15 +101,26 @@ class _CommunityPostCreateScreenV3State
     _selectedReadRestriction =
         CommunityAccessLevel.fromRestriction(widget.editReadRestriction);
 
+    final initialBoardId = _hasSharedContent
+        ? (widget.initialBoardId ?? 'free')
+        : widget.initialBoardId;
+    final initialBoardName = _hasSharedContent
+        ? (widget.initialBoardName ?? '자유게시판')
+        : widget.initialBoardName;
+    final initialTitle =
+        _hasSharedContent ? _deriveSharedTitle() : widget.editTitle;
+    final initialContentHtml =
+        _hasSharedContent ? _buildSharedContentHtml() : widget.editContentHtml;
+
     // 초기 데이터 설정
     _editorController.initializeWithData(
-      boardId: widget.initialBoardId,
-      boardName: widget.initialBoardName,
+      boardId: initialBoardId,
+      boardName: initialBoardName,
       isEditMode: widget.isEditMode,
       postId: widget.postId,
       dateString: widget.dateString,
-      editTitle: widget.editTitle,
-      editContentHtml: widget.editContentHtml,
+      editTitle: initialTitle,
+      editContentHtml: initialContentHtml,
     );
 
     // 즉시 업로드 사용 안 함: 식별자 사전 부여 제거
@@ -104,6 +131,9 @@ class _CommunityPostCreateScreenV3State
         setState(() {
           // 상태 변경 반영
         });
+        if (state.isReady) {
+          unawaited(_insertInitialSharedImages());
+        }
       }
     };
 
@@ -132,12 +162,67 @@ class _CommunityPostCreateScreenV3State
     });
 
     // 진입 시 임시 저장 데이터가 있으면 팝업 노출
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkDraftAndPrompt();
-    });
+    if (!_hasSharedContent) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkDraftAndPrompt();
+      });
+    }
     // 초기 진입 시 deal 게시판이면 기본 타입을 설정
     // deal 보드 초기 타입 상태 설정 제거
     _loadUserProfile();
+  }
+
+  String _deriveSharedTitle() {
+    final subject = widget.sharedSubject?.trim() ?? '';
+    if (subject.isNotEmpty) return _shortenSharedTitle(subject);
+
+    final text = widget.sharedText?.trim() ?? '';
+    if (text.isNotEmpty) {
+      final firstLine = text
+          .split(RegExp(r'\r?\n'))
+          .map((line) => line.trim())
+          .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+      if (firstLine.isNotEmpty) return _shortenSharedTitle(firstLine);
+    }
+
+    return '공유한 이미지';
+  }
+
+  String _shortenSharedTitle(String value) {
+    const maxLength = 40;
+    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= maxLength) return normalized;
+    return '${normalized.substring(0, maxLength)}...';
+  }
+
+  String? _buildSharedContentHtml() {
+    final text = (widget.sharedText?.trim().isNotEmpty ?? false)
+        ? widget.sharedText!.trim()
+        : (widget.sharedImagePaths.isEmpty
+            ? widget.sharedSubject?.trim() ?? ''
+            : '');
+    if (text.isEmpty) return null;
+
+    final escaped = const HtmlEscape(HtmlEscapeMode.element).convert(text);
+    return '<p>${escaped.replaceAll(RegExp(r'\r?\n'), '<br>')}</p>';
+  }
+
+  Future<void> _insertInitialSharedImages() async {
+    if (!_hasSharedContent || _sharedImagesInserted) return;
+    if (widget.sharedImagePaths.isEmpty) return;
+
+    _sharedImagesInserted = true;
+    final images = widget.sharedImagePaths
+        .where((path) => path.trim().isNotEmpty)
+        .map((path) => XFile(path))
+        .toList();
+    if (images.isEmpty) return;
+
+    await _editorController.insertImages(
+      images,
+      showLimitToast: false,
+      hapticFeedback: false,
+    );
   }
 
   bool get _canSetReadRestriction {

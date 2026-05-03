@@ -118,7 +118,7 @@ class CommunityEditorController extends ChangeNotifier {
         _updateState(currentText: text, isDirty: true);
         break;
       case CommunityEditorConstants.messageTypeFocus:
-      // 웹뷰에 포커스가 갈 때 제목 포커스 해제
+        // 웹뷰에 포커스가 갈 때 제목 포커스 해제
         titleFocusNode.unfocus();
         _updateState(
           isContentFocused: true,
@@ -135,11 +135,12 @@ class CommunityEditorController extends ChangeNotifier {
         );
         break;
       case CommunityEditorConstants.messageTypeImageInserted:
-      // 이미지 삽입 완료 알림
+        // 이미지 삽입 완료 알림
         break;
       case CommunityEditorConstants.messageTypeFormatChanged:
-      // 포맷 상태 업데이트
-        final formatState = messageData?['formatState'] as Map<String, dynamic>?;
+        // 포맷 상태 업데이트
+        final formatState =
+            messageData?['formatState'] as Map<String, dynamic>?;
         if (formatState != null) {
           final convertedFormatState = <String, bool>{};
           formatState.forEach((key, value) {
@@ -206,6 +207,7 @@ class CommunityEditorController extends ChangeNotifier {
   /// HTML 내용을 설정합니다.
   Future<void> setHTML(String html) async {
     _currentHtml = html;
+    _updatePostData(contentHtml: html);
     await _executeCommand('setHTML', [html]);
   }
 
@@ -225,39 +227,52 @@ class CommunityEditorController extends ChangeNotifier {
       final List<XFile> images = await _imagePicker.pickMultiImage();
 
       if (images.isNotEmpty) {
-        // 사용자 선택 완료 직후 안내 토스트 표시
-        Fluttertoast.showToast(
-          msg: "이미지는 최대 30개까지만 첨부됩니다.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.black,
-          textColor: Colors.white,
-        );
-        // 현재 선택된 이미지 수와 합산하여 최대 개수 제한
-        final currentCount = _postData.selectedImages.length;
-        final remaining = CommunityEditorConstants.maxImageCount - currentCount;
-        final toInsert = remaining <= 0 ? <XFile>[] : images.take(remaining).toList();
-
-        for (final image in toInsert) {
-          await _insertImageToEditor(image);
-        }
-
-        if (images.length > toInsert.length) {
-          HapticFeedback.lightImpact();
-          Fluttertoast.showToast(
-            msg: "이미지는 최대 30개까지만 첨부됩니다.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-          );
-        }
-
-        HapticFeedback.lightImpact();
+        await insertImages(images);
       }
     } catch (e) {
       print('이미지 선택 오류: $e');
     }
+  }
+
+  /// 외부 공유 등에서 받은 이미지를 에디터에 삽입합니다.
+  Future<void> insertImages(
+    List<XFile> images, {
+    bool showLimitToast = true,
+    bool hapticFeedback = true,
+  }) async {
+    if (images.isEmpty) return;
+
+    if (showLimitToast) {
+      _showImageLimitToast();
+    }
+
+    final currentCount = _postData.selectedImages.length;
+    final remaining = CommunityEditorConstants.maxImageCount - currentCount;
+    final toInsert =
+        remaining <= 0 ? <XFile>[] : images.take(remaining).toList();
+
+    for (final image in toInsert) {
+      await _insertImageToEditor(image);
+    }
+
+    if (images.length > toInsert.length) {
+      if (hapticFeedback) HapticFeedback.lightImpact();
+      if (showLimitToast) {
+        _showImageLimitToast();
+      }
+    }
+
+    if (hapticFeedback) HapticFeedback.lightImpact();
+  }
+
+  void _showImageLimitToast() {
+    Fluttertoast.showToast(
+      msg: "이미지는 최대 30개까지만 첨부됩니다.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
   }
 
   /// 동영상을 선택하고 에디터에 삽입합니다. (mp4 전용)
@@ -289,9 +304,11 @@ class CommunityEditorController extends ChangeNotifier {
         // 파일을 data URL로 만들지 않고, 업로드 단계에서 처리하므로 임시 태그를 삽입
         // 에디터에는 임시로 간단한 플레이스홀더 이미지를 그대로 두고, 제출 시 <video>로 치환될 수 있게 현재는 보류
         // 선택된 동영상 경로를 metadata에 기록 (업로드 처리 시 사용)
-        final List<dynamic> videos = List<dynamic>.from(_postData.metadata['videos'] ?? []);
+        final List<dynamic> videos =
+            List<dynamic>.from(_postData.metadata['videos'] ?? []);
         videos.add({'id': videoId, 'path': video.path});
-        final Map<String, dynamic> newMeta = Map<String, dynamic>.from(_postData.metadata);
+        final Map<String, dynamic> newMeta =
+            Map<String, dynamic>.from(_postData.metadata);
         newMeta['videos'] = videos;
         _updatePostData(metadata: newMeta);
 
@@ -300,12 +317,21 @@ class CommunityEditorController extends ChangeNotifier {
           final thumbBytes = await _generateVideoThumbnail(video.path);
           if (thumbBytes != null && thumbBytes.isNotEmpty) {
             final base64Thumb = base64Encode(thumbBytes);
-            await _executeCommand('replaceLoadingImage', [videoId, 'data:image/jpeg;base64,' + base64Thumb, 'Video']);
+            await _executeCommand('replaceLoadingImage',
+                [videoId, 'data:image/jpeg;base64,' + base64Thumb, 'Video']);
           } else {
-            await _executeCommand('replaceLoadingImage', [videoId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PSc1MCUnIHZpZXdCb3g9JzAgMCAxMDAgNTAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nNTAlJyBmaWxsPScjZWVlJy8+PHBhdGggZD0nTTQwIDE1IEw4MCAyNSBMNDAgMzV6JyBmaWxsPScjOTk5Jy8+PHRleHQgeD0nNTApJyB5PSc0MCUnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZvbnQtc2l6ZT0nMTAnIGZpbGw9JyM2NjYnPm1wNCB2aWRlbyBsb2FkaW5nPC90ZXh0Pjwvc3ZnPg==', 'Video']);
+            await _executeCommand('replaceLoadingImage', [
+              videoId,
+              'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PSc1MCUnIHZpZXdCb3g9JzAgMCAxMDAgNTAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nNTAlJyBmaWxsPScjZWVlJy8+PHBhdGggZD0nTTQwIDE1IEw4MCAyNSBMNDAgMzV6JyBmaWxsPScjOTk5Jy8+PHRleHQgeD0nNTApJyB5PSc0MCUnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZvbnQtc2l6ZT0nMTAnIGZpbGw9JyM2NjYnPm1wNCB2aWRlbyBsb2FkaW5nPC90ZXh0Pjwvc3ZnPg==',
+              'Video'
+            ]);
           }
         } catch (e) {
-          await _executeCommand('replaceLoadingImage', [videoId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PSc1MCUnIHZpZXdCb3g9JzAgMCAxMDAgNTAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nNTAlJyBmaWxsPScjZWVlJy8+PHBhdGggZD0nTTQwIDE1IEw4MCAyNSBMNDAgMzV6JyBmaWxsPScjOTk5Jy8+PHRleHQgeD0nNTApJyB5PSc0MCUnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZvbnQtc2l6ZT0nMTAnIGZpbGw9JyM2NjYnPm1wNCB2aWRlbyBsb2FkaW5nPC90ZXh0Pjwvc3ZnPg==', 'Video']);
+          await _executeCommand('replaceLoadingImage', [
+            videoId,
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PSc1MCUnIHZpZXdCb3g9JzAgMCAxMDAgNTAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nNTAlJyBmaWxsPScjZWVlJy8+PHBhdGggZD0nTTQwIDE1IEw4MCAyNSBMNDAgMzV6JyBmaWxsPScjOTk5Jy8+PHRleHQgeD0nNTApJyB5PSc0MCUnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZvbnQtc2l6ZT0nMTAnIGZpbGw9JyM2NjYnPm1wNCB2aWRlbyBsb2FkaW5nPC90ZXh0Pjwvc3ZnPg==',
+            'Video'
+          ]);
         }
 
         Fluttertoast.showToast(
@@ -319,7 +345,6 @@ class CommunityEditorController extends ChangeNotifier {
         await _executeCommand('replaceLoadingImage', [videoId, '', '']);
         print('동영상 삽입 오류: $e');
       }
-
     } catch (e) {
       print('동영상 선택 오류: $e');
     }
@@ -345,7 +370,6 @@ class CommunityEditorController extends ChangeNotifier {
       // 추가된 이미지 파일을 임시 리스트에 저장 (나중에 Firebase 업로드용)
       final List<XFile> newImages = [..._postData.selectedImages, imageFile];
       _updatePostData(selectedImages: newImages);
-
     } catch (e) {
       print('이미지 삽입 오류: $e');
       // 오류 발생시 로딩 이미지 제거
@@ -386,13 +410,20 @@ class CommunityEditorController extends ChangeNotifier {
   Future<void> applyFontSize(int fontSize) async {
     // fontSize 명령은 1-7 값을 사용하므로 픽셀 값으로 변환
     String fontSizeValue;
-    if (fontSize <= 10) fontSizeValue = '1';
-    else if (fontSize <= 12) fontSizeValue = '2';
-    else if (fontSize <= 14) fontSizeValue = '3';
-    else if (fontSize <= 16) fontSizeValue = '4';
-    else if (fontSize <= 18) fontSizeValue = '5';
-    else if (fontSize <= 24) fontSizeValue = '6';
-    else fontSizeValue = '7';
+    if (fontSize <= 10)
+      fontSizeValue = '1';
+    else if (fontSize <= 12)
+      fontSizeValue = '2';
+    else if (fontSize <= 14)
+      fontSizeValue = '3';
+    else if (fontSize <= 16)
+      fontSizeValue = '4';
+    else if (fontSize <= 18)
+      fontSizeValue = '5';
+    else if (fontSize <= 24)
+      fontSizeValue = '6';
+    else
+      fontSizeValue = '7';
 
     await _executeCommand('execCommand', ['fontSize', fontSizeValue]);
     HapticFeedback.selectionClick();
@@ -400,7 +431,8 @@ class CommunityEditorController extends ChangeNotifier {
 
   /// 텍스트 색상을 적용합니다.
   Future<void> applyTextColor(Color color) async {
-    final colorHex = '#${(color.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+    final colorHex =
+        '#${(color.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
     await _executeCommand('execCommand', ['foreColor', colorHex]);
     HapticFeedback.selectionClick();
   }
@@ -452,7 +484,8 @@ class CommunityEditorController extends ChangeNotifier {
       try {
         processedHtml = await FirebaseImageUploader.processVideosInHtml(
           htmlContent: processedHtml,
-          videos: List<Map<String, dynamic>>.from(_postData.metadata['videos'] as List),
+          videos: List<Map<String, dynamic>>.from(
+              _postData.metadata['videos'] as List),
           postId: _postData.postId!,
           dateString: _postData.dateString!,
         );
@@ -477,7 +510,8 @@ class CommunityEditorController extends ChangeNotifier {
       try {
         processedHtml = await FirebaseImageUploader.processVideosInHtml(
           htmlContent: processedHtml,
-          videos: List<Map<String, dynamic>>.from(_postData.metadata['videos'] as List),
+          videos: List<Map<String, dynamic>>.from(
+              _postData.metadata['videos'] as List),
           postId: _postData.postId!,
           dateString: _postData.dateString!,
         );

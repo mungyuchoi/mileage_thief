@@ -119,9 +119,19 @@ class BranchService {
     }
 
     final cardId = data['cardId']?.toString();
-    if (cardId != null && cardId.trim().isNotEmpty) {
-      debugPrint('실제 딥링크 클릭 감지 - 카드 상세로 이동: $cardId');
-      _navigateToCard(cardId.trim());
+    final linkCardId = _cardIdFromLinkValue(linkValue);
+    final resolvedCardId =
+        cardId?.trim().isNotEmpty == true ? cardId!.trim() : linkCardId;
+    if (resolvedCardId != null && resolvedCardId.trim().isNotEmpty) {
+      debugPrint('실제 딥링크 클릭 감지 - 카드 상세로 이동: $resolvedCardId');
+      _navigateToCard(resolvedCardId.trim());
+      return;
+    }
+
+    if (_isCardCatalogDestination(destination) ||
+        _isCardCatalogDestination(linkValue)) {
+      debugPrint('실제 딥링크 클릭 감지 - 카드 목록으로 이동');
+      _navigateToCards();
       return;
     }
 
@@ -161,6 +171,17 @@ class BranchService {
       return true;
     }
 
+    if (_isCardCatalogDestination(value)) {
+      _navigateToCards(context: context);
+      return true;
+    }
+
+    final cardId = _cardIdFromLinkValue(value);
+    if (cardId != null) {
+      _navigateToCard(cardId, context: context);
+      return true;
+    }
+
     return false;
   }
 
@@ -185,6 +206,58 @@ class BranchService {
         normalized == 'community-chat' ||
         normalized == 'community/chat' ||
         normalized == '/community/chat';
+  }
+
+  bool _isCardCatalogDestination(String? value) {
+    if (value == null) return false;
+    final normalized =
+        value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+    return normalized == 'cards' ||
+        normalized == 'card-list' ||
+        normalized == 'card-catalog' ||
+        normalized == 'card/catalog' ||
+        normalized == '/card' ||
+        normalized == '/cards' ||
+        normalized == '/card/catalog';
+  }
+
+  String? _cardIdFromLinkValue(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final normalized = trimmed.toLowerCase().replaceAll('_', '-');
+
+    const prefixes = [
+      'card:',
+      'card-detail:',
+      'cards:',
+      'card/detail:',
+      '/card/detail/',
+      '/cards/',
+    ];
+    for (final prefix in prefixes) {
+      if (normalized.startsWith(prefix)) {
+        final cardId = trimmed.substring(prefix.length).trim();
+        return cardId.isEmpty ? null : cardId;
+      }
+    }
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return null;
+    final host = uri.host.toLowerCase();
+    final path = uri.path;
+    if (host == 'card' || host == 'cards') {
+      final cardId = uri.queryParameters['cardId'] ??
+          uri.queryParameters['id'] ??
+          (path.length > 1 ? path.substring(1) : null);
+      return cardId?.trim().isNotEmpty == true ? cardId!.trim() : null;
+    }
+    if (path.toLowerCase() == '/card/detail' ||
+        path.toLowerCase() == '/cards/detail') {
+      final cardId = uri.queryParameters['cardId'] ?? uri.queryParameters['id'];
+      return cardId?.trim().isNotEmpty == true ? cardId!.trim() : null;
+    }
+    return null;
   }
 
   String? _chatRoomIdFromLinkValue(String? value) {
@@ -284,11 +357,26 @@ class BranchService {
     );
   }
 
-  void _navigateToCard(String cardId) {
-    navigatorKey.currentState?.pushNamed(
-      '/card/detail',
-      arguments: {'cardId': cardId},
-    );
+  void _navigateToCards({
+    BuildContext? context,
+  }) {
+    if (context != null) {
+      Navigator.of(context).pushNamed('/cards');
+      return;
+    }
+    navigatorKey.currentState?.pushNamed('/cards');
+  }
+
+  void _navigateToCard(
+    String cardId, {
+    BuildContext? context,
+  }) {
+    final arguments = {'cardId': cardId};
+    if (context != null) {
+      Navigator.of(context).pushNamed('/card/detail', arguments: arguments);
+      return;
+    }
+    navigatorKey.currentState?.pushNamed('/card/detail', arguments: arguments);
   }
 
   /// 콘테스트로 이동
@@ -395,6 +483,46 @@ class BranchService {
       return null;
     } catch (e) {
       debugPrint('Branch 카드 링크 생성 오류: $e');
+      return null;
+    }
+  }
+
+  /// 카드 목록 딥링크 생성
+  Future<String?> createCardCatalogLink({
+    String? title,
+    String? description,
+  }) async {
+    try {
+      final buo = BranchUniversalObject(
+        canonicalIdentifier: 'cards',
+        title: title ?? '마일캐치 카드',
+        contentDescription: description ?? '마일캐치 카드 혜택 DB를 확인해보세요!',
+        contentMetadata: BranchContentMetaData()
+          ..addCustomMetadata('destination', 'cards')
+          ..addCustomMetadata('screen', 'card_catalog')
+          ..addCustomMetadata('path', '/cards')
+          ..addCustomMetadata('linkValue', 'cards'),
+      );
+
+      final lp = BranchLinkProperties(
+        channel: 'card',
+        feature: 'deeplink',
+        campaign: 'card_catalog',
+      );
+
+      final response = await FlutterBranchSdk.getShortUrl(
+        buo: buo,
+        linkProperties: lp,
+      );
+
+      if (response.success) {
+        debugPrint('Branch 카드 목록 링크 생성 성공: ${response.result}');
+        return response.result;
+      }
+      debugPrint('Branch 카드 목록 링크 생성 실패: ${response.errorMessage}');
+      return null;
+    } catch (e) {
+      debugPrint('Branch 카드 목록 링크 생성 오류: $e');
       return null;
     }
   }

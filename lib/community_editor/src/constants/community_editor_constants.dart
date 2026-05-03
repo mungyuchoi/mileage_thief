@@ -1004,6 +1004,10 @@ class CommunityEditorConstants {
                 }
                 
                 sendMessage('imageInserted', { src: src, alt: alt });
+                sendMessage('textChanged', {
+                    content: editor.innerHTML,
+                    text: editor.textContent
+                });
             },
             
             // 로딩 이미지 표시
@@ -1045,6 +1049,10 @@ class CommunityEditorConstants {
                     
                     loadingDiv.parentNode.replaceChild(img, loadingDiv);
                     sendMessage('imageReplaced', { id: id, src: src, alt: alt });
+                    sendMessage('textChanged', {
+                        content: editor.innerHTML,
+                        text: editor.textContent
+                    });
                 }
             },
             
