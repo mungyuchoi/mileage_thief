@@ -14,6 +14,8 @@ import 'screen/community_chat_screen.dart';
 import 'screen/community_detail_screen.dart';
 import 'screen/community_post_create_screen_v3.dart';
 import 'screen/card_catalog_screen.dart';
+import 'screen/card_hub_screen.dart';
+import 'screen/giftcard_deals_screen.dart';
 import 'screen/my_card_dashboard_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -325,6 +327,10 @@ class _MyAppState extends State<MyApp> {
                     ?.whereType<String>()
                     .toList() ??
                 const <String>[],
+            initialTitle: args?['initialTitle'],
+            entityRefs: Map<String, dynamic>.from(
+              (args?['entityRefs'] as Map?) ?? const <String, dynamic>{},
+            ),
           );
         },
         '/community/chat': (context) {
@@ -334,14 +340,21 @@ class _MyAppState extends State<MyApp> {
             roomId: args?['roomId']?.toString() ?? 'global',
           );
         },
-        '/cards': (context) => const CardCatalogScreen(),
-        '/card': (context) => const CardCatalogScreen(),
+        '/cards': (context) => const CardHubScreen(),
+        '/card': (context) => const CardHubScreen(),
         '/my-cards': (context) => const MyCardDashboardScreen(),
         '/card/detail': (context) {
           final args = ModalRoute.of(context)?.settings.arguments
               as Map<String, dynamic>?;
           return CardProductDetailScreen(
             cardId: args?['cardId']?.toString() ?? '',
+          );
+        },
+        '/giftcard/deal': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+          return GiftcardDealDetailScreen(
+            dealId: args?['dealId']?.toString() ?? '',
           );
         },
       },

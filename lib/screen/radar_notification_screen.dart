@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
+import '../models/giftcard_deal_model.dart';
 import '../models/radar_item_model.dart';
+import '../services/giftcard_deal_service.dart';
 import '../services/radar_service.dart';
 import 'login_screen.dart';
 
@@ -87,7 +89,7 @@ class _RadarNotificationHeader extends StatelessWidget {
               style: TextStyle(
                 color: Color(0xFF1A1D27),
                 fontSize: 22,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -156,7 +158,7 @@ class _RadarSegmentedTabs extends StatelessWidget {
                         ? const Color(0xFF1A1D27)
                         : const Color(0xFF727A89),
                     fontSize: 15,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -177,45 +179,71 @@ class _RadarSubscriptionTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: RadarService.watchRadarSubscriptions(uid),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
+      builder: (context, radarSnapshot) {
+        if (radarSnapshot.hasError) {
           return _RadarMessageState(
             title: '알림 조건을 불러오지 못했습니다.',
-            subtitle: snapshot.error.toString(),
+            subtitle: radarSnapshot.error.toString(),
             icon: Icons.error_outline_rounded,
           );
         }
-        if (!snapshot.hasData) {
+        if (!radarSnapshot.hasData) {
           return const _RadarLoadingState();
         }
 
-        final entries = snapshot.data!.docs
+        final radarEntries = radarSnapshot.data!.docs
             .map(_RadarSubscriptionEntry.fromDoc)
             .toList(growable: false);
-        if (entries.isEmpty) {
-          return const _RadarMessageState(
-            title: '저장된 레이더 알림이 없습니다.',
-            subtitle: '가이드 탭의 마일캐치 레이더 카드에서 알림을 눌러 조건을 저장하세요.',
-            icon: Icons.notifications_none_rounded,
-          );
-        }
 
-        final activeCount = entries.where((entry) => entry.isActiveNow).length;
-        final mutedCount = entries.where((entry) => !entry.pushEnabled).length;
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-          itemCount: entries.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return _RadarSubscriptionSummary(
-                totalCount: entries.length,
-                activeCount: activeCount,
-                mutedCount: mutedCount,
+        return StreamBuilder<List<GiftcardDealAlert>>(
+          stream: GiftcardDealService.watchAlertsForUser(uid),
+          builder: (context, giftcardSnapshot) {
+            if (giftcardSnapshot.hasError) {
+              return _RadarMessageState(
+                title: '상품권 특가 알림을 불러오지 못했습니다.',
+                subtitle: giftcardSnapshot.error.toString(),
+                icon: Icons.error_outline_rounded,
               );
             }
-            final entry = entries[index - 1];
-            return _RadarSubscriptionCard(entry: entry);
+
+            if (!giftcardSnapshot.hasData && radarEntries.isEmpty) {
+              return const _RadarLoadingState();
+            }
+
+            final entries = <_RadarSubscriptionEntry>[
+              ...radarEntries,
+              ...(giftcardSnapshot.data ?? const <GiftcardDealAlert>[])
+                  .map(_RadarSubscriptionEntry.fromGiftcardAlert),
+            ]..sort(_compareSubscriptionEntries);
+
+            if (entries.isEmpty) {
+              return const _RadarMessageState(
+                title: '저장된 레이더 알림이 없습니다.',
+                subtitle: '가이드 탭의 마일캐치 레이더 카드나 상품권 특가 화면에서 알림을 저장하세요.',
+                icon: Icons.notifications_none_rounded,
+              );
+            }
+
+            final activeCount =
+                entries.where((entry) => entry.isActiveNow).length;
+            final mutedCount =
+                entries.where((entry) => !entry.pushEnabled).length;
+            return ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+              itemCount: entries.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _RadarSubscriptionSummary(
+                    totalCount: entries.length,
+                    activeCount: activeCount,
+                    mutedCount: mutedCount,
+                  );
+                }
+                final entry = entries[index - 1];
+                return _RadarSubscriptionCard(entry: entry);
+              },
+            );
           },
         );
       },
@@ -300,7 +328,7 @@ class _RadarSubscriptionSummary extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -308,7 +336,7 @@ class _RadarSubscriptionSummary extends StatelessWidget {
                   '전체 $totalCount개 · 활성 $activeCount개 · 꺼짐 $mutedCount개',
                   style: const TextStyle(
                     color: Color(0xFFC7D2FE),
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ],
@@ -384,7 +412,7 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
                           style: const TextStyle(
                             color: Color(0xFF727A89),
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ],
@@ -398,7 +426,7 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
                         color: Color(0xFF1A1D27),
                         fontSize: 16,
                         height: 1.18,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.normal,
                       ),
                     ),
                     if (entry.description.isNotEmpty) ...[
@@ -411,7 +439,7 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
                           color: Color(0xFF5F6877),
                           fontSize: 13,
                           height: 1.28,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.normal,
                         ),
                       ),
                     ],
@@ -446,31 +474,48 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _busy ? null : _extend,
-                  icon: const Icon(Icons.update_rounded, size: 18),
-                  label: const Text('30일 연장'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black87,
-                    side: const BorderSide(color: Color(0xFFD7DCE5)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          if (entry.canExtend)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _extend,
+                    icon: const Icon(Icons.update_rounded, size: 18),
+                    label: const Text('30일 연장'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                      side: const BorderSide(color: Color(0xFFD7DCE5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _busy ? null : _confirmDelete,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  color: const Color(0xFFB42318),
+                  tooltip: '삭제',
+                ),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
                 onPressed: _busy ? null : _confirmDelete,
-                icon: const Icon(Icons.delete_outline_rounded),
-                color: const Color(0xFFB42318),
-                tooltip: '삭제',
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                label: const Text('알림 삭제'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFB42318),
+                  side: const BorderSide(color: Color(0xFFFECACA)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -479,10 +524,14 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
   Future<void> _togglePush(bool value) async {
     setState(() => _busy = true);
     try {
-      await RadarService.updateRadarSubscriptionPush(
-        subscriptionId: widget.entry.id,
-        pushEnabled: value,
-      );
+      if (widget.entry.isGiftcardDealAlert) {
+        await GiftcardDealService.setAlertEnabled(widget.entry.id, value);
+      } else {
+        await RadarService.updateRadarSubscriptionPush(
+          subscriptionId: widget.entry.id,
+          pushEnabled: value,
+        );
+      }
       Fluttertoast.showToast(msg: value ? '레이더 알림을 켰습니다.' : '레이더 알림을 껐습니다.');
     } catch (_) {
       Fluttertoast.showToast(msg: '알림 상태 변경에 실패했습니다.');
@@ -512,9 +561,9 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
           backgroundColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text(
-            '레이더 알림 삭제',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          title: Text(
+            widget.entry.isGiftcardDealAlert ? '상품권 특가 알림 삭제' : '레이더 알림 삭제',
+            style: const TextStyle(fontWeight: FontWeight.normal),
           ),
           content: Text('${widget.entry.title}\n\n이 조건을 삭제할까요?'),
           actions: [
@@ -536,8 +585,13 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
 
     setState(() => _busy = true);
     try {
-      await RadarService.deleteRadarSubscription(widget.entry.id);
-      Fluttertoast.showToast(msg: '레이더 알림을 삭제했습니다.');
+      if (widget.entry.isGiftcardDealAlert) {
+        await GiftcardDealService.deleteAlert(widget.entry.id);
+        Fluttertoast.showToast(msg: '상품권 특가 알림을 삭제했습니다.');
+      } else {
+        await RadarService.deleteRadarSubscription(widget.entry.id);
+        Fluttertoast.showToast(msg: '레이더 알림을 삭제했습니다.');
+      }
     } catch (_) {
       Fluttertoast.showToast(msg: '알림 삭제에 실패했습니다.');
     } finally {
@@ -595,7 +649,7 @@ class _RadarMatchCard extends StatelessWidget {
                       color: Color(0xFF1A1D27),
                       fontSize: 16,
                       height: 1.18,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -607,7 +661,7 @@ class _RadarMatchCard extends StatelessWidget {
                       color: Color(0xFF5F6877),
                       fontSize: 13,
                       height: 1.28,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -616,7 +670,7 @@ class _RadarMatchCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Color(0xFF8A93A3),
                       fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ],
@@ -658,7 +712,7 @@ class _RadarStatusPill extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontSize: 11,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.normal,
         ),
       ),
     );
@@ -693,7 +747,7 @@ class _RadarInfoChip extends StatelessWidget {
               style: const TextStyle(
                 color: Color(0xFF4B5563),
                 fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -765,7 +819,7 @@ class _RadarMessageState extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFF1B1E27),
               fontSize: 21,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
             ),
           ),
           const SizedBox(height: 8),
@@ -776,7 +830,7 @@ class _RadarMessageState extends StatelessWidget {
               color: Color(0xFF717986),
               fontSize: 15,
               height: 1.35,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.normal,
             ),
           ),
           const Spacer(flex: 9),
@@ -815,7 +869,7 @@ class _RadarLoginEmptyState extends StatelessWidget {
             style: TextStyle(
               color: Color(0xFF1B1E27),
               fontSize: 21,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
             ),
           ),
           const SizedBox(height: 8),
@@ -826,7 +880,7 @@ class _RadarLoginEmptyState extends StatelessWidget {
               color: Color(0xFF717986),
               fontSize: 15,
               height: 1.35,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.normal,
             ),
           ),
           const SizedBox(height: 18),
@@ -848,11 +902,15 @@ class _RadarLoginEmptyState extends StatelessWidget {
   }
 }
 
+enum _RadarAlertKind { radar, giftcardDeal }
+
 class _RadarSubscriptionEntry {
   const _RadarSubscriptionEntry({
     required this.id,
+    required this.kind,
     required this.type,
     required this.title,
+    required this.descriptionOverride,
     required this.route,
     required this.dateRange,
     required this.source,
@@ -865,8 +923,10 @@ class _RadarSubscriptionEntry {
   });
 
   final String id;
+  final _RadarAlertKind kind;
   final String type;
   final String title;
+  final String descriptionOverride;
   final String route;
   final String dateRange;
   final String source;
@@ -877,11 +937,14 @@ class _RadarSubscriptionEntry {
   final DateTime? expiresAt;
   final DateTime? createdAt;
 
+  bool get isGiftcardDealAlert => kind == _RadarAlertKind.giftcardDeal;
+  bool get canExtend => kind == _RadarAlertKind.radar;
   bool get isExpired =>
-      expiresAt != null && expiresAt!.isBefore(DateTime.now());
+      canExtend && expiresAt != null && expiresAt!.isBefore(DateTime.now());
   bool get isActiveNow => isActive && pushEnabled && !isExpired;
 
-  String get typeLabel => _radarTypeLabel(type);
+  String get typeLabel =>
+      isGiftcardDealAlert ? '상품권 특가' : _radarTypeLabel(type);
 
   String get statusLabel {
     if (isExpired) return '만료';
@@ -896,6 +959,7 @@ class _RadarSubscriptionEntry {
   }
 
   String get description {
+    if (descriptionOverride.isNotEmpty) return descriptionOverride;
     final parts = <String>[
       if (price != null && price! > 0)
         '${NumberFormat('#,###').format(price)}원',
@@ -907,6 +971,7 @@ class _RadarSubscriptionEntry {
   }
 
   String get expiresAtLabel {
+    if (!canExtend) return '기간 제한 없음';
     if (expiresAt == null) return '만료일 없음';
     final label = DateFormat('MM.dd HH:mm').format(expiresAt!);
     if (isExpired) return '$label 만료';
@@ -923,8 +988,10 @@ class _RadarSubscriptionEntry {
     );
     return _RadarSubscriptionEntry(
       id: doc.id,
+      kind: _RadarAlertKind.radar,
       type: (data['type'] as String? ?? '').trim(),
       title: (conditions['title'] as String? ?? '레이더 알림').trim(),
+      descriptionOverride: '',
       route: (conditions['route'] as String? ?? '').trim(),
       dateRange: (conditions['dateRange'] as String? ?? '').trim(),
       source: (conditions['source'] as String? ?? '').trim(),
@@ -936,6 +1003,80 @@ class _RadarSubscriptionEntry {
       createdAt: _dateTimeOf(data['createdAt']),
     );
   }
+
+  static _RadarSubscriptionEntry fromGiftcardAlert(
+    GiftcardDealAlert alert,
+  ) {
+    return _RadarSubscriptionEntry(
+      id: alert.id,
+      kind: _RadarAlertKind.giftcardDeal,
+      type: RadarItemType.giftcard,
+      title: alert.name.isEmpty ? '상품권 맞춤 알림' : alert.name,
+      descriptionOverride: _giftcardAlertDescription(alert),
+      route: '',
+      dateRange: '',
+      source: '상품권 특가',
+      price: alert.maxPriceKRW > 0 ? alert.maxPriceKRW : null,
+      miles: null,
+      pushEnabled: alert.enabled,
+      isActive: alert.enabled,
+      expiresAt: null,
+      createdAt: _dateTimeOf(alert.updatedAt) ?? _dateTimeOf(alert.createdAt),
+    );
+  }
+}
+
+int _compareSubscriptionEntries(
+  _RadarSubscriptionEntry a,
+  _RadarSubscriptionEntry b,
+) {
+  final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  return bDate.compareTo(aDate);
+}
+
+String _giftcardAlertDescription(GiftcardDealAlert alert) {
+  final parts = <String>[];
+  if (alert.dealTitle.isNotEmpty) {
+    parts.add(alert.dealTitle);
+  } else if (alert.brandName.isNotEmpty) {
+    parts.add(alert.brandName);
+  } else if (alert.brandIds.isNotEmpty) {
+    parts.add(alert.brandIds.take(3).join('/'));
+  }
+  if (alert.denominationsKRW.isNotEmpty) {
+    parts.add(
+        alert.denominationsKRW.map(_formatRadarDenomination).take(3).join('/'));
+  }
+  if (alert.merchantName.isNotEmpty) {
+    parts.add(alert.merchantName);
+  } else if (alert.merchantIds.isNotEmpty) {
+    parts.add(alert.merchantIds.take(3).join('/'));
+  }
+  if (alert.minDiscountRate > 0) {
+    parts.add('${_formatRadarRate(alert.minDiscountRate)}% 이상');
+  }
+  if (alert.maxPriceKRW > 0) {
+    parts.add('${_formatRadarWon(alert.maxPriceKRW)} 이하');
+  }
+  return parts.isEmpty ? '전체 상품권 특가' : parts.join(' · ');
+}
+
+String _formatRadarWon(int value) {
+  if (value <= 0) return '-';
+  return '${NumberFormat('#,###').format(value)}원';
+}
+
+String _formatRadarRate(double value) {
+  if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+  return value.toStringAsFixed(1);
+}
+
+String _formatRadarDenomination(int value) {
+  if (value >= 10000 && value % 10000 == 0) {
+    return '${value ~/ 10000}만원권';
+  }
+  return _formatRadarWon(value);
 }
 
 class _RadarMatchEntry {

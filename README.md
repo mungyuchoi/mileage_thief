@@ -21,6 +21,9 @@ open -a Xcode build/ios/archive/Runner.xcarchive
 ```
 생성된 IPA를 Xcode Organizer 또는 Transporter로 업로드합니다.
 
+### 0.4 상품권 특가 자동 배포
+0 0,8,12,16,20 * * * cd /path/to/mileage_thief && /usr/bin/python3 task/gift/collectGiftPrice.py >> /path/to/mileage_thief/logs/collectGiftPrice.log 2>&1
+path는 다른 수정된 것에 맞춰 변경하기
 ## 개요 및 목적
 
 마일리지도둑은 항공권 마일리지 좌석을 쉽고 빠르게 검색할 수 있도록 도와주는 Flutter 기반의 앱/웹 서비스입니다. 다양한 항공사와 노선의 마일리지 좌석 정보를 한눈에 확인하고, 상세 정보를 제공하여 사용자들의 마일리지 활용을 극대화하는 것이 목적입니다.

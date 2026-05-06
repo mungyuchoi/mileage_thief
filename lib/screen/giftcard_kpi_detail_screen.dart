@@ -249,7 +249,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
     );
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       if (!mounted) return;
@@ -267,6 +267,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         periodType: widget.periodType,
         selectedMonth: widget.selectedMonth,
         selectedYear: widget.selectedYear,
+        forceRefresh: forceRefresh,
       );
       if (!mounted) return;
       setState(() {
@@ -347,6 +348,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         'trade': trade,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      GiftcardService.invalidateUser(uid);
 
       if (!mounted) return;
 
@@ -603,7 +605,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
               ),
             )
           : RefreshIndicator(
-              onRefresh: _load,
+              onRefresh: () => _load(forceRefresh: true),
               color: const Color(0xFF74512D),
               backgroundColor: Colors.white,
               child: Builder(

@@ -9,6 +9,7 @@ class RadarItemType {
   static const String giftcard = 'giftcard';
   static const String benefitNews = 'benefitNews';
   static const String valueCalculator = 'valueCalculator';
+  static const String cardCalculator = 'cardCalculator';
 }
 
 class RadarTravelProfile {
@@ -180,6 +181,8 @@ class RadarItem {
         return '상품권';
       case RadarItemType.valueCalculator:
         return '계산기';
+      case RadarItemType.cardCalculator:
+        return '카드 계산기';
       case RadarItemType.benefitNews:
       default:
         return '뉴스/혜택';

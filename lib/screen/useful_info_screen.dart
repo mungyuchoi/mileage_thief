@@ -14,12 +14,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/card_product_model.dart';
 import '../models/radar_item_model.dart';
 import '../services/branch_service.dart';
+import '../services/card_catalog_service.dart';
 import '../services/category_service.dart';
+import '../services/giftcard_deal_service.dart';
 import '../services/radar_service.dart';
 import 'cancellation_notification_screen.dart';
 import 'card_catalog_screen.dart';
+import 'card_hub_screen.dart';
 import 'community_chat_screen.dart';
 import 'community_detail_screen.dart';
 import 'dan_screen.dart';
@@ -28,6 +32,7 @@ import 'deals/flight_deals_screen.dart';
 import 'deals/hotel_deals_screen.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
+import 'giftcard_deals_screen.dart';
 
 typedef _PostDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>;
 typedef _BoardDocs = List<Map<String, dynamic>>;
@@ -314,7 +319,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             onTapItem: _handleRadarTap,
             onShareItem: _openRadarShareSheet,
             onSubscribe: _saveRadarSubscription,
-            onCalculate: _openRadarValueCalculator,
+            onCalculate: _openRadarCalculator,
           ),
           _QuickActionsSection(
             actions: [
@@ -323,7 +328,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                 assetIcon: _cardQuickActionIconAsset,
                 title: '카드',
                 subtitle: '혜택 DB',
-                onTap: () => _push(CardCatalogScreen(
+                onTap: () => _push(CardHubScreen(
                   onRequireLogin: _openProfileTabForLogin,
                 )),
               ),
@@ -558,6 +563,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
         .collection('bottom_sheet_ads')
         .where('isActive', isEqualTo: true)
         .orderBy('priority', descending: false)
+        .limit(12)
         .get();
 
     return snap.docs
@@ -639,8 +645,19 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   }
 
   Future<void> _handleRadarTap(RadarItem item) async {
-    if (item.itemType == RadarItemType.valueCalculator) {
-      await _openRadarValueCalculator(item);
+    if (item.itemType == RadarItemType.valueCalculator ||
+        item.itemType == RadarItemType.cardCalculator) {
+      await _openRadarCalculator(item);
+      return;
+    }
+
+    if (_isGiftcardDealRadarItem(item)) {
+      final dealId = item.payload['giftcardDealId']?.toString() ?? '';
+      if (dealId.isNotEmpty) {
+        _push(GiftcardDealDetailScreen(dealId: dealId));
+      } else {
+        widget.onOpenGiftcard();
+      }
       return;
     }
 
@@ -713,6 +730,38 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     );
   }
 
+  Future<void> _openRadarCalculator(RadarItem item) async {
+    if (item.itemType == RadarItemType.cardCalculator) {
+      await _openRadarCardCalculator(item);
+      return;
+    }
+    await _openRadarValueCalculator(item);
+  }
+
+  Future<void> _openRadarCardCalculator(RadarItem item) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _RadarCardCalculatorSheet(
+        item: item,
+        onOpenCard: (product) {
+          Navigator.of(sheetContext).pop();
+          _push(CardProductDetailScreen(
+            cardId: product.id,
+            onRequireLogin: _openProfileTabForLogin,
+          ));
+        },
+        onOpenHub: () {
+          Navigator.of(sheetContext).pop();
+          _push(CardHubScreen(
+            onRequireLogin: _openProfileTabForLogin,
+          ));
+        },
+      ),
+    );
+  }
+
   Future<void> _openRadarShareSheet(RadarItem item) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -723,6 +772,11 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   }
 
   Future<void> _saveRadarSubscription(RadarItem item) async {
+    if (_isGiftcardDealRadarItem(item)) {
+      await _openGiftcardDealAlertSheet(item);
+      return;
+    }
+
     try {
       await RadarService.saveRadarSubscription(item);
       Fluttertoast.showToast(msg: '레이더 알림 조건을 저장했습니다.');
@@ -730,6 +784,30 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       Fluttertoast.showToast(msg: '로그인 후 레이더 알림을 저장할 수 있습니다.');
     } catch (_) {
       Fluttertoast.showToast(msg: '레이더 알림 저장에 실패했습니다.');
+    }
+  }
+
+  bool _isGiftcardDealRadarItem(RadarItem item) {
+    return item.itemType == RadarItemType.giftcard &&
+        item.payload['giftcardRadarKind'] == 'deal';
+  }
+
+  Future<void> _openGiftcardDealAlertSheet(RadarItem item) async {
+    final dealId = item.payload['giftcardDealId']?.toString() ?? '';
+    if (dealId.isEmpty) {
+      Fluttertoast.showToast(msg: '상품권 특가 정보를 찾을 수 없습니다.');
+      return;
+    }
+    try {
+      final deal = await GiftcardDealService.loadDeal(dealId);
+      if (!mounted) return;
+      if (deal == null) {
+        Fluttertoast.showToast(msg: '상품권 특가 정보를 찾을 수 없습니다.');
+        return;
+      }
+      await showGiftcardDealAlertEditor(context, deal: deal);
+    } catch (_) {
+      Fluttertoast.showToast(msg: '상품권 특가 알림 설정을 열지 못했습니다.');
     }
   }
 
@@ -920,7 +998,7 @@ class _GuideAdBannerCarouselState extends State<_GuideAdBannerCarousel> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ),
@@ -998,7 +1076,7 @@ class _RadarSection extends StatelessWidget {
                             '오늘 잡을 액션',
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.normal,
                               color: Color(0xFF111827),
                             ),
                           ),
@@ -1009,7 +1087,7 @@ class _RadarSection extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.normal,
                               color: Color(0xFF64748B),
                             ),
                           ),
@@ -1094,7 +1172,8 @@ class _RadarItemCard extends StatelessWidget {
       item.costPerMileLabel ?? item.cashValueLabel,
       if (item.urgency.isNotEmpty) item.urgency,
     ].whereType<String>().take(3).toList();
-    final canSubscribe = item.itemType != RadarItemType.valueCalculator;
+    final canSubscribe = item.itemType != RadarItemType.valueCalculator &&
+        item.itemType != RadarItemType.cardCalculator;
 
     return Material(
       color: Colors.white,
@@ -1142,7 +1221,7 @@ class _RadarItemCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.normal,
                         color: accent,
                       ),
                     ),
@@ -1152,7 +1231,7 @@ class _RadarItemCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ],
@@ -1165,7 +1244,7 @@ class _RadarItemCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   height: 1.16,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.normal,
                   color: Color(0xFF0F172A),
                 ),
               ),
@@ -1177,7 +1256,7 @@ class _RadarItemCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.normal,
                     color: Color(0xFF64748B),
                   ),
                 ),
@@ -1191,7 +1270,7 @@ class _RadarItemCard extends StatelessWidget {
                   fontSize: 12,
                   height: 1.24,
                   color: Color(0xFF334155),
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const Spacer(),
@@ -1261,7 +1340,7 @@ class _RadarMetricChip extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontSize: 10,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.normal,
           color: Color(0xFF334155),
         ),
       ),
@@ -1338,7 +1417,7 @@ class _RadarTextButton extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ],
@@ -1384,7 +1463,7 @@ class _RadarEmptyState extends StatelessWidget {
               '아직 잡힌 레이더 카드가 없습니다.',
               style: TextStyle(
                 color: Color(0xFF475569),
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -1466,9 +1545,18 @@ class _RadarProfileSheetState extends State<_RadarProfileSheet> {
             hint: 'ICN, GMP, PUS',
           ),
           const SizedBox(height: 12),
-          const Text(
-            '선호 좌석',
-            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black),
+          const ColoredBox(
+            color: Colors.white,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                '선호 좌석',
+                style: TextStyle(
+                  fontWeight: FontWeight.normal,
+                  color: Colors.black,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1486,6 +1574,7 @@ class _RadarProfileSheetState extends State<_RadarProfileSheet> {
                     }
                   });
                 },
+                backgroundColor: Colors.white,
                 selectedColor: const Color(0xFFE8F0FE),
                 checkmarkColor: const Color(0xFF1A56DB),
               );
@@ -1549,9 +1638,14 @@ class _RadarProfileSheetState extends State<_RadarProfileSheet> {
           SwitchListTile(
             value: _giftcardEnabled,
             contentPadding: EdgeInsets.zero,
+            activeThumbColor: Colors.white,
+            activeTrackColor: Colors.black,
+            inactiveThumbColor: Colors.black,
+            inactiveTrackColor: Colors.white,
+            trackOutlineColor: WidgetStateProperty.all(Colors.black),
             title: const Text(
-              '상품권/상테크 카드 포함',
-              style: TextStyle(fontWeight: FontWeight.w900),
+              '상품권 시세/특가 포함',
+              style: TextStyle(fontWeight: FontWeight.normal),
             ),
             onChanged: (value) => setState(() => _giftcardEnabled = value),
           ),
@@ -1570,7 +1664,7 @@ class _RadarProfileSheetState extends State<_RadarProfileSheet> {
               ),
               child: const Text(
                 '조건 저장',
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.normal),
               ),
             ),
           ),
@@ -1600,6 +1694,688 @@ class _RadarProfileSheetState extends State<_RadarProfileSheet> {
     );
     Navigator.of(context).pop(profile);
   }
+}
+
+class _RadarCardCalculatorSheet extends StatefulWidget {
+  final RadarItem item;
+  final ValueChanged<CatalogCardProduct> onOpenCard;
+  final VoidCallback onOpenHub;
+
+  const _RadarCardCalculatorSheet({
+    required this.item,
+    required this.onOpenCard,
+    required this.onOpenHub,
+  });
+
+  @override
+  State<_RadarCardCalculatorSheet> createState() =>
+      _RadarCardCalculatorSheetState();
+}
+
+class _RadarCardCalculatorSheetState extends State<_RadarCardCalculatorSheet> {
+  final CardCatalogService _service = CardCatalogService();
+  late final TextEditingController _monthlyController;
+  late final TextEditingController _giftcardController;
+  late final TextEditingController _mileValueController;
+  late String _airline;
+  late bool _usesOverseas;
+  late bool _wantsLounge;
+  bool _loadingProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final defaults = CardPreferenceProfile.defaults();
+    _airline =
+        widget.item.payload['preferredAirline']?.toString().trim().isNotEmpty ==
+                true
+            ? widget.item.payload['preferredAirline'].toString().trim()
+            : defaults.preferredAirline;
+    _usesOverseas = defaults.usesOverseas;
+    _wantsLounge = defaults.wantsLounge;
+    _monthlyController =
+        TextEditingController(text: defaults.monthlySpendKRW.toString());
+    _giftcardController = TextEditingController(
+      text: (defaults.spendCategories['giftcard'] ?? 0).toString(),
+    );
+    _mileValueController =
+        TextEditingController(text: defaults.mileValueKRW.toString());
+    _loadSavedProfile();
+  }
+
+  @override
+  void dispose() {
+    _monthlyController.dispose();
+    _giftcardController.dispose();
+    _mileValueController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSavedProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    setState(() => _loadingProfile = true);
+    try {
+      final profile = await _service.loadCardPreferenceProfile(uid: uid);
+      if (!mounted) return;
+      setState(() {
+        _airline = profile.preferredAirline;
+        _usesOverseas = profile.usesOverseas;
+        _wantsLounge = profile.wantsLounge;
+        _monthlyController.text = profile.monthlySpendKRW.toString();
+        _giftcardController.text =
+            (profile.spendCategories['giftcard'] ?? 0).toString();
+        _mileValueController.text = profile.mileValueKRW.toString();
+      });
+    } catch (_) {
+      // 저장된 선호값이 없어도 기본값 계산기는 그대로 사용할 수 있다.
+    } finally {
+      if (mounted) setState(() => _loadingProfile = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final monthlySpend = _parseInt(_monthlyController.text) ?? 0;
+    final giftcardSpend = _parseInt(_giftcardController.text) ?? 0;
+    final mileValue = _parseInt(_mileValueController.text) ?? 15;
+
+    return _RadarSheetFrame(
+      title: '카드 손익 계산기',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.item.title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.normal,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '월 소비 기준으로 예상 마일, 연 가치, 연회비 차감 순가치를 비교합니다.',
+            style: TextStyle(
+              color: Color(0xFF64748B),
+              height: 1.35,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          if (_loadingProfile) ...[
+            const SizedBox(height: 10),
+            const LinearProgressIndicator(minHeight: 2),
+          ],
+          const SizedBox(height: 14),
+          const Text(
+            '선호 항공사',
+            style: TextStyle(fontWeight: FontWeight.normal),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ['대한항공', '아시아나', 'LCC/외항사', '상관없음'].map((airline) {
+              final selected = _airline == airline;
+              return ChoiceChip(
+                label: Text(airline),
+                selected: selected,
+                selectedColor: const Color(0xFFE6FFFA),
+                checkmarkColor: const Color(0xFF0F766E),
+                labelStyle: TextStyle(
+                  color: selected ? const Color(0xFF0F766E) : Colors.black,
+                  fontWeight: FontWeight.normal,
+                ),
+                onSelected: (_) => setState(() => _airline = airline),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _monthlyController,
+                  label: '월 사용액',
+                  hint: '1000000',
+                  suffix: '원',
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RadarSheetTextField(
+                  controller: _giftcardController,
+                  label: '상테크 금액',
+                  hint: '0',
+                  suffix: '원',
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _RadarSheetTextField(
+            controller: _mileValueController,
+            label: '1마일 가치',
+            hint: '15',
+            suffix: '원',
+            keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            value: _usesOverseas,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              '해외/여행 소비 반영',
+              style: TextStyle(fontWeight: FontWeight.normal),
+            ),
+            onChanged: (value) => setState(() => _usesOverseas = value),
+          ),
+          SwitchListTile(
+            value: _wantsLounge,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              '라운지 혜택 선호',
+              style: TextStyle(fontWeight: FontWeight.normal),
+            ),
+            onChanged: (value) => setState(() => _wantsLounge = value),
+          ),
+          const SizedBox(height: 10),
+          StreamBuilder<List<CatalogCardProduct>>(
+            stream: _service.watchProducts(),
+            initialData: _service.peekProducts(),
+            builder: (context, snapshot) {
+              final products = snapshot.data ?? const <CatalogCardProduct>[];
+              if (products.isEmpty &&
+                  snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              if (products.isEmpty) {
+                return _RadarCardCalculatorEmptyState(
+                  message: snapshot.hasError
+                      ? '카드 DB를 불러오지 못했습니다.'
+                      : '비교할 카드 데이터가 아직 없습니다.',
+                  onOpenHub: widget.onOpenHub,
+                );
+              }
+              final results = _buildRadarCardCalculatorResults(
+                products: products,
+                monthlySpendKRW: monthlySpend,
+                giftcardSpendKRW: giftcardSpend,
+                mileValueKRW: mileValue <= 0 ? 15 : mileValue,
+                preferredAirline: _airline,
+                usesOverseas: _usesOverseas,
+                wantsLounge: _wantsLounge,
+              );
+              if (results.isEmpty) {
+                return _RadarCardCalculatorEmptyState(
+                  message: '조건에 맞는 카드 계산 결과가 없습니다.',
+                  onOpenHub: widget.onOpenHub,
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _RadarCardCalculatorTopSummary(result: results.first),
+                  const SizedBox(height: 10),
+                  for (final result in results.take(6)) ...[
+                    _RadarCardCalculatorTile(
+                      result: result,
+                      onOpenCard: () => widget.onOpenCard(result.product),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: widget.onOpenHub,
+                      icon: const Icon(Icons.compare_arrows_outlined),
+                      label: const Text('카드 허브에서 비교'),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarCardCalculatorTopSummary extends StatelessWidget {
+  final _RadarCardCalculatorResult result;
+
+  const _RadarCardCalculatorTopSummary({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    final won = NumberFormat('#,###');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDFA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '현재 조건 대표 카드',
+            style: TextStyle(fontWeight: FontWeight.normal),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            result.product.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 17, color: Colors.black),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _RadarCardMiniMetric(
+                  label: '연 순가치',
+                  value: result.estimatedAnnualNetValueKRW == null
+                      ? '검증 필요'
+                      : '${won.format(result.estimatedAnnualNetValueKRW)}원',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _RadarCardMiniMetric(
+                  label: '월 예상',
+                  value: result.estimatedMonthlyMiles == null
+                      ? '검증 필요'
+                      : '${won.format(result.estimatedMonthlyMiles)}마일',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarCardCalculatorTile extends StatelessWidget {
+  final _RadarCardCalculatorResult result;
+  final VoidCallback onOpenCard;
+
+  const _RadarCardCalculatorTile({
+    required this.result,
+    required this.onOpenCard,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final won = NumberFormat('#,###');
+    final product = result.product;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      product.issuerName,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: onOpenCard,
+                child: const Text('상세'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _RadarMetricChip(
+                text: result.perMileKRW == null
+                    ? '적립률 검증 필요'
+                    : '${won.format(result.perMileKRW)}원/마일',
+              ),
+              _RadarMetricChip(
+                text: result.annualFeeKRW == null
+                    ? '연회비 검증 필요'
+                    : '연회비 ${won.format(result.annualFeeKRW)}원',
+              ),
+              if (result.airlineMatch) const _RadarMetricChip(text: '항공사 일치'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _RadarResultRow(
+            label: '예상 월 마일',
+            value: result.estimatedMonthlyMiles == null
+                ? '검증 필요'
+                : '${won.format(result.estimatedMonthlyMiles)}마일',
+          ),
+          _RadarResultRow(
+            label: '연 마일 가치',
+            value: result.estimatedAnnualValueKRW == null
+                ? '검증 필요'
+                : '${won.format(result.estimatedAnnualValueKRW)}원',
+          ),
+          _RadarResultRow(
+            label: '연 순가치',
+            value: result.estimatedAnnualNetValueKRW == null
+                ? '검증 필요'
+                : '${won.format(result.estimatedAnnualNetValueKRW)}원',
+            color: (result.estimatedAnnualNetValueKRW ?? 0) >= 0
+                ? const Color(0xFF047857)
+                : const Color(0xFFB91C1C),
+          ),
+          _RadarResultRow(
+            label: '손익분기 월 사용액',
+            value: result.breakEvenMonthlySpendKRW == null
+                ? '검증 필요'
+                : '${won.format(result.breakEvenMonthlySpendKRW)}원',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarCardMiniMetric extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _RadarCardMiniMetric({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFCCFBF1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 12,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarCardCalculatorEmptyState extends StatelessWidget {
+  final String message;
+  final VoidCallback onOpenHub;
+
+  const _RadarCardCalculatorEmptyState({
+    required this.message,
+    required this.onOpenHub,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message,
+            style: const TextStyle(
+              color: Color(0xFF475569),
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: onOpenHub,
+            icon: const Icon(Icons.credit_card_outlined),
+            label: const Text('카드 허브 열기'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadarCardCalculatorResult {
+  final CatalogCardProduct product;
+  final int? perMileKRW;
+  final int? annualFeeKRW;
+  final int? estimatedMonthlyMiles;
+  final int? estimatedAnnualValueKRW;
+  final int? estimatedAnnualNetValueKRW;
+  final int? breakEvenMonthlySpendKRW;
+  final bool airlineMatch;
+  final int sortScore;
+
+  const _RadarCardCalculatorResult({
+    required this.product,
+    required this.perMileKRW,
+    required this.annualFeeKRW,
+    required this.estimatedMonthlyMiles,
+    required this.estimatedAnnualValueKRW,
+    required this.estimatedAnnualNetValueKRW,
+    required this.breakEvenMonthlySpendKRW,
+    required this.airlineMatch,
+    required this.sortScore,
+  });
+}
+
+List<_RadarCardCalculatorResult> _buildRadarCardCalculatorResults({
+  required List<CatalogCardProduct> products,
+  required int monthlySpendKRW,
+  required int giftcardSpendKRW,
+  required int mileValueKRW,
+  required String preferredAirline,
+  required bool usesOverseas,
+  required bool wantsLounge,
+}) {
+  final safeMonthlySpend = monthlySpendKRW <= 0 ? 1000000 : monthlySpendKRW;
+  final safeMileValue = mileValueKRW <= 0 ? 15 : mileValueKRW;
+  final results =
+      products.where((product) => product.status != 'hidden').map((product) {
+    final perMile = _cardCalculatorPerMileKRW(product);
+    final annualFee = _cardCalculatorAnnualFeeKRW(product);
+    final monthlyMiles =
+        perMile == null ? null : (safeMonthlySpend / perMile).round();
+    final annualValue =
+        monthlyMiles == null ? null : monthlyMiles * 12 * safeMileValue;
+    final annualNet = annualValue == null || annualFee == null
+        ? null
+        : annualValue - annualFee;
+    final breakEven = annualFee == null || perMile == null
+        ? null
+        : (annualFee * perMile / (12 * safeMileValue)).round();
+    final searchable = product.searchableText;
+    final airlineMatch = _cardCalculatorAirlineMatches(
+      searchable,
+      preferredAirline,
+    );
+    var sortScore = annualNet ?? annualValue ?? -100000000;
+    if (airlineMatch) sortScore += 25000;
+    if (usesOverseas && product.isTravelCard) sortScore += 12000;
+    if (wantsLounge &&
+        (product.loungeSummaryText.isNotEmpty || searchable.contains('라운지'))) {
+      sortScore += 12000;
+    }
+    if (giftcardSpendKRW > 0 &&
+        (searchable.contains('상품권') ||
+            searchable.contains('상테크') ||
+            searchable.contains('실적'))) {
+      sortScore += 10000;
+    }
+    sortScore += product.likesCount * 120 + product.commentsCount * 250;
+    sortScore += product.viewsCount.clamp(0, 5000).toInt();
+    return _RadarCardCalculatorResult(
+      product: product,
+      perMileKRW: perMile,
+      annualFeeKRW: annualFee,
+      estimatedMonthlyMiles: monthlyMiles,
+      estimatedAnnualValueKRW: annualValue,
+      estimatedAnnualNetValueKRW: annualNet,
+      breakEvenMonthlySpendKRW: breakEven,
+      airlineMatch: airlineMatch,
+      sortScore: sortScore,
+    );
+  }).toList();
+  results.sort((a, b) {
+    final aComplete = a.perMileKRW != null && a.annualFeeKRW != null;
+    final bComplete = b.perMileKRW != null && b.annualFeeKRW != null;
+    if (aComplete != bComplete) return aComplete ? -1 : 1;
+    final scoreCompare = b.sortScore.compareTo(a.sortScore);
+    if (scoreCompare != 0) return scoreCompare;
+    return a.product.name.compareTo(b.product.name);
+  });
+  return results;
+}
+
+bool _cardCalculatorAirlineMatches(String searchable, String preferredAirline) {
+  if (preferredAirline == '상관없음') return false;
+  if (preferredAirline.contains('대한')) {
+    return searchable.contains('대한') ||
+        searchable.contains('skypass') ||
+        searchable.contains('스카이패스');
+  }
+  if (preferredAirline.contains('아시아나')) {
+    return searchable.contains('아시아나') || searchable.contains('asiana');
+  }
+  return searchable.contains('마일') || searchable.contains('mileage');
+}
+
+int? _cardCalculatorPerMileKRW(CatalogCardProduct product) {
+  for (final value in [
+    product.raw['mileRuleUsedPerMileKRW'],
+    product.raw['creditPerMileKRW'],
+    product.raw['checkPerMileKRW'],
+    product.raw['perMileKRW'],
+    product.raw['milePerKRW'],
+  ]) {
+    final parsed = _firstPositiveInt(value);
+    if (parsed != null) return parsed;
+  }
+  final haystack = [
+    product.rewardProgram,
+    product.detailSummary,
+    ...product.primaryBenefits.map(displayValue),
+  ].whereType<String>().join(' ');
+  final match = RegExp(r'([0-9,]+)\s*원당\s*([0-9,]+)\s*마일').firstMatch(haystack);
+  if (match != null) {
+    final krw = int.tryParse(match.group(1)!.replaceAll(',', '')) ?? 0;
+    final miles = int.tryParse(match.group(2)!.replaceAll(',', '')) ?? 0;
+    if (krw > 0 && miles > 0) return (krw / miles).round();
+  }
+  return null;
+}
+
+int? _cardCalculatorAnnualFeeKRW(CatalogCardProduct product) {
+  for (final value in [
+    product.annualFee['amountKRW'],
+    product.annualFee['domesticKRW'],
+    product.annualFee['overseasKRW'],
+    product.annualFee['localKRW'],
+    product.annualFee['summary'],
+    product.annualFee['domestic'],
+    product.annualFee['overseas'],
+    product.raw['annualFeeKRW'],
+  ]) {
+    final parsed = _firstPositiveInt(value);
+    if (parsed != null) return parsed;
+  }
+  return _firstPositiveInt(product.annualFee);
+}
+
+int? _firstPositiveInt(dynamic value) {
+  if (value is num && value > 0) return value.round();
+  if (value is String) {
+    final normalized = value.replaceAll('만원', '0000');
+    final match = RegExp(r'([0-9][0-9,]*)').firstMatch(normalized);
+    if (match == null) return null;
+    final parsed = int.tryParse(match.group(1)!.replaceAll(',', ''));
+    return parsed != null && parsed > 0 ? parsed : null;
+  }
+  if (value is Map) {
+    for (final entry in value.values) {
+      final parsed = _firstPositiveInt(entry);
+      if (parsed != null) return parsed;
+    }
+  }
+  if (value is Iterable) {
+    for (final entry in value) {
+      final parsed = _firstPositiveInt(entry);
+      if (parsed != null) return parsed;
+    }
+  }
+  return null;
 }
 
 class _RadarValueCalculatorSheet extends StatefulWidget {
@@ -1668,7 +2444,7 @@ class _RadarValueCalculatorSheetState
               widget.item.title,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
                 color: Colors.black,
               ),
             ),
@@ -1766,7 +2542,7 @@ class _RadarCalculatorResult extends StatelessWidget {
         children: [
           const Text(
             '계산 결과',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+            style: TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
           ),
           const SizedBox(height: 10),
           _RadarResultRow(
@@ -1815,7 +2591,7 @@ class _RadarResultRow extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: Color(0xFF64748B),
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -1823,7 +2599,7 @@ class _RadarResultRow extends StatelessWidget {
             value,
             style: TextStyle(
               color: color ?? Colors.black,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
             ),
           ),
         ],
@@ -1943,7 +2719,7 @@ class _RadarShareCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF334155),
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -1952,7 +2728,7 @@ class _RadarShareCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ],
@@ -1964,7 +2740,7 @@ class _RadarShareCard extends StatelessWidget {
               fontSize: 22,
               height: 1.12,
               color: Colors.black,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
             ),
           ),
           if (item.subtitle.isNotEmpty) ...[
@@ -1974,7 +2750,7 @@ class _RadarShareCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 color: Color(0xFF475569),
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ],
@@ -2008,7 +2784,7 @@ class _RadarShareCard extends StatelessWidget {
               fontSize: 12,
               height: 1.28,
               color: Color(0xFF334155),
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.normal,
             ),
           ),
           const SizedBox(height: 14),
@@ -2017,7 +2793,7 @@ class _RadarShareCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 10,
               color: Color(0xFF94A3B8),
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.normal,
             ),
           ),
         ],
@@ -2049,7 +2825,7 @@ class _RadarShareLine extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 color: Color(0xFF64748B),
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -2060,7 +2836,7 @@ class _RadarShareLine extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.black,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -2115,7 +2891,7 @@ class _RadarSheetFrame extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                     color: Colors.black,
                   ),
                 ),
@@ -2190,6 +2966,8 @@ IconData _radarIcon(String itemType) {
       return Icons.card_giftcard;
     case RadarItemType.valueCalculator:
       return Icons.calculate_outlined;
+    case RadarItemType.cardCalculator:
+      return Icons.credit_score_outlined;
     case RadarItemType.benefitNews:
     default:
       return Icons.newspaper_outlined;
@@ -2209,6 +2987,8 @@ Color _radarAccentColor(String itemType) {
       return const Color(0xFFDC2626);
     case RadarItemType.valueCalculator:
       return const Color(0xFF047857);
+    case RadarItemType.cardCalculator:
+      return const Color(0xFF0F766E);
     case RadarItemType.benefitNews:
     default:
       return const Color(0xFF475569);
@@ -2304,7 +3084,7 @@ class _QuickActionsSection extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.normal,
                         color: Color(0xFF1D1D1F),
                       ),
                     ),
@@ -2839,7 +3619,7 @@ class _GiftcardRateTable extends StatelessWidget {
                 '상품권 시세',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.normal,
                   color: Color(0xFF1D1D1F),
                 ),
               ),
@@ -2974,7 +3754,7 @@ class _GiftcardRateTableCell extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.normal,
                     color: Color(0xFF1D1D1F),
                   ),
                 ),
@@ -2986,7 +3766,7 @@ class _GiftcardRateTableCell extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11,
                     color: Colors.black54,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ],
@@ -2999,7 +3779,7 @@ class _GiftcardRateTableCell extends StatelessWidget {
               style: TextStyle(
                 fontSize: isHeader ? 12 : 13,
                 height: 1.2,
-                fontWeight: isHeader ? FontWeight.w900 : FontWeight.w800,
+                fontWeight: FontWeight.normal,
                 color: const Color(0xFF1D1D1F),
               ),
             ),
@@ -3330,7 +4110,7 @@ class _GiftcardRateOrderEditScreenState
               '저장',
               style: TextStyle(
                 color: Colors.black,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -3534,7 +4314,7 @@ class _GiftcardRateEditPanel extends StatelessWidget {
               title,
               style: const TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
                 color: Colors.black,
               ),
             ),
@@ -3574,7 +4354,7 @@ class _GiftcardRateEditPagerButton extends StatelessWidget {
             label,
             style: TextStyle(
               color: selected ? Colors.white : Colors.black,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
               fontSize: 13,
             ),
           ),
@@ -3621,7 +4401,7 @@ class _SelectedBranchTile extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -3631,7 +4411,7 @@ class _SelectedBranchTile extends StatelessWidget {
               branch.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(fontWeight: FontWeight.normal),
             ),
           ),
           IconButton(
@@ -3692,7 +4472,7 @@ class _SelectedGiftcardTile extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -3702,7 +4482,7 @@ class _SelectedGiftcardTile extends StatelessWidget {
               giftcard.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(fontWeight: FontWeight.normal),
             ),
           ),
           IconButton(
@@ -3755,7 +4535,7 @@ class _BranchSelectTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.black,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ),
@@ -3799,7 +4579,7 @@ class _GiftcardSelectTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.black,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ),
@@ -4022,7 +4802,7 @@ class _FeatureLinkSection extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800),
+                          fontSize: 15, fontWeight: FontWeight.normal),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -4132,7 +4912,7 @@ class _PopularBoardSection extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w800),
+                              fontSize: 14, fontWeight: FontWeight.normal),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -4265,7 +5045,7 @@ class _SectionShell extends StatelessWidget {
                       title,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.normal,
                         color: Color(0xFF1D1D1F),
                       ),
                     ),
@@ -4334,7 +5114,7 @@ class _PostCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF74512D),
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.normal,
               ),
             ),
             const SizedBox(height: 8),
@@ -4350,7 +5130,7 @@ class _PostCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 14,
                         height: 1.28,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.normal,
                         color: Color(0xFF1D1D1F),
                       ),
                     ),

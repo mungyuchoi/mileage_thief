@@ -1,0 +1,460 @@
+<html lang="ko"><head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#5555FF">
+    <meta name="description" content="상품권 신저가 알림">
+    <title>상품권 알리미</title>
+    <link rel="apple-touch-icon" href="./images/icon_x192.png">
+    <link rel="apple-touch-icon" href="./images/icon_x512.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./images/icon_32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./images/icon_16.png">
+    <link rel="manifest" href="/market/app.webmanifest">
+    <style>
+        ::-webkit-scrollbar
+        {
+          width: 5px;
+        }
+        ::-webkit-scrollbar-thumb
+        {
+            background: #BACEE0;
+            border: 0px;
+        }
+        :root
+        {
+            --toph : 100px;
+            --dvh : calc(100dvh);
+        }
+        BODY
+        {
+            margin:0;
+            color : #262626;
+            font-size : 0.75em;
+            font-family : 돋움;
+        }
+        A
+        {
+            color : #0069C2;
+            text-decoration		:none;
+        }
+        A:visited
+        {
+            color : #262626;
+        }
+        #GIFTCARD_CONTENTS
+        {
+            position: relative;
+            display: flex;
+            height: calc(var(--dvh) - var(--toph) - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+        }
+        DIV.alimi
+        {
+            position : relative;
+            padding-top : 5px;
+            padding-right : 5px;
+            margin-top : 0px;
+            margin-left : 1px;
+            margin-right : 1px;
+            text-align : right;
+            height : 70px;
+            overflow-y : auto;
+            line-height : 18px;
+            visibility : hidden;
+            display : block;
+        }
+        DIV.unsupported
+        {
+            height : 35px;
+            visibility : visible;
+        }
+        .tab
+        {
+            flex: 1;
+        }
+        .tab [type=radio]
+        {
+            display: none;
+        }
+        .tab label
+        {
+            display: block;
+            box-sizing: border-box;
+            height: 30px;
+            border-radius: 10px 10px 0 0;
+            padding-top: 8px;
+            text-align: center;
+            font-weight : bold;
+            background-color: #E0E0E0;
+            cursor: pointer;
+            transition: background 1s ease;
+        }
+        .tab label:hover
+        {
+            background: #E0E0FF;
+        }
+        .tab_content
+        {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            top: 30px;
+            overflow-y : auto;
+            background: white;
+
+            transition:
+                opacity 0.1s ease,
+                transform 0.1s ease		;
+
+            opacity: 0;
+            transform: scale(0.5);
+            transform-origin: top left;
+        }
+        [type=radio]:checked ~ label
+        {
+            background: #C0C0FF;
+            z-index: 2;
+        }
+
+        [type=radio]:checked ~ label ~ .tab_content
+        {
+            z-index: 1;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+
+        DIV.title_link
+        {
+            float : right;
+            padding-right : 20px;
+        }
+        table.giftcard_list
+        {
+            table-layout:fixed;
+        }
+        table.giftcard_list  > thead > tr
+        {
+            font-weight : bold;
+            height : 30px;
+            background-color : #E0E0FF;
+        }
+        table.giftcard_list > * > tr
+        {
+            text-align : right;
+        }
+        table.giftcard_list > * > tr > td:nth-child(5)
+        {
+            padding-left : 5px;
+            text-align : left;
+        }
+        table.giftcard_list > tbody > tr > td
+        {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            overflow:hidden;
+            white-space:nowrap;
+            text-overflow:ellipsis;
+        }
+        tr._b
+        {
+            background-color : #F7F7FF;
+        }
+    </style>
+    <base target="_blank">
+    <link rel="stylesheet" type="text/css" href="css/alimi.css?v=54"></head>
+<body>
+<script>
+    var _trace_level_ = -2;
+    var _version = 54;
+    var _app = null;
+    var _remote_addr = '193.186.4.174';
+    var _target = 0;
+    var _motd = '구독 : 11,551. 대기실 : 0/4425명. 조회 : 963. 갱신주기 : 10분. 수집가공 : 7.99초. 최종갱신 : 2026-05-06 07:30:09';
+    window.addEventListener("load", OnLoad);
+    window.addEventListener("beforeinstallprompt", OnBeforeInstallPrompt);
+    async function OnLoad()
+    {
+        if (navigator.serviceWorker && window.PushManager)
+        {
+            const { importCSS } = await import("./js/lib/common.mjs?v=" + _version);
+            await importCSS("css/alimi.css?v=" + _version);
+            const { CApplication } = await import("./js/lib/alimiweb.mjs?v=" + _version);
+            _app = new CApplication("GIFTCARD_ALIMI", _version);
+            console.log(_app);
+        }
+        else
+        {
+            const elm = document.getElementById("GIFTCARD_ALIMI");
+            elm.className = "alimi unsupported";
+            elm.innerHTML = "아이폰/패드에서 <b>상품권 신저가알림</b>을 구독하는 방법은 <a href=https://auto.ddart.net/xe/help/15677>여기</a>에서 참고하세요 <br>";
+            elm.innerHTML += _motd;
+        }
+
+        const tabs = document.getElementsByTagName("label");
+        tabs[0].addEventListener("click", UpdatePrice);
+        tabs[1].addEventListener("click", InitChat);
+        if (window.visualViewport)
+        {
+            visualViewport.addEventListener("resize", OnResize);
+        }
+    }
+    function InitChat()
+    {
+        if (_app)
+        {
+            OnResize();
+            _app.StartChat();
+        }
+    }
+    function OnResize()
+    {
+        if (navigator.userAgent.match("iPhone|Mac OS"))
+        {
+            GIFTCARD_CONTENTS.style.setProperty('--dvh',  visualViewport.height + "px");
+            document.body.scrollTop = 0;
+        }
+        else
+        {
+            const toph = Math.ceil(Math.min(window.innerHeight - 200, GIFTCARD_ALIMI.clientHeight + window.innerHeight - visualViewport.height));
+            GIFTCARD_CONTENTS.style.setProperty('--toph', toph + "px");
+        }
+    }
+    function OnBeforeInstallPrompt(e)
+    {
+        if (_app)
+        {
+            _app.EnableInstall(e);
+            e.preventDefault();
+        }
+    }
+    function UpdatePrice(e)
+    {
+        if (_app)
+        {
+            _app.UpdatePrice(_target);
+        }
+        else
+        {
+            location.reload(true);
+        }
+        return false;
+    }
+    function ChangeTarget(e)
+    {
+        if (_app)
+        {
+            _target = _target ? 0 : 1;
+            _app.UpdatePrice(_target, false);
+            e.srcElement.innerText = _target ? "일반용" : "사업자용";
+        }
+        else
+        {
+            location.href = _target ? "/market" : "/market/biz";
+        }
+        return false;
+    }
+    function LogMessage(msg)
+    {
+        if (_app)
+        {
+            _app.LogMessage(msg);
+        }
+    }
+</script>
+<div id="GIFTCARD_ALIMI"><button class="alimi hidden">알림설정</button><button class="alimi hidden">최근알림</button><button class="alimi">구독하기</button><button class="alimi hidden">앱 설치</button><div class="alimi" style="visibility: visible;">구독 : 11,551. 대기실 : 0/4425명. 조회 : 963. 갱신주기 : 10분. 수집가공 : 7.99초. 최종갱신 : 2026-05-06 07:30:09<br></div><div class="setting"><table>  <tbody><tr>    <td nowrap="">북앤라이프</td>    <td><input class="setting_type" type="checkbox"> <input class="setting_price" type="number" min="0" max="50000" step="50"> 원 이하만</td>  </tr>  <tr>    <td>해피머니</td>    <td><input class="setting_type" type="checkbox"> <input class="setting_price" type="number" min="0" max="50000" step="50"> 원 이하만</td>  </tr>  <tr>    <td>컬쳐랜드</td>    <td><input class="setting_type" type="checkbox"> <input class="setting_price" type="number" min="0" max="50000" step="50"> 원 이하만</td>  </tr>  <tr>    <td>온라인문화</td>    <td><input class="setting_type" type="checkbox"> <input class="setting_price" type="number" min="0" max="50000" step="50"> 원 이하만</td>  </tr>  <tr>    <td>상점</td>    <td>	  <input class="setting_target" type="checkbox"> 티몬	  <input class="setting_target" type="checkbox"> 11번가	  <input class="setting_target" type="checkbox"> G마켓	  <input class="setting_target" type="checkbox"> 위메프<br>	  <input class="setting_target" type="checkbox"> 옥션	  <input class="setting_target" type="checkbox"> SSG	  <input class="setting_target" type="checkbox"> 올댓	</td>  </tr>  <tr>    <td>알림 대상</td>    <td>	  <input class="setting_target" type="checkbox"> 상품신저가	  <input class="setting_target" type="checkbox"> 상점신저가<br>	  <input class="setting_target" type="checkbox"> 새상품	  <input class="setting_target" type="checkbox"> 재등록<br>	  <input class="setting_target" type="checkbox"> 가격하락	  <input class="setting_target" type="checkbox"> 가격상승	  <input class="setting_target" type="checkbox"> 사업자용	</td>  </tr>  <tr>    <td>허용 시간</td>    <td><input class="setting_time" type="time" step="1"> 부터</td>  </tr>  <tr>    <td></td>    <td><input class="setting_time" type="time" step="1"> 까지</td>  </tr>  <tr>    <td>허용 날짜</td>    <td>매월 <input class="setting_day" type="number" min="1" max="31" step="1"> 일 부터 <input class="setting_day" type="number" min="1" max="31" step="1"> 일 까지</td>  </tr>  <tr>    <td>수신 유효</td>    <td><input class="setting_time" type="number" min="1" max="255" step="1"> 시간이내에 발송된 알림만 수신</td>  </tr>  <tr>    <td colspan="2" align="center"><button class="setting">적용</button><button class="setting">취소</button><button class="setting">도움말</button></td>  </tr></tbody></table></div></div>
+<div id="GIFTCARD_CONTENTS" style="--dvh: 839px;">
+    <div class="tab">
+        <input type="radio" id="tab_1" name="tab" checked="">
+        <label for="tab_1">가격비교</label>
+        <div class="tab_content">
+            <table class="giftcard_list" width="100%" cellspacing="0" cellpadding="0">
+                <thead>
+                <tr>
+                    <td width="70" nowrap="">종류</td>
+                    <td width="50" nowrap="">가격</td>
+                    <td width="50" nowrap="">할인</td>
+                    <td width="40" nowrap="">상점</td>
+                    <td nowrap=""> 상품
+                        <div class="title_link">
+                            <a href="#" onclick="return ChangeTarget(event)">사업자용</a>
+                        </div>
+                    </td>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- from cache -->
+                <tr><td>북앤라이프</td><td>46,500</td><td>-7.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4551232530">(특가) 북앤라이프 도서문화상품권 5만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>46,600</td><td>-6.80%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4339838361">(특가) 북앤라이프 도서문화상품권 5만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>46,600</td><td>-6.80%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4434417644">(특가) 북앤라이프 도서문화상품권 5만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>28,080</td><td>-6.40%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4333465835">(북앤라이프) 도서문화상품권 3만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>47,500</td><td>-5.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9203481517">북앤라이프 도서문화상품권 5만원권 5%할인</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,400</td><td>-3.20%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917053342">[도서문화상품권](특가) 북앤라이프 도서문화상품권 5만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,500</td><td>-3.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000640984667&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 5만원권 (3%할인)</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,500</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917027284">[도서문화상품권](북앤라이프) 도서문화상품권 5만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,500</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917160289">[도서문화상품권](클럽전용) 북앤라이프 도서문화상품권 5만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,500</td><td>-3.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250102178683">도서문화상품권 5만원권</a></td></tr>
+                <tr><td>북앤라이프</td><td>38,800</td><td>-3.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000640982966&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 4만원권 (3%할인)</a></td></tr>
+                <tr><td>북앤라이프</td><td>29,100</td><td>-3.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000640982197&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 3만원권 (3%할인)</a></td></tr>
+                <tr><td>북앤라이프</td><td>29,100</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917052511">[도서문화상품권](북앤라이프) 도서문화상품권 3만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>29,100</td><td>-3.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250402278190">도서문화상품권 3만원권</a></td></tr>
+                <tr><td>북앤라이프</td><td>19,400</td><td>-3.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000640980341&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 2만원권 (3%할인)</a></td></tr>
+                <tr><td>북앤라이프</td><td>19,400</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917052884">[도서문화상품권](북앤라이프) 도서문화상품권 2만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>9,700</td><td>-3.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000640979333&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 1만원권 (3%할인)</a></td></tr>
+                <tr><td>북앤라이프</td><td>9,700</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917062436">[도서문화상품권](북앤라이프) 도서문화상품권 1만원권 / 온라인전용</a></td></tr>
+                <tr><td>북앤라이프</td><td>9,700</td><td>-3.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250402278160">도서문화상품권 1만원권</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,500</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=D528580316">북앤라이프 ID즉시충전형 북앤라이프 5만원 (실시간발송)</a></td></tr>
+                <tr><td>북앤라이프</td><td>48,500</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=B893118415">북앤라이프 도서문화상품권 5만원권 (실시간발송)</a></td></tr>
+                <tr><td>북앤라이프</td><td>40,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000622524255&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 4만원권</a></td></tr>
+                <tr><td>북앤라이프</td><td>30,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000622524249&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 3만원권</a></td></tr>
+                <tr><td>북앤라이프</td><td>29,100</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=D528580004">북앤라이프 ID즉시충전형 북앤라이프 3만원 (실시간발송)</a></td></tr>
+                <tr><td>북앤라이프</td><td>29,100</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=B893118320">북앤라이프 도서문화상품권 3만원권 (실시간발송)</a></td></tr>
+                <tr><td>북앤라이프</td><td>20,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000622524239&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 2만원권</a></td></tr>
+                <tr><td>북앤라이프</td><td>10,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000622523463&amp;siteNo=6004&amp;salestrNo=6005">북앤라이프 온라인 도서문화상품권 1만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>46,500</td><td>-7.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4551300619">(특가) 컬쳐랜드 모바일 문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>46,600</td><td>-6.80%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4339623390">(특가) 컬쳐랜드 모바일 문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>46,600</td><td>-6.80%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4720849517">(특가) 컬쳐랜드 모바일 문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>46,800</td><td>-6.40%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=2502868776">(컬쳐랜드) 모바일문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>28,080</td><td>-6.40%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=2502865180">(컬쳐랜드) 모바일문화상품권 3만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>47,400</td><td>-5.20%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9315309544">컬쳐랜드 상품권(모바일문화상품권) 5만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>28,440</td><td>-5.20%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9315307642">컬쳐랜드 상품권(모바일문화상품권) 3만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>18,960</td><td>-5.20%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9315305862">컬쳐랜드 상품권(모바일문화상품권) 2만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>9,480</td><td>-5.20%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9315303869">컬쳐랜드 상품권(모바일문화상품권) 1만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,000</td><td>-4.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9169806065">컬쳐랜드 상품권(모바일문화상품권) 5만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,000</td><td>-4.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/5366207769">[컬쳐랜드] 컬쳐랜드 모바일문화상품권 5만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>28,800</td><td>-4.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9169798985">컬쳐랜드 상품권(모바일문화상품권) 3만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>28,800</td><td>-4.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/5366206725">[컬쳐랜드] 컬쳐랜드 모바일문화상품권 3만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>19,200</td><td>-4.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/5366208516">[컬쳐랜드] 컬쳐랜드 모바일문화상품권 2만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>9,600</td><td>-4.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9169792459">컬쳐랜드 상품권(모바일문화상품권) 1만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,350</td><td>-3.30%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=F355471351">[컬쳐랜드문화상품권](특가) 컬쳐랜드 모바일 문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,400</td><td>-3.20%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=F528037676">[컬쳐랜드문화상품권](특가) 컬쳐랜드 모바일 문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,400</td><td>-3.20%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=E917950563">[컬쳐랜드문화상품권](특가) 컬쳐랜드 모바일 문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>485,000</td><td>-3.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4476770156">(컬쳐랜드) 모바일문화상품권 50만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>485,000</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=F280327535">[컬쳐랜드문화상품권](컬쳐랜드) 모바일문화상품권 50만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,500</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C662004935">[컬쳐랜드문화상품권](클럽전용) 컬쳐랜드 모바일문화상품권 5만원</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,500</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C662000977">[컬쳐랜드문화상품권](컬쳐랜드) 모바일문화상품권 5만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>29,100</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C661996373">[컬쳐랜드문화상품권](컬쳐랜드) 모바일문화상품권 3만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>9,700</td><td>-3.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=2502726629">(컬쳐랜드) 모바일문화상품권 1만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>9,700</td><td>-3.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C661774697">[컬쳐랜드문화상품권](컬쳐랜드) 모바일문화상품권 1만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>486,000</td><td>-2.80%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=F265911581">[컬쳐랜드문화상품권](컬쳐랜드) 모바일문화상품권 50만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>291,900</td><td>-2.70%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=F265909836">[컬쳐랜드문화상품권](컬쳐랜드) 모바일문화상품권 30만원권 /컬쳐캐시 충전</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>49,000</td><td>-2.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000572386251&amp;siteNo=6004&amp;salestrNo=6005">컬쳐랜드 상품권 5만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>29,400</td><td>-2.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000573759918&amp;siteNo=6004&amp;salestrNo=6005">컬쳐랜드 상품권 3만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>9,800</td><td>-2.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000573759878&amp;siteNo=6004&amp;salestrNo=6005">컬쳐랜드 상품권 1만원권</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,500</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C666334975">컬쳐랜드 모바일문화상품권 5만원권 실시간발송</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>48,500</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=B533214273">컬쳐랜드 컬쳐캐쉬 5만원 ID즉시충전형 실시간발송</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>29,100</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=B533215835">컬쳐랜드 컬쳐캐쉬 3만원 ID즉시충전형 실시간발송</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>29,100</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C666335092">컬쳐랜드 모바일문화상품권 3만원권 실시간발송</a></td></tr>
+                <tr class="_b"><td>컬쳐랜드</td><td>19,600</td><td>0.00%</td><td>옥션</td><td><a href="http://itempage3.auction.co.kr/detailview.aspx?ItemNo=C666334497">컬쳐랜드 모바일문화상품권 2만원권 실시간발송</a></td></tr>
+                <tr><td>SSG</td><td>500,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000703484166&amp;siteNo=6004&amp;salestrNo=6005">SSG상품권 50만원권_신세계/이마트 사용 가능</a></td></tr>
+                <tr><td>SSG</td><td>500,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010931263">[2% 할인] SSG상품권 50만원권</a></td></tr>
+                <tr><td>SSG</td><td>300,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000703456406&amp;siteNo=6004&amp;salestrNo=6005">SSG상품권 30만원권_신세계/이마트 사용 가능</a></td></tr>
+                <tr><td>SSG</td><td>300,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010931281">[2% 할인] SSG상품권 30만원권</a></td></tr>
+                <tr><td>SSG</td><td>200,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000703479048&amp;siteNo=6004&amp;salestrNo=6005">SSG상품권 20만원권_신세계/이마트 사용 가능</a></td></tr>
+                <tr><td>SSG</td><td>200,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010931330">[2% 할인] SSG상품권 20만원권</a></td></tr>
+                <tr><td>SSG</td><td>100,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000703463440&amp;siteNo=6004&amp;salestrNo=6005">SSG상품권 10만원권_신세계/이마트 사용 가능</a></td></tr>
+                <tr><td>SSG</td><td>100,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010931292">[2% 할인] SSG상품권 10만원권</a></td></tr>
+                <tr><td>SSG</td><td>50,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000703448610&amp;siteNo=6004&amp;salestrNo=6005">SSG상품권 5만원권_신세계/이마트 사용 가능</a></td></tr>
+                <tr><td>SSG</td><td>50,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010817290">[체크전용][2% 할인] SSG상품권 5만원권</a></td></tr>
+                <tr><td>SSG</td><td>30,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000703444215&amp;siteNo=6004&amp;salestrNo=6005">SSG상품권 3만원권_신세계/이마트 사용 가능</a></td></tr>
+                <tr class="_b"><td>스마일머니</td><td>100,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010325340">[2% 할인] 스마일머니 10만원 상품권</a></td></tr>
+                <tr class="_b"><td>스마일머니</td><td>30,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000578035268&amp;siteNo=6004&amp;salestrNo=6005">스마일페이 스마일머니 3만원권</a></td></tr>
+                <tr class="_b"><td>스마일머니</td><td>10,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000578035270&amp;siteNo=6004&amp;salestrNo=6005">스마일페이 스마일머니 1만원권</a></td></tr>
+                <tr><td>엘포인트</td><td>100,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010974712">[4% 할인] 엘포인트 상품권 10만원권</a></td></tr>
+                <tr><td>엘포인트</td><td>50,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010974760">[4% 할인] 엘포인트 상품권 5만원권</a></td></tr>
+                <tr><td>엘포인트</td><td>10,000</td><td>0.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/7791959846">엘포인트 1만원권</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>97,800</td><td>-2.20%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4616723630">(이마트교환전용) 신세계상품권 10만원</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>97,900</td><td>-2.10%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4741614509">(이마트) 신세계상품권 10만원권 / 이마트 교환전용</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>490,000</td><td>-2.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4517027512">(이마트) 신세계상품권 50만원권/이마트 교환전용</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>98,000</td><td>-2.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4130506108">(이마트) 신세계상품권 10만원권 / 이마트 교환 전용</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>98,000</td><td>-2.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4710000096">(신세계백화점) (지마켓) 신세계상품권 10만원 / 신세계백화점 지류 교환용</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>98,200</td><td>-1.80%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4616723411">(신세계상품권) 10만원(신세계백화점 지류교환)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>99,000</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250302258524">신세계모바일상품권 10만원권</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>49,500</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250302258539">신세계모바일상품권 5만원권</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>99,300</td><td>-0.70%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/5917614041">신세계상품권(100000원)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>199,000</td><td>-0.50%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/4087374622">[기프티콘]신세계상품권 20만원권 교환권</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>49,750</td><td>-0.50%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/5438932123">[기프티콘] 신세계 상품권 (50000원)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>500,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G011073230">[2% 할인] 신세계모바일상품권 50만원권 (백화점 교환전용)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>500,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G011119152">2% 할인 신세계상품권 50만원(이마트 교환전용)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>300,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4684883971">(이마트) 신세계상품권 30만원권 (이마트/이마트트레이더스 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>300,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4659478342">(신세계백화점) 신세계상품권 30만원권 (신세계백화점 지류 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>300,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G011073220">[2%할인] 신세계모바일상품권 30만원권 (백화점 교환전용)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>200,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805658755&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 200000원권 / 백화점교환 (지류교환형)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>200,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4684882471">(이마트) 신세계상품권 20만원권 (이마트/이마트트레이더스 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>200,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4659475979">(신세계백화점) 신세계상품권 20만원권 (신세계백화점 지류 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000032737850&amp;siteNo=6004&amp;salestrNo=6005">신세계 상품권 모바일교환권 10만원권 [카카오알림톡 발송]</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805654341&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 100000원권 / 이마트교환전용</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805669400&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 100000원권 / 백화점교환 (지류교환형)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805671778&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 100000원권 / 이마트, 신세계백화점 선택 교환</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4684881123">(이마트) 신세계상품권 10만원권 (이마트/이마트트레이더스 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4659475294">(신세계백화점) 신세계상품권 10만원권 (신세계백화점 지류 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G011073250">[2% 할인] 신세계모바일상품권 10만원권 (백화점 교환전용)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>100,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010684080">[체크전용][2% 할인] 신세계모바일상품권 10만원권 (백화점 교환전용)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>50,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000032737808&amp;siteNo=6004&amp;salestrNo=6005">신세계 상품권 모바일교환권 5만원권 [카카오알림톡 발송]</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>50,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805667397&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 50000원권 / 백화점교환 (지류교환형)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>50,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805655584&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 50000원권 / 이마트교환전용</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>50,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805673377&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 50000원권 / 이마트, 신세계백화점 선택 교환</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>50,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4684877222">(이마트) 신세계상품권 5만원권 (이마트/이마트트레이더스 교환 가능)</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>10,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000032737770&amp;siteNo=6004&amp;salestrNo=6005">신세계 상품권 모바일교환권 1만원권 [카카오알림톡 발송]</a></td></tr>
+                <tr class="_b"><td>신세계</td><td>10,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000805674657&amp;siteNo=6004&amp;salestrNo=6005">신세계 [신세계상품권] 10000원권 / 이마트, 신세계백화점 선택 교환</a></td></tr>
+                <tr><td>롯데</td><td>487,500</td><td>-2.50%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4658291735">롯데모바일교환권 50만원권 (온라인/오프라인 지류교환 가능)</a></td></tr>
+                <tr><td>롯데</td><td>97,500</td><td>-2.50%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4425605025">롯데모바일교환권 10만원권 (온라인/오프라인 지류교환 가능)</a></td></tr>
+                <tr><td>롯데</td><td>495,000</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250502354431">롯데모바일상품권_50만원권</a></td></tr>
+                <tr><td>롯데</td><td>99,000</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250502354416">롯데모바일상품권_10만원권</a></td></tr>
+                <tr><td>롯데</td><td>49,500</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250502354412">롯데모바일상품권_5만원권</a></td></tr>
+                <tr><td>롯데</td><td>299,400</td><td>-0.20%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9282809500">롯데모바일상품권 30만원권</a></td></tr>
+                <tr><td>롯데</td><td>50,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4425604197">롯데모바일교환권 5만원권 (온라인/오프라인 지류교환 가능)</a></td></tr>
+                <tr><td>롯데</td><td>30,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4425603365">롯데모바일교환권 3만원권 (온라인/오프라인 지류교환 가능)</a></td></tr>
+                <tr><td>롯데</td><td>10,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4425602655">롯데모바일교환권 1만원권 (온라인/오프라인 지류교환 가능)</a></td></tr>
+                <tr class="_b"><td>현대</td><td>97,200</td><td>-2.80%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4742644876">(현대백화점) 상품권 교환권 10만원</a></td></tr>
+                <tr class="_b"><td>현대</td><td>494,000</td><td>-1.20%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9283225881">현대백화점모바일상품권50만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>495,000</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250402264552">현대백화점 상품권 모바일 교환권 50만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>99,000</td><td>-1.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/8994610561">현대백화점 100000 원 상품권 교환권(지류교환)</a></td></tr>
+                <tr class="_b"><td>현대</td><td>99,000</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250102181108">현대백화점 상품권 모바일 교환권 10만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>49,500</td><td>-1.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/8994598002">현대백화점 50000 원 상품권 교환권(지류교환)</a></td></tr>
+                <tr class="_b"><td>현대</td><td>49,500</td><td>-1.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250102181102">현대백화점 상품권 모바일 교환권 5만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>500,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4576203123">(현대백화점) 상품권 교환권 50만원</a></td></tr>
+                <tr class="_b"><td>현대</td><td>500,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G011075880">[2.8% 할인] 현대백화점 상품권 50만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>100,000</td><td>0.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4576204166">(현대백화점) 상품권 교환권 10만원</a></td></tr>
+                <tr class="_b"><td>현대</td><td>100,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G011073080">[특가][3% 할인] 현대백화점 상품권 10만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>50,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010610271">[3%할인][H.Point] 현대모바일상품권 5만원권 (충전 전용)</a></td></tr>
+                <tr class="_b"><td>현대</td><td>50,000</td><td>0.00%</td><td>띵샵</td><td><a href="https://locashop.lottecard.co.kr/goods/detail?goodsNo=G010914530">[체크전용][H.Point] 3%할인 현대모바일상품권 5만원권 (충전 전용)</a></td></tr>
+                <tr class="_b"><td>현대</td><td>30,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000592510092&amp;siteNo=6004&amp;salestrNo=6005">현대백화점그룹 H.Point 모바일상품권 3만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>20,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000592510085&amp;siteNo=6004&amp;salestrNo=6005">현대백화점그룹 H.Point 모바일상품권 2만원권</a></td></tr>
+                <tr class="_b"><td>현대</td><td>10,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000592510075&amp;siteNo=6004&amp;salestrNo=6005">현대백화점그룹 H.Point 모바일상품권 1만원권</a></td></tr>
+                <tr><td>GS25</td><td>9,700</td><td>-3.00%</td><td>삼카몰</td><td><a href="https://shopping.samsungcard.com/pd/PSHPPD22C019.do?itgspPdC=SP250202196676">GS25 모바일 상품권 1만원권</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>194,000</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/1805681719">[20만원권] Google Play 구글플레이 기프트코드 3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>145,500</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/1805681256">[15만원권] Google Play 구글플레이 기프트코드 3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>97,000</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/1805680463">[10만원권] Google Play 구글플레이 기프트코드 3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>48,500</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/1805679704">[5만원권] Google Play 구글플레이 기프트코드_3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>29,100</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/1805676029">[3만원권] Google Play 구글플레이 기프트코드 3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>14,550</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/1805642668">[1.5만원권] Google Play 구글플레이 기프트코드 3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>9,700</td><td>-3.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/3039806321">[1만원권] Google Play 구글플레이 기프트코드 3% 할인_실시간 발송</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>198,000</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541993182">(Google Play 기프트코드) 20만원 / 구글 기프트카드</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>148,500</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541991260">(Google Play 기프트코드) 15만원권 / 구글 기프트카드</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>99,000</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541988860">(Google Play 기프트코드) 10만원권 / 구글 기프트카드</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>49,500</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541986385">(Google Play 기프트코드) 5만원권 / 구글 기프트카드</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>29,700</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541984448">(Google Play 기프트코드) 3만원권 / 구글 기프트카드</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>14,850</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541980512">(Google Play 기프트코드) 1만 5천원권 / 구글 기프트카드</a></td></tr>
+                <tr class="_b"><td>구글플레이</td><td>9,900</td><td>-1.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4541976953">(Google Play 기프트코드) 1만원권 / 구글 기프트카드</a></td></tr>
+                <tr><td>에그머니</td><td>450,000</td><td>-10.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4551559109">(특가) (에그머니) 온라인게임상품권 50만원</a></td></tr>
+                <tr><td>에그머니</td><td>270,000</td><td>-10.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4551556863">(특가) (에그머니) 온라인게임상품권 30만원</a></td></tr>
+                <tr><td>에그머니</td><td>45,000</td><td>-10.00%</td><td>G마켓</td><td><a href="https://item.gmarket.co.kr/Item?goodscode=4551552043">(특가) (에그머니) 온라인게임상품권 5만원</a></td></tr>
+                <tr><td>에그머니</td><td>46,000</td><td>-8.00%</td><td>11번가</td><td><a href="https://www.11st.co.kr/products/9066457165">에그머니 온라인 전용 상품권 5만원</a></td></tr>
+                <tr><td>에그머니</td><td>30,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000553060236&amp;siteNo=6004&amp;salestrNo=6005">에그머니 온라인 상품권 3만원권</a></td></tr>
+                <tr><td>에그머니</td><td>10,000</td><td>0.00%</td><td>SSG</td><td><a href="https://www.ssg.com/item/itemView.ssg?itemId=1000553058854&amp;siteNo=6004&amp;salestrNo=6005">에그머니 온라인 상품권 1만원권</a></td></tr>
+                <!-- from cache -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="tab">
+        <input type="radio" id="tab_2" name="tab">
+        <label for="tab_2">알림대기실 베타</label>
+        <div id="GIFTCARD_CHATCLIENT" class="tab_content">
+        </div>
+    </div>
+</div>
+
+</body></html>

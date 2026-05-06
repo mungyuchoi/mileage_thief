@@ -235,7 +235,7 @@ class _CommunityPostCreateSimpleScreenState
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 20,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.normal,
                         ),
                       ),
                     ),
@@ -289,7 +289,7 @@ class _CommunityPostCreateSimpleScreenState
                                             style: const TextStyle(
                                               color: Colors.black,
                                               fontSize: 17,
-                                              fontWeight: FontWeight.w900,
+                                              fontWeight: FontWeight.normal,
                                             ),
                                           ),
                                           if (description.isNotEmpty) ...[
@@ -301,7 +301,7 @@ class _CommunityPostCreateSimpleScreenState
                                               style: const TextStyle(
                                                 color: Color(0xFF707070),
                                                 fontSize: 12,
-                                                fontWeight: FontWeight.w600,
+                                                fontWeight: FontWeight.normal,
                                               ),
                                             ),
                                           ],
@@ -387,7 +387,7 @@ class _CommunityPostCreateSimpleScreenState
             style: TextStyle(
               color: Colors.black,
               fontSize: 20,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
             ),
           ),
           content: TextField(
@@ -423,8 +423,8 @@ class _CommunityPostCreateSimpleScreenState
                   Navigator.of(context).pop(controller.text.trim()),
               child: const Text(
                 '저장',
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.normal),
               ),
             ),
           ],
@@ -475,7 +475,7 @@ class _CommunityPostCreateSimpleScreenState
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -491,7 +491,7 @@ class _CommunityPostCreateSimpleScreenState
                   '전체 공개',
                   style: TextStyle(
                     color: Colors.black,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
                 onTap: () => Navigator.of(context).pop(0),
@@ -511,7 +511,7 @@ class _CommunityPostCreateSimpleScreenState
                     '${level.label} 이상',
                     style: const TextStyle(
                       color: Colors.black,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                   onTap: () => Navigator.of(context).pop(level.rank),
@@ -906,7 +906,7 @@ class _CommunityPostCreateSimpleScreenState
                   '게시글을 등록하고 있습니다...',
                   style: TextStyle(
                     color: Colors.black,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ],
@@ -939,7 +939,7 @@ class _CommunityPostCreateSimpleScreenState
         ),
         title: const Text(
           '새 게시물',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
         ),
         actions: [
           TextButton(
@@ -949,7 +949,7 @@ class _CommunityPostCreateSimpleScreenState
               style: TextStyle(
                 color: _isSubmitting ? Colors.black38 : Colors.black,
                 fontSize: 20,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -992,7 +992,7 @@ class _CommunityPostCreateSimpleScreenState
                         _authorName,
                         style: const TextStyle(
                           fontSize: 24,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.normal,
                           color: Colors.black,
                         ),
                       ),
@@ -1012,14 +1012,14 @@ class _CommunityPostCreateSimpleScreenState
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                   decoration: const InputDecoration(
                     hintText: '제목',
                     hintStyle: TextStyle(
                       color: Color(0xFF9D9D9D),
                       fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.normal,
                     ),
                     border: InputBorder.none,
                   ),
@@ -1032,7 +1032,7 @@ class _CommunityPostCreateSimpleScreenState
                   style: const TextStyle(
                     color: Color(0xFF222222),
                     fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.normal,
                     height: 1.35,
                   ),
                   decoration: const InputDecoration(
@@ -1040,7 +1040,7 @@ class _CommunityPostCreateSimpleScreenState
                     hintStyle: TextStyle(
                       color: Color(0xFFA0A0A0),
                       fontSize: 18,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.normal,
                     ),
                     border: InputBorder.none,
                   ),
@@ -1060,7 +1060,7 @@ class _CommunityPostCreateSimpleScreenState
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.black,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         backgroundColor: Colors.white,
@@ -1210,7 +1210,7 @@ class _CommunityPostCreateSimpleScreenState
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 17,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ),
@@ -1251,7 +1251,7 @@ class _CommunityPostCreateSimpleScreenState
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 16,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
             const SizedBox(width: 10),
@@ -1263,7 +1263,7 @@ class _CommunityPostCreateSimpleScreenState
                 style: const TextStyle(
                   color: Color(0xFF555555),
                   fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ),
@@ -1297,7 +1297,7 @@ class _CommunityPostCreateSimpleScreenState
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 16,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ),
@@ -1329,7 +1329,7 @@ class _CommunityPostCreateSimpleScreenState
                       color: _structuredMetaType == type
                           ? Colors.white
                           : Colors.black,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.normal,
                     ),
                     onSelected: (_) {
                       setState(() => _structuredMetaType = type);
@@ -1503,7 +1503,7 @@ class _ToolButton extends StatelessWidget {
               label,
               style: TextStyle(
                 color: enabled ? Colors.black : Colors.black38,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ],

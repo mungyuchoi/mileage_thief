@@ -16,7 +16,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/auth_service.dart';
-import '../services/radar_service.dart';
 import '../services/user_service.dart';
 import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
@@ -24,9 +23,9 @@ import 'giftcard_map_screen.dart';
 import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
+import 'giftcard_deals_screen.dart';
 import 'giftcard_info_screen.dart';
 import 'my_card_dashboard_screen.dart';
-import 'radar_notification_screen.dart';
 import 'useful_info_screen.dart';
 import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
@@ -74,6 +73,11 @@ class NoticePopupDialog extends StatelessWidget {
     );
   }
 }
+
+const TextStyle _mileageSettingActionTitleTextStyle = TextStyle(
+  color: Color(0xFF1D212C),
+  fontWeight: FontWeight.w800,
+);
 
 class _MileageSettingSection extends StatelessWidget {
   const _MileageSettingSection({required this.children});
@@ -149,10 +153,7 @@ class _MileageSettingActionTile extends StatelessWidget {
       leading: Icon(icon, color: const Color(0xFFAEB4C0)),
       title: Text(
         title,
-        style: const TextStyle(
-          color: Color(0xFF1D212C),
-          fontWeight: FontWeight.w800,
-        ),
+        style: _mileageSettingActionTitleTextStyle,
       ),
       subtitle: subtitle == null
           ? null
@@ -211,78 +212,6 @@ class _MileageSettingSwitchTile extends StatelessWidget {
       ),
       onTap: () => onChanged(!value),
     );
-  }
-}
-
-class _RadarNotificationAppBarButton extends StatelessWidget {
-  const _RadarNotificationAppBarButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return IconButton(
-        tooltip: '레이더 알림',
-        icon: const Icon(Icons.notifications_none_rounded, color: Colors.black),
-        onPressed: onTap,
-      );
-    }
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: RadarService.watchRadarSubscriptions(user.uid),
-      builder: (context, snapshot) {
-        final activeCount = (snapshot.data?.docs ?? const [])
-            .where((doc) => _isActiveRadarSubscription(doc.data()))
-            .length;
-        return IconButton(
-          tooltip: '레이더 알림',
-          onPressed: onTap,
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.notifications_none_rounded, color: Colors.black),
-              if (activeCount > 0)
-                Positioned(
-                  right: -7,
-                  top: -7,
-                  child: Container(
-                    constraints:
-                        const BoxConstraints(minWidth: 17, minHeight: 17),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      activeCount > 9 ? '9+' : '$activeCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  static bool _isActiveRadarSubscription(Map<String, dynamic> data) {
-    if (data['pushEnabled'] == false || data['isActive'] == false) {
-      return false;
-    }
-    final expiresAt = data['expiresAt'];
-    if (expiresAt is Timestamp) {
-      return expiresAt.toDate().isAfter(DateTime.now());
-    }
-    return true;
   }
 }
 
@@ -517,7 +446,9 @@ class _HomeBottomNavigationBar extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: index == _HomeTab.usefulInfo.index
+                            ? _mileageSettingActionTitleTextStyle.fontWeight
+                            : FontWeight.w700,
                         color: selected
                             ? (isDark
                                 ? const Color(0xFFF2F5FB)
@@ -595,7 +526,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _giftcardTabController = TabController(length: 4, vsync: this);
+    _giftcardTabController = TabController(length: 5, vsync: this);
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
@@ -780,10 +711,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   List<Widget> _buildGuideAppBarActions() {
-    return <Widget>[
-      _RadarNotificationAppBarButton(onTap: _openRadarNotificationScreen),
-      ..._buildDefaultAppBarActions(),
-    ];
+    return _buildDefaultAppBarActions();
   }
 
   List<Widget> _buildProfileAppBarActions() {
@@ -898,13 +826,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _openRadarNotificationScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const RadarNotificationScreen()),
-    );
-  }
-
   void _refreshGiftcardInfoIfNeeded(Object? navigationResult) {
     if (navigationResult == true) {
       (_giftcardInfoKey.currentState as dynamic)?.refresh();
@@ -940,7 +861,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       color: Colors.white,
       child: SegmentTabBar(
         controller: _giftcardTabController,
-        labels: const ['정보', '지도', '시세', '지점'],
+        labels: const ['정보', '특가', '지도', '시세', '지점'],
         margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       ),
     );
@@ -980,7 +901,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           key: _giftcardInfoKey,
                           onScrollChanged: _setGiftcardScrolling,
                         ),
-                        GiftcardMapScreen(),
+                        const GiftcardDealsScreen(),
+                        const GiftcardMapScreen(),
                         const GiftcardRatesTab(),
                         const BranchListTab(),
                       ],

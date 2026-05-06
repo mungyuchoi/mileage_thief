@@ -14,41 +14,48 @@ class NotificationService {
   NotificationService._internal();
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
   // 전역 네비게이션 키 (앱 전체에서 사용)
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   // 알림 채널들 설정
-  static const AndroidNotificationChannel postLikeChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel postLikeChannel =
+      AndroidNotificationChannel(
     'post_like_notifications',
     '게시글 좋아요 알림',
     description: '내 게시글에 좋아요가 눌렸을 때 알림을 받습니다.',
     importance: Importance.high,
   );
 
-  static const AndroidNotificationChannel postCommentChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel postCommentChannel =
+      AndroidNotificationChannel(
     'post_comment_notifications',
     '게시글 댓글 알림',
     description: '내 게시글에 댓글이 달렸을 때 알림을 받습니다.',
     importance: Importance.high,
   );
 
-  static const AndroidNotificationChannel commentReplyChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel commentReplyChannel =
+      AndroidNotificationChannel(
     'comment_reply_notifications',
     '대댓글 알림',
     description: '내 댓글에 대댓글이 달렸을 때 알림을 받습니다.',
     importance: Importance.high,
   );
 
-  static const AndroidNotificationChannel commentLikeChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel commentLikeChannel =
+      AndroidNotificationChannel(
     'comment_like_notifications',
     '댓글 좋아요 알림',
     description: '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.',
     importance: Importance.high,
   );
 
-  static const AndroidNotificationChannel radarChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel radarChannel =
+      AndroidNotificationChannel(
     'radar_notifications',
     '마일캐치 레이더 알림',
     description: '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.',
@@ -84,7 +91,8 @@ class NotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
     // 앱이 종료된 상태에서 알림 클릭으로 앱 실행
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    RemoteMessage? initialMessage =
+        await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       _handleInitialMessage(initialMessage);
     }
@@ -117,13 +125,15 @@ class NotificationService {
     );
 
     // 알림 채널들 생성 (Android만 해당)
-    final androidImplementation = _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    
+    final androidImplementation =
+        _localNotifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
     if (androidImplementation != null) {
       await androidImplementation.createNotificationChannel(postLikeChannel);
       await androidImplementation.createNotificationChannel(postCommentChannel);
-      await androidImplementation.createNotificationChannel(commentReplyChannel);
+      await androidImplementation
+          .createNotificationChannel(commentReplyChannel);
       await androidImplementation.createNotificationChannel(commentLikeChannel);
       await androidImplementation.createNotificationChannel(radarChannel);
     }
@@ -132,30 +142,39 @@ class NotificationService {
   /// 포그라운드 메시지 처리 (앱이 열려있을 때)
   void _handleForegroundMessage(RemoteMessage message) async {
     print('포그라운드 메시지 수신: ${message.data}');
-    
+
     // 개별 알림 설정 확인
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final type = message.data['type'];
     bool specificNotificationEnabled = true;
-    
+
     switch (type) {
       case 'post_like':
-        specificNotificationEnabled = prefs.getBool('post_like_notification') ?? true;
+        specificNotificationEnabled =
+            prefs.getBool('post_like_notification') ?? true;
         break;
       case 'post_comment':
-        specificNotificationEnabled = prefs.getBool('post_comment_notification') ?? true;
+        specificNotificationEnabled =
+            prefs.getBool('post_comment_notification') ?? true;
         break;
       case 'comment_reply':
-        specificNotificationEnabled = prefs.getBool('comment_reply_notification') ?? true;
+        specificNotificationEnabled =
+            prefs.getBool('comment_reply_notification') ?? true;
         break;
       case 'comment_like':
-        specificNotificationEnabled = prefs.getBool('comment_like_notification') ?? true;
+        specificNotificationEnabled =
+            prefs.getBool('comment_like_notification') ?? true;
         break;
       case 'radar_match':
-        specificNotificationEnabled = prefs.getBool('radar_notification') ?? true;
+        specificNotificationEnabled =
+            prefs.getBool('radar_notification') ?? true;
+        break;
+      case 'giftcard_deal':
+        specificNotificationEnabled =
+            prefs.getBool('radar_notification') ?? true;
         break;
     }
-    
+
     if (specificNotificationEnabled) {
       // 개별 알림이 켜져있을 때만 로컬 알림 생성
       _showLocalNotification(message);
@@ -169,13 +188,13 @@ class NotificationService {
     final data = message.data;
     final notificationTitle = data['notificationTitle'] ?? '알림';
     final notificationBody = data['notificationBody'] ?? '';
-    
+
     // 알림 타입에 따라 적절한 채널 선택
     final channelId = data['channelId'] ?? 'post_like_notifications';
-    
+
     // 알림 ID 생성 (중복 방지)
     final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    
+
     _localNotifications.show(
       notificationId,
       notificationTitle,
@@ -217,13 +236,13 @@ class NotificationService {
   /// 로컬 알림 클릭 처리
   void _onLocalNotificationTapped(NotificationResponse response) {
     print('로컬 알림 클릭: ${response.payload}');
-    
+
     if (response.payload != null) {
       try {
         // payload에서 딥링크 데이터 파싱
         final payloadString = response.payload!;
         final data = _parsePayloadToMap(payloadString);
-        
+
         if (data.isNotEmpty) {
           _handleDeepLink(data);
         }
@@ -255,6 +274,17 @@ class NotificationService {
       return;
     }
 
+    if (type == 'giftcard_deal') {
+      final dealId = data['dealId'] ?? data['giftcardDealId'];
+      if (dealId == null || dealId.toString().trim().isEmpty) {
+        print('상품권 특가 딥링크 데이터 누락: $data');
+        _showErrorToast('상품권 특가 정보를 찾을 수 없습니다.');
+        return;
+      }
+      _navigateToGiftcardDeal(dealId.toString().trim());
+      return;
+    }
+
     final postId = data['postId'];
     final date = data['date'];
     final boardId = data['boardId'] ?? 'free'; // 게시판 ID
@@ -266,7 +296,8 @@ class NotificationService {
       return;
     }
 
-    print('딥링크 처리: type=$type, postId=$postId, date=$date, boardId=$boardId, boardName=$boardName');
+    print(
+        '딥링크 처리: type=$type, postId=$postId, date=$date, boardId=$boardId, boardName=$boardName');
 
     switch (type) {
       case 'post_like':
@@ -274,18 +305,27 @@ class NotificationService {
         break;
       case 'post_comment':
         final commentId = data['commentId'];
-        _navigateToPostDetailWithComment(postId, date, boardId, boardName, commentId);
+        _navigateToPostDetailWithComment(
+            postId, date, boardId, boardName, commentId);
         break;
       case 'comment_reply':
         final commentId = data['commentId'];
-        _navigateToPostDetailWithComment(postId, date, boardId, boardName, commentId);
+        _navigateToPostDetailWithComment(
+            postId, date, boardId, boardName, commentId);
         break;
       case 'comment_like':
         final commentId = data['commentId'];
-        _navigateToPostDetailWithComment(postId, date, boardId, boardName, commentId);
+        _navigateToPostDetailWithComment(
+            postId, date, boardId, boardName, commentId);
         break;
       case 'radar_match':
         _navigateToRadarNotifications();
+        break;
+      case 'giftcard_deal':
+        final dealId = data['dealId'] ?? data['giftcardDealId'];
+        if (dealId != null) {
+          _navigateToGiftcardDeal(dealId.toString());
+        }
         break;
       default:
         print('알 수 없는 알림 타입: $type');
@@ -294,7 +334,8 @@ class NotificationService {
   }
 
   /// 게시글 상세 페이지로 이동 (좋아요 알림)
-  void _navigateToPostDetail(String postId, String date, String boardId, String boardName) {
+  void _navigateToPostDetail(
+      String postId, String date, String boardId, String boardName) {
     if (navigatorKey.currentState != null) {
       navigatorKey.currentState!.pushNamed(
         '/community/detail',
@@ -309,7 +350,8 @@ class NotificationService {
   }
 
   /// 게시글 상세 페이지로 이동 + 특정 댓글 스크롤
-  void _navigateToPostDetailWithComment(String postId, String date, String boardId, String boardName, String? commentId) {
+  void _navigateToPostDetailWithComment(String postId, String date,
+      String boardId, String boardName, String? commentId) {
     if (navigatorKey.currentState != null) {
       navigatorKey.currentState!.pushNamed(
         '/community/detail',
@@ -331,6 +373,15 @@ class NotificationService {
         MaterialPageRoute(
           builder: (_) => const RadarNotificationScreen(),
         ),
+      );
+    }
+  }
+
+  void _navigateToGiftcardDeal(String dealId) {
+    if (navigatorKey.currentState != null) {
+      navigatorKey.currentState!.pushNamed(
+        '/giftcard/deal',
+        arguments: {'dealId': dealId},
       );
     }
   }
@@ -417,4 +468,4 @@ class NotificationService {
         return '알림';
     }
   }
-} 
+}

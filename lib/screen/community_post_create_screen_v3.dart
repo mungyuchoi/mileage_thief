@@ -34,6 +34,8 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? sharedText;
   final String? sharedSubject;
   final List<String> sharedImagePaths;
+  final String? initialTitle;
+  final Map<String, dynamic> entityRefs;
 
   const CommunityPostCreateScreenV3({
     Key? key,
@@ -49,6 +51,8 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
     this.sharedText,
     this.sharedSubject,
     this.sharedImagePaths = const <String>[],
+    this.initialTitle,
+    this.entityRefs = const <String, dynamic>{},
   }) : super(key: key);
 
   @override
@@ -107,8 +111,9 @@ class _CommunityPostCreateScreenV3State
     final initialBoardName = _hasSharedContent
         ? (widget.initialBoardName ?? '자유게시판')
         : widget.initialBoardName;
-    final initialTitle =
-        _hasSharedContent ? _deriveSharedTitle() : widget.editTitle;
+    final initialTitle = _hasSharedContent
+        ? _deriveSharedTitle()
+        : (widget.initialTitle ?? widget.editTitle);
     final initialContentHtml =
         _hasSharedContent ? _buildSharedContentHtml() : widget.editContentHtml;
 
@@ -268,7 +273,7 @@ class _CommunityPostCreateScreenV3State
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -284,7 +289,7 @@ class _CommunityPostCreateScreenV3State
                   '전체 공개',
                   style: TextStyle(
                     color: Colors.black,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
                 onTap: () => Navigator.of(context).pop(0),
@@ -304,7 +309,7 @@ class _CommunityPostCreateScreenV3State
                     '${level.label} 이상',
                     style: const TextStyle(
                       color: Colors.black,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                   onTap: () => Navigator.of(context).pop(level.rank),
@@ -353,7 +358,7 @@ class _CommunityPostCreateScreenV3State
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 15,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.normal,
               ),
             ),
             const SizedBox(width: 10),
@@ -365,7 +370,7 @@ class _CommunityPostCreateScreenV3State
                 style: const TextStyle(
                   color: Color(0xFF555555),
                   fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ),
@@ -464,7 +469,7 @@ class _CommunityPostCreateScreenV3State
                   const Text('지점 선택',
                       style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.normal,
                           color: Colors.black87)),
                   const SizedBox(height: 8),
                   Expanded(
@@ -537,7 +542,7 @@ class _CommunityPostCreateScreenV3State
                 const Text('상품권',
                     style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.normal,
                         color: Colors.black87)),
                 const SizedBox(height: 8),
                 Expanded(
@@ -614,7 +619,7 @@ class _CommunityPostCreateScreenV3State
                   const Text('지도에서 위치 선택',
                       style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.normal,
                           color: Colors.black87)),
                   const SizedBox(height: 4),
                   Padding(
@@ -678,7 +683,7 @@ class _CommunityPostCreateScreenV3State
                         child: const Text('선택',
                             style: TextStyle(
                                 color: Color(0xFF74512D),
-                                fontWeight: FontWeight.bold)),
+                                fontWeight: FontWeight.normal)),
                       ),
                     ],
                   ),
@@ -943,7 +948,7 @@ class _CommunityPostCreateScreenV3State
                   '이 게시글을 임시 저장할까요?',
                   style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.normal,
                       color: Colors.black87),
                 ),
                 const SizedBox(height: 16),
@@ -967,7 +972,7 @@ class _CommunityPostCreateScreenV3State
                       child: const Text('저장',
                           style: TextStyle(
                               color: Color(0xFF74512D),
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.normal,
                               fontSize: 16)),
                     ),
                   ],
@@ -1001,7 +1006,7 @@ class _CommunityPostCreateScreenV3State
                   '임시 저장한 내용 불러오기',
                   style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.normal,
                       color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
@@ -1025,7 +1030,7 @@ class _CommunityPostCreateScreenV3State
                       child: const Text('불러오기',
                           style: TextStyle(
                               color: Color(0xFF74512D),
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.normal,
                               fontSize: 16)),
                     ),
                   ],
@@ -1063,7 +1068,7 @@ class _CommunityPostCreateScreenV3State
                   widget.isEditMode ? '게시글을 수정하고 있습니다...' : '게시글을 등록하고 있습니다...',
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.normal,
                     color: Colors.black87,
                   ),
                 ),
@@ -1210,6 +1215,9 @@ class _CommunityPostCreateScreenV3State
           'contentHtml': cleanedHtml.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
+        if (widget.entityRefs.isNotEmpty) {
+          postData['entityRefs'] = Map<String, dynamic>.from(widget.entityRefs);
+        }
         if (canSetReadRestriction) {
           postData['readRestriction'] = readRestriction?.toRestrictionMap() ??
               CommunityAccessLevel.unrestrictedMap();
@@ -1260,6 +1268,8 @@ class _CommunityPostCreateScreenV3State
           'hiddenByReport': false,
           'readRestriction': readRestriction?.toRestrictionMap() ??
               CommunityAccessLevel.unrestrictedMap(),
+          if (widget.entityRefs.isNotEmpty)
+            'entityRefs': Map<String, dynamic>.from(widget.entityRefs),
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
@@ -1409,7 +1419,7 @@ class _CommunityPostCreateScreenV3State
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -1442,7 +1452,7 @@ class _CommunityPostCreateScreenV3State
                                 ? Colors.grey
                                 : Colors.black,
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -1471,7 +1481,7 @@ class _CommunityPostCreateScreenV3State
                   style: TextStyle(
                     color: _isLoading ? Colors.grey : const Color(0xFF74512D),
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),

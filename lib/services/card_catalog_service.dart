@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
@@ -13,6 +14,12 @@ class CardCatalogService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'asia-northeast3');
+  static const int _maxProductWatchLimit = 240;
+  static final Map<int, Stream<List<CatalogCardProduct>>> _productStreams = {};
+  static final Map<int, List<CatalogCardProduct>> _productCache = {};
+
+  static const String cardProductsPath = 'cards/catalog/cardProducts';
+  static const String cardRankingsPath = 'cards/catalog/cardRankings';
 
   static DocumentReference<Map<String, dynamic>> get _catalogRef =>
       _firestore.collection('cards').doc('catalog');
@@ -26,14 +33,74 @@ class CardCatalogService {
   static CollectionReference<Map<String, dynamic>> get cardRequestsRef =>
       _catalogRef.collection('cardRequests');
 
-  Stream<List<CatalogCardProduct>> watchProducts({int limit = 300}) {
-    return productsRef
-        .orderBy('updatedAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map(CatalogCardProduct.fromFirestore)
-            .toList(growable: false));
+  static CollectionReference<Map<String, dynamic>> get cardIssuersRef =>
+      _catalogRef.collection('cardIssuers');
+
+  static CollectionReference<Map<String, dynamic>> get cardEventsRef =>
+      _catalogRef.collection('cardEvents');
+
+  static CollectionReference<Map<String, dynamic>> get cardRankingsRef =>
+      _catalogRef.collection('cardRankings');
+
+  static String get firebaseProjectId {
+    try {
+      return Firebase.app().options.projectId;
+    } catch (_) {
+      return 'unknown';
+    }
+  }
+
+  static String firestoreConsoleUrl(String path) {
+    final encodedPath = path
+        .split('/')
+        .map(Uri.encodeComponent)
+        .where((segment) => segment.isNotEmpty)
+        .join('~2F');
+    return 'https://console.firebase.google.com/project/$firebaseProjectId'
+        '/firestore/databases/-default-/data/~2F$encodedPath';
+  }
+
+  static String firestoreDebugSummary(String path) {
+    return 'project=$firebaseProjectId path=$path '
+        'console=${firestoreConsoleUrl(path)}';
+  }
+
+  List<CatalogCardProduct>? peekProducts({int limit = _maxProductWatchLimit}) {
+    final effectiveLimit = _effectiveProductLimit(limit);
+    final cached = _productCache[effectiveLimit];
+    if (cached == null) return null;
+    return List<CatalogCardProduct>.unmodifiable(cached);
+  }
+
+  Stream<List<CatalogCardProduct>> watchProducts({
+    int limit = _maxProductWatchLimit,
+  }) {
+    final effectiveLimit = _effectiveProductLimit(limit);
+    return _productStreams.putIfAbsent(
+      effectiveLimit,
+      () {
+        final query = productsRef
+            .orderBy('updatedAt', descending: true)
+            .limit(effectiveLimit);
+        return query.snapshots().map((snapshot) {
+          debugPrint(
+            '[CardCatalogService] cardProducts snapshot: '
+            '${firestoreDebugSummary(productsRef.path)} docs=${snapshot.docs.length}',
+          );
+          final products = snapshot.docs
+              .map(CatalogCardProduct.fromFirestore)
+              .toList(growable: false);
+          _productCache[effectiveLimit] = products;
+          return products;
+        }).handleError((Object error, StackTrace stackTrace) {
+          debugPrint(
+            '[CardCatalogService] cardProducts error: '
+            '${firestoreDebugSummary(productsRef.path)} error=$error',
+          );
+          Error.throwWithStackTrace(error, stackTrace);
+        }).asBroadcastStream();
+      },
+    );
   }
 
   Stream<CatalogCardProduct?> watchProduct(String cardId) {
@@ -41,6 +108,10 @@ class CardCatalogService {
       if (!doc.exists) return null;
       return CatalogCardProduct.fromFirestore(doc);
     });
+  }
+
+  static int _effectiveProductLimit(int limit) {
+    return limit.clamp(1, _maxProductWatchLimit).toInt();
   }
 
   Stream<List<CardProductRevision>> watchRevisions(String cardId) {
@@ -101,6 +172,104 @@ class CardCatalogService {
         .map((snapshot) => snapshot.docs
             .map(CardSourceRequest.fromFirestore)
             .toList(growable: false));
+  }
+
+  Stream<List<CardIssuer>> watchIssuers({int limit = 80}) {
+    return cardIssuersRef
+        .where('isVisible', isEqualTo: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+      final issuers = snapshot.docs
+          .map(CardIssuer.fromFirestore)
+          .where((issuer) => issuer.isVisible)
+          .toList();
+      issuers.sort((a, b) => a.nameKo.compareTo(b.nameKo));
+      return issuers;
+    });
+  }
+
+  Stream<List<CardEvent>> watchEvents({
+    String? cardId,
+    int limit = 80,
+  }) {
+    Query<Map<String, dynamic>> query = cardEventsRef
+        .where('isVisible', isEqualTo: true)
+        .where('isLive', isEqualTo: true);
+    if (cardId != null && cardId.trim().isNotEmpty) {
+      query = query.where('cardIds', arrayContains: cardId.trim());
+    }
+    return query.limit(limit).snapshots().map((snapshot) {
+      final events = snapshot.docs
+          .map(CardEvent.fromFirestore)
+          .where((event) => event.isVisible && event.isLive && !event.isExpired)
+          .toList();
+      events.sort((a, b) {
+        final amount = b.benefitAmountKRW.compareTo(a.benefitAmountKRW);
+        if (amount != 0) return amount;
+        final aEnd = a.endsAt?.millisecondsSinceEpoch ?? 1 << 62;
+        final bEnd = b.endsAt?.millisecondsSinceEpoch ?? 1 << 62;
+        return aEnd.compareTo(bEnd);
+      });
+      return events;
+    });
+  }
+
+  Stream<List<CardRanking>> watchRankings({int limit = 20}) async* {
+    final query = cardRankingsRef.limit(limit);
+    try {
+      await for (final snapshot in query.snapshots()) {
+        if (snapshot.docs.isNotEmpty) {
+          debugPrint(
+            '[CardCatalogService] cardRankings snapshot: '
+            '${firestoreDebugSummary(cardRankingsRef.path)} docs=${snapshot.docs.length}',
+          );
+        }
+        final rankings = snapshot.docs.map(CardRanking.fromFirestore).toList();
+        rankings.sort((a, b) {
+          const order = ['popular', 'mileage', 'travel'];
+          final aIndex = order.indexOf(a.id);
+          final bIndex = order.indexOf(b.id);
+          final normalizedA = aIndex < 0 ? 99 : aIndex;
+          final normalizedB = bIndex < 0 ? 99 : bIndex;
+          if (normalizedA != normalizedB) {
+            return normalizedA.compareTo(normalizedB);
+          }
+          return a.title.compareTo(b.title);
+        });
+        yield rankings;
+      }
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[CardCatalogService] cardRankings error: '
+        '${firestoreDebugSummary(cardRankingsRef.path)} error=$error',
+      );
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Stream<List<CardRelatedPost>> watchRelatedPosts({
+    required String cardId,
+    int limit = 20,
+  }) {
+    return _firestore
+        .collectionGroup('posts')
+        .where('entityRefs.cardId', isEqualTo: cardId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+      final posts = snapshot.docs.map(CardRelatedPost.fromFirestore).toList();
+      posts.sort((a, b) {
+        final pinned = b.commentCount.compareTo(a.commentCount);
+        if (pinned != 0) return pinned;
+        final bCreated = b.createdAt?.millisecondsSinceEpoch ?? 0;
+        final aCreated = a.createdAt?.millisecondsSinceEpoch ?? 0;
+        return bCreated.compareTo(aCreated);
+      });
+      return posts;
+    });
   }
 
   Future<CardMutationResult> createCardProduct(
@@ -181,6 +350,68 @@ class CardCatalogService {
     return CardViewResult.fromMap(
       Map<String, dynamic>.from(result.data),
     );
+  }
+
+  Future<CardRecommendationDashboard> calculateCardMatches({
+    required CardPreferenceProfile profile,
+    int limit = 20,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'calculateCardMatches',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
+    );
+    final result = await callable.call<Map<String, dynamic>>({
+      'profile': profile.toMap(),
+      'limit': limit,
+    });
+    final data = Map<String, dynamic>.from(result.data);
+    return CardRecommendationDashboard.fromMap(
+      data,
+      fallbackProfile: profile,
+    );
+  }
+
+  Future<CardPreferenceProfile> loadCardPreferenceProfile({
+    required String uid,
+  }) async {
+    final doc = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('cardPreferenceProfiles')
+        .doc('default')
+        .get();
+    if (!doc.exists) return CardPreferenceProfile.defaults();
+    return CardPreferenceProfile.fromMap(doc.data() ?? <String, dynamic>{});
+  }
+
+  Future<void> saveCardPreferenceProfile({
+    required String uid,
+    required CardPreferenceProfile profile,
+  }) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('cardPreferenceProfiles')
+        .doc('default')
+        .set({
+      ...profile.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<Map<String, dynamic>> refreshCardRankings() async {
+    final callable = _functions.httpsCallable('refreshCardRankings');
+    final result = await callable.call<Map<String, dynamic>>();
+    return Map<String, dynamic>.from(result.data);
+  }
+
+  Future<Map<String, dynamic>> syncCardEvents({int limit = 80}) async {
+    final callable = _functions.httpsCallable(
+      'syncCardEvents',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),
+    );
+    final result = await callable.call<Map<String, dynamic>>({'limit': limit});
+    return Map<String, dynamic>.from(result.data);
   }
 
   Future<CardImportResult> importCardGorillaCards({

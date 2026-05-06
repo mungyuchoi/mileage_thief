@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 import '../models/deal_model.dart';
+import '../models/giftcard_deal_model.dart';
 import '../models/radar_item_model.dart';
+import 'giftcard_deal_service.dart';
 
 class RadarService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -54,12 +56,17 @@ class RadarService {
         _safeItems(_loadGiftcardItems)
       else
         Future.value(const <RadarItem>[]),
+      if (resolvedProfile.giftcardEnabled)
+        _safeItems(_loadGiftcardDealItems)
+      else
+        Future.value(const <RadarItem>[]),
       _safeItems(_loadPopularCancellationItems),
       _safeItems(_loadNewsItems),
     ]);
 
     final items = <RadarItem>[
       _buildValueCalculatorItem(resolvedProfile, averageCost),
+      _buildCardCalculatorItem(resolvedProfile),
       for (final group in groups) ...group,
     ];
 
@@ -354,6 +361,95 @@ class RadarService {
     }).toList();
   }
 
+  static Future<List<RadarItem>> _loadGiftcardDealItems() async {
+    final deals = await GiftcardDealService.loadTopDeals(limit: 24);
+    final liveDeals = deals.where((deal) => deal.hasLivePrice).toList()
+      ..sort(_compareGiftcardDealRadarPriority);
+    return liveDeals.take(6).map(_giftcardDealItem).toList();
+  }
+
+  static RadarItem _giftcardDealItem(GiftcardDeal deal) {
+    final faceValue =
+        deal.faceValueKRW > 0 ? deal.faceValueKRW : deal.denominationKRW;
+    final discountLabel = deal.discountRate > 0
+        ? '${deal.discountRate.toStringAsFixed(2)}% 할인'
+        : '특가 추적';
+    final source = deal.merchantName.isNotEmpty ? deal.merchantName : '상품권 특가';
+    final title = deal.displayTitle;
+    final subtitleParts = <String>[
+      source,
+      if (faceValue > 0) '정가 ${_wonFormat.format(faceValue)}원',
+      if (deal.discountAmountKRW > 0)
+        '${_wonFormat.format(deal.discountAmountKRW)}원 절약',
+    ];
+    final departmentStoreRank = _departmentStoreGiftcardRank(deal);
+    final priorityBoost =
+        departmentStoreRank == null ? 0.0 : 10.0 - (departmentStoreRank * 1.5);
+    return RadarItem(
+      id: 'giftcard_deal_${deal.id}',
+      itemType: RadarItemType.giftcard,
+      title: title,
+      subtitle: subtitleParts.join(' · '),
+      reason: '조건에 맞으면 상품권 특가 알림으로 바로 추적할 수 있습니다.',
+      source: source,
+      route: '',
+      dateRange: '',
+      price: deal.priceKRW,
+      miles: null,
+      cashValue: null,
+      costPerMile: null,
+      urgency: discountLabel,
+      score: 74.0 +
+          priorityBoost +
+          (deal.discountRate * 4).clamp(0, 18).toDouble(),
+      deepLink: '',
+      updatedAt: deal.lastChangedAt?.toDate() ??
+          deal.updatedAt?.toDate() ??
+          deal.lastSeenAt?.toDate() ??
+          DateTime.now(),
+      payload: {
+        'giftcardRadarKind': 'deal',
+        'giftcardDealId': deal.id,
+        'brandId': deal.brandId,
+        'brandName': deal.brandName,
+        'merchantId': deal.merchantId,
+        'merchantName': deal.merchantName,
+        'discountRate': deal.discountRate,
+        'buyUrl': deal.buyUrl,
+      },
+    );
+  }
+
+  static int _compareGiftcardDealRadarPriority(
+    GiftcardDeal a,
+    GiftcardDeal b,
+  ) {
+    final aRank = _departmentStoreGiftcardRank(a) ?? 99;
+    final bRank = _departmentStoreGiftcardRank(b) ?? 99;
+    if (aRank != bRank) return aRank.compareTo(bRank);
+
+    final discount = b.discountRate.compareTo(a.discountRate);
+    if (discount != 0) return discount;
+
+    final price = a.priceKRW.compareTo(b.priceKRW);
+    if (price != 0) return price;
+
+    return a.displayTitle.compareTo(b.displayTitle);
+  }
+
+  static int? _departmentStoreGiftcardRank(GiftcardDeal deal) {
+    final text = [
+      deal.brandId,
+      deal.brandName,
+      deal.title,
+      deal.displayTitle,
+    ].join(' ').toLowerCase();
+    if (text.contains('롯데') || text.contains('lotte')) return 0;
+    if (text.contains('현대') || text.contains('hyundai')) return 1;
+    if (text.contains('신세계') || text.contains('shinsegae')) return 2;
+    return null;
+  }
+
   static Future<List<RadarItem>> _loadPopularCancellationItems() async {
     final snap = await _firestore
         .collection('popular_subscriptions')
@@ -471,6 +567,32 @@ class RadarService {
       deepLink: '',
       updatedAt: DateTime.now(),
       payload: {'averageCostPerMile': averageCost},
+    );
+  }
+
+  static RadarItem _buildCardCalculatorItem(RadarTravelProfile profile) {
+    final preferredAirline = profile.mileageBalances.keys.firstWhere(
+      (airline) => (profile.mileageBalances[airline] ?? 0) > 0,
+      orElse: () => '대한항공',
+    );
+    return RadarItem(
+      id: 'card_calculator',
+      itemType: RadarItemType.cardCalculator,
+      title: '내 소비 카드 손익 계산',
+      subtitle: '$preferredAirline · 월 소비 기준 비교',
+      reason: '월 사용액과 1마일 가치를 넣어 카드별 연 순가치와 손익분기점을 비교합니다.',
+      source: '마일캐치 카드 DB',
+      route: '',
+      dateRange: '',
+      price: null,
+      miles: null,
+      cashValue: null,
+      costPerMile: null,
+      urgency: '바로 계산',
+      score: 90,
+      deepLink: '',
+      updatedAt: DateTime.now(),
+      payload: {'preferredAirline': preferredAirline},
     );
   }
 

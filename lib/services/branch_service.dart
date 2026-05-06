@@ -5,6 +5,7 @@ import '../screen/branch/branch_detail_screen.dart';
 import '../screen/community_chat_screen.dart';
 import '../screen/community_detail_screen.dart';
 import '../screen/contest_detail_screen.dart';
+import '../screen/giftcard_deals_screen.dart';
 
 class BranchService {
   static final BranchService _instance = BranchService._internal();
@@ -135,6 +136,22 @@ class BranchService {
       return;
     }
 
+    final giftcardDealId = data['giftcardDealId']?.toString() ??
+        data['dealId']?.toString() ??
+        _giftcardDealIdFromLinkValue(linkValue);
+    if (giftcardDealId != null && giftcardDealId.trim().isNotEmpty) {
+      debugPrint('실제 딥링크 클릭 감지 - 상품권 특가로 이동: $giftcardDealId');
+      _navigateToGiftcardDeal(giftcardDealId.trim());
+      return;
+    }
+
+    if (_isGiftcardDealDestination(destination) ||
+        _isGiftcardDealDestination(linkValue)) {
+      debugPrint('실제 딥링크 클릭 감지 - 상품권 특가 목록으로 이동');
+      _navigateToGiftcardDealList();
+      return;
+    }
+
     // 게시글 딥링크 처리
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
@@ -182,6 +199,17 @@ class BranchService {
       return true;
     }
 
+    final giftcardDealId = _giftcardDealIdFromLinkValue(value);
+    if (giftcardDealId != null) {
+      _navigateToGiftcardDeal(giftcardDealId, context: context);
+      return true;
+    }
+
+    if (_isGiftcardDealDestination(value)) {
+      _navigateToGiftcardDealList(context: context);
+      return true;
+    }
+
     return false;
   }
 
@@ -219,6 +247,57 @@ class BranchService {
         normalized == '/card' ||
         normalized == '/cards' ||
         normalized == '/card/catalog';
+  }
+
+  bool _isGiftcardDealDestination(String? value) {
+    if (value == null) return false;
+    final normalized =
+        value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+    return normalized == 'giftcard-deal' ||
+        normalized == 'giftcard-deals' ||
+        normalized == 'giftcard-deal-list' ||
+        normalized == 'giftcard/special' ||
+        normalized == 'giftcard/deals' ||
+        normalized == '/giftcard/deals' ||
+        normalized == '/giftcard/special';
+  }
+
+  String? _giftcardDealIdFromLinkValue(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final normalized = trimmed.toLowerCase().replaceAll('_', '-');
+
+    const prefixes = [
+      'giftcard-deal:',
+      'giftcard-deals:',
+      'giftcard/deal:',
+      '/giftcard/deal/',
+    ];
+    for (final prefix in prefixes) {
+      if (normalized.startsWith(prefix)) {
+        final dealId = trimmed.substring(prefix.length).trim();
+        return dealId.isEmpty ? null : dealId;
+      }
+    }
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return null;
+    final host = uri.host.toLowerCase();
+    final path = uri.path.toLowerCase();
+    if (host == 'giftcard-deal' || host == 'giftcard-deals') {
+      final dealId = uri.queryParameters['dealId'] ??
+          uri.queryParameters['giftcardDealId'] ??
+          uri.queryParameters['id'];
+      return dealId?.trim().isNotEmpty == true ? dealId!.trim() : null;
+    }
+    if (path == '/giftcard/deal' || path == '/giftcard/deals/detail') {
+      final dealId = uri.queryParameters['dealId'] ??
+          uri.queryParameters['giftcardDealId'] ??
+          uri.queryParameters['id'];
+      return dealId?.trim().isNotEmpty == true ? dealId!.trim() : null;
+    }
+    return null;
   }
 
   String? _cardIdFromLinkValue(String? value) {
@@ -379,6 +458,46 @@ class BranchService {
     navigatorKey.currentState?.pushNamed('/card/detail', arguments: arguments);
   }
 
+  void _navigateToGiftcardDeal(
+    String dealId, {
+    BuildContext? context,
+  }) {
+    final screen = GiftcardDealDetailScreen(dealId: dealId);
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
+  void _navigateToGiftcardDealList({
+    BuildContext? context,
+  }) {
+    final screen = Scaffold(
+      backgroundColor: const Color(0xFFF7F7FA),
+      appBar: AppBar(
+        title: const Text('상품권 특가'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+      ),
+      body: const SafeArea(child: GiftcardDealsScreen()),
+    );
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
   /// 콘테스트로 이동
   void _navigateToContest(String contestId) {
     if (navigatorKey.currentState != null) {
@@ -523,6 +642,49 @@ class BranchService {
       return null;
     } catch (e) {
       debugPrint('Branch 카드 목록 링크 생성 오류: $e');
+      return null;
+    }
+  }
+
+  /// 상품권 특가 공유 링크 생성
+  Future<String?> createGiftcardDealShareLink({
+    required String dealId,
+    String? title,
+    String? description,
+  }) async {
+    try {
+      final buo = BranchUniversalObject(
+        canonicalIdentifier: 'giftcard_deal_$dealId',
+        title: title ?? '마일캐치 상품권 특가',
+        contentDescription: description ?? '상품권 특가와 할인율을 확인해보세요!',
+        contentMetadata: BranchContentMetaData()
+          ..addCustomMetadata('giftcardDealId', dealId)
+          ..addCustomMetadata('dealId', dealId)
+          ..addCustomMetadata('destination', 'giftcard-deal')
+          ..addCustomMetadata('screen', 'giftcard_deal')
+          ..addCustomMetadata('path', '/giftcard/deal')
+          ..addCustomMetadata('linkValue', 'giftcard-deal:$dealId'),
+      );
+
+      final lp = BranchLinkProperties(
+        channel: 'giftcard',
+        feature: 'sharing',
+        campaign: 'giftcard_deal_share',
+      );
+
+      final response = await FlutterBranchSdk.getShortUrl(
+        buo: buo,
+        linkProperties: lp,
+      );
+
+      if (response.success) {
+        debugPrint('Branch 상품권 특가 링크 생성 성공: ${response.result}');
+        return response.result;
+      }
+      debugPrint('Branch 상품권 특가 링크 생성 실패: ${response.errorMessage}');
+      return null;
+    } catch (e) {
+      debugPrint('Branch 상품권 특가 링크 생성 오류: $e');
       return null;
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,8 +37,8 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
   final CardCatalogService _service = CardCatalogService();
   final TextEditingController _queryController = TextEditingController();
   late final Future<bool> _adminFuture = _canAccessAdmin();
-  String _statusFilter = 'all';
-  String _sortOrder = 'latest';
+  String _statusFilter = 'active';
+  String _sortOrder = 'popular';
   bool _importing = false;
 
   @override
@@ -52,7 +54,7 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
       appBar: AppBar(
         title: const Text(
           '카드',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w400),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -100,7 +102,10 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
               side: const BorderSide(color: _cardLine),
             ),
             icon: const Icon(Icons.search_outlined),
-            label: const Text('카드 요청'),
+            label: const Text(
+              '카드 요청',
+              style: TextStyle(fontWeight: FontWeight.w400),
+            ),
             onPressed: _openRequest,
           ),
           const SizedBox(height: 10),
@@ -109,13 +114,17 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
             backgroundColor: _cardInk,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_card_outlined),
-            label: const Text('카드 추가'),
+            label: const Text(
+              '카드 추가',
+              style: TextStyle(fontWeight: FontWeight.w400),
+            ),
             onPressed: _openCreate,
           ),
         ],
       ),
       body: StreamBuilder<List<CatalogCardProduct>>(
         stream: _service.watchProducts(),
+        initialData: _service.peekProducts(),
         builder: (context, snapshot) {
           final header = _CatalogSearchHeader(
             controller: _queryController,
@@ -364,12 +373,33 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
   List<CardSourceCandidate> _candidates = const [];
   String? _searchedQuery;
   String? _requestingSourceId;
+  Timer? _searchDebounce;
+  int _searchToken = 0;
   bool _searching = false;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _queueSearch(String value) {
+    _searchDebounce?.cancel();
+    final query = value.trim();
+    if (query.length < 2) {
+      _searchToken++;
+      setState(() {
+        _searchedQuery = null;
+        _candidates = const [];
+        _searching = false;
+      });
+      return;
+    }
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 450),
+      () => _search(showValidationToast: false),
+    );
   }
 
   @override
@@ -379,7 +409,7 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
       appBar: AppBar(
         title: const Text(
           '카드 요청',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w400),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -394,6 +424,7 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
               TextField(
                 controller: _searchController,
                 textInputAction: TextInputAction.search,
+                onChanged: _queueSearch,
                 onSubmitted: (_) => _search(),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search, color: _cardMuted),
@@ -407,7 +438,7 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
                   suffixIcon: IconButton(
                     tooltip: '검색',
                     icon: const Icon(Icons.arrow_forward),
-                    onPressed: _searching ? null : _search,
+                    onPressed: _searching ? null : () => _search(),
                   ),
                 ),
               ),
@@ -416,7 +447,7 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
                 '찾는 카드를 선택하면 관리자에게 가져오기 요청이 전달됩니다.',
                 style: TextStyle(
                   color: _cardMuted,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                   height: 1.35,
                 ),
               ),
@@ -426,7 +457,9 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
           if (_searching)
             const Padding(
               padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: CircularProgressIndicator(color: _cardInk),
+              ),
             )
           else if (_searchedQuery != null && _candidates.isEmpty)
             const Padding(
@@ -451,12 +484,16 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
     );
   }
 
-  Future<void> _search() async {
+  Future<void> _search({bool showValidationToast = true}) async {
+    _searchDebounce?.cancel();
     final query = _searchController.text.trim();
     if (query.length < 2) {
-      Fluttertoast.showToast(msg: '두 글자 이상 입력해주세요.');
+      if (showValidationToast) {
+        Fluttertoast.showToast(msg: '두 글자 이상 입력해주세요.');
+      }
       return;
     }
+    final token = ++_searchToken;
     setState(() {
       _searching = true;
       _searchedQuery = query;
@@ -467,11 +504,18 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
         query: query,
       );
       if (!mounted) return;
+      if (token != _searchToken || query != _searchController.text.trim()) {
+        return;
+      }
       setState(() => _candidates = candidates);
     } catch (error) {
-      Fluttertoast.showToast(msg: '카드 검색에 실패했습니다: $error');
+      if (token == _searchToken && query == _searchController.text.trim()) {
+        Fluttertoast.showToast(msg: '카드 검색에 실패했습니다: $error');
+      }
     } finally {
-      if (mounted) setState(() => _searching = false);
+      if (mounted && token == _searchToken) {
+        setState(() => _searching = false);
+      }
     }
   }
 
@@ -517,7 +561,7 @@ class _CardRequestManageScreenState extends State<CardRequestManageScreen> {
       appBar: AppBar(
         title: const Text(
           '카드 요청',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w400),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -637,10 +681,13 @@ class CardProductDetailScreen extends StatefulWidget {
       _CardProductDetailScreenState();
 }
 
+enum _CardDetailAction { like, share, edit, history }
+
 class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
   final CardCatalogService _service = CardCatalogService();
   late final Future<bool> _adminFuture = _canAccessAdmin();
   bool _sharing = false;
+  bool _likeToggling = false;
   bool _viewIncremented = false;
 
   @override
@@ -659,56 +706,129 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
             title: Text(
               product?.name ?? '카드 상세',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+              style: const TextStyle(fontWeight: FontWeight.w400),
             ),
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
             elevation: 0.4,
             actions: [
-              if (product != null)
-                _CardLikeActionButton(
-                  service: _service,
-                  cardId: product.id,
-                  likesCount: product.likesCount,
-                  onRequireLogin: widget.onRequireLogin,
-                ),
-              if (product != null)
-                IconButton(
-                  tooltip: '공유',
-                  icon: _sharing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.share_outlined),
-                  onPressed: _sharing ? null : () => _shareCard(product),
-                ),
-              if (product != null)
-                IconButton(
-                  tooltip: '수정',
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () => _openEdit(product),
-                ),
-              FutureBuilder<bool>(
-                future: _adminFuture,
-                builder: (context, adminSnapshot) {
-                  if (product == null || adminSnapshot.data != true) {
-                    return const SizedBox.shrink();
-                  }
-                  return IconButton(
-                    tooltip: '히스토리',
-                    icon: const Icon(Icons.history_outlined),
-                    onPressed: () => _openHistory(product),
-                  );
-                },
-              ),
+              if (product != null) _buildActionMenu(product),
             ],
           ),
           body: _buildBody(snapshot, product),
         );
       },
     );
+  }
+
+  Widget _buildActionMenu(CatalogCardProduct product) {
+    return FutureBuilder<bool>(
+      future: _adminFuture,
+      builder: (context, adminSnapshot) {
+        final isAdmin = adminSnapshot.data == true;
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          return _actionMenuButton(
+            product: product,
+            liked: false,
+            isAdmin: isAdmin,
+          );
+        }
+        return StreamBuilder<bool>(
+          stream: _service.watchUserLike(
+            cardId: product.id,
+            uid: user.uid,
+          ),
+          builder: (context, likeSnapshot) {
+            return _actionMenuButton(
+              product: product,
+              liked: likeSnapshot.data == true,
+              isAdmin: isAdmin,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _actionMenuButton({
+    required CatalogCardProduct product,
+    required bool liked,
+    required bool isAdmin,
+  }) {
+    final busy = _sharing || _likeToggling;
+    return PopupMenuButton<_CardDetailAction>(
+      tooltip: '카드 메뉴',
+      enabled: !busy,
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.black.withValues(alpha: 0.16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: _cardLine),
+      ),
+      icon: busy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.more_horiz, color: _cardInk),
+      onSelected: (action) => _handleActionMenuSelection(action, product),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _CardDetailAction.like,
+          child: _ActionMenuRow(
+            icon: liked ? Icons.favorite : Icons.favorite_border_outlined,
+            label: liked
+                ? '좋아요 취소 ${product.likesCount}'
+                : '좋아요 ${product.likesCount}',
+          ),
+        ),
+        const PopupMenuItem(
+          value: _CardDetailAction.share,
+          child: _ActionMenuRow(
+            icon: Icons.share_outlined,
+            label: '공유',
+          ),
+        ),
+        const PopupMenuItem(
+          value: _CardDetailAction.edit,
+          child: _ActionMenuRow(
+            icon: Icons.edit_outlined,
+            label: '수정',
+          ),
+        ),
+        if (isAdmin)
+          const PopupMenuItem(
+            value: _CardDetailAction.history,
+            child: _ActionMenuRow(
+              icon: Icons.history_outlined,
+              label: '히스토리/롤백',
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _handleActionMenuSelection(
+    _CardDetailAction action,
+    CatalogCardProduct product,
+  ) {
+    switch (action) {
+      case _CardDetailAction.like:
+        _toggleLike(product);
+        break;
+      case _CardDetailAction.share:
+        _shareCard(product);
+        break;
+      case _CardDetailAction.edit:
+        _openEdit(product);
+        break;
+      case _CardDetailAction.history:
+        _openHistory(product);
+        break;
+    }
   }
 
   Widget _buildBody(
@@ -732,8 +852,8 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
         message: '삭제되었거나 아직 동기화되지 않은 카드입니다.',
       );
     }
-
     final issuerUrl = _cardIssuerUrl(product);
+    final showSangtechPanel = _estimatedPerMileKRW(product) > 0;
     return Stack(
       children: [
         ListView(
@@ -749,6 +869,17 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
               values: product.primaryBenefits,
               emptyMessage: '아직 입력된 혜택 정보가 없습니다.',
             ),
+            const SizedBox(height: 12),
+            _CardTravelPanel(product: product),
+            const SizedBox(height: 12),
+            _CardEventSummarySection(
+              service: _service,
+              product: product,
+            ),
+            if (showSangtechPanel) ...[
+              const SizedBox(height: 12),
+              _CardSangtechPanel(product: product),
+            ],
             const SizedBox(height: 12),
             _NoticePanel(values: product.exclusions),
             const SizedBox(height: 12),
@@ -834,6 +965,27 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
       Fluttertoast.showToast(msg: '공유 링크를 만들지 못했습니다: $error');
     } finally {
       if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  Future<void> _toggleLike(CatalogCardProduct product) async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인 후 좋아요를 누를 수 있습니다.');
+      widget.onRequireLogin?.call();
+      return;
+    }
+    if (_likeToggling) return;
+
+    setState(() => _likeToggling = true);
+    try {
+      final result = await _service.toggleCardProductLike(cardId: product.id);
+      Fluttertoast.showToast(
+        msg: result.liked ? '좋아요를 눌렀습니다.' : '좋아요를 취소했습니다.',
+      );
+    } catch (error) {
+      Fluttertoast.showToast(msg: '좋아요 처리에 실패했습니다: $error');
+    } finally {
+      if (mounted) setState(() => _likeToggling = false);
     }
   }
 
@@ -945,164 +1097,215 @@ class _CardProductEditScreenState extends State<CardProductEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _cardPage,
-      appBar: AppBar(
-        title: Text(
-          _isCreate ? '카드 추가' : '카드 수정',
-          style: const TextStyle(fontWeight: FontWeight.w900),
+    final baseTheme = Theme.of(context);
+    return Theme(
+      data: baseTheme.copyWith(
+        colorScheme: baseTheme.colorScheme.copyWith(
+          primary: _cardInk,
+          secondary: _cardInk,
+          onPrimary: Colors.white,
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.4,
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-          child: FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_outlined),
-            label: Text(_saving ? '저장 중' : '저장'),
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: _cardInk,
+          selectionColor: _cardInk.withValues(alpha: 0.18),
+          selectionHandleColor: _cardInk,
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          floatingLabelStyle: TextStyle(color: _cardInk),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: _cardInk, width: 1.4),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: _cardMuted),
           ),
         ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: _cardInk,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: _cardLine,
+            disabledForegroundColor: _cardMuted,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: _cardInk),
+        ),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-          children: [
-            _EditPanel(
-              title: '필수 정보',
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: '카드명'),
-                  validator: (value) =>
-                      (value ?? '').trim().isEmpty ? '카드명을 입력해주세요.' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _issuerController,
-                  decoration: const InputDecoration(labelText: '카드사명'),
-                  validator: (value) =>
-                      (value ?? '').trim().isEmpty ? '카드사명을 입력해주세요.' : null,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _cardType,
-                  decoration: const InputDecoration(labelText: '카드 유형'),
-                  items: const [
-                    DropdownMenuItem(value: 'credit', child: Text('신용')),
-                    DropdownMenuItem(value: 'check', child: Text('체크')),
-                    DropdownMenuItem(value: 'hybrid', child: Text('하이브리드')),
-                    DropdownMenuItem(value: 'unknown', child: Text('기타')),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => _cardType = value ?? 'unknown'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _EditPanel(
-              title: '선택 정보',
-              children: [
-                DropdownButtonFormField<String>(
-                  initialValue: _status,
-                  decoration: const InputDecoration(labelText: '상태'),
-                  items: const [
-                    DropdownMenuItem(value: 'active', child: Text('사용 가능')),
-                    DropdownMenuItem(value: 'pending', child: Text('정보 확인중')),
-                    DropdownMenuItem(value: 'discontinued', child: Text('단종')),
-                    DropdownMenuItem(value: 'hidden', child: Text('숨김')),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => _status = value ?? 'active'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _rewardController,
-                  decoration: const InputDecoration(labelText: '마일리지/리워드 프로그램'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _annualFeeController,
-                  decoration: const InputDecoration(labelText: '연회비'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _previousMonthController,
-                  decoration: const InputDecoration(labelText: '전월실적'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _EditPanel(
-              title: '혜택/상세',
-              children: [
-                TextFormField(
-                  controller: _benefitsController,
-                  maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: '주요 혜택',
-                    helperText: '한 줄에 하나씩 입력',
-                    alignLabelWithHint: true,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _exclusionsController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: '제외/유의 항목',
-                    helperText: '한 줄에 하나씩 입력',
-                    alignLabelWithHint: true,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _detailController,
-                  maxLines: 6,
-                  decoration: const InputDecoration(
-                    labelText: '상세 정보',
-                    alignLabelWithHint: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _EditPanel(
-              title: '카드 이미지',
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _selectedImage?.name ??
-                            (widget.product?.mainStoragePath == null
-                                ? '이미지 없음'
-                                : '기존 이미지 사용'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+      child: Scaffold(
+        backgroundColor: _cardPage,
+        appBar: AppBar(
+          title: Text(
+            _isCreate ? '카드 추가' : '카드 수정',
+            style: const TextStyle(fontWeight: FontWeight.w400),
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.4,
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _cardInk,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: _cardLine,
+                disabledForegroundColor: _cardMuted,
+              ),
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
                       ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.image_outlined),
-                      label: const Text('선택'),
-                    ),
-                  ],
-                ),
-              ],
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(_saving ? '저장 중' : '저장'),
             ),
-          ],
+          ),
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+            children: [
+              _EditPanel(
+                title: '필수 정보',
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: '카드명'),
+                    validator: (value) =>
+                        (value ?? '').trim().isEmpty ? '카드명을 입력해주세요.' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _issuerController,
+                    decoration: const InputDecoration(labelText: '카드사명'),
+                    validator: (value) =>
+                        (value ?? '').trim().isEmpty ? '카드사명을 입력해주세요.' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _cardType,
+                    decoration: const InputDecoration(labelText: '카드 유형'),
+                    dropdownColor: Colors.white,
+                    iconEnabledColor: _cardInk,
+                    items: const [
+                      DropdownMenuItem(value: 'credit', child: Text('신용')),
+                      DropdownMenuItem(value: 'check', child: Text('체크')),
+                      DropdownMenuItem(value: 'hybrid', child: Text('하이브리드')),
+                      DropdownMenuItem(value: 'unknown', child: Text('기타')),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _cardType = value ?? 'unknown'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _EditPanel(
+                title: '선택 정보',
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: _status,
+                    decoration: const InputDecoration(labelText: '상태'),
+                    dropdownColor: Colors.white,
+                    iconEnabledColor: _cardInk,
+                    items: const [
+                      DropdownMenuItem(value: 'active', child: Text('사용 가능')),
+                      DropdownMenuItem(value: 'pending', child: Text('정보 확인중')),
+                      DropdownMenuItem(
+                          value: 'discontinued', child: Text('단종')),
+                      DropdownMenuItem(value: 'hidden', child: Text('숨김')),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _status = value ?? 'active'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _rewardController,
+                    decoration:
+                        const InputDecoration(labelText: '마일리지/리워드 프로그램'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _annualFeeController,
+                    decoration: const InputDecoration(labelText: '연회비'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _previousMonthController,
+                    decoration: const InputDecoration(labelText: '전월실적'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _EditPanel(
+                title: '혜택/상세',
+                children: [
+                  TextFormField(
+                    controller: _benefitsController,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      labelText: '주요 혜택',
+                      helperText: '한 줄에 하나씩 입력',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _exclusionsController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: '제외/유의 항목',
+                      helperText: '한 줄에 하나씩 입력',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _detailController,
+                    maxLines: 6,
+                    decoration: const InputDecoration(
+                      labelText: '상세 정보',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _EditPanel(
+                title: '카드 이미지',
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _selectedImage?.name ??
+                              (widget.product?.mainStoragePath == null
+                                  ? '이미지 없음'
+                                  : '기존 이미지 사용'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w400),
+                        ),
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(foregroundColor: _cardInk),
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.image_outlined),
+                        label: const Text('선택'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1211,7 +1414,7 @@ class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
       appBar: AppBar(
         title: const Text(
           '수정 히스토리',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w400),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -1317,7 +1520,7 @@ class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
           children: [
             Text(
               '${revision.actionLabel} v${revision.versionFrom} → v${revision.versionTo}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
             ),
             const SizedBox(height: 6),
             _RevisionActorSummary(
@@ -1414,7 +1617,7 @@ class _CatalogSearchHeader extends StatelessWidget {
               hintText: '카드명, 카드사, 혜택 검색',
               hintStyle: const TextStyle(
                 color: _cardMuted,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
               ),
               filled: true,
               fillColor: const Color(0xFFF4F5F7),
@@ -1433,61 +1636,92 @@ class _CatalogSearchHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _StatusChip(
-                  label: '전체',
-                  selected: statusFilter == 'all',
-                  onTap: () => onStatusChanged('all'),
-                ),
-                _StatusChip(
-                  label: '사용 가능',
-                  selected: statusFilter == 'active',
-                  onTap: () => onStatusChanged('active'),
-                ),
-                _StatusChip(
-                  label: '정보 확인중',
-                  selected: statusFilter == 'pending',
-                  onTap: () => onStatusChanged('pending'),
-                ),
-                _StatusChip(
-                  label: '단종',
-                  selected: statusFilter == 'discontinued',
-                  onTap: () => onStatusChanged('discontinued'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _StatusChip(
-                    label: '최신순',
-                    selected: sortOrder == 'latest',
-                    onTap: () => onSortChanged('latest'),
-                    fontSize: 12,
-                    horizontalPadding: 14,
-                    verticalPadding: 8,
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _StatusChip(
+                        label: '사용 가능',
+                        selected: statusFilter == 'active',
+                        onTap: () => onStatusChanged('active'),
+                        width: 96,
+                      ),
+                      _StatusChip(
+                        label: '단종',
+                        selected: statusFilter == 'discontinued',
+                        onTap: () => onStatusChanged('discontinued'),
+                        width: 96,
+                      ),
+                    ],
                   ),
-                  _StatusChip(
-                    label: '인기순',
-                    selected: sortOrder == 'popular',
-                    onTap: () => onSortChanged('popular'),
-                    fontSize: 12,
-                    horizontalPadding: 14,
-                    verticalPadding: 8,
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              _SortDropdown(
+                value: sortOrder,
+                onChanged: onSortChanged,
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SortDropdown extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _SortDropdown({
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 104,
+      height: 44,
+      padding: const EdgeInsets.only(left: 14, right: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFD1D5DB), width: 1.1),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Color(0xFF4B5563),
+          ),
+          borderRadius: BorderRadius.circular(8),
+          dropdownColor: Colors.white,
+          style: const TextStyle(
+            color: Color(0xFF4B5563),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: 'popular',
+              child: Text('인기순', overflow: TextOverflow.ellipsis),
+            ),
+            DropdownMenuItem(
+              value: 'latest',
+              child: Text('최신순', overflow: TextOverflow.ellipsis),
+            ),
+          ],
+          onChanged: (nextValue) {
+            if (nextValue == null) return;
+            onChanged(nextValue);
+          },
+        ),
       ),
     );
   }
@@ -1528,7 +1762,7 @@ class _CardProductTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1538,7 +1772,7 @@ class _CardProductTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF6B7280),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     const SizedBox(height: 7),
@@ -1599,7 +1833,7 @@ class _MetricPill extends StatelessWidget {
             style: const TextStyle(
               color: _cardInk,
               fontSize: 11,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -1642,7 +1876,7 @@ class _SourceCandidateTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1652,7 +1886,7 @@ class _SourceCandidateTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: _cardMuted,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   if (benefitText.isNotEmpty) ...[
@@ -1663,7 +1897,7 @@ class _SourceCandidateTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF303544),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                         height: 1.3,
                       ),
                     ),
@@ -1755,7 +1989,7 @@ class _CardRequestTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -1765,7 +1999,7 @@ class _CardRequestTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: _cardMuted,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -1779,7 +2013,7 @@ class _CardRequestTile extends StatelessWidget {
               style: const TextStyle(
                 color: Color(0xFF8A91A1),
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 10),
@@ -1877,7 +2111,7 @@ class _CardHeroImage extends StatelessWidget {
             style: const TextStyle(
               color: _cardInk,
               fontSize: 20,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w400,
               height: 1.18,
             ),
           ),
@@ -1887,7 +2121,7 @@ class _CardHeroImage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: _cardMuted,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w400,
             ),
           ),
           const SizedBox(height: 12),
@@ -1994,7 +2228,7 @@ class _IconInfoRow extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: Color(0xFF8A91A1),
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
@@ -2003,7 +2237,7 @@ class _IconInfoRow extends StatelessWidget {
               value,
               style: const TextStyle(
                 color: Color(0xFF252A36),
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w400,
                 height: 1.35,
               ),
             ),
@@ -2035,7 +2269,7 @@ class _BenefitsPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(2, 2, 2, 10),
           child: Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
           ),
         ),
         if (items.isEmpty)
@@ -2053,7 +2287,7 @@ class _BenefitsPanel extends StatelessWidget {
                 emptyMessage,
                 style: const TextStyle(
                   color: _cardMuted,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -2098,7 +2332,7 @@ class _BenefitRow extends StatelessWidget {
                     style: const TextStyle(
                       color: _cardInk,
                       fontSize: 15,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   if (item.description.isNotEmpty) ...[
@@ -2108,7 +2342,7 @@ class _BenefitRow extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFF555C6B),
                         height: 1.35,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -2138,7 +2372,7 @@ class _NoticePanel extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(2, 2, 2, 10),
           child: Text(
             '제외/유의 항목',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
           ),
         ),
         for (final item in items)
@@ -2174,10 +2408,297 @@ class _DetailSummaryPanel extends StatelessWidget {
           style: const TextStyle(
             color: Color(0xFF303544),
             height: 1.45,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w400,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CardTravelPanel extends StatelessWidget {
+  final CatalogCardProduct product;
+
+  const _CardTravelPanel({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_BenefitDisplayItem>[
+      if (product.isMileageCard)
+        _BenefitDisplayItem(
+          title: '항공 마일리지',
+          description: product.mileagePrograms.isEmpty
+              ? product.rewardProgram ?? '마일리지 적립 카드로 분류됩니다.'
+              : product.mileagePrograms.join(' · '),
+          iconAsset: _benefitIconAsset('마일리지 항공'),
+        ),
+      if (product.isTravelCard)
+        _BenefitDisplayItem(
+          title: '트래블/해외',
+          description: _firstNonEmpty([
+            product.travelFlags['summary'],
+            product.detailSummary,
+            '해외, 여행, 라운지 혜택을 함께 검토할 카드입니다.',
+          ]),
+          iconAsset: _benefitIconAsset('여행 해외 라운지'),
+        ),
+      if (product.loungeSummaryText.isNotEmpty)
+        _BenefitDisplayItem(
+          title: '공항 라운지',
+          description: product.loungeSummaryText,
+          iconAsset: _benefitIconAsset('라운지'),
+        ),
+    ];
+
+    if (items.isEmpty) {
+      return const _SectionPanel(
+        title: '마일리지/라운지/여행',
+        children: [
+          Text(
+            '아직 여행 특화 정보가 정리되지 않았습니다. 댓글과 토론으로 실제 혜택을 검증해보세요.',
+            style: TextStyle(
+              color: _cardMuted,
+              fontWeight: FontWeight.w400,
+              height: 1.38,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return _SectionPanel(
+      title: '마일리지/라운지/여행',
+      children: [
+        for (final item in items) ...[
+          _BenefitRow(item: item),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _CardEventSummarySection extends StatelessWidget {
+  final CardCatalogService service;
+  final CatalogCardProduct product;
+
+  const _CardEventSummarySection({
+    required this.service,
+    required this.product,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<CardEvent>>(
+      stream: service.watchEvents(cardId: product.id, limit: 12),
+      builder: (context, snapshot) {
+        final events = snapshot.data ?? const <CardEvent>[];
+        final fallbackText = product.eventSummaryText;
+        if (events.isEmpty && fallbackText.isEmpty) {
+          return const _SectionPanel(
+            title: '이벤트',
+            children: [
+              Text(
+                '진행중인 캐시백/연회비 이벤트가 확인되면 이곳에 표시됩니다.',
+                style: TextStyle(
+                  color: _cardMuted,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          );
+        }
+        return _SectionPanel(
+          title: '이벤트',
+          children: [
+            if (fallbackText.isNotEmpty)
+              _IconInfoRow(
+                iconAsset: _benefitIconAsset('캐시백 이벤트'),
+                label: '요약',
+                value: fallbackText,
+              ),
+            for (final event in events) ...[
+              _CardEventInlineTile(event: event),
+              const SizedBox(height: 8),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CardEventInlineTile extends StatelessWidget {
+  final CardEvent event;
+
+  const _CardEventInlineTile({required this.event});
+
+  Future<void> _openUrl() async {
+    final raw = event.applyUrl ?? event.sourceUrl;
+    if (raw == null || raw.trim().isEmpty) return;
+    final uri = Uri.tryParse(raw);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF8F9FB),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _BenefitIcon(asset: _benefitIconAsset('이벤트 캐시백'), size: 30),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.title,
+                    style: const TextStyle(fontWeight: FontWeight.w400),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    [
+                      event.displayBenefit,
+                      if (event.endsAt != null)
+                        '${DateFormat('M.d').format(event.endsAt!)}까지',
+                    ].join(' · '),
+                    style: const TextStyle(
+                      color: _cardMuted,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if ((event.applyUrl ?? event.sourceUrl)?.isNotEmpty == true)
+              IconButton(
+                tooltip: '출처 보기',
+                onPressed: _openUrl,
+                icon: const Icon(Icons.open_in_new_outlined, size: 19),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardSangtechPanel extends StatefulWidget {
+  final CatalogCardProduct product;
+
+  const _CardSangtechPanel({required this.product});
+
+  @override
+  State<_CardSangtechPanel> createState() => _CardSangtechPanelState();
+}
+
+class _CardSangtechPanelState extends State<_CardSangtechPanel> {
+  double _monthlyAmount = 1000000;
+
+  @override
+  Widget build(BuildContext context) {
+    final won = NumberFormat('#,###');
+    final perMile = _estimatedPerMileKRW(widget.product);
+    final miles = perMile <= 0 ? 0 : (_monthlyAmount / perMile).round();
+    final yearlyMiles = miles * 12;
+    final valueKRW = yearlyMiles * 15;
+
+    return _SectionPanel(
+      title: '상테크 계산',
+      children: [
+        Text(
+          '월 상품권/실적 반영 금액 ${won.format(_monthlyAmount.round())}원',
+          style: const TextStyle(
+            color: _cardInk,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        Slider(
+          value: _monthlyAmount,
+          min: 100000,
+          max: 5000000,
+          divisions: 49,
+          activeColor: const Color(0xFF74512D),
+          onChanged: (value) => setState(() => _monthlyAmount = value),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _MiniMetric(
+                label: '월 예상',
+                value: miles <= 0 ? '-' : '${won.format(miles)}마일',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MiniMetric(
+                label: '연 가치',
+                value: valueKRW <= 0 ? '-' : '${won.format(valueKRW)}원',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          perMile <= 0
+              ? '마일 적립률이 명확하지 않아 실제 댓글/토론 검증이 필요합니다.'
+              : '임시 기준: ${won.format(perMile)}원당 1마일, 1마일 15원 가치로 계산합니다.',
+          style: const TextStyle(
+            color: _cardMuted,
+            height: 1.35,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniMetric extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MiniMetric({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F5F7),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _cardLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: _cardMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              color: _cardInk,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2248,7 +2769,7 @@ class _IssuerFloatingButton extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
@@ -2366,7 +2887,7 @@ class _SectionPanel extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 12),
           ...children,
@@ -2428,7 +2949,7 @@ class _RevisionTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'v${revision.versionFrom} → v${revision.versionTo}',
-                      style: const TextStyle(fontWeight: FontWeight.w900),
+                      style: const TextStyle(fontWeight: FontWeight.w400),
                     ),
                   ),
                   TextButton.icon(
@@ -2445,7 +2966,7 @@ class _RevisionTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Color(0xFF5E6676),
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
               const SizedBox(height: 4),
@@ -2540,7 +3061,7 @@ class _RevisionActorSummary extends StatelessWidget {
                         style: const TextStyle(
                           color: Color(0xFF8A91A1),
                           fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -2552,7 +3073,7 @@ class _RevisionActorSummary extends StatelessWidget {
                       style: TextStyle(
                         color: _cardInk,
                         fontSize: dense ? 13 : 15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -2565,7 +3086,7 @@ class _RevisionActorSummary extends StatelessWidget {
                             ? const Color(0xFF2563EB)
                             : const Color(0xFF8A91A1),
                         fontSize: dense ? 11 : 12,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -2691,7 +3212,7 @@ class _DetailSectionCard extends StatelessWidget {
                     style: const TextStyle(
                       color: _cardInk,
                       fontSize: 16,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
@@ -2704,7 +3225,7 @@ class _DetailSectionCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Color(0xFF303544),
                   height: 1.48,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               )
             else
@@ -2716,81 +3237,30 @@ class _DetailSectionCard extends StatelessWidget {
   }
 }
 
-class _CardLikeActionButton extends StatefulWidget {
-  final CardCatalogService service;
-  final String cardId;
-  final int likesCount;
-  final VoidCallback? onRequireLogin;
+class _ActionMenuRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
 
-  const _CardLikeActionButton({
-    required this.service,
-    required this.cardId,
-    required this.likesCount,
-    required this.onRequireLogin,
+  const _ActionMenuRow({
+    required this.icon,
+    required this.label,
   });
 
   @override
-  State<_CardLikeActionButton> createState() => _CardLikeActionButtonState();
-}
-
-class _CardLikeActionButtonState extends State<_CardLikeActionButton> {
-  bool _toggling = false;
-
-  @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return IconButton(
-        tooltip: '좋아요 ${widget.likesCount}',
-        icon: const Icon(Icons.favorite_border_outlined),
-        onPressed: _toggleLike,
-      );
-    }
-
-    return StreamBuilder<bool>(
-      stream: widget.service.watchUserLike(
-        cardId: widget.cardId,
-        uid: user.uid,
-      ),
-      builder: (context, snapshot) {
-        final liked = snapshot.data == true;
-        return IconButton(
-          tooltip: liked ? '좋아요 취소' : '좋아요 ${widget.likesCount}',
-          icon: _toggling
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(
-                  liked ? Icons.favorite : Icons.favorite_border_outlined,
-                  color: liked ? const Color(0xFFE11D48) : null,
-                ),
-          onPressed: _toggling ? null : _toggleLike,
-        );
-      },
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: _cardInk),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: const TextStyle(
+            color: _cardInk,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
     );
-  }
-
-  Future<void> _toggleLike() async {
-    if (FirebaseAuth.instance.currentUser == null) {
-      Fluttertoast.showToast(msg: '로그인 후 좋아요를 누를 수 있습니다.');
-      widget.onRequireLogin?.call();
-      return;
-    }
-
-    setState(() => _toggling = true);
-    try {
-      final result = await widget.service.toggleCardProductLike(
-        cardId: widget.cardId,
-      );
-      Fluttertoast.showToast(
-          msg: result.liked ? '좋아요를 눌렀습니다.' : '좋아요를 취소했습니다.');
-    } catch (error) {
-      Fluttertoast.showToast(msg: '좋아요 처리에 실패했습니다: $error');
-    } finally {
-      if (mounted) setState(() => _toggling = false);
-    }
   }
 }
 
@@ -2839,7 +3309,7 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
                 '댓글을 불러오지 못했습니다: ${snapshot.error}',
                 style: const TextStyle(
                   color: _cardMuted,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               );
             }
@@ -2863,7 +3333,7 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
                   '아직 댓글이 없습니다.',
                   style: TextStyle(
                     color: _cardMuted,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               );
@@ -2906,7 +3376,7 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: _cardInk,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
@@ -3032,7 +3502,7 @@ class _CardCommentTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: _cardInk,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
@@ -3051,7 +3521,7 @@ class _CardCommentTile extends StatelessWidget {
                   style: const TextStyle(
                     color: _cardMuted,
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -3060,7 +3530,7 @@ class _CardCommentTile extends StatelessWidget {
                   style: const TextStyle(
                     color: Color(0xFF303544),
                     height: 1.38,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 if (onReply != null) ...[
@@ -3107,7 +3577,7 @@ class _ChangeDiff extends StatelessWidget {
         children: [
           Text(
             change.path,
-            style: const TextStyle(fontWeight: FontWeight.w900),
+            style: const TextStyle(fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 8),
           Text(
@@ -3144,7 +3614,7 @@ class _SmallPill extends StatelessWidget {
         style: const TextStyle(
           color: _cardInk,
           fontSize: 11,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w400,
         ),
       ),
     );
@@ -3155,17 +3625,13 @@ class _StatusChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final double fontSize;
-  final double horizontalPadding;
-  final double verticalPadding;
+  final double? width;
 
   const _StatusChip({
     required this.label,
     required this.selected,
     required this.onTap,
-    this.fontSize = 14,
-    this.horizontalPadding = 18,
-    this.verticalPadding = 10,
+    this.width,
   });
 
   @override
@@ -3180,10 +3646,10 @@ class _StatusChip extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
             curve: Curves.easeOut,
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: verticalPadding,
-            ),
+            width: width,
+            height: 44,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
               color: selected ? _cardInk : Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -3194,10 +3660,13 @@ class _StatusChip extends StatelessWidget {
             ),
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: selected ? Colors.white : const Color(0xFF4B5563),
-                fontWeight: FontWeight.w900,
-                fontSize: fontSize,
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
               ),
             ),
           ),
@@ -3231,7 +3700,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
             ),
             const SizedBox(height: 6),
             Text(
@@ -3374,6 +3843,34 @@ String _benefitIconAsset(String text) {
     return 'asset/icon/card_benefits/life.svg';
   }
   return 'asset/icon/card_benefits/default.svg';
+}
+
+int _estimatedPerMileKRW(CatalogCardProduct product) {
+  for (final value in [
+    product.raw['mileRuleUsedPerMileKRW'],
+    product.raw['creditPerMileKRW'],
+    product.raw['checkPerMileKRW'],
+    product.raw['perMileKRW'],
+    product.raw['milePerKRW'],
+  ]) {
+    if (value is num && value > 0) return value.toInt();
+    if (value is String) {
+      final parsed = int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
+      if (parsed != null && parsed > 0) return parsed;
+    }
+  }
+  final haystack = [
+    product.rewardProgram,
+    product.detailSummary,
+    ...product.primaryBenefits.map(displayValue),
+  ].whereType<String>().join(' ');
+  final match = RegExp(r'([0-9,]+)\s*원당\s*([0-9,]+)\s*마일').firstMatch(haystack);
+  if (match != null) {
+    final krw = int.tryParse(match.group(1)!.replaceAll(',', '')) ?? 0;
+    final miles = int.tryParse(match.group(2)!.replaceAll(',', '')) ?? 0;
+    if (krw > 0 && miles > 0) return (krw / miles).round();
+  }
+  return 0;
 }
 
 String? _cardIssuerUrl(CatalogCardProduct product) {

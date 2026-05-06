@@ -34,57 +34,7 @@ class _ShoppingMallGridState extends State<ShoppingMallGrid> {
   }
 
   Future<void> _handleMallTap(ShoppingMall mall) async {
-    // 카운트다운이 완료되었으면 땅콩 적립
-    final earnedPeanuts = await ShoppingMallService.handleMallClick(mall.id);
-    
-    // 토스트 먼저 표시
-    if (earnedPeanuts && mounted) {
-      Fluttertoast.showToast(
-        msg: '땅콩 ${mall.peanutReward}개를 모았습니다.',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.grey[800],
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    } else if (mounted) {
-      final remaining = await ShoppingMallService.getRemainingTime(mall.id);
-      if (remaining != null && remaining.inHours < 24) {
-        final timeStr = ShoppingMallService.formatTime(remaining);
-        Fluttertoast.showToast(
-          msg: '땅콩 획득까지 $timeStr 남았습니다',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.grey[800],
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      }
-    }
-
-    // 토스트가 표시될 시간을 주기 위해 짧은 딜레이
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    // 외부 브라우저로 이동
-    if (!mounted) return;
-    try {
-      final uri = Uri.parse(mall.url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        throw Exception('URL을 열 수 없습니다');
-      }
-    } catch (e) {
-      if (mounted) {
-        Fluttertoast.showToast(
-          msg: '링크를 열 수 없습니다',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
-      }
-    }
+    await _handleShoppingMallTap(mall, () => mounted);
   }
 
   @override
@@ -109,6 +59,154 @@ class _ShoppingMallGridState extends State<ShoppingMallGrid> {
         );
       },
     );
+  }
+}
+
+class ShoppingMallHorizontalScroll extends StatefulWidget {
+  final List<String> leadingMallIds;
+  final EdgeInsetsGeometry padding;
+  final double itemWidth;
+  final double height;
+
+  const ShoppingMallHorizontalScroll({
+    super.key,
+    this.leadingMallIds = const [],
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.itemWidth = 104,
+    this.height = 132,
+  });
+
+  @override
+  State<ShoppingMallHorizontalScroll> createState() =>
+      _ShoppingMallHorizontalScrollState();
+}
+
+class _ShoppingMallHorizontalScrollState
+    extends State<ShoppingMallHorizontalScroll> {
+  late final List<ShoppingMall> _malls;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _malls = _orderedShoppingMalls(widget.leadingMallIds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleMallTap(ShoppingMall mall) async {
+    await _handleShoppingMallTap(mall, () => mounted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: widget.height,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: widget.padding,
+        itemCount: _malls.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final mall = _malls[index];
+          return SizedBox(
+            width: widget.itemWidth,
+            child: _ShoppingMallItem(
+              key: ValueKey('horizontal_${mall.id}'),
+              mall: mall,
+              onTap: () => _handleMallTap(mall),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+List<ShoppingMall> _orderedShoppingMalls(List<String> leadingMallIds) {
+  final malls = ShoppingMall.getShoppingMalls();
+  if (leadingMallIds.isEmpty) return malls;
+
+  final leading = <ShoppingMall>[];
+  final usedIds = <String>{};
+  for (final id in leadingMallIds) {
+    for (final mall in malls) {
+      if (mall.id == id && usedIds.add(mall.id)) {
+        leading.add(mall);
+        break;
+      }
+    }
+  }
+
+  return [
+    ...leading,
+    ...malls.where((mall) => !usedIds.contains(mall.id)),
+  ];
+}
+
+Future<void> _handleShoppingMallTap(
+  ShoppingMall mall,
+  bool Function() isMounted,
+) async {
+  // 카운트다운이 완료되었으면 땅콩 적립
+  final earnedPeanuts = await ShoppingMallService.handleMallClick(mall.id);
+
+  // 토스트 먼저 표시
+  if (earnedPeanuts && isMounted()) {
+    Fluttertoast.showToast(
+      msg: '땅콩 ${mall.peanutReward}개를 모았습니다.',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.grey[800],
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  } else if (isMounted()) {
+    final remaining = await ShoppingMallService.getRemainingTime(mall.id);
+    if (remaining != null && remaining.inHours < 24) {
+      final timeStr = ShoppingMallService.formatTime(remaining);
+      Fluttertoast.showToast(
+        msg: '땅콩 획득까지 $timeStr 남았습니다',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  }
+
+  // 토스트가 표시될 시간을 주기 위해 짧은 딜레이
+  await Future.delayed(const Duration(milliseconds: 300));
+
+  // 외부 브라우저로 이동
+  if (!isMounted()) return;
+  try {
+    final uri = Uri.parse(mall.url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception('URL을 열 수 없습니다');
+    }
+  } catch (e) {
+    if (isMounted()) {
+      Fluttertoast.showToast(
+        msg: '링크를 열 수 없습니다',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
   }
 }
 
@@ -137,8 +235,10 @@ class _ShoppingMallItemState extends State<_ShoppingMallItem> {
   }
 
   Future<void> _updateTime() async {
-    final remaining = await ShoppingMallService.getRemainingTime(widget.mall.id);
-    final isComplete = await ShoppingMallService.isCountdownComplete(widget.mall.id);
+    final remaining =
+        await ShoppingMallService.getRemainingTime(widget.mall.id);
+    final isComplete =
+        await ShoppingMallService.isCountdownComplete(widget.mall.id);
 
     if (mounted) {
       setState(() {

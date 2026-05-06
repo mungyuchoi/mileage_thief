@@ -250,7 +250,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
 
   // 외부에서 호출할 수 있는 새로고침 메서드
   void refresh() {
-    _load();
+    _load(forceRefresh: true);
   }
 
   @override
@@ -261,7 +261,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     super.dispose();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       setState(() {
@@ -280,6 +280,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         periodType: _periodType,
         selectedMonth: _selectedMonth,
         selectedYear: _selectedYear,
+        forceRefresh: forceRefresh,
       );
       setState(() {
         _lots = data.lots;
@@ -1292,7 +1293,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       ),
     );
     if (mounted) {
-      _load();
+      _load(forceRefresh: true);
     }
   }
 
@@ -1414,7 +1415,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         return false;
       },
       child: RefreshIndicator(
-        onRefresh: _load,
+        onRefresh: () => _load(forceRefresh: true),
         color: const Color(0xFF74512D),
         backgroundColor: Colors.white,
         child: ListView(
@@ -2978,7 +2979,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       });
 
       if (!mounted) return;
-      await _load();
+      await _load(forceRefresh: true);
       Fluttertoast.showToast(msg: '판매 내역이 삭제되었습니다.');
     } catch (e) {
       debugPrint('판매 삭제 오류: $e');
@@ -3002,7 +3003,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       });
 
       if (!mounted) return;
-      await _load();
+      await _load(forceRefresh: true);
     } catch (e) {
       debugPrint('교환 상태 업데이트 오류: $e');
       Fluttertoast.showToast(msg: '교환 상태 업데이트 중 오류가 발생했습니다.');
@@ -3084,7 +3085,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
           .delete();
 
       if (!mounted) return;
-      await _load();
+      await _load(forceRefresh: true);
       Fluttertoast.showToast(msg: '구매 내역이 삭제되었습니다.');
     } catch (e) {
       debugPrint('구매 삭제 오류: $e');
@@ -3196,7 +3197,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                             builder: (_) =>
                                 GiftBuyScreen(editLotId: m['id'] as String?)),
                       );
-                      if (mounted) _load();
+                      if (mounted) _load(forceRefresh: true);
                     }, cost: 20);
                   },
                 ),
@@ -3323,7 +3324,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                             builder: (_) =>
                                 GiftSellScreen(editSaleId: m['id'] as String?)),
                       );
-                      if (mounted) _load();
+                      if (mounted) _load(forceRefresh: true);
                     }, cost: 20);
                   },
                 ),
@@ -3430,7 +3431,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         return false;
       },
       child: RefreshIndicator(
-        onRefresh: _load,
+        onRefresh: () => _load(forceRefresh: true),
         color: const Color(0xFF74512D),
         backgroundColor: Colors.white,
         child: GiftcardDailyLedger(
@@ -3458,7 +3459,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                       builder: (_) => GiftSellScreen(editSaleId: entry.id)),
                 );
               }
-              if (mounted) _load();
+              if (mounted) _load(forceRefresh: true);
             }, cost: 20);
           },
           onDelete: (entry) async {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'ad_manage_screen.dart';
+import 'admin_giftcard_deal_source_screen.dart';
 import 'admin_insight_manage_screen.dart';
 import 'admin_report_manage_screen.dart';
 import 'card_catalog_screen.dart';
@@ -148,6 +149,12 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '공용 카드 정보와 수정 히스토리를 확인합니다.',
                       icon: Icons.credit_card_outlined,
                       onTap: () => _open(const CardCatalogScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '상품권 특가 URL 관리',
+                      description: '매일 수집할 상품권 구매 링크와 가격 이력을 관리합니다.',
+                      icon: Icons.add_link_rounded,
+                      onTap: () => _open(const AdminGiftcardDealSourceScreen()),
                     ),
                   ],
                 ),

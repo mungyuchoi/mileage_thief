@@ -382,7 +382,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 20,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.normal,
                         ),
                       ),
                     ),
@@ -432,7 +432,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                             style: const TextStyle(
                                               color: Colors.black,
                                               fontSize: 17,
-                                              fontWeight: FontWeight.w900,
+                                              fontWeight: FontWeight.normal,
                                             ),
                                           ),
                                           if (description.isNotEmpty) ...[
@@ -444,7 +444,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               style: const TextStyle(
                                                 color: Color(0xFF707070),
                                                 fontSize: 12,
-                                                fontWeight: FontWeight.w600,
+                                                fontWeight: FontWeight.normal,
                                               ),
                                             ),
                                           ],
@@ -556,7 +556,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           color: Colors.black,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.normal,
           fontSize: 18,
         ),
       ),
@@ -733,7 +733,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               style: TextStyle(
                 color: isSelected ? Colors.black : const Color(0xFF858585),
                 fontSize: 17,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                fontWeight: FontWeight.normal,
                 height: 1.1,
               ),
             ),
@@ -792,7 +792,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           child: const Text(
                             '로그인 해주세요',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.normal,
                               fontSize: 16,
                               color: Colors.blue,
                               decoration: TextDecoration.underline,
@@ -858,7 +858,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       children: [
                                         Text(displayName,
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
+                                                fontWeight: FontWeight.normal,
                                                 fontSize: 16,
                                                 color: Colors.black)),
                                         Text('등급: $displayGrade',
@@ -910,7 +910,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 '등급',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.normal,
                                   color: Color(0xFF74512D),
                                 ),
                               ),
@@ -921,7 +921,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         return const Text(
                           '정보를 불러올 수 없습니다',
                           style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.normal,
                               fontSize: 16,
                               color: Colors.red),
                         );
@@ -954,9 +954,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         color: selectedBoardId == 'all'
                             ? Colors.white
                             : Colors.black87,
-                        fontWeight: selectedBoardId == 'all'
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                        fontWeight: FontWeight.normal,
                       ),
                     ),
                     selected: selectedBoardId == 'all',
@@ -1001,9 +999,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             color: selectedBoardId == boardId
                                 ? Colors.white
                                 : Colors.black87,
-                            fontWeight: selectedBoardId == boardId
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         // Lv2 이상 입장제한 배지
@@ -1038,7 +1034,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       'Lv.2+',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.normal,
                                         color: selectedBoardId == boardId
                                             ? Colors.white
                                             : const Color(0xFFEF6C00),

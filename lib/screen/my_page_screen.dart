@@ -20,10 +20,10 @@ import '../utils/image_compressor.dart';
 import '../screen/peanut_history_screen.dart';
 import '../utils/ad_removal_utils.dart';
 import '../services/card_transaction_service.dart';
+import '../widgets/shopping_mall_grid.dart';
 import 'my_card_dashboard_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/auth_service.dart';
 
 class MyPageScreen extends StatefulWidget {
   final bool highlightAds;
@@ -1923,6 +1923,9 @@ class _MyPageScreenState extends State<MyPageScreen>
                       // 스카이 이펙트 영역
                       _buildSkyEffectSection(),
                       const SizedBox(height: 8),
+                      // 쇼핑몰 땅콩 적립 영역
+                      _buildShoppingRewardSection(),
+                      const SizedBox(height: 8),
                       if (_shouldShowMyCardSection) ...[
                         // 내 카드 관리 영역
                         _buildMyCardSection(),
@@ -2506,6 +2509,34 @@ class _MyPageScreenState extends State<MyPageScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildShoppingRewardSection() {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '쇼핑몰 땅콩 적립',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          SizedBox(height: 12),
+          ShoppingMallHorizontalScroll(
+            leadingMallIds: ['coupang', 'kyobo'],
+          ),
+        ],
       ),
     );
   }

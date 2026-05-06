@@ -228,6 +228,11 @@ const CARD_PRODUCT_FIELDS = new Set([
   "previousMonthSpend",
   "brands",
   "primaryBenefits",
+  "benefitCategoryIds",
+  "mileagePrograms",
+  "travelFlags",
+  "loungeSummary",
+  "eventSummary",
   "calculatorRules",
   "exclusions",
   "detailSummary",
@@ -1029,6 +1034,11 @@ function normalizeCardGorillaProduct(source, issuerNameByIdx, copiedImage) {
     "카드사 미입력";
   const rawHash = cardHash(source);
   const topBenefits = normalizeCardGorillaTopBenefits(source.top_benefit);
+  const benefitCategoryIds = inferCardBenefitCategoryIds(source, topBenefits);
+  const mileagePrograms = inferMileagePrograms(source, topBenefits);
+  const travelFlags = inferTravelFlags(source, topBenefits);
+  const loungeSummary = inferLoungeSummary(source, topBenefits);
+  const eventSummary = normalizeCardGorillaEventSummary(source.event);
 
   return {
     name: requireCardText(source.name, "카드명"),
@@ -1047,6 +1057,11 @@ function normalizeCardGorillaProduct(source, issuerNameByIdx, copiedImage) {
     },
     brands: sanitizeCardJsonValue(source.brand || []),
     primaryBenefits: topBenefits,
+    benefitCategoryIds,
+    mileagePrograms,
+    travelFlags,
+    loungeSummary,
+    eventSummary,
     calculatorRules: [],
     exclusions: [],
     detailSummary: topBenefits
@@ -1072,6 +1087,150 @@ function normalizeCardGorillaProduct(source, issuerNameByIdx, copiedImage) {
       status: "sourceImported",
       parserVersion: 1,
     },
+  };
+}
+
+/**
+ * 카드 원문/혜택 텍스트를 하나의 검색 문자열로 합친다.
+ * @param {Object} source
+ * @param {Array<Object>} topBenefits
+ * @return {string}
+ */
+function cardBenefitHaystack(source, topBenefits) {
+  return [
+    source.name,
+    source.c_type,
+    source.cate_txt,
+    source.brand_txt,
+    source.annual_fee_basic,
+    source.annual_fee_detail,
+    source.censorship_info,
+    ...topBenefits.map((item) => `${item.title || ""} ${item.value || ""}`),
+  ].join(" ").toLowerCase();
+}
+
+/**
+ * 추천/차트용 혜택 카테고리 추론
+ * @param {Object} source
+ * @param {Array<Object>} topBenefits
+ * @return {Array<string>}
+ */
+function inferCardBenefitCategoryIds(source, topBenefits) {
+  const text = cardBenefitHaystack(source, topBenefits);
+  const categories = new Set();
+  const addIf = (id, words) => {
+    if (words.some((word) => text.includes(word))) {
+      categories.add(id);
+    }
+  };
+  addIf("mileage", ["마일", "mileage", "skypass", "스카이패스", "아시아나"]);
+  addIf("travel", ["여행", "트래블", "해외", "항공", "호텔", "면세"]);
+  addIf("lounge", ["라운지", "lounge", "pp카드", "priority pass"]);
+  addIf("pay", ["간편결제", "pay", "페이"]);
+  addIf("shopping", ["쇼핑", "백화점", "마트", "쿠팡"]);
+  addIf("food", ["음식", "푸드", "배달", "카페", "커피"]);
+  addIf("telecom", ["통신", "휴대폰", "인터넷"]);
+  addIf("transport", ["교통", "주유", "택시", "대중교통"]);
+  addIf("subscription", ["구독", "스트리밍", "ott"]);
+  addIf("giftcard", ["상품권", "상테크", "무실적", "실적"]);
+  return Array.from(categories);
+}
+
+/**
+ * 마일리지 프로그램명 추론
+ * @param {Object} source
+ * @param {Array<Object>} topBenefits
+ * @return {Array<string>}
+ */
+function inferMileagePrograms(source, topBenefits) {
+  const text = cardBenefitHaystack(source, topBenefits);
+  const programs = new Set();
+  if (text.includes("대한") || text.includes("skypass") ||
+      text.includes("스카이패스")) {
+    programs.add("대한항공");
+  }
+  if (text.includes("아시아나") || text.includes("asiana")) {
+    programs.add("아시아나");
+  }
+  if (text.includes("마일") || text.includes("mileage")) {
+    programs.add("항공마일리지");
+  }
+  return Array.from(programs);
+}
+
+/**
+ * 여행 관련 플래그 추론
+ * @param {Object} source
+ * @param {Array<Object>} topBenefits
+ * @return {Object}
+ */
+function inferTravelFlags(source, topBenefits) {
+  const text = cardBenefitHaystack(source, topBenefits);
+  return {
+    overseas: /해외|foreign|global/.test(text),
+    travel: /여행|트래블|travel|항공|호텔|면세/.test(text),
+    lounge: /라운지|lounge|priority pass|pp카드/.test(text),
+    noFxFee: /수수료\s*면제|해외.*수수료/.test(text),
+    summary: [
+      /해외|foreign|global/.test(text) ? "해외 이용" : "",
+      /라운지|lounge|priority pass|pp카드/.test(text) ? "라운지" : "",
+      /항공|마일|mileage/.test(text) ? "항공/마일" : "",
+    ].filter(Boolean).join(" · "),
+  };
+}
+
+/**
+ * 라운지 요약 추론
+ * @param {Object} source
+ * @param {Array<Object>} topBenefits
+ * @return {Object}
+ */
+function inferLoungeSummary(source, topBenefits) {
+  const text = cardBenefitHaystack(source, topBenefits);
+  if (!/라운지|lounge|priority pass|pp카드/.test(text)) {
+    return {};
+  }
+  const visitMatch = text.match(/연\s*([0-9]+)\s*회/);
+  return {
+    summary: visitMatch ? `공항라운지 연 ${visitMatch[1]}회` : "공항라운지 혜택",
+    annualVisits: visitMatch ? Number(visitMatch[1]) : null,
+  };
+}
+
+/**
+ * "최대 4.2만원" 같은 한국어 금액 문자열을 원 단위로 추정한다.
+ * @param {string|null} value
+ * @return {number}
+ */
+function extractKrwAmount(value) {
+  const text = String(value || "").replace(/,/g, "");
+  const man = text.match(/([0-9]+(?:\.[0-9]+)?)\s*만\s*원/);
+  if (man) {
+    return Math.round(Number(man[1]) * 10000);
+  }
+  const won = text.match(/([0-9]+)\s*원/);
+  return won ? Number(won[1]) : 0;
+}
+
+/**
+ * 카드고릴라 이벤트 요약
+ * @param {Object|null|undefined} event
+ * @return {Object}
+ */
+function normalizeCardGorillaEventSummary(event) {
+  if (!event || typeof event !== "object") {
+    return {};
+  }
+  const text = asOptionalString(event.card_detail_text) ||
+    asOptionalString(event.subject) ||
+    asOptionalString(event.title);
+  const amount = extractKrwAmount(text);
+  return {
+    type: asOptionalString(event.type),
+    title: asOptionalString(event.title),
+    summary: text,
+    cashbackKRW: amount,
+    sourceEventId: asIdString(event.idx || event.eid),
   };
 }
 
@@ -3388,7 +3547,6 @@ exports.searchCardSourceCandidates = onCall({
   timeoutSeconds: 120,
   memory: "512MiB",
 }, async (request) => {
-  requireAuthUid(request);
   const query = asOptionalString((request.data || {}).query) || "";
   const limit = Math.min(
       30,
@@ -3864,6 +4022,721 @@ exports.incrementCardProductView = onCall({
       viewsCount: nextViews,
     };
   });
+});
+
+/**
+ * 카드 매칭 테스트 입력 정규화
+ * @param {Object} input
+ * @return {Object}
+ */
+function normalizeCardPreferenceProfile(input) {
+  const data = isPlainObject(input) ? input : {};
+  const categories = Array.isArray(data.benefitCategoryIds) ?
+    data.benefitCategoryIds.map(String).slice(0, 20) :
+    [];
+  const monthlySpendKRW = Math.max(
+      0,
+      asOptionalNumber(data.monthlySpendKRW) || 1000000,
+  );
+  const spendCategories = normalizeCardSpendCategories(
+      data.spendCategories,
+      monthlySpendKRW,
+  );
+  const detailedSpend = sumSpendCategories(spendCategories);
+  return {
+    preferredAirline: asOptionalString(data.preferredAirline) || "대한항공",
+    monthlySpendKRW: detailedSpend > 0 ? detailedSpend : monthlySpendKRW,
+    spendCategories,
+    usesOverseas: data.usesOverseas !== false,
+    wantsLounge: data.wantsLounge !== false,
+    usesGiftcard: data.usesGiftcard !== false,
+    benefitCategoryIds: categories,
+    maxAnnualFeeKRW: Math.max(
+        0,
+        asOptionalNumber(data.maxAnnualFeeKRW) || 150000,
+    ),
+    maxPreviousMonthSpendKRW: Math.max(
+        0,
+        asOptionalNumber(data.maxPreviousMonthSpendKRW) || 500000,
+    ),
+    mileValueKRW: Math.max(1, asOptionalNumber(data.mileValueKRW) || 15),
+  };
+}
+
+/**
+ * 카드 추천용 상세 소비 항목 정규화
+ * @param {unknown} input
+ * @param {number} monthlySpendKRW
+ * @return {Object<string, number>}
+ */
+function normalizeCardSpendCategories(input, monthlySpendKRW) {
+  const defaults = defaultCardSpendCategories(monthlySpendKRW);
+  if (!isPlainObject(input)) {
+    return defaults;
+  }
+  const output = {...defaults};
+  Object.keys(defaults).forEach((key) => {
+    const value = asOptionalNumber(input[key]);
+    if (value !== null && value !== undefined && Number.isFinite(value)) {
+      output[key] = Math.max(0, Math.round(value));
+    }
+  });
+  return output;
+}
+
+/**
+ * 월 사용액을 상세 소비 항목으로 나눈 기본값
+ * @param {number} monthlySpendKRW
+ * @return {Object<string, number>}
+ */
+function defaultCardSpendCategories(monthlySpendKRW) {
+  const safeMonthlySpend = monthlySpendKRW > 0 ? monthlySpendKRW : 1000000;
+  const portion = (ratio) => Math.round(safeMonthlySpend * ratio);
+  return {
+    general: portion(0.50),
+    overseas: portion(0.10),
+    onlineShopping: portion(0.15),
+    mart: portion(0.10),
+    telecomSubscription: portion(0.10),
+    travel: portion(0.05),
+    giftcard: 0,
+  };
+}
+
+/**
+ * 상세 소비 항목 합계
+ * @param {Object<string, number>} spendCategories
+ * @return {number}
+ */
+function sumSpendCategories(spendCategories) {
+  return Object.values(spendCategories || {}).reduce(
+      (sum, value) => sum + Math.max(0, Number(value || 0)),
+      0,
+  );
+}
+
+/**
+ * 카드 문서의 추천 검색 문자열
+ * @param {Object} card
+ * @return {string}
+ */
+function catalogCardHaystack(card) {
+  const benefits = Array.isArray(card.primaryBenefits) ?
+    card.primaryBenefits.map((item) => {
+      if (!item || typeof item !== "object") {
+        return String(item || "");
+      }
+      return `${item.title || ""} ${item.value || ""} ${item.summary || ""}`;
+    }) :
+    [];
+  return [
+    card.name,
+    card.issuerName,
+    card.rewardProgram,
+    card.detailSummary,
+    ...(Array.isArray(card.benefitCategoryIds) ? card.benefitCategoryIds : []),
+    ...(Array.isArray(card.mileagePrograms) ? card.mileagePrograms : []),
+    ...benefits,
+  ].join(" ").toLowerCase();
+}
+
+/**
+ * 카드 문서가 마일리지형인지 확인
+ * @param {Object} card
+ * @return {boolean}
+ */
+function isMileageCatalogCard(card) {
+  return /마일|mileage|skypass|스카이패스|아시아나/.test(
+      catalogCardHaystack(card),
+  );
+}
+
+/**
+ * 카드 문서가 여행형인지 확인
+ * @param {Object} card
+ * @return {boolean}
+ */
+function isTravelCatalogCard(card) {
+  const flags = card.travelFlags || {};
+  return Object.values(flags).some((value) => value === true) ||
+    /여행|트래블|travel|해외|라운지|lounge|항공/.test(
+        catalogCardHaystack(card),
+    );
+}
+
+/**
+ * 카드 문서에서 대략적인 마일 적립 기준을 추정
+ * @param {Object} card
+ * @return {number}
+ */
+function estimatePerMileKRW(card) {
+  for (const key of [
+    "mileRuleUsedPerMileKRW",
+    "creditPerMileKRW",
+    "checkPerMileKRW",
+    "perMileKRW",
+    "milePerKRW",
+  ]) {
+    const value = asOptionalNumber(card[key]);
+    if (value && value > 0) {
+      return value;
+    }
+  }
+  const text = catalogCardHaystack(card);
+  const match = text.match(/([0-9,]+)\s*원당\s*([0-9,]+)\s*마일/);
+  if (match) {
+    const krw = Number(match[1].replace(/,/g, ""));
+    const miles = Number(match[2].replace(/,/g, ""));
+    if (krw > 0 && miles > 0) {
+      return Math.round(krw / miles);
+    }
+  }
+  return isMileageCatalogCard(card) ? 1000 : 0;
+}
+
+/**
+ * 텍스트나 숫자에서 첫 원화 금액을 추출한다.
+ * @param {unknown} value
+ * @return {?number}
+ */
+function extractFirstKrwNumber(value) {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.round(value);
+  }
+  if (typeof value !== "string") {
+    return null;
+  }
+  const normalized = value.replace(/만원/g, "0000");
+  const match = normalized.match(/([0-9][0-9,]*)/);
+  if (!match) {
+    return null;
+  }
+  const parsed = Number(match[1].replace(/,/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null;
+}
+
+/**
+ * 카드 문서에서 연회비를 추정한다.
+ * @param {Object} card
+ * @return {?number}
+ */
+function estimateAnnualFeeKRW(card) {
+  const annualFee = isPlainObject(card.annualFee) ? card.annualFee : {};
+  for (const key of [
+    "amountKRW",
+    "domesticKRW",
+    "overseasKRW",
+    "localKRW",
+    "summary",
+    "domestic",
+    "overseas",
+  ]) {
+    const value = extractFirstKrwNumber(annualFee[key]);
+    if (value) {
+      return value;
+    }
+  }
+  const rawValue = extractFirstKrwNumber(card.annualFeeKRW);
+  if (rawValue) {
+    return rawValue;
+  }
+  const summary = Object.values(annualFee).map(String).join(" ");
+  return extractFirstKrwNumber(summary);
+}
+
+/**
+ * 카드 매칭 점수 계산
+ * @param {string} cardId
+ * @param {Object} card
+ * @param {Object} profile
+ * @return {Object}
+ */
+function calculateCardMatch(cardId, card, profile) {
+  const text = catalogCardHaystack(card);
+  const reasons = [];
+  const communityScore = Math.max(0, Math.min(100,
+      Number(card.commentsCount || 0) * 12 +
+      Number(card.likesCount || 0) * 5 +
+      Math.floor(Number(card.viewsCount || 0) / 10),
+  ));
+  const perMile = estimatePerMileKRW(card);
+  const annualFeeKRW = estimateAnnualFeeKRW(card);
+  const mileValueKRW = Math.max(1, Number(profile.mileValueKRW || 15));
+  const giftcardSpend = Math.max(
+      0,
+      Number((profile.spendCategories || {}).giftcard || 0),
+  );
+  const overseasSpend = Math.max(
+      0,
+      Number((profile.spendCategories || {}).overseas || 0),
+  );
+  const travelSpend = Math.max(
+      0,
+      Number((profile.spendCategories || {}).travel || 0),
+  );
+  let mileageScore = isMileageCatalogCard(card) ? 42 : 0;
+  let sangtechScore = 10;
+  let travelScore = isTravelCatalogCard(card) ? 38 : 0;
+  let score = 25;
+
+  if (isMileageCatalogCard(card)) {
+    score += 18;
+    reasons.push("마일리지 적립 성향");
+  }
+  if (
+    profile.preferredAirline.includes("대한") &&
+    (text.includes("대한") || text.includes("skypass") ||
+      text.includes("스카이패스"))
+  ) {
+    score += 16;
+    mileageScore += 24;
+    reasons.push("대한항공 선호와 맞음");
+  }
+  if (profile.preferredAirline.includes("아시아나") &&
+      text.includes("아시아나")) {
+    score += 16;
+    mileageScore += 24;
+    reasons.push("아시아나 선호와 맞음");
+  }
+  if (profile.usesOverseas && isTravelCatalogCard(card)) {
+    score += 12;
+    travelScore += overseasSpend > 0 ? 18 : 10;
+    reasons.push("해외/여행 혜택");
+  }
+  if (profile.wantsLounge && /라운지|lounge|priority pass/.test(text)) {
+    score += 12;
+    travelScore += 22;
+    reasons.push("라운지 활용 가능");
+  }
+  if (profile.usesGiftcard && /실적|무실적|상품권|상테크/.test(text)) {
+    score += 7;
+    sangtechScore += 28;
+    reasons.push("상테크 검토 대상");
+  }
+  if (giftcardSpend > 0 && /실적|무실적|상품권|상테크/.test(text)) {
+    sangtechScore += 18;
+  }
+  if (card.eventSummary && Object.keys(card.eventSummary).length > 0) {
+    sangtechScore += 10;
+  }
+  if (travelSpend > 0 && isTravelCatalogCard(card)) {
+    travelScore += 12;
+  }
+
+  score += Math.min(10, Number(card.likesCount || 0));
+  score += Math.min(8, Number(card.commentsCount || 0) * 2);
+  score += Math.min(8, Math.floor(Number(card.viewsCount || 0) / 20));
+  const estimatedMonthlyMiles = perMile > 0 ?
+    Math.round(profile.monthlySpendKRW / perMile) :
+    0;
+  const estimatedAnnualValueKRW = estimatedMonthlyMiles * 12 * mileValueKRW;
+  const estimatedAnnualNetValueKRW = annualFeeKRW ?
+    estimatedAnnualValueKRW - annualFeeKRW :
+    null;
+  const breakEvenMonthlySpendKRW = annualFeeKRW && perMile > 0 ?
+    Math.round((annualFeeKRW * perMile) / (12 * mileValueKRW)) :
+    null;
+  mileageScore += Math.min(20, Math.floor(estimatedMonthlyMiles / 50));
+  sangtechScore += Math.min(18, Math.floor(estimatedAnnualValueKRW / 60000));
+  travelScore += Math.min(
+      10,
+      Math.floor((overseasSpend + travelSpend) / 100000),
+  );
+  mileageScore = Math.max(0, Math.min(100, mileageScore));
+  sangtechScore = Math.max(0, Math.min(100, sangtechScore));
+  travelScore = Math.max(0, Math.min(100, travelScore));
+  const overallScore = Math.round(
+      Math.max(0, Math.min(100, score)) * 0.38 +
+      sangtechScore * 0.27 +
+      mileageScore * 0.20 +
+      travelScore * 0.10 +
+      communityScore * 0.05,
+  );
+
+  return {
+    cardId,
+    score: overallScore,
+    overallScore,
+    sangtechScore,
+    mileageScore,
+    travelScore,
+    communityScore,
+    estimatedMonthlyMiles,
+    estimatedAnnualValueKRW,
+    annualFeeKRW,
+    estimatedAnnualNetValueKRW,
+    breakEvenMonthlySpendKRW,
+    reasons: reasons.length ? reasons : ["마일캐치 인기 카드"],
+    product: {
+      name: card.name,
+      issuerName: card.issuerName,
+      issuerId: card.issuerId || null,
+      cardType: card.cardType || "unknown",
+      status: card.status || "active",
+      sourceType: card.sourceType || "unknown",
+      rewardProgram: card.rewardProgram || null,
+      annualFee: card.annualFee || {},
+      previousMonthSpend: card.previousMonthSpend || {},
+      primaryBenefits: card.primaryBenefits || [],
+      exclusions: card.exclusions || [],
+      benefitCategoryIds: card.benefitCategoryIds || [],
+      mileagePrograms: card.mileagePrograms || [],
+      travelFlags: card.travelFlags || {},
+      loungeSummary: card.loungeSummary || {},
+      eventSummary: card.eventSummary || {},
+      sourceRefs: card.sourceRefs || {},
+      detailSummary: card.detailSummary || "",
+      images: card.images || {},
+      quality: card.quality || {},
+      likesCount: Number(card.likesCount || 0),
+      commentsCount: Number(card.commentsCount || 0),
+      viewsCount: Number(card.viewsCount || 0),
+    },
+  };
+}
+
+/**
+ * 카드 추천 섹션 묶음을 만든다.
+ * @param {Array<Object>} matches
+ * @return {Array<Object>}
+ */
+function buildCardRecommendationSections(matches) {
+  const by = (field) => [...matches].sort((left, right) =>
+    Number(right[field] || 0) - Number(left[field] || 0),
+  );
+  const eventMatches = [...matches]
+      .filter((match) => {
+        const summary = match.product && match.product.eventSummary;
+        return summary && Object.keys(summary).length > 0;
+      })
+      .sort((left, right) => right.sangtechScore - left.sangtechScore);
+  return [
+    {
+      key: "overall",
+      title: "내 소비 기준 TOP",
+      subtitle: "입력한 소비 패턴과 카드 기본 효율을 함께 본 추천입니다.",
+      matches: by("overallScore").slice(0, 10),
+    },
+    {
+      key: "sangtech",
+      title: "상테크 효율 TOP",
+      subtitle: "상품권/실적 루틴과 예상 마일 가치를 우선했습니다.",
+      matches: by("sangtechScore").slice(0, 10),
+    },
+    {
+      key: "mileage",
+      title: "항공 마일리지 TOP",
+      subtitle: "항공사 선호와 월 예상 마일을 기준으로 정렬했습니다.",
+      matches: by("mileageScore").slice(0, 10),
+    },
+    {
+      key: "travel",
+      title: "라운지/트래블 TOP",
+      subtitle: "해외결제, 여행, 라운지 활용도를 반영했습니다.",
+      matches: by("travelScore").slice(0, 10),
+    },
+    {
+      key: "event",
+      title: "이벤트 캐시백 추천",
+      subtitle: "진행 이벤트 요약이 있는 카드를 먼저 보여줍니다.",
+      matches: eventMatches.slice(0, 10),
+    },
+    {
+      key: "community",
+      title: "커뮤니티 검증 카드",
+      subtitle: "댓글, 좋아요, 조회 기반으로 실제 검증 신호를 봅니다.",
+      matches: by("communityScore").slice(0, 10),
+    },
+  ].filter((section) => section.matches.length > 0);
+}
+
+/**
+ * 추천 비교표에 넣을 대표 카드들을 고른다.
+ * @param {Array<Object>} sections
+ * @return {Array<Object>}
+ */
+function buildCardComparisonRows(sections) {
+  const seen = new Set();
+  const rows = [];
+  sections.forEach((section) => {
+    section.matches.slice(0, 4).forEach((match) => {
+      if (seen.has(match.cardId)) {
+        return;
+      }
+      seen.add(match.cardId);
+      rows.push(match);
+    });
+  });
+  return rows.slice(0, 14);
+}
+
+/**
+ * 1분 테스트 기반 카드 매칭 결과를 계산한다.
+ */
+exports.calculateCardMatches = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 60,
+  memory: "512MiB",
+}, async (request) => {
+  const data = request.data || {};
+  const profile = normalizeCardPreferenceProfile(data.profile || {});
+  const limit = Math.min(50, Math.max(1, asOptionalNumber(data.limit) || 20));
+
+  const snapshot = await cardCatalogRef()
+      .collection("cardProducts")
+      .where("status", "in", ["active", "pending"])
+      .limit(500)
+      .get();
+  const matches = snapshot.docs
+      .map((doc) => calculateCardMatch(doc.id, doc.data() || {}, profile))
+      .sort((left, right) => right.overallScore - left.overallScore);
+  const sections = buildCardRecommendationSections(matches)
+      .map((section) => ({
+        ...section,
+        matches: section.matches.slice(0, limit),
+      }));
+  const comparisonRows = buildCardComparisonRows(sections);
+  return {
+    profile,
+    matches: matches.slice(0, limit),
+    sections,
+    comparisonRows,
+  };
+});
+
+/**
+ * 랭킹 문서를 갱신한다.
+ */
+exports.refreshCardRankings = onCall({
+  region: CARD_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+  const snapshot = await cardCatalogRef()
+      .collection("cardProducts")
+      .where("status", "in", ["active", "pending"])
+      .limit(800)
+      .get();
+  const cards = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data() || {},
+  }));
+  const popularityScore = (card) =>
+    Number(card.commentsCount || 0) * 12 +
+    Number(card.likesCount || 0) * 6 +
+    Number(card.viewsCount || 0);
+  const keywordScore = (card, keywords) => {
+    const text = catalogCardHaystack(card).toLowerCase();
+    return keywords.reduce(
+        (score, keyword) => score + (text.includes(keyword) ? 1 : 0),
+        0,
+    );
+  };
+  const updatedMillis = (card) => {
+    const value = card.updatedAt || card.createdAt;
+    return value && typeof value.toMillis === "function" ? value.toMillis() : 0;
+  };
+  const compareByScore = (left, right, score) => {
+    const scoreDiff = score(right.data) - score(left.data);
+    if (scoreDiff !== 0) return scoreDiff;
+    const updatedDiff = updatedMillis(right.data) - updatedMillis(left.data);
+    if (updatedDiff !== 0) return updatedDiff;
+    return String(left.data.name || left.id).localeCompare(
+        String(right.data.name || right.id),
+        "ko",
+    );
+  };
+  const mileageKeywords = [
+    "마일",
+    "mileage",
+    "skypass",
+    "스카이패스",
+    "대한항공",
+    "아시아나",
+  ];
+  const travelKeywords = [
+    "여행",
+    "트래블",
+    "travel",
+    "해외",
+    "라운지",
+    "lounge",
+    "항공",
+    "호텔",
+  ];
+  const byPopularity = [...cards].sort((left, right) =>
+    compareByScore(left, right, popularityScore),
+  );
+  const mileage = cards
+      .filter((item) => isMileageCatalogCard(item.data))
+      .sort((left, right) =>
+        compareByScore(
+            left,
+            right,
+            (card) => keywordScore(card, mileageKeywords) * 1000 +
+              popularityScore(card),
+        ),
+      );
+  const travel = cards
+      .filter((item) => isTravelCatalogCard(item.data))
+      .sort((left, right) =>
+        compareByScore(
+            left,
+            right,
+            (card) => keywordScore(card, travelKeywords) * 1000 +
+              popularityScore(card),
+        ),
+      );
+
+  const rankings = {
+    popular: {
+      title: "마일캐치 인기순",
+      basis: "댓글 12점 + 좋아요 6점 + 조회 1점",
+      periodLabel: "실시간",
+      cardIds: byPopularity.map((item) => item.id).slice(0, 100),
+    },
+    mileage: {
+      title: "항공마일리지 TOP",
+      basis: "마일리지 적합도 + 실시간 반응",
+      periodLabel: "실시간",
+      cardIds: mileage.map((item) => item.id).slice(0, 100),
+    },
+    travel: {
+      title: "라운지/트래블 TOP",
+      basis: "여행/라운지 적합도 + 실시간 반응",
+      periodLabel: "실시간",
+      cardIds: travel.map((item) => item.id).slice(0, 100),
+    },
+  };
+
+  const batch = admin.firestore().batch();
+  Object.entries(rankings).forEach(([key, value]) => {
+    batch.set(
+        cardCatalogRef().collection("cardRankings").doc(key),
+        {
+          ...value,
+          calculatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedByUid: uid,
+        },
+        {merge: true},
+    );
+  });
+  await batch.commit();
+  return {
+    updated: Object.keys(rankings),
+    counts: {
+      products: cards.length,
+      mileage: mileage.length,
+      travel: travel.length,
+    },
+  };
+});
+
+/**
+ * 카드고릴라 이벤트 항목 정규화
+ * @param {Object} item
+ * @return {Object|null}
+ */
+function normalizeCardGorillaEvent(item) {
+  if (!item || typeof item !== "object") {
+    return null;
+  }
+  const idx = asIdString(item.idx || item.eid);
+  if (!idx) {
+    return null;
+  }
+  const rawCardIds = Array.isArray(item.card_idxs) ?
+    item.card_idxs :
+    String(item.card_idxs || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+  const cardIds = rawCardIds
+      .map((value) => asIdString(value))
+      .filter(Boolean)
+      .map((value) => `cg_${value}`);
+  const title = asOptionalString(item.title) ||
+    asOptionalString(item.subject) ||
+    "카드 이벤트";
+  const subject = asOptionalString(item.subject);
+  const eventUrl = asOptionalString(item.event_url);
+  const absoluteEventUrl = eventUrl && eventUrl.startsWith("http") ?
+    eventUrl :
+    null;
+  const startsAt = asOptionalDate(item.evt_start_time);
+  const endsAt = asOptionalDate(item.evt_end_time);
+  const benefitText = asOptionalString(item.card_detail_text) || subject;
+  return {
+    eventId: `cg_${idx}`,
+    data: {
+      sourceType: "cardGorilla",
+      sourceRefs: {
+        cardGorilla: {
+          idx,
+          eventUrl: `https://www.card-gorilla.com/event/detail/${idx}`,
+        },
+      },
+      title,
+      issuerName: asOptionalString(item.corp_name) || "카드사",
+      issuerId: item.corp_idx ? `cg_${asIdString(item.corp_idx)}` : null,
+      type: asOptionalString(item.type) || "event",
+      subject,
+      cardIds,
+      benefitText,
+      benefitAmountKRW: extractKrwAmount(benefitText),
+      applyUrl: absoluteEventUrl,
+      sourceUrl: `https://www.card-gorilla.com/event/detail/${idx}`,
+      startsAt,
+      endsAt,
+      isVisible: item.is_visible !== false,
+      isLive: item.is_live !== false && item.evt_status !== "E",
+      raw: sanitizeCardJsonValue(item),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  };
+}
+
+/**
+ * 카드 이벤트를 공개 데이터에서 동기화한다.
+ */
+exports.syncCardEvents = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 120,
+  memory: "512MiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+  const limit = Math.min(
+      200,
+      Math.max(1, asOptionalNumber((request.data || {}).limit) || 80),
+  );
+  const response = await globalThis.fetch(
+      `${CARD_GORILLA_API_BASE}/events?p=1&perPage=${limit}`,
+  );
+  if (!response.ok) {
+    throw new HttpsError("unavailable", "카드 이벤트를 가져오지 못했습니다.");
+  }
+  const payload = await response.json();
+  const items = Array.isArray(payload) ? payload : payload.data || [];
+  const normalized = items.map(normalizeCardGorillaEvent).filter(Boolean);
+  const batch = admin.firestore().batch();
+  normalized.forEach((event) => {
+    batch.set(
+        cardCatalogRef().collection("cardEvents").doc(event.eventId),
+        {
+          ...event.data,
+          syncedByUid: uid,
+        },
+        {merge: true},
+    );
+  });
+  if (normalized.length > 0) {
+    await batch.commit();
+  }
+  return {
+    requested: limit,
+    imported: normalized.length,
+  };
 });
 
 /**
