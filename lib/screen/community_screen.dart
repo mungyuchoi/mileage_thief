@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'dart:async';
 import '../const/colors.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
@@ -78,6 +76,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   static const String _gradeGuidePostDateString = '20250825';
   static const String _gradeGuideBoardId = 'notice';
   static const double _drawerBottomScrollPadding = 168;
+  static const double _postListBottomScrollPadding = 168;
 
   static const List<_CommunityBoardTab> _communityTabs = [
     _CommunityBoardTab(
@@ -168,16 +167,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 초기 로딩 상태 관리
   bool _isInitialLoading = true;
 
-  // 이펙트 캐시 (성능 최적화)
-  static final Map<String, Map<String, dynamic>> _effectCache = {};
+  // 본문 파싱 캐시 (스크롤 중 반복 작업 방지)
+  static final RegExp _htmlBreakRegExp =
+      RegExp(r'<br\s*/?>', caseSensitive: false);
+  static final RegExp _htmlTagRegExp = RegExp(r'<[^>]*>');
+  static final RegExp _htmlEntityRegExp = RegExp(r'&[^;]+;');
+  static final RegExp _imageTagRegExp =
+      RegExp('<img[^>]+src=["\']([^"\']+)["\']', caseSensitive: false);
 
-  // 스크롤 상태 추적 (애니메이션 최적화)
-  bool _isScrolling = false;
-  Timer? _scrollTimer;
+  final Map<String, String> _postPreviewTextCache = {};
+  final Map<String, String?> _bestImageUrlCache = {};
 
   void _safeSetState(VoidCallback fn) {
     if (!mounted) return;
     setState(fn);
+  }
+
+  void _clearPostRenderCaches() {
+    _postPreviewTextCache.clear();
+    _bestImageUrlCache.clear();
   }
 
   String _normalizedInitialBoardId() {
@@ -205,6 +213,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (selectedBoardId == boardId && selectedBoardName == boardName) return;
 
     setState(() {
+      _clearPostRenderCaches();
       selectedBoardId = boardId;
       selectedBoardName = boardName;
       _posts.clear();
@@ -244,7 +253,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _scrollTimer?.cancel();
     super.dispose();
   }
 
@@ -677,6 +685,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
 
     setState(() {
+      _clearPostRenderCaches();
       selectedBoardId = boardId;
       selectedBoardName = boardName;
       _posts.clear();
@@ -1119,8 +1128,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
                             return ListView.separated(
                               controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 8),
+                              padding: const EdgeInsets.fromLTRB(
+                                8,
+                                8,
+                                8,
+                                8 + _postListBottomScrollPadding,
+                              ),
                               itemCount: itemCount,
                               separatorBuilder: (context, index) {
                                 // 베스트 섹션과 목록 사이에는 기본 간격 유지
@@ -1161,16 +1174,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   return const SizedBox.shrink();
                                 }
 
-                                final post = _posts[adjustedIndex].data()
-                                    as Map<String, dynamic>;
+                                final doc = _posts[adjustedIndex];
+                                final post = doc.data() as Map<String, dynamic>;
                                 final createdAt =
                                     (post['createdAt'] as Timestamp?)
                                             ?.toDate() ??
                                         DateTime.now();
-
-                                // HTML 태그 제거해서 미리보기 텍스트 만들기
-                                String plainText =
-                                    _removeHtmlTags(post['contentHtml'] ?? '');
 
                                 // 뷰 모드에 따라 다른 위젯 반환
                                 if (isCompactView) {
@@ -1178,6 +1187,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       post, createdAt, adjustedIndex);
                                 }
 
+                                // HTML 태그 제거해서 미리보기 텍스트 만들기
+                                final plainText =
+                                    _previewTextForPost(doc, post);
+                                final thumbnailUrl =
+                                    _firstImageUrlForPost(doc, post);
                                 final readRestriction =
                                     CommunityAccessLevel.restrictionFromPost(
                                         post);
@@ -1208,31 +1222,46 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                           _buildCardAuthorRow(post, createdAt),
                                           const SizedBox(height: 10),
 
-                                          // 제목 (굵게) + 최신 키워드
                                           Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Expanded(
-                                                child: Text(
-                                                  post['title'] ?? '제목 없음',
-                                                  style: McTextStyles.cardTitle,
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      post['title'] ?? '제목 없음',
+                                                      style: McTextStyles
+                                                          .cardTitle,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    if (plainText.isNotEmpty)
+                                                      Text(
+                                                        plainText,
+                                                        style: McTextStyles.meta
+                                                            .copyWith(
+                                                          fontSize: 13,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                  ],
                                                 ),
                                               ),
+                                              if (thumbnailUrl != null) ...[
+                                                const SizedBox(width: 12),
+                                                _buildPostThumbnail(
+                                                  thumbnailUrl,
+                                                ),
+                                              ],
                                             ],
                                           ),
-                                          const SizedBox(height: 6),
-
-                                          // contentHtml 텍스트로만 1줄
-                                          if (plainText.isNotEmpty)
-                                            Text(
-                                              plainText,
-                                              style: McTextStyles.meta
-                                                  .copyWith(fontSize: 13),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
                                           const SizedBox(height: 10),
 
                                           // 조회수, 열람 제한, 댓글, 좋아요
@@ -1321,26 +1350,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   // 스크롤 리스너
   void _onScroll() {
-    // 스크롤 상태 추적
-    if (!_isScrolling) {
-      _safeSetState(() {
-        _isScrolling = true;
-      });
-    }
-
-    // 기존 타이머 취소
-    _scrollTimer?.cancel();
-
-    // 스크롤 멈춤 감지 (300ms 후)
-    _scrollTimer = Timer(const Duration(milliseconds: 300), () {
-      _safeSetState(() {
-        _isScrolling = false;
-      });
-    });
-
     // 무한 스크롤 로직
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasMoreData) {
         _loadMorePosts();
       }
@@ -1545,6 +1557,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   // 게시판 변경 시 데이터 새로고침
   void _refreshPosts() {
     setState(() {
+      _clearPostRenderCaches();
       _posts.clear();
       _lastDocument = null;
       _hasMoreData = true;
@@ -1560,29 +1573,58 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (htmlString.isEmpty) return '';
 
     // <br> 태그가 나오기 전까지의 HTML만 추출
-    String beforeBr =
-        htmlString.split(RegExp(r'<br\s*/?>', caseSensitive: false))[0];
+    final brMatch = _htmlBreakRegExp.firstMatch(htmlString);
+    final beforeBr =
+        brMatch == null ? htmlString : htmlString.substring(0, brMatch.start);
 
     // HTML 태그 제거
-    String cleaned = beforeBr
-        .replaceAll(RegExp(r'<[^>]*>'), '') // 모든 HTML 태그 제거
-        .replaceAll(RegExp(r'&[^;]+;'), '') // HTML 엔티티 제거
+    final cleaned = beforeBr
+        .replaceAll(_htmlTagRegExp, '') // 모든 HTML 태그 제거
+        .replaceAll(_htmlEntityRegExp, '') // HTML 엔티티 제거
         .trim();
 
     return cleaned;
+  }
+
+  String _previewTextForPost(
+    DocumentSnapshot doc,
+    Map<String, dynamic> post,
+  ) {
+    final cacheKey = doc.reference.path;
+    if (_postPreviewTextCache.containsKey(cacheKey)) {
+      return _postPreviewTextCache[cacheKey]!;
+    }
+
+    final htmlString = (post['contentHtml'] ?? '').toString();
+    final preview = _removeHtmlTags(htmlString);
+    _postPreviewTextCache[cacheKey] = preview;
+    return preview;
   }
 
   // contentHtml에서 첫 번째 이미지 URL 추출
   String? _extractFirstImageUrl(String htmlString) {
     if (htmlString.isEmpty) return null;
 
-    final imgTag =
-        RegExp('<img[^>]+src=["\']([^"\']+)["\']', caseSensitive: false)
-            .firstMatch(htmlString);
+    final imgTag = _imageTagRegExp.firstMatch(htmlString);
     if (imgTag != null && imgTag.groupCount >= 1) {
       return imgTag.group(1);
     }
     return null;
+  }
+
+  String? _firstImageUrlForPost(
+    DocumentSnapshot doc,
+    Map<String, dynamic> post,
+  ) {
+    final cacheKey = doc.reference.path;
+    if (_bestImageUrlCache.containsKey(cacheKey)) {
+      return _bestImageUrlCache[cacheKey];
+    }
+
+    final htmlString = (post['contentHtml'] ?? '').toString();
+    final imageUrl = _extractFirstImageUrl(htmlString);
+    _bestImageUrlCache[cacheKey] = imageUrl;
+    return imageUrl;
   }
 
   // boardId로 게시판 이름 가져오기
@@ -1654,6 +1696,33 @@ class _CommunityScreenState extends State<CommunityScreen> {
           style: TextStyle(fontSize: fontSize, color: color),
         ),
       ],
+    );
+  }
+
+  Widget _buildPostThumbnail(String imageUrl) {
+    const size = 72.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        imageUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        cacheWidth: 216,
+        cacheHeight: 216,
+        filterQuality: FilterQuality.low,
+        errorBuilder: (_, __, ___) => Container(
+          width: size,
+          height: size,
+          color: const Color(0xFFF0F0F0),
+          child: const Icon(
+            Icons.image_not_supported_outlined,
+            size: 20,
+            color: Colors.black26,
+          ),
+        ),
+      ),
     );
   }
 
@@ -1753,11 +1822,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
+                Container(
+                  width: 80,
                   height: 80,
-                  child: Lottie.network(
-                    'https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/lottie%2Flock.json?alt=media&token=db2b5411-d1ce-4f23-8a66-23a349fcaf91',
-                    repeat: true,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF8DC),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    color: Color(0xFF74512D),
+                    size: 40,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -2101,7 +2176,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               final data = doc.data() as Map<String, dynamic>;
               final createdAt =
                   (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-              final imageUrl = _extractFirstImageUrl(data['contentHtml'] ?? '');
+              final imageUrl = _firstImageUrlForPost(doc, data);
 
               return GestureDetector(
                 onTap: () => _openPostDocument(doc),
@@ -2128,6 +2203,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             child: Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
+                              cacheWidth: 480,
+                              cacheHeight: 480,
+                              filterQuality: FilterQuality.low,
                             ),
                           )
                         else
@@ -2202,106 +2280,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  // 스카이 이펙트 미리보기 위젯 (캐시 최적화)
-  Widget _buildSkyEffectPreview(String? effectId) {
-    if (effectId == null || effectId.isEmpty) return const SizedBox.shrink();
-
-    // 캐시에서 먼저 확인
-    if (_effectCache.containsKey(effectId)) {
-      final cachedData = _effectCache[effectId]!;
-      final lottieUrl = cachedData['lottieUrl'] as String?;
-
-      if (lottieUrl != null && lottieUrl.isNotEmpty) {
-        return Lottie.network(
-          lottieUrl,
-          width: 20,
-          height: 20,
-          fit: BoxFit.contain,
-          repeat: true,
-          animate: !_isScrolling, // 스크롤 중일 때는 애니메이션 멈춤
-          // 캐싱 옵션 추가
-          options: LottieOptions(
-            enableMergePaths: false, // 성능 최적화
-          ),
-          // 에러 처리
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.auto_awesome,
-                color: Color(0xFF74512D), size: 12);
-          },
-        );
-      } else {
-        return const Icon(Icons.auto_awesome,
-            color: Color(0xFF74512D), size: 12);
-      }
-    }
-
-    // 캐시에 없으면 Firestore에서 로드
-    return FutureBuilder<DocumentSnapshot>(
-      future:
-          FirebaseFirestore.instance.collection('effects').doc(effectId).get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            width: 20,
-            height: 20,
-            child: Center(
-              child: SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: Color(0xFF74512D),
-                ),
-              ),
-            ),
-          );
-        }
-
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Icon(Icons.auto_awesome,
-              color: Color(0xFF74512D), size: 12);
-        }
-
-        final data = snapshot.data!.data() as Map<String, dynamic>;
-        final lottieUrl = data['lottieUrl'] as String?;
-
-        // 캐시에 저장
-        _effectCache[effectId] = data;
-
-        if (lottieUrl != null && lottieUrl.isNotEmpty) {
-          return Lottie.network(
-            lottieUrl,
-            width: 20,
-            height: 20,
-            fit: BoxFit.contain,
-            repeat: true,
-            animate: !_isScrolling, // 스크롤 중일 때는 애니메이션 멈춤
-            // 캐싱 옵션 추가
-            options: LottieOptions(
-              enableMergePaths: false, // 성능 최적화
-            ),
-            // 에러 처리
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.auto_awesome,
-                  color: Color(0xFF74512D), size: 12);
-            },
-          );
-        } else {
-          return const Icon(Icons.auto_awesome,
-              color: Color(0xFF74512D), size: 12);
-        }
-      },
-    );
-  }
-
   // 카드 작성자 Row를 반드시 함수로 분리해서 사용하도록 수정합니다.
   Widget _buildCardAuthorRow(Map<String, dynamic> post, DateTime createdAt) {
     final photoURL =
         post['author']?['photoURL'] ?? post['author']?['profileImageUrl'] ?? '';
     final displayName = post['author']['displayName'] ?? '익명';
     final isRecent = DateTime.now().difference(createdAt).inHours < 2;
-    final hasSkyEffect = post['author']?['currentSkyEffect'] != null &&
-        (post['author']['currentSkyEffect'] as String).isNotEmpty;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2318,15 +2302,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   ? const Icon(Icons.person, color: Colors.black54, size: 18)
                   : null,
             ),
-            SizedBox(width: hasSkyEffect ? 4 : 8), // 스카이 이펙트가 있으면 4, 없으면 8
-            if (hasSkyEffect)
-              SizedBox(
-                width: 24,
-                height: 24,
-                child:
-                    _buildSkyEffectPreview(post['author']['currentSkyEffect']),
-              ),
-            if (hasSkyEffect) const SizedBox(width: 4), // 스카이 이펙트가 있을 때만 추가 간격
+            const SizedBox(width: 8),
             Text(
               displayName,
               style: McTextStyles.bodyStrong,

@@ -4780,7 +4780,7 @@ class _HtmlNetworkVideoPlayerState extends State<_HtmlNetworkVideoPlayer> {
       alignment: Alignment.bottomCenter,
       children: [
         VideoPlayer(_controller!),
-        _PlayPauseOverlay(controller: _controller!),
+        _VideoTapDetector(controller: _controller!),
         VideoProgressIndicator(_controller!, allowScrubbing: true),
       ],
     );
@@ -4794,13 +4794,14 @@ class _HtmlNetworkVideoPlayerState extends State<_HtmlNetworkVideoPlayer> {
   }
 }
 
-class _PlayPauseOverlay extends StatelessWidget {
+class _VideoTapDetector extends StatelessWidget {
   final VideoPlayerController controller;
-  const _PlayPauseOverlay({required this.controller});
+  const _VideoTapDetector({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         if (controller.value.isPlaying) {
           controller.pause();
@@ -4808,26 +4809,7 @@ class _PlayPauseOverlay extends StatelessWidget {
           controller.play();
         }
       },
-      child: Stack(
-        children: <Widget>[
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: controller.value.isPlaying
-                ? const SizedBox.shrink()
-                : Container(
-                    color: Colors.black26,
-                    child: const Center(
-                      child: Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 56.0,
-                        semanticLabel: 'Play',
-                      ),
-                    ),
-                  ),
-          ),
-        ],
-      ),
+      child: const SizedBox.expand(),
     );
   }
 }
