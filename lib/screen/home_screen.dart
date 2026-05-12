@@ -447,6 +447,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late TabController _giftcardTabController; // 상품권 탭 전용 TabController
   String _communityInitialBoardId = 'all';
   String _communityInitialBoardName = '전체글';
+  static const String _giftcardGuideBoardId = 'milecatch_guide';
+  static const String _giftcardGuideBoardName = '마일캐치 사용법';
 
   // 공지사항 제목을 저장할 변수
   String _communityNoticeTitle = '';
@@ -462,6 +464,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _selectHomeTab(_HomeTab tab) {
     setState(() {
+      if (tab != _HomeTab.giftcard) {
+        _giftFabOpen = false;
+        _isScrolling = false;
+      }
       _currentTab = tab;
     });
   }
@@ -478,6 +484,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _communityInitialBoardId = nextBoardId;
       _communityInitialBoardName = nextBoardName;
+      _giftFabOpen = false;
+      _isScrolling = false;
       _currentTab = _HomeTab.community;
     });
   }
@@ -618,6 +626,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _communityInitialBoardId = 'all';
         _communityInitialBoardName = '전체글';
       }
+      if (nextTab != _HomeTab.giftcard) {
+        _giftFabOpen = false;
+        _isScrolling = false;
+      }
       _currentTab = nextTab;
     });
   }
@@ -686,19 +698,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Widget> _buildGiftcardAppBarActions() {
     return <Widget>[
       ..._buildDefaultAppBarActions(),
-      Builder(builder: (context) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return const SizedBox.shrink();
-        return IconButton(
-          icon: const Icon(Icons.send_rounded, color: Colors.black),
-          onPressed: () async {
-            final uri = Uri.parse('https://t.me/+6ZxoqIXFsI5kMzVl');
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
-          },
-        );
-      }),
+      IconButton(
+        tooltip: '상품권 사용법',
+        icon: const Icon(Icons.info_outline, color: Colors.black),
+        onPressed: _openGiftcardGuide,
+      ),
       Builder(builder: (context) {
         final user = FirebaseAuth.instance.currentUser;
         if (user == null) {
@@ -799,6 +803,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  void _openGiftcardGuide() {
+    _openCommunityTab(
+      boardId: _giftcardGuideBoardId,
+      boardName: _giftcardGuideBoardName,
+    );
+  }
+
   void _setGiftcardScrolling(bool isScrolling) {
     if (_isScrolling == isScrolling) return;
     setState(() {
@@ -807,8 +818,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   bool _handleGiftcardScrollNotification(ScrollNotification notification) {
-    if (notification is ScrollStartNotification ||
-        notification is ScrollUpdateNotification) {
+    if (notification is ScrollStartNotification) {
       _setGiftcardScrolling(true);
     } else if (notification is ScrollEndNotification) {
       _setGiftcardScrolling(false);

@@ -63,46 +63,58 @@ Future<void> showGiftcardDealAlertEditor(
 }
 
 class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
+  static const List<String> _preferredBrandOrder = ['현대', '롯데', '신세계'];
+
+  late final Stream<List<GiftcardDeal>> _dealsStream;
+  late final List<GiftcardDeal>? _initialDeals;
+
   String _brandFilter = '전체';
+  List<GiftcardDeal>? _cachedViewModelSource;
+  String? _cachedViewModelBrandFilter;
+  _GiftcardDealsViewModel? _cachedViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _dealsStream = GiftcardDealService.watchDeals();
+    _initialDeals = GiftcardDealService.peekDeals();
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<GiftcardDeal>>(
-      stream: GiftcardDealService.watchDeals(),
-      initialData: GiftcardDealService.peekDeals(),
+      stream: _dealsStream,
+      initialData: _initialDeals,
       builder: (context, snapshot) {
         final deals = snapshot.data ?? const <GiftcardDeal>[];
-        final availableBrands = deals
-            .map((deal) => deal.brandName)
-            .where((name) => name.isNotEmpty)
-            .toSet();
-        final preferredBrands =
-            ['현대', '롯데', '신세계'].where(availableBrands.contains).toList();
-        final otherBrands = availableBrands
-            .where((brand) => !preferredBrands.contains(brand))
-            .toList()
-          ..sort();
-        final brands = ['전체', ...preferredBrands, ...otherBrands];
-        final filtered = deals
-            .where((deal) =>
-                _brandFilter == '전체' || deal.brandName == _brandFilter)
-            .toList()
-          ..sort((a, b) {
-            final rate = b.discountRate.compareTo(a.discountRate);
-            if (rate != 0) return rate;
-            return a.priceKRW.compareTo(b.priceKRW);
-          });
+        final viewModel = _viewModelFor(deals);
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              Future<void>.delayed(const Duration(milliseconds: 350)),
+          onRefresh: () async {
+            try {
+              await GiftcardDealService.loadTopDeals(
+                limit: 80,
+                forceRefresh: true,
+              );
+            } catch (_) {
+              Fluttertoast.showToast(msg: '특가 정보를 새로고침하지 못했습니다.');
+            }
+            if (!mounted) return;
+            setState(() {
+              _cachedViewModelSource = null;
+              _cachedViewModelBrandFilter = null;
+              _cachedViewModel = null;
+            });
+          },
           child: CustomScrollView(
+            key: const PageStorageKey<String>('giftcard-deals-scroll'),
+            cacheExtent: 900,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: _GiftcardDealHeader(
-                  bestDeal: filtered.isNotEmpty ? filtered.first : null,
-                  totalCount: filtered.length,
+                  bestDeal: viewModel.bestDeal,
+                  totalCount: viewModel.filteredDeals.length,
                   onCreateAlert: () => _showAlertSheet(context, deals: deals),
                   onManageAlerts: () =>
                       _showAlertManageSheet(context, deals: deals),
@@ -114,11 +126,14 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
                 child: SizedBox(
                   height: 54,
                   child: ListView.separated(
+                    key: const PageStorageKey<String>(
+                      'giftcard-deals-brand-filter-scroll',
+                    ),
                     padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (context, index) {
-                      final brand = brands[index];
-                      final selected = brand == _brandFilter;
+                      final brand = viewModel.brands[index];
+                      final selected = brand == viewModel.selectedBrandFilter;
                       return ChoiceChip(
                         label: Text(brand),
                         selected: selected,
@@ -140,7 +155,7 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
                       );
                     },
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemCount: brands.length,
+                    itemCount: viewModel.brands.length,
                   ),
                 ),
               ),
@@ -149,7 +164,7 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (filtered.isEmpty)
+              else if (viewModel.filteredDeals.isEmpty)
                 const SliverFillRemaining(
                   child: _GiftcardDealEmptyState(),
                 )
@@ -157,15 +172,18 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 140),
                   sliver: SliverList.separated(
-                    itemBuilder: (context, index) => _GiftcardDealCard(
-                      deal: filtered[index],
-                      onOpenDetail: () =>
-                          _showDealDetail(context, filtered[index]),
-                      onShare: () => _shareDeal(filtered[index]),
-                      onBuy: () => _openBuyUrl(filtered[index]),
-                    ),
+                    itemBuilder: (context, index) {
+                      final deal = viewModel.filteredDeals[index];
+                      return _GiftcardDealListItem(
+                        key: ValueKey('giftcard-deal-${deal.id}'),
+                        deal: deal,
+                        onOpenDetail: () => _showDealDetail(context, deal),
+                        onShare: () => _shareDeal(deal),
+                        onBuy: () => _openBuyUrl(deal),
+                      );
+                    },
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemCount: filtered.length,
+                    itemCount: viewModel.filteredDeals.length,
                   ),
                 ),
             ],
@@ -173,6 +191,59 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
         );
       },
     );
+  }
+
+  _GiftcardDealsViewModel _viewModelFor(List<GiftcardDeal> deals) {
+    final cached = _cachedViewModel;
+    if (cached != null &&
+        identical(_cachedViewModelSource, deals) &&
+        _cachedViewModelBrandFilter == _brandFilter) {
+      return cached;
+    }
+
+    final availableBrands = <String>{};
+    for (final deal in deals) {
+      final brandName = deal.brandName.trim();
+      if (brandName.isNotEmpty) {
+        availableBrands.add(brandName);
+      }
+    }
+
+    final preferredBrands = _preferredBrandOrder
+        .where(availableBrands.contains)
+        .toList(growable: false);
+    final preferredBrandSet = preferredBrands.toSet();
+    final otherBrands = availableBrands
+        .where((brand) => !preferredBrandSet.contains(brand))
+        .toList()
+      ..sort();
+    final brands = List<String>.unmodifiable([
+      '전체',
+      ...preferredBrands,
+      ...otherBrands,
+    ]);
+    final selectedBrandFilter =
+        brands.contains(_brandFilter) ? _brandFilter : '전체';
+    final filteredDeals = deals
+        .where((deal) =>
+            selectedBrandFilter == '전체' ||
+            deal.brandName == selectedBrandFilter)
+        .toList()
+      ..sort((a, b) {
+        final rate = b.discountRate.compareTo(a.discountRate);
+        if (rate != 0) return rate;
+        return a.priceKRW.compareTo(b.priceKRW);
+      });
+
+    final viewModel = _GiftcardDealsViewModel(
+      brands: brands,
+      selectedBrandFilter: selectedBrandFilter,
+      filteredDeals: List<GiftcardDeal>.unmodifiable(filteredDeals),
+    );
+    _cachedViewModelSource = deals;
+    _cachedViewModelBrandFilter = _brandFilter;
+    _cachedViewModel = viewModel;
+    return viewModel;
   }
 
   Future<void> _openBuyUrl(GiftcardDeal deal) async {
@@ -296,6 +367,58 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => _GiftcardDealDetailSheet(deal: deal),
+    );
+  }
+}
+
+class _GiftcardDealsViewModel {
+  const _GiftcardDealsViewModel({
+    required this.brands,
+    required this.selectedBrandFilter,
+    required this.filteredDeals,
+  });
+
+  final List<String> brands;
+  final String selectedBrandFilter;
+  final List<GiftcardDeal> filteredDeals;
+
+  GiftcardDeal? get bestDeal =>
+      filteredDeals.isEmpty ? null : filteredDeals.first;
+}
+
+class _GiftcardDealListItem extends StatefulWidget {
+  const _GiftcardDealListItem({
+    super.key,
+    required this.deal,
+    required this.onOpenDetail,
+    required this.onShare,
+    required this.onBuy,
+  });
+
+  final GiftcardDeal deal;
+  final VoidCallback onOpenDetail;
+  final VoidCallback onShare;
+  final VoidCallback onBuy;
+
+  @override
+  State<_GiftcardDealListItem> createState() => _GiftcardDealListItemState();
+}
+
+class _GiftcardDealListItemState extends State<_GiftcardDealListItem>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return RepaintBoundary(
+      child: _GiftcardDealCard(
+        deal: widget.deal,
+        onOpenDetail: widget.onOpenDetail,
+        onShare: widget.onShare,
+        onBuy: widget.onBuy,
+      ),
     );
   }
 }
@@ -1695,16 +1818,23 @@ class _GiftcardDealDetailSheet extends StatelessWidget {
       builder: (context, controller) => SingleChildScrollView(
         controller: controller,
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        child: _GiftcardDealDetailBody(deal: deal),
+        child: _GiftcardDealDetailBody(
+          deal: deal,
+          closeBeforeOpeningBuyUrl: true,
+        ),
       ),
     );
   }
 }
 
 class _GiftcardDealDetailBody extends StatelessWidget {
-  const _GiftcardDealDetailBody({required this.deal});
+  const _GiftcardDealDetailBody({
+    required this.deal,
+    this.closeBeforeOpeningBuyUrl = false,
+  });
 
   final GiftcardDeal deal;
+  final bool closeBeforeOpeningBuyUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -1773,6 +1903,13 @@ class _GiftcardDealDetailBody extends StatelessWidget {
             onPressed: () async {
               final uri = Uri.tryParse(deal.buyUrl);
               if (uri == null) return;
+              if (closeBeforeOpeningBuyUrl) {
+                final navigator = Navigator.of(context);
+                if (navigator.canPop()) {
+                  navigator.pop();
+                  await Future<void>.delayed(const Duration(milliseconds: 120));
+                }
+              }
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             },
             icon: const Icon(Icons.open_in_new_rounded),

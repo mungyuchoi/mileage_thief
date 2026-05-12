@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../screen/branch/branch_detail_screen.dart';
 import '../screen/community_chat_screen.dart';
+import '../screen/community_screen.dart';
 import '../screen/community_detail_screen.dart';
 import '../screen/contest_detail_screen.dart';
 import '../screen/giftcard_deals_screen.dart';
@@ -155,7 +156,8 @@ class BranchService {
     // 게시글 딥링크 처리
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
-    final boardId = data['boardId']?.toString() ?? 'free';
+    final rawBoardId = data['boardId']?.toString();
+    final boardId = rawBoardId ?? 'free';
     final boardName = data['boardName']?.toString() ?? '자유게시판';
     final scrollToCommentId = data['scrollToCommentId']?.toString();
 
@@ -163,6 +165,21 @@ class BranchService {
       debugPrint('실제 딥링크 클릭 감지 - 게시글로 이동: $postId');
       _navigateToPost(
           postId, dateString, boardId, boardName, scrollToCommentId);
+      return;
+    }
+
+    final communityBoardId = _communityBoardIdFromLinkValue(linkValue) ??
+        (_isCommunityDestination(destination)
+            ? (rawBoardId?.trim().isNotEmpty == true
+                ? rawBoardId!.trim()
+                : 'all')
+            : null);
+    if (communityBoardId != null) {
+      debugPrint('실제 딥링크 클릭 감지 - 커뮤니티 보드로 이동: $communityBoardId');
+      _navigateToCommunityBoard(
+        communityBoardId,
+        boardName: data['boardName']?.toString(),
+      );
     } else {
       debugPrint('딥링크 데이터 부족: postId=$postId, dateString=$dateString');
     }
@@ -207,6 +224,12 @@ class BranchService {
 
     if (_isGiftcardDealDestination(value)) {
       _navigateToGiftcardDealList(context: context);
+      return true;
+    }
+
+    final communityBoardId = _communityBoardIdFromLinkValue(value);
+    if (communityBoardId != null) {
+      _navigateToCommunityBoard(communityBoardId, context: context);
       return true;
     }
 
@@ -260,6 +283,72 @@ class BranchService {
         normalized == 'giftcard/deals' ||
         normalized == '/giftcard/deals' ||
         normalized == '/giftcard/special';
+  }
+
+  bool _isCommunityDestination(String? value) {
+    if (value == null) return false;
+    final normalized =
+        value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+    return normalized == 'community' ||
+        normalized == 'community-board' ||
+        normalized == 'community/board' ||
+        normalized == '/community' ||
+        normalized == '/community/board';
+  }
+
+  String? _communityBoardIdFromLinkValue(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    if (_isCommunityDestination(trimmed)) return 'all';
+    final normalized = trimmed.toLowerCase().replaceAll('_', '-');
+
+    const prefixes = [
+      'community:',
+      'community-board:',
+      'community/board:',
+      '/community/board/',
+    ];
+    for (final prefix in prefixes) {
+      if (normalized.startsWith(prefix)) {
+        final boardId = trimmed.substring(prefix.length).trim();
+        return boardId.isEmpty ? 'all' : boardId;
+      }
+    }
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return null;
+    final host = uri.host.toLowerCase();
+    final path = uri.path.toLowerCase();
+    String? boardIdFromQuery() {
+      final boardId = uri.queryParameters['boardId'] ??
+          uri.queryParameters['board'] ??
+          uri.queryParameters['tab'] ??
+          uri.queryParameters['id'];
+      return boardId?.trim().isNotEmpty == true ? boardId!.trim() : null;
+    }
+
+    if (host == 'community' || host == 'community-board') {
+      final queryBoardId = boardIdFromQuery();
+      if (queryBoardId != null) return queryBoardId;
+      final segments = uri.pathSegments;
+      if (segments.length >= 2 && segments.first.toLowerCase() == 'board') {
+        return segments[1].trim().isEmpty ? 'all' : segments[1].trim();
+      }
+      return 'all';
+    }
+    if (path == '/community' || path == '/community/board') {
+      return boardIdFromQuery() ?? 'all';
+    }
+    if (uri.pathSegments.length >= 3 &&
+        uri.pathSegments[0].toLowerCase() == 'community' &&
+        uri.pathSegments[1].toLowerCase() == 'board') {
+      final queryBoardId = boardIdFromQuery();
+      if (queryBoardId != null) return queryBoardId;
+      final board = uri.pathSegments[2].trim();
+      return board.isEmpty ? 'all' : board;
+    }
+    return null;
   }
 
   String? _giftcardDealIdFromLinkValue(String? value) {
@@ -487,6 +576,50 @@ class BranchService {
       ),
       body: const SafeArea(child: GiftcardDealsScreen()),
     );
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
+  String _communityBoardNameFor(String boardId, String? providedName) {
+    final trimmedName = providedName?.trim();
+    if (trimmedName != null && trimmedName.isNotEmpty) return trimmedName;
+
+    const names = {
+      'all': '전체글',
+      'free': '자유게시판',
+      'deal': '적립/카드 혜택',
+      'milecatch_guide': '마일캐치 사용법',
+      'hot_deal': '핫딜',
+      'question': '마일리지',
+      'seats': '오늘의 좌석',
+      'news': '오늘의 뉴스',
+      'aeroroute_news': 'AeroRoutes',
+      'secretflying_news': 'SecretFlying',
+      'workingholiday_news': '워킹홀리데이',
+      'suggestion': '건의사항',
+      'notice': '운영 공지사항',
+    };
+    return names[boardId] ?? boardId;
+  }
+
+  void _navigateToCommunityBoard(
+    String boardId, {
+    String? boardName,
+    BuildContext? context,
+  }) {
+    final normalizedBoardId = boardId.trim().isEmpty ? 'all' : boardId.trim();
+    final screen = CommunityScreen(
+      initialBoardId: normalizedBoardId,
+      initialBoardName: _communityBoardNameFor(normalizedBoardId, boardName),
+    );
+
     if (context != null) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => screen),

@@ -96,6 +96,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
       boardName: '적립/카드 혜택',
     ),
     _CommunityBoardTab(
+      boardId: 'milecatch_guide',
+      label: '사용법',
+      boardName: '마일캐치 사용법',
+    ),
+    _CommunityBoardTab(
       boardId: 'hot_deal',
       label: '핫딜',
       boardName: '핫딜',
@@ -145,6 +150,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   static const Map<String, String> _fallbackBoardNames = {
     'free': '자유게시판',
     'deal': '적립/카드 혜택',
+    'milecatch_guide': '마일캐치 사용법',
     'hot_deal': '핫딜',
     'question': '마일리지',
     'seat_share': '좌석 공유',
@@ -518,6 +524,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     'local_fire_department': Icons.local_fire_department,
     'public': Icons.public,
     'work_outline': Icons.work_outline,
+    'menu_book_outlined': Icons.menu_book_outlined,
   };
 
   IconData getBoardIcon(String? iconName) {

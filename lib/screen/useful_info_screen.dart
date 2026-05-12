@@ -312,16 +312,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             initialAds: _UsefulInfoMemoryCache.peek<_GuideAds>('guideAds'),
             onTapAd: _handleAdTap,
           ),
-          _RadarSection(
-            profileFuture: _radarProfileFuture,
-            itemsFuture: _radarItemsFuture,
-            onRefresh: () => setState(() => _loadRadar(force: true)),
-            onEditProfile: _openRadarProfileSheet,
-            onTapItem: _handleRadarTap,
-            onShareItem: _openRadarShareSheet,
-            onSubscribe: _saveRadarSubscription,
-            onCalculate: _openRadarCalculator,
-          ),
+          const _GiftcardRateTableSection(),
           _QuickActionsSection(
             actions: [
               _QuickAction(
@@ -381,7 +372,6 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
               ),
             ],
           ),
-          const _GiftcardRateTableSection(),
           _PostSection(
             title: '베스트 게시글',
             icon: Icons.local_fire_department_outlined,
@@ -391,6 +381,16 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
             onSeeAll: () => widget.onOpenCommunity(),
             onTapPost: _openPost,
             showThumbnail: true,
+          ),
+          _RadarSection(
+            profileFuture: _radarProfileFuture,
+            itemsFuture: _radarItemsFuture,
+            onRefresh: () => setState(() => _loadRadar(force: true)),
+            onEditProfile: _openRadarProfileSheet,
+            onTapItem: _handleRadarTap,
+            onShareItem: _openRadarShareSheet,
+            onSubscribe: _saveRadarSubscription,
+            onCalculate: _openRadarCalculator,
           ),
           _PostSection(
             title: '인기 게시글',

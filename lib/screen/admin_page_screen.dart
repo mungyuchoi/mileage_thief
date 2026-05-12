@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'ad_manage_screen.dart';
+import 'admin_category_manage_screen.dart';
 import 'admin_giftcard_deal_source_screen.dart';
 import 'admin_insight_manage_screen.dart';
 import 'admin_report_manage_screen.dart';
+import 'admin_scrap_upload_screen.dart';
 import 'card_catalog_screen.dart';
 import 'contest_manage_screen.dart';
 
@@ -125,6 +127,18 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '커뮤니티 게시글을 확인하고 숨김, 삭제 상태를 관리합니다.',
                       icon: Icons.feed_outlined,
                       onTap: () => _open(const AdminPostManageScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '스크랩 업로드',
+                      description: '네이버 블로그와 AAGAG 링크를 검증 후 커뮤니티 게시글로 올립니다.',
+                      icon: Icons.content_paste_search_outlined,
+                      onTap: () => _open(const AdminScrapUploadScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '카테고리 관리',
+                      description: '커뮤니티 카테고리의 노출 순서를 관리합니다.',
+                      icon: Icons.account_tree_outlined,
+                      onTap: () => _open(const AdminCategoryManageScreen()),
                     ),
                     _AdminMenuTile(
                       title: '광고 관리',

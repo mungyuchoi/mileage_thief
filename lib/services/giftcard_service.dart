@@ -1,4 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../model/giftcard_info_data.dart';
 import '../model/giftcard_period.dart';
@@ -6,8 +12,12 @@ import 'firestore_page_loader.dart';
 
 class GiftcardService {
   static const Duration _infoTtl = Duration(minutes: 2);
+  static const Duration _diskInfoTtl = Duration(hours: 24);
   static const Duration _referenceTtl = Duration(minutes: 10);
   static const int _pageSize = 200;
+  static const int _diskCacheSchemaVersion = 1;
+  static const int _whereInChunkSize = 10;
+  static const int _whereInConcurrency = 4;
 
   static final Map<String, _CacheEntry<GiftcardInfoData>> _infoCache = {};
   static final Map<String, _CacheEntry<Map<String, Map<String, dynamic>>>>
@@ -26,6 +36,98 @@ class GiftcardService {
     required int selectedYear,
     bool forceRefresh = false,
   }) async {
+    if (!forceRefresh) {
+      final cached = _freshCachedInfoData(
+        uid: uid,
+        periodType: periodType,
+        selectedMonth: selectedMonth,
+        selectedYear: selectedYear,
+      );
+      if (cached != null) return cached;
+    }
+
+    try {
+      return await refreshInfoData(
+        uid: uid,
+        periodType: periodType,
+        selectedMonth: selectedMonth,
+        selectedYear: selectedYear,
+        forceReferenceRefresh: forceRefresh,
+      );
+    } catch (_) {
+      final diskCache = !forceRefresh
+          ? await loadInfoDataFromDiskCache(
+              uid: uid,
+              periodType: periodType,
+              selectedMonth: selectedMonth,
+              selectedYear: selectedYear,
+            )
+          : null;
+      if (diskCache != null) return diskCache;
+      rethrow;
+    }
+  }
+
+  static GiftcardInfoData? peekCachedInfoData({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+  }) {
+    final key = _infoCacheKey(
+      uid: uid,
+      periodType: periodType,
+      selectedMonth: selectedMonth,
+      selectedYear: selectedYear,
+    );
+    return _infoCache[key]?.data?.copy();
+  }
+
+  static Future<GiftcardInfoData?> loadInfoDataFromDiskCache({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+  }) async {
+    try {
+      final file = await _diskCacheFile(
+        uid: uid,
+        periodType: periodType,
+        selectedMonth: selectedMonth,
+        selectedYear: selectedYear,
+      );
+      if (!await file.exists()) return null;
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map<String, dynamic>) return null;
+      final data = debugDecodeInfoDataCachePayload(decoded);
+      if (data == null) return null;
+
+      final key = _infoCacheKey(
+        uid: uid,
+        periodType: periodType,
+        selectedMonth: selectedMonth,
+        selectedYear: selectedYear,
+      );
+      final entry = _infoCache.putIfAbsent(
+        key,
+        () => _CacheEntry<GiftcardInfoData>(),
+      );
+      entry
+        ..data = data.copy()
+        ..fetchedAt = DateTime.now();
+      return data.copy();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<GiftcardInfoData> refreshInfoData({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+    bool forceReferenceRefresh = false,
+  }) async {
     final key = _infoCacheKey(
       uid: uid,
       periodType: periodType,
@@ -36,25 +138,63 @@ class GiftcardService {
       key,
       () => _CacheEntry<GiftcardInfoData>(),
     );
-    return _cached(
-      entry: entry,
-      ttl: _infoTtl,
-      force: forceRefresh,
-      copy: (data) => data.copy(),
-      loader: () => _fetchInfoData(
+    if (entry.inFlight != null) {
+      return (await entry.inFlight!).copy();
+    }
+
+    final future = _fetchInfoData(
+      uid: uid,
+      periodType: periodType,
+      selectedMonth: selectedMonth,
+      selectedYear: selectedYear,
+      forceReferenceRefresh: forceReferenceRefresh,
+    );
+    entry.inFlight = future;
+    try {
+      final data = await future;
+      entry
+        ..data = data.copy()
+        ..fetchedAt = DateTime.now();
+      unawaited(_writeInfoDataToDiskCache(
         uid: uid,
         periodType: periodType,
         selectedMonth: selectedMonth,
         selectedYear: selectedYear,
-        forceReferenceRefresh: forceRefresh,
-      ),
+        data: data,
+      ));
+      return data.copy();
+    } finally {
+      if (identical(entry.inFlight, future)) {
+        entry.inFlight = null;
+      }
+    }
+  }
+
+  static GiftcardInfoData? _freshCachedInfoData({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+  }) {
+    final key = _infoCacheKey(
+      uid: uid,
+      periodType: periodType,
+      selectedMonth: selectedMonth,
+      selectedYear: selectedYear,
     );
+    final entry = _infoCache[key];
+    final cachedData = entry?.data;
+    final fetchedAt = entry?.fetchedAt;
+    if (cachedData == null || fetchedAt == null) return null;
+    if (DateTime.now().difference(fetchedAt) >= _infoTtl) return null;
+    return cachedData.copy();
   }
 
   static void invalidateUser(String uid) {
     _infoCache.removeWhere((key, _) => key.startsWith('$uid|'));
     _cardsCache.remove(uid);
     _whereToBuyCache.remove(uid);
+    unawaited(_deleteUserDiskCaches(uid));
   }
 
   static Future<GiftcardInfoData> _fetchInfoData({
@@ -121,18 +261,12 @@ class GiftcardService {
       // 1) lotId 기준으로 연결된 판매 조회 (대시보드/내역용)
       final lotIds = lotsDocs.map((d) => d.id).toList();
       if (lotIds.isNotEmpty) {
-        // Firestore whereIn 은 최대 10개까지만 지원하므로 10개 단위로 나누어 조회
-        for (int i = 0; i < lotIds.length; i += 10) {
-          final int endIndex =
-              (i + 10 < lotIds.length) ? i + 10 : lotIds.length;
-          final List<String> chunk = lotIds.sublist(i, endIndex);
-          final docs = await FirestorePageLoader.load(
-            query: salesRef.where('lotId', whereIn: chunk),
-            pageSize: _pageSize,
-          );
-          for (final d in docs) {
-            saleById[d.id] = d;
-          }
+        final docs = await _loadSalesForLotIds(
+          salesRef: salesRef,
+          lotIds: lotIds,
+        );
+        for (final d in docs) {
+          saleById[d.id] = d;
         }
       }
 
@@ -172,6 +306,40 @@ class GiftcardService {
       branchNames: references.branchNames,
       whereToBuyNames: references.whereToBuyNames,
     );
+  }
+
+  static Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadSalesForLotIds({
+    required CollectionReference<Map<String, dynamic>> salesRef,
+    required List<String> lotIds,
+  }) async {
+    final chunks = <List<String>>[];
+    for (int i = 0; i < lotIds.length; i += _whereInChunkSize) {
+      final int end = (i + _whereInChunkSize < lotIds.length)
+          ? i + _whereInChunkSize
+          : lotIds.length;
+      chunks.add(lotIds.sublist(i, end));
+    }
+
+    final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    for (int i = 0; i < chunks.length; i += _whereInConcurrency) {
+      final int end = (i + _whereInConcurrency < chunks.length)
+          ? i + _whereInConcurrency
+          : chunks.length;
+      final batch = chunks.sublist(i, end);
+      final batchDocs = await Future.wait(
+        batch.map(
+          (chunk) => FirestorePageLoader.load(
+            query: salesRef.where('lotId', whereIn: chunk),
+            pageSize: _pageSize,
+          ),
+        ),
+      );
+      for (final pageDocs in batchDocs) {
+        docs.addAll(pageDocs);
+      }
+    }
+    return docs;
   }
 
   static Future<_GiftcardReferenceData> _loadReferenceData({
@@ -344,6 +512,212 @@ class GiftcardService {
     final monthKey =
         '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
     return '$uid|${periodType.name}|$monthKey|$selectedYear';
+  }
+
+  @visibleForTesting
+  static String debugInfoCacheKey({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+  }) {
+    return _infoCacheKey(
+      uid: uid,
+      periodType: periodType,
+      selectedMonth: selectedMonth,
+      selectedYear: selectedYear,
+    );
+  }
+
+  static Future<File> _diskCacheFile({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+  }) async {
+    final dir = await getApplicationSupportDirectory();
+    final cacheDir = Directory('${dir.path}/giftcard_info_cache');
+    if (!await cacheDir.exists()) {
+      await cacheDir.create(recursive: true);
+    }
+    final key = _infoCacheKey(
+      uid: uid,
+      periodType: periodType,
+      selectedMonth: selectedMonth,
+      selectedYear: selectedYear,
+    );
+    final fileName = base64Url.encode(utf8.encode(key)).replaceAll('=', '');
+    return File('${cacheDir.path}/$fileName.json');
+  }
+
+  static Future<void> _writeInfoDataToDiskCache({
+    required String uid,
+    required DashboardPeriodType periodType,
+    required DateTime selectedMonth,
+    required int selectedYear,
+    required GiftcardInfoData data,
+  }) async {
+    try {
+      final file = await _diskCacheFile(
+        uid: uid,
+        periodType: periodType,
+        selectedMonth: selectedMonth,
+        selectedYear: selectedYear,
+      );
+      final payload = debugEncodeInfoDataCachePayload(data);
+      await file.writeAsString(jsonEncode(payload), flush: true);
+    } catch (_) {}
+  }
+
+  static Future<void> _deleteUserDiskCaches(String uid) async {
+    try {
+      final dir = await getApplicationSupportDirectory();
+      final cacheDir = Directory('${dir.path}/giftcard_info_cache');
+      if (!await cacheDir.exists()) return;
+      await for (final entity in cacheDir.list()) {
+        if (entity is! File) continue;
+        final name =
+            entity.uri.pathSegments.isEmpty ? '' : entity.uri.pathSegments.last;
+        if (!name.endsWith('.json')) continue;
+        try {
+          final rawName = name.replaceAll('.json', '');
+          final padding = '=' * ((4 - rawName.length % 4) % 4);
+          final decoded = utf8.decode(
+            base64Url.decode('$rawName$padding'),
+            allowMalformed: true,
+          );
+          if (decoded.startsWith('$uid|')) {
+            await entity.delete();
+          }
+        } catch (_) {
+          continue;
+        }
+      }
+    } catch (_) {}
+  }
+
+  @visibleForTesting
+  static Map<String, dynamic> debugEncodeInfoDataCachePayload(
+    GiftcardInfoData data, {
+    DateTime? fetchedAt,
+  }) {
+    return {
+      'schemaVersion': _diskCacheSchemaVersion,
+      'fetchedAtMillis': (fetchedAt ?? DateTime.now()).millisecondsSinceEpoch,
+      'data': {
+        'lots': _encodeCacheValue(data.lots),
+        'sales': _encodeCacheValue(data.sales),
+        'cards': _encodeCacheValue(data.cards),
+        'giftcardNames': _encodeCacheValue(data.giftcardNames),
+        'branchNames': _encodeCacheValue(data.branchNames),
+        'whereToBuyNames': _encodeCacheValue(data.whereToBuyNames),
+      },
+    };
+  }
+
+  @visibleForTesting
+  static GiftcardInfoData? debugDecodeInfoDataCachePayload(
+    Map<String, dynamic> payload, {
+    DateTime? now,
+  }) {
+    try {
+      if (payload['schemaVersion'] != _diskCacheSchemaVersion) return null;
+      final fetchedAtMillis = payload['fetchedAtMillis'];
+      if (fetchedAtMillis is! int) return null;
+      final fetchedAt = DateTime.fromMillisecondsSinceEpoch(fetchedAtMillis);
+      if ((now ?? DateTime.now()).difference(fetchedAt) > _diskInfoTtl) {
+        return null;
+      }
+      final data = payload['data'];
+      if (data is! Map<String, dynamic>) return null;
+      return GiftcardInfoData(
+        lots: _decodeListOfMaps(data['lots']),
+        sales: _decodeListOfMaps(data['sales']),
+        cards: _decodeCards(data['cards']),
+        giftcardNames: _decodeStringMap(data['giftcardNames']),
+        branchNames: _decodeStringMap(data['branchNames']),
+        whereToBuyNames: _decodeStringMap(data['whereToBuyNames']),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static dynamic _encodeCacheValue(dynamic value) {
+    if (value is Timestamp) {
+      return {
+        '__cacheType': 'timestamp',
+        'millis': value.millisecondsSinceEpoch,
+      };
+    }
+    if (value is DateTime) {
+      return {
+        '__cacheType': 'datetime',
+        'millis': value.millisecondsSinceEpoch,
+      };
+    }
+    if (value is Map) {
+      return value.map<String, dynamic>(
+        (key, child) => MapEntry(key.toString(), _encodeCacheValue(child)),
+      );
+    }
+    if (value is Iterable) {
+      return value.map(_encodeCacheValue).toList(growable: false);
+    }
+    return value;
+  }
+
+  static dynamic _decodeCacheValue(dynamic value) {
+    if (value is Map) {
+      final type = value['__cacheType'];
+      if (type == 'timestamp') {
+        final millis = value['millis'];
+        if (millis is int) {
+          return Timestamp.fromMillisecondsSinceEpoch(millis);
+        }
+      }
+      if (type == 'datetime') {
+        final millis = value['millis'];
+        if (millis is int) {
+          return DateTime.fromMillisecondsSinceEpoch(millis);
+        }
+      }
+      return value.map<String, dynamic>(
+        (key, child) => MapEntry(key.toString(), _decodeCacheValue(child)),
+      );
+    }
+    if (value is List) {
+      return value.map(_decodeCacheValue).toList(growable: false);
+    }
+    return value;
+  }
+
+  static List<Map<String, dynamic>> _decodeListOfMaps(dynamic value) {
+    final decoded = _decodeCacheValue(value);
+    if (decoded is! List) return <Map<String, dynamic>>[];
+    return decoded
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+
+  static Map<String, String> _decodeStringMap(dynamic value) {
+    final decoded = _decodeCacheValue(value);
+    if (decoded is! Map) return <String, String>{};
+    return decoded.map<String, String>(
+      (key, child) => MapEntry(key.toString(), child?.toString() ?? ''),
+    );
+  }
+
+  static Map<String, Map<String, dynamic>> _decodeCards(dynamic value) {
+    final decoded = _decodeCacheValue(value);
+    if (decoded is! Map) return <String, Map<String, dynamic>>{};
+    return decoded.map<String, Map<String, dynamic>>((key, child) {
+      if (child is Map) {
+        return MapEntry(key.toString(), Map<String, dynamic>.from(child));
+      }
+      return MapEntry(key.toString(), <String, dynamic>{});
+    });
   }
 }
 

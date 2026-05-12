@@ -8,12 +8,14 @@ class ImageViewer extends StatefulWidget {
   final List<String> imageUrls;
   final int initialIndex;
   final String? heroTag;
+  final Map<String, String>? Function(String url)? headersBuilder;
 
   const ImageViewer({
     super.key,
     required this.imageUrls,
     this.initialIndex = 0,
     this.heroTag,
+    this.headersBuilder,
   });
 
   @override
@@ -86,7 +88,10 @@ class _ImageViewerState extends State<ImageViewer> {
           Positioned.fill(
             child: widget.imageUrls.length == 1
                 ? PhotoView(
-                    imageProvider: NetworkImage(widget.imageUrls[0]),
+                    imageProvider: NetworkImage(
+                      widget.imageUrls[0],
+                      headers: widget.headersBuilder?.call(widget.imageUrls[0]),
+                    ),
                     heroAttributes: widget.heroTag != null
                         ? PhotoViewHeroAttributes(tag: widget.heroTag!)
                         : null,
@@ -128,7 +133,11 @@ class _ImageViewerState extends State<ImageViewer> {
                     scrollPhysics: const BouncingScrollPhysics(),
                     builder: (BuildContext context, int index) {
                       return PhotoViewGalleryPageOptions(
-                        imageProvider: NetworkImage(widget.imageUrls[index]),
+                        imageProvider: NetworkImage(
+                          widget.imageUrls[index],
+                          headers: widget.headersBuilder
+                              ?.call(widget.imageUrls[index]),
+                        ),
                         heroAttributes: widget.heroTag != null
                             ? PhotoViewHeroAttributes(
                                 tag: '${widget.heroTag}_$index',
@@ -400,11 +409,13 @@ class _ViewerArrowButton extends StatelessWidget {
 class SingleImageViewer extends StatelessWidget {
   final String imageUrl;
   final String? heroTag;
+  final Map<String, String>? headers;
 
   const SingleImageViewer({
     super.key,
     required this.imageUrl,
     this.heroTag,
+    this.headers,
   });
 
   @override
@@ -429,7 +440,7 @@ class SingleImageViewer extends StatelessWidget {
       ),
       body: Center(
         child: PhotoView(
-          imageProvider: NetworkImage(imageUrl),
+          imageProvider: NetworkImage(imageUrl, headers: headers),
           heroAttributes:
               heroTag != null ? PhotoViewHeroAttributes(tag: heroTag!) : null,
           minScale: PhotoViewComputedScale.contained,

@@ -97,6 +97,7 @@ class CategoryService {
       {'id': 'workingholiday_news', 'name': '워킹홀리데이', 'group': '뉴스', 'description': '워킹홀리데이 여행 정보', 'order': 7.3, 'icon': 'work_outline', 'fabEnabled': false},
       {'id': 'error_report', 'name': '오류 신고', 'group': '운영/소통', 'description': '앱/서비스 오류 제보', 'order': 8, 'icon': 'bug_report', 'fabEnabled': true},
       {'id': 'suggestion', 'name': '건의사항', 'group': '운영/소통', 'description': '사용자 의견, 개선 요청', 'order': 8, 'icon': 'lightbulb_outline', 'fabEnabled': true},
+      {'id': 'milecatch_guide', 'name': '마일캐치 사용법', 'group': '운영/소통', 'description': '마일캐치 기능 안내와 사용법', 'order': 8.5, 'icon': 'menu_book_outlined', 'fabEnabled': false},
       {'id': 'notice', 'name': '운영 공지사항', 'group': '운영/소통', 'description': '관리자 공지, 업데이트 안내', 'order': 9, 'icon': 'campaign', 'fabEnabled': false},
     ];
   }

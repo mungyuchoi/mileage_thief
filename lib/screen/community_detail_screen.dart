@@ -1417,6 +1417,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         builder: (context) => SingleImageViewer(
           imageUrl: imageUrl,
           heroTag: 'image_$imageUrl',
+          headers: _scrapMediaHeadersForUrl(imageUrl),
         ),
       ),
     );
@@ -1450,6 +1451,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           imageUrls: imageUrls,
           initialIndex: initialIndex >= 0 ? initialIndex : 0,
           heroTag: null,
+          headersBuilder: _scrapMediaHeadersForUrl,
         ),
       ),
     );
@@ -2511,6 +2513,33 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                                       color: Colors
                                                                           .blue)),
                                                             ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                    TagExtension(
+                                                      tagsToExtend: {'img'},
+                                                      builder: (ctx) {
+                                                        final src = ctx
+                                                            .attributes['src'];
+                                                        if (src == null ||
+                                                            src.isEmpty) {
+                                                          return const SizedBox
+                                                              .shrink();
+                                                        }
+                                                        return GestureDetector(
+                                                          onTap: () =>
+                                                              _openImageViewerFromHtml(
+                                                                  src,
+                                                                  _post!['contentHtml'] ??
+                                                                      ''),
+                                                          child: Image.network(
+                                                            src,
+                                                            headers:
+                                                                _scrapMediaHeadersForUrl(
+                                                                    src),
+                                                            fit:
+                                                                BoxFit.fitWidth,
                                                           ),
                                                         );
                                                       },
@@ -4682,6 +4711,24 @@ class _DetailsExpansionWidgetState extends State<DetailsExpansionWidget> {
   }
 }
 
+Map<String, String>? _scrapMediaHeadersForUrl(String url) {
+  final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+  final isNaverMedia = host == 'blog.naver.com' ||
+      host == 'm.blog.naver.com' ||
+      host.endsWith('.pstatic.net') ||
+      host.endsWith('.naver.com');
+
+  if (!isNaverMedia) {
+    return null;
+  }
+
+  return const {
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    'Referer': 'https://m.blog.naver.com/',
+  };
+}
+
 class _HtmlNetworkVideoPlayer extends StatefulWidget {
   final String url;
   const _HtmlNetworkVideoPlayer({required this.url});
@@ -4699,8 +4746,10 @@ class _HtmlNetworkVideoPlayerState extends State<_HtmlNetworkVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(widget.url),
+      httpHeaders: _scrapMediaHeadersForUrl(widget.url) ?? const {},
+    )..initialize().then((_) {
         if (mounted) {
           setState(() {
             _initialized = true;

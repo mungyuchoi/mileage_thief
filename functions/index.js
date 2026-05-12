@@ -19,6 +19,7 @@ const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const cheerio = require("cheerio");
 
 // Firebase Admin SDK 초기화
 admin.initializeApp();
@@ -347,6 +348,764 @@ async function requireCardAdmin(uid) {
   if (!hasAdminRole(userDoc.data() && userDoc.data().roles)) {
     throw new HttpsError("permission-denied", "관리자 권한이 필요합니다.");
   }
+}
+
+const SCRAP_ALLOWED_TAGS = new Set([
+  "p",
+  "br",
+  "img",
+  "video",
+  "a",
+  "strong",
+  "em",
+  "b",
+  "i",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+  "h2",
+  "h3",
+  "h4",
+]);
+const SCRAP_NAVER = "naver_blog";
+const SCRAP_AAGAG = "aagag_issue";
+
+/**
+ * 스크랩 sourceType을 서버 표준 값으로 정규화한다.
+ * @param {unknown} value
+ * @return {string|null}
+ */
+function normalizeScrapSourceValue(value) {
+  const raw = asOptionalString(value);
+  if (!raw) return null;
+  const normalized = raw.toLowerCase().replace(/-/g, "_");
+  if (normalized === "naver" || normalized === SCRAP_NAVER) {
+    return SCRAP_NAVER;
+  }
+  if (
+    normalized === "aagag" ||
+    normalized === "aggag" ||
+    normalized === SCRAP_AAGAG
+  ) {
+    return SCRAP_AAGAG;
+  }
+  return null;
+}
+
+/**
+ * URL을 지원 소스에 맞게 검증하고 정규화한다.
+ * @param {unknown} rawUrl
+ * @param {unknown} rawSourceType
+ * @return {{normalizedUrl: string, sourceType: string}}
+ */
+function normalizeScrapUrl(rawUrl, rawSourceType) {
+  let value = asOptionalString(rawUrl);
+  if (!value) {
+    throw new HttpsError("invalid-argument", "URL을 입력해주세요.");
+  }
+  if (!/^https?:\/\//i.test(value)) {
+    value = `https://${value}`;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch (error) {
+    throw new HttpsError("invalid-argument", "URL 형식이 올바르지 않습니다.");
+  }
+
+  parsed.protocol = "https:";
+  parsed.hash = "";
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  let sourceType = normalizeScrapSourceValue(rawSourceType);
+
+  if (host === "m.blog.naver.com" || host === "blog.naver.com") {
+    if (sourceType && sourceType !== SCRAP_NAVER) {
+      throw new HttpsError(
+          "invalid-argument",
+          "선택한 소스와 URL 도메인이 일치하지 않습니다.",
+      );
+    }
+    sourceType = SCRAP_NAVER;
+    const pathParts = parsed.pathname.split("/").filter((part) => part);
+    let blogId = parsed.searchParams.get("blogId");
+    let logNo = parsed.searchParams.get("logNo");
+    if (!blogId && !logNo && pathParts.length >= 2) {
+      blogId = decodeURIComponent(pathParts[0]);
+      logNo = pathParts[1];
+    }
+    if (blogId && logNo) {
+      parsed.hostname = "m.blog.naver.com";
+      parsed.pathname = `/${encodeURIComponent(blogId)}/${logNo}`;
+      parsed.search = "";
+    }
+  } else if (host === "aagag.com") {
+    if (sourceType && sourceType !== SCRAP_AAGAG) {
+      throw new HttpsError(
+          "invalid-argument",
+          "선택한 소스와 URL 도메인이 일치하지 않습니다.",
+      );
+    }
+    sourceType = SCRAP_AAGAG;
+    if (!parsed.pathname.startsWith("/issue")) {
+      throw new HttpsError(
+          "invalid-argument",
+          "AAGAG 이슈 URL만 지원합니다.",
+      );
+    }
+  } else {
+    throw new HttpsError(
+        "invalid-argument",
+        "네이버 블로그 또는 AAGAG URL만 지원합니다.",
+    );
+  }
+
+  if (!sourceType) {
+    throw new HttpsError("invalid-argument", "지원하지 않는 스크랩 소스입니다.");
+  }
+
+  return {
+    normalizedUrl: parsed.toString(),
+    sourceType,
+  };
+}
+
+/**
+ * 스크랩 fetch 요청 헤더를 만든다.
+ * @param {string} sourceType
+ * @return {Record<string, string>}
+ */
+function scrapRequestHeaders(sourceType) {
+  const headers = {
+    "User-Agent": [
+      "Mozilla/5.0 (Linux; Android 10; Mobile)",
+      "AppleWebKit/537.36 (KHTML, like Gecko)",
+      "Chrome/126.0.0.0 Mobile Safari/537.36",
+    ].join(" "),
+    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+  };
+  if (sourceType === SCRAP_NAVER) {
+    headers.Referer = "https://m.blog.naver.com/";
+  }
+  if (sourceType === SCRAP_AAGAG) {
+    headers.Referer = "https://aagag.com/";
+  }
+  return headers;
+}
+
+/**
+ * 원격 HTML을 가져온다.
+ * @param {string} url
+ * @param {string} sourceType
+ * @return {Promise<string>}
+ */
+async function fetchScrapHtml(url, sourceType) {
+  const response = await globalThis.fetch(url, {
+    headers: scrapRequestHeaders(sourceType),
+  });
+  if (!response.ok) {
+    throw new HttpsError(
+        "unavailable",
+        `원문을 가져오지 못했습니다. (${response.status})`,
+    );
+  }
+  return response.text();
+}
+
+/**
+ * 네이버 데스크톱 프레임 URL이면 실제 본문 HTML을 추가로 가져온다.
+ * @param {string} html
+ * @param {string} url
+ * @param {string} sourceType
+ * @return {Promise<string>}
+ */
+async function resolveScrapHtmlForParsing(html, url, sourceType) {
+  if (sourceType !== SCRAP_NAVER || html.includes("se-main-container")) {
+    return html;
+  }
+  const redirectMatch = html.match(
+      /top\.location\.replace\(['"]([^'"]+)['"]\)/,
+  );
+  if (redirectMatch) {
+    const redirectUrl = redirectMatch[1].replace(/\\\//g, "/");
+    return fetchScrapHtml(new URL(redirectUrl, url).toString(), sourceType);
+  }
+  const $ = cheerio.load(html);
+  const frameSrc = $("iframe#mainFrame").attr("src");
+  if (!frameSrc) return html;
+  const frameUrl = new URL(frameSrc, url).toString();
+  return fetchScrapHtml(frameUrl, sourceType);
+}
+
+/**
+ * 텍스트를 공백 정리해서 가져온다.
+ * @param {unknown} value
+ * @return {string}
+ */
+function cleanScrapText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * HTML attribute/text 출력용 escape.
+ * @param {string} value
+ * @return {string}
+ */
+function escapeScrapHtml(value) {
+  return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+}
+
+/**
+ * 안전한 http(s) URL만 반환한다.
+ * @param {unknown} value
+ * @param {string|null} baseUrl
+ * @return {string}
+ */
+function safeScrapUrl(value, baseUrl = null) {
+  const raw = asOptionalString(value);
+  if (!raw) return "";
+  try {
+    const parsed = baseUrl ? new URL(raw, baseUrl) : new URL(raw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return "";
+    }
+    parsed.hash = "";
+    return parsed.toString();
+  } catch (error) {
+    return "";
+  }
+}
+
+/**
+ * 스크랩 본문 HTML을 Flutter 렌더링에 맞는 최소 태그로 정리한다.
+ * @param {string} html
+ * @param {string} baseUrl
+ * @return {string}
+ */
+function sanitizeScrapHtml(html, baseUrl) {
+  if (!html) return "";
+  const $ = cheerio.load(`<div id="scrap-root">${html}</div>`, {
+    decodeEntities: false,
+  });
+  const $root = $("#scrap-root");
+
+  $root.find("script, style").remove();
+  $root.contents().filter((index, node) => node.type === "comment").remove();
+  $root.find("*").contents()
+      .filter((index, node) => node.type === "comment")
+      .remove();
+
+  for (const node of $root.find("*").toArray()) {
+    const tagName = String(node.tagName || "").toLowerCase();
+    if (!SCRAP_ALLOWED_TAGS.has(tagName)) {
+      $(node).replaceWith($(node).contents());
+    }
+  }
+
+  for (const node of $root.find("*").toArray()) {
+    const tagName = String(node.tagName || "").toLowerCase();
+    const $node = $(node);
+
+    if (tagName === "a") {
+      const href = safeScrapUrl($node.attr("href"), baseUrl);
+      if (!href) {
+        $node.replaceWith($node.contents());
+        continue;
+      }
+      const title = cleanScrapText($node.attr("title"));
+      $node.attr({});
+      $node.attr("href", href);
+      if (title) $node.attr("title", title.slice(0, 200));
+      continue;
+    }
+
+    if (tagName === "img") {
+      const src = safeScrapUrl($node.attr("src"), baseUrl);
+      if (!src) {
+        $node.remove();
+        continue;
+      }
+      const alt = cleanScrapText($node.attr("alt"));
+      $node.attr({});
+      $node.attr("src", src);
+      if (alt) $node.attr("alt", alt.slice(0, 200));
+      continue;
+    }
+
+    if (tagName === "video") {
+      const src = safeScrapUrl(
+          $node.attr("src") || $node.find("source").first().attr("src"),
+          baseUrl,
+      );
+      if (!src) {
+        $node.remove();
+        continue;
+      }
+      const poster = safeScrapUrl($node.attr("poster"), baseUrl);
+      $node.attr({});
+      $node.attr("src", src);
+      if (poster) $node.attr("poster", poster);
+      continue;
+    }
+
+    $node.attr({});
+  }
+
+  $root.find("p").each((index, node) => {
+    const $node = $(node);
+    if (
+      !cleanScrapText($node.text()) &&
+      $node.find("img, video").length === 0
+    ) {
+      $node.remove();
+    }
+  });
+
+  return ($root.html() || "").trim();
+}
+
+/**
+ * 네이버 블로그 HTML을 게시글 데이터로 파싱한다.
+ * @param {string} html
+ * @param {string} sourceUrl
+ * @return {Object}
+ */
+function parseNaverBlogScrap(html, sourceUrl) {
+  const $ = cheerio.load(html, {decodeEntities: false});
+  let title = cleanScrapText($(".se-title-text .se-text-paragraph span")
+      .first()
+      .text());
+  if (!title) {
+    title = cleanScrapText($("meta[property='og:title']").attr("content"));
+  }
+  const scrapedAuthor = cleanScrapText($(".blog_author .ell").first().text());
+  const scrapedAuthorFallback = cleanScrapText($(".writer .nick a")
+      .first()
+      .text());
+  const scrapedDateText = cleanScrapText(
+      $(".blog_date, .se_publishDate").first().text(),
+  );
+  let contentHtml = $(".se-main-container").first().html() || "";
+  if (!contentHtml) {
+    contentHtml = $("article, #postViewArea, .se_component_wrap")
+        .first()
+        .html() || "";
+  }
+
+  const content$ = cheerio.load(contentHtml, {decodeEntities: false}, false);
+  content$("img").each((index, img) => {
+    const $img = content$(img);
+    let src = $img.attr("data-lazy-src") ||
+      $img.attr("data-src") ||
+      $img.attr("src") ||
+      "";
+    const $parent = $img.parent("[data-linkdata]");
+    if (!src && $parent.length > 0) {
+      try {
+        const raw = String($parent.attr("data-linkdata") || "")
+            .replace(/&quot;/g, "\"");
+        const data = JSON.parse(raw);
+        src = data.src || "";
+      } catch (error) {
+        src = "";
+      }
+    }
+    src = safeScrapUrl(src, sourceUrl);
+    if (src) $img.attr("src", src);
+    if (($img.attr("alt") || "") === "") $img.removeAttr("alt");
+  });
+  content$("video").each((index, video) => {
+    const $video = content$(video);
+    const src = safeScrapUrl(
+        $video.attr("src") ||
+          $video.find("source").first().attr("src") ||
+          $video.attr("data-gif-url"),
+        sourceUrl,
+    );
+    const poster = safeScrapUrl($video.attr("poster"), sourceUrl);
+    if (src) $video.attr("src", src);
+    if (poster) $video.attr("poster", poster);
+  });
+
+  const sanitized = sanitizeScrapHtml(content$.root().html() || "", sourceUrl);
+  return {
+    sourceType: SCRAP_NAVER,
+    title,
+    scrapedAuthor: scrapedAuthor || scrapedAuthorFallback,
+    scrapedDateText,
+    contentHtml: sanitized,
+  };
+}
+
+/**
+ * AAGAG media id를 HTML에 넣어도 되는 짧은 토큰으로 제한한다.
+ * @param {unknown} value
+ * @return {string}
+ */
+function safeAagagMediaId(value) {
+  const raw = asOptionalString(value);
+  return raw && /^[A-Za-z0-9_-]+$/.test(raw) ? raw : "";
+}
+
+/**
+ * AAGAG [sTag] payload가 mp4 렌더링 대상인지 확인한다.
+ * @param {Object} data
+ * @return {boolean}
+ */
+function isAagagVideoPayload(data) {
+  return Boolean(
+      data.mp4_byte ||
+      data.mp4_seq ||
+      data.mp4_width ||
+      data.mp4_height ||
+      data.codec ||
+      data.audio,
+  );
+}
+
+/**
+ * AAGAG [sTag] 미디어 payload를 Flutter HTML 태그로 바꾼다.
+ * @param {string} text
+ * @return {string}
+ */
+function replaceAagagSTags(text) {
+  return String(text || "").replace(
+      /\[sTag\]\s*(\{[\s\S]*?\})\s*\[\/sTag\]/g,
+      (match, payload) => {
+        try {
+          const data = JSON.parse(payload);
+          const mediaId = safeAagagMediaId(data.q);
+          if (data.m !== "img" || !mediaId) {
+            return "";
+          }
+          if (isAagagVideoPayload(data)) {
+            return [
+              `<video src="https://i.aagag.com/${mediaId}.mp4" `,
+              `poster="https://i.aagag.com/o/${mediaId}.jpg"></video>`,
+            ].join("");
+          }
+          return `<img src="https://i.aagag.com/o/${mediaId}.webp">`;
+        } catch (error) {
+          return "";
+        }
+      },
+  );
+}
+
+/**
+ * AAGAG 이슈 HTML을 게시글 데이터로 파싱한다.
+ * @param {string} html
+ * @param {string} sourceUrl
+ * @return {Object}
+ */
+function parseAagagScrap(html, sourceUrl) {
+  const $ = cheerio.load(html, {decodeEntities: false});
+  let title = cleanScrapText($("h1.title").first().text());
+  if (!title) {
+    title = cleanScrapText($("meta[property='og:title']").attr("content"));
+  }
+  const scrapedAuthor = cleanScrapText($("#top_menu .member").first().text());
+  let scrapedDateText = cleanScrapText($(".taa_other_info .odate")
+      .first()
+      .text());
+  if (!scrapedDateText) {
+    scrapedDateText = cleanScrapText(
+        $("meta[property='og:article:published_time']").attr("content"),
+    );
+  }
+  let contentHtml = $("#vContent").first().html() || "";
+
+  if (!contentHtml || !contentHtml.includes("<img")) {
+    for (const script of $("script").toArray()) {
+      const text = $(script).text() || "";
+      const match = text.match(/AAGAG_AA\.content\s*=\s*"([\s\S]*?)";/);
+      if (!match) continue;
+      try {
+        contentHtml = JSON.parse(`"${match[1]}"`);
+      } catch (error) {
+        contentHtml = match[1].replace(/\\"/g, "\"");
+      }
+      contentHtml = replaceAagagSTags(contentHtml);
+      break;
+    }
+  }
+
+  const sanitized = sanitizeScrapHtml(contentHtml, sourceUrl);
+  return {
+    sourceType: SCRAP_AAGAG,
+    title,
+    scrapedAuthor,
+    scrapedDateText,
+    contentHtml: sanitized,
+  };
+}
+
+/**
+ * 스크랩 본문 미디어 개수를 센다.
+ * @param {string} html
+ * @return {{images: number, videos: number, links: number}}
+ */
+function countScrapMedia(html) {
+  const $ = cheerio.load(html || "", {decodeEntities: false}, false);
+  return {
+    images: $("img").length,
+    videos: $("video").length,
+    links: $("a").length,
+  };
+}
+
+/**
+ * 미리보기 HTML을 만든다.
+ * @param {Object} parsed
+ * @param {string} sourceUrl
+ * @return {string}
+ */
+function buildScrapPreviewHtml(parsed, sourceUrl) {
+  const meta = [parsed.scrapedAuthor, parsed.scrapedDateText]
+      .filter((item) => item)
+      .join(" · ");
+  const escapedMeta = escapeScrapHtml(meta);
+  const escapedSourceUrl = escapeScrapHtml(sourceUrl);
+  const metaHtml = meta ?
+    `<p style="margin:4px 0;color:#666;font-size:14px;">` +
+      `${escapedMeta}</p>` :
+    "";
+  const sourceHtml = parsed.sourceType === SCRAP_NAVER ?
+    `<p>출처: <a href="${escapedSourceUrl}">` +
+      `${escapedSourceUrl}</a></p>` :
+    "";
+  return [
+    "<article>",
+    `<h1>${escapeScrapHtml(parsed.title)}</h1>`,
+    metaHtml,
+    `<section>${parsed.contentHtml}</section>`,
+    sourceHtml,
+    "</article>",
+  ].join("");
+}
+
+/**
+ * 게시글 발행용 HTML을 만든다.
+ * @param {Object} parsed
+ * @param {string} sourceUrl
+ * @return {string}
+ */
+function buildScrapPublishHtml(parsed, sourceUrl) {
+  if (parsed.sourceType !== SCRAP_NAVER) {
+    return parsed.contentHtml;
+  }
+  return [
+    "<p>네이버 블로그 스크랩한 게시글입니다.</p>",
+    "<p>&nbsp;</p>",
+    parsed.contentHtml,
+    `<p>출처: <a href="${escapeScrapHtml(sourceUrl)}">`,
+    `${escapeScrapHtml(sourceUrl)}</a></p>`,
+  ].join("");
+}
+
+/**
+ * collectionGroup 결과에서 게시글 경로 정보를 만든다.
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} doc
+ * @return {Object}
+ */
+function scrapDuplicatePostFromDoc(doc) {
+  const data = doc.data() || {};
+  const dateString = doc.ref.parent.parent ? doc.ref.parent.parent.id : "";
+  return {
+    postId: data.postId || doc.id,
+    postNumber: data.postNumber || "",
+    dateString,
+    boardId: data.boardId || "",
+    title: data.title || "",
+    postPath: `posts/${dateString}/posts/${data.postId || doc.id}`,
+  };
+}
+
+/**
+ * 스크랩 URL 중복 확인용 단일 문서 ref를 만든다.
+ * @param {string} normalizedUrl
+ * @return {FirebaseFirestore.DocumentReference}
+ */
+function scrapSourceRef(normalizedUrl) {
+  const id = crypto.createHash("sha256").update(normalizedUrl).digest("hex");
+  return admin.firestore().collection("scrap_source_urls").doc(id);
+}
+
+/**
+ * 스크랩 URL ledger 문서를 duplicatePost 응답으로 바꾼다.
+ * @param {Object} data
+ * @return {Object}
+ */
+function scrapDuplicatePostFromLedger(data) {
+  return {
+    postId: data.postId || "",
+    postNumber: data.postNumber || "",
+    dateString: data.dateString || "",
+    boardId: data.boardId || "",
+    title: data.title || "",
+    postPath: data.postPath || "",
+  };
+}
+
+/**
+ * Firestore collectionGroup 인덱스 누락 오류 여부.
+ * @param {unknown} error
+ * @return {boolean}
+ */
+function isScrapIndexPreconditionError(error) {
+  const message = error && error.message ? String(error.message) : "";
+  return error && (
+    error.code === 9 ||
+    message.includes("FAILED_PRECONDITION")
+  );
+}
+
+/**
+ * 스크랩 URL ledger가 실제 게시글을 가리키는지 확인한다.
+ * @param {Object} duplicatePost
+ * @return {Promise<boolean>}
+ */
+async function scrapDuplicatePostStillExists(duplicatePost) {
+  if (!duplicatePost.postPath) {
+    return true;
+  }
+  const postDoc = await admin.firestore().doc(duplicatePost.postPath).get();
+  return postDoc.exists;
+}
+
+/**
+ * 동일 sourceUrl로 이미 발행된 게시글을 찾는다.
+ * @param {string} normalizedUrl
+ * @return {Promise<Object|null>}
+ */
+async function findDuplicateScrapPost(normalizedUrl) {
+  const db = admin.firestore();
+  const ledgerDoc = await scrapSourceRef(normalizedUrl).get();
+  if (ledgerDoc.exists) {
+    const duplicatePost = scrapDuplicatePostFromLedger(ledgerDoc.data() || {});
+    if (await scrapDuplicatePostStillExists(duplicatePost)) {
+      return duplicatePost;
+    }
+    await ledgerDoc.ref.delete();
+    logger.warn("실제 게시글이 없는 스크랩 URL ledger를 정리했습니다.", {
+      sourceUrl: normalizedUrl,
+      postPath: duplicatePost.postPath,
+    });
+  }
+
+  try {
+    const queries = [
+      db.collectionGroup("posts")
+          .where("sourceUrlNormalized", "==", normalizedUrl)
+          .limit(3)
+          .get(),
+      db.collectionGroup("posts")
+          .where("sourceUrl", "==", normalizedUrl)
+          .limit(3)
+          .get(),
+    ];
+    const snapshots = await Promise.all(queries);
+    for (const snapshot of snapshots) {
+      for (const doc of snapshot.docs) {
+        const data = doc.data() || {};
+        if (data.postId || data.sourceUrl || data.sourceUrlNormalized) {
+          return scrapDuplicatePostFromDoc(doc);
+        }
+      }
+    }
+  } catch (error) {
+    if (!isScrapIndexPreconditionError(error)) {
+      throw error;
+    }
+    logger.warn("스크랩 기존 게시글 중복 조회 인덱스가 없어 건너뜁니다.", {
+      code: error.code,
+      message: error.message,
+    });
+  }
+  return null;
+}
+
+/**
+ * 원격 글을 fetch/parse/sanitize/중복검사까지 수행한다.
+ * @param {unknown} rawUrl
+ * @param {unknown} rawSourceType
+ * @return {Promise<Object>}
+ */
+async function validateScrapPayload(rawUrl, rawSourceType) {
+  const normalized = normalizeScrapUrl(rawUrl, rawSourceType);
+  const fetchedHtml = await fetchScrapHtml(
+      normalized.normalizedUrl,
+      normalized.sourceType,
+  );
+  const html = await resolveScrapHtmlForParsing(
+      fetchedHtml,
+      normalized.normalizedUrl,
+      normalized.sourceType,
+  );
+  const parsed = normalized.sourceType === SCRAP_AAGAG ?
+    parseAagagScrap(html, normalized.normalizedUrl) :
+    parseNaverBlogScrap(html, normalized.normalizedUrl);
+  const warnings = [];
+  if (!parsed.title) warnings.push("제목을 찾지 못했습니다.");
+  if (!parsed.contentHtml) warnings.push("본문을 찾지 못했습니다.");
+  const duplicatePost = await findDuplicateScrapPost(normalized.normalizedUrl);
+  if (duplicatePost) warnings.push("이미 같은 URL로 발행된 게시글이 있습니다.");
+  const mediaCounts = countScrapMedia(parsed.contentHtml);
+
+  return {
+    ok: true,
+    canPublish: !duplicatePost && Boolean(parsed.title && parsed.contentHtml),
+    sourceType: normalized.sourceType,
+    normalizedUrl: normalized.normalizedUrl,
+    title: parsed.title,
+    scrapedAuthor: parsed.scrapedAuthor,
+    scrapedDateText: parsed.scrapedDateText,
+    contentHtml: parsed.contentHtml,
+    previewHtml: buildScrapPreviewHtml(parsed, normalized.normalizedUrl),
+    mediaCounts,
+    warnings,
+    duplicatePost,
+  };
+}
+
+/**
+ * Realtime Database 카테고리를 찾아 발행 가능 여부를 확인한다.
+ * @param {string} boardId
+ * @return {Promise<Object>}
+ */
+async function requireScrapBoard(boardId) {
+  const snapshot = await admin.database().ref("CATEGORIES").get();
+  const raw = snapshot.val();
+  const entries = Array.isArray(raw) ? raw : Object.values(raw || {});
+  for (const entry of entries) {
+    if (!entry || String(entry.id || "") !== boardId) continue;
+    if (boardId === "seats") {
+      throw new HttpsError(
+          "invalid-argument",
+          "오늘의 좌석 카테고리에는 스크랩 업로드를 할 수 없습니다.",
+      );
+    }
+    return entry;
+  }
+  throw new HttpsError("invalid-argument", "카테고리를 찾을 수 없습니다.");
+}
+
+/**
+ * 한국 시간 기준 yyyyMMdd 파티션을 만든다.
+ * @return {string}
+ */
+function koreaDateKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()).replace(/-/g, "");
 }
 
 /**
@@ -2333,6 +3092,203 @@ setGlobalOptions({maxInstances: 10});
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
+
+/**
+ * 관리자 스크랩 URL을 검증하고 미리보기 데이터를 반환한다.
+ */
+exports.validateScrapPost = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 60,
+  memory: "512MiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+  const data = request.data || {};
+  return validateScrapPayload(data.url, data.sourceType);
+});
+
+/**
+ * 관리자 스크랩 글을 선택 사용자 명의의 커뮤니티 게시글로 발행한다.
+ */
+exports.publishScrapPost = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 90,
+  memory: "512MiB",
+}, async (request) => {
+  const adminUid = requireAuthUid(request);
+  await requireCardAdmin(adminUid);
+  const data = request.data || {};
+  const boardId = asIdString(data.boardId);
+  const authorUid = asIdString(data.authorUid);
+  const titleOverride = asOptionalString(data.titleOverride);
+  if (!boardId) {
+    throw new HttpsError("invalid-argument", "카테고리를 선택해주세요.");
+  }
+  if (!authorUid) {
+    throw new HttpsError("invalid-argument", "작성자를 선택해주세요.");
+  }
+
+  await requireScrapBoard(boardId);
+  const db = admin.firestore();
+  const authorRef = db.collection("users").doc(authorUid);
+  const authorDoc = await authorRef.get();
+  if (!authorDoc.exists) {
+    throw new HttpsError("not-found", "작성자 사용자를 찾을 수 없습니다.");
+  }
+
+  const validated = await validateScrapPayload(data.url, data.sourceType);
+  if (!validated.canPublish) {
+    throw new HttpsError(
+        "failed-precondition",
+        "검증을 통과한 URL만 업로드할 수 있습니다.",
+        {
+          warnings: validated.warnings,
+          duplicatePost: validated.duplicatePost,
+        },
+    );
+  }
+
+  const finalTitle = (titleOverride || validated.title || "").trim();
+  if (!finalTitle) {
+    throw new HttpsError("invalid-argument", "제목을 입력해주세요.");
+  }
+
+  const postId = crypto.randomUUID();
+  const dateString = koreaDateKey();
+  const author = authorDoc.data() || {};
+  const postPath = `posts/${dateString}/posts/${postId}`;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const sourceUrl = validated.normalizedUrl;
+  const postTitle = finalTitle.slice(0, 180);
+  const parsedForHtml = {
+    sourceType: validated.sourceType,
+    contentHtml: validated.contentHtml,
+  };
+  const contentHtml = buildScrapPublishHtml(parsedForHtml, sourceUrl);
+  let postNumber = "";
+  const postRef = db.collection("posts")
+      .doc(dateString)
+      .collection("posts")
+      .doc(postId);
+  await db.runTransaction(async (transaction) => {
+    const metaRef = db.collection("meta").doc("postNumber");
+    const sourceRef = scrapSourceRef(sourceUrl);
+    const [snap, sourceSnap] = await Promise.all([
+      transaction.get(metaRef),
+      transaction.get(sourceRef),
+    ]);
+    if (sourceSnap.exists) {
+      const duplicatePost = scrapDuplicatePostFromLedger(
+          sourceSnap.data() || {},
+      );
+      if (!duplicatePost.postPath) {
+        throw new HttpsError(
+            "failed-precondition",
+            "이미 같은 URL로 발행된 게시글이 있습니다.",
+            {duplicatePost},
+        );
+      }
+      const duplicateSnap = await transaction.get(
+          db.doc(duplicatePost.postPath),
+      );
+      if (duplicateSnap.exists) {
+        throw new HttpsError(
+            "failed-precondition",
+            "이미 같은 URL로 발행된 게시글이 있습니다.",
+            {duplicatePost},
+        );
+      }
+    }
+
+    const current = Number((snap.data() || {}).number || 0);
+    const next = current + 1;
+    postNumber = String(next);
+    const postData = {
+      postId,
+      postNumber,
+      boardId,
+      title: postTitle,
+      contentHtml,
+      author: {
+        uid: authorUid,
+        displayName: author.displayName || "익명",
+        photoURL: author.photoURL || "",
+        displayGrade: author.displayGrade || "이코노미 Lv.1",
+        currentSkyEffect: author.currentSkyEffect || "",
+      },
+      viewsCount: 0,
+      likesCount: 0,
+      commentCount: 0,
+      reportsCount: 0,
+      isDeleted: false,
+      isHidden: false,
+      hiddenByReport: false,
+      readRestriction: {
+        enabled: false,
+        minRank: 0,
+        label: "전체 공개",
+      },
+      sourceUrl,
+      sourceUrlNormalized: sourceUrl,
+      sourceType: validated.sourceType,
+      scrapedAuthor: validated.scrapedAuthor,
+      scrapedDateText: validated.scrapedDateText,
+      scrapedByAdminUid: adminUid,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    transaction.set(metaRef, {number: next}, {merge: true});
+    transaction.set(postRef, postData);
+    transaction.set(db.collection("post_numbers").doc(postNumber), {
+      postNumber,
+      postPath,
+      dateString,
+      postId,
+      boardId,
+      title: postTitle,
+      authorUid,
+      isDeleted: false,
+      isHidden: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+    transaction.set(authorRef.collection("my_posts").doc(postId), {
+      postPath,
+      postId,
+      postNumber,
+      dateString,
+      title: postTitle,
+      boardId,
+      createdAt: now,
+    });
+    transaction.set(sourceRef, {
+      sourceUrl,
+      sourceUrlNormalized: sourceUrl,
+      sourceType: validated.sourceType,
+      postId,
+      postNumber,
+      dateString,
+      postPath,
+      boardId,
+      title: postTitle,
+      authorUid,
+      createdAt: now,
+      updatedAt: now,
+    });
+    transaction.update(authorRef, {
+      postsCount: admin.firestore.FieldValue.increment(1),
+    });
+  });
+
+  return {
+    ok: true,
+    postId,
+    postNumber,
+    dateString,
+    postPath,
+  };
+});
 
 /**
  * 레이더 알림 조건 생성 시 현재 서버 레이더 아이템과 즉시 매칭
