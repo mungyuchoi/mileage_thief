@@ -81,6 +81,16 @@ String _displayBoardName(Map<String, dynamic> data) {
   return '커뮤니티';
 }
 
+int _postViewsCount(Map<String, dynamic> data) {
+  final views = data['viewsCount'] ?? data['viewCount'];
+  return (views as num?)?.toInt() ?? 0;
+}
+
+int _postCommentCount(Map<String, dynamic> data) {
+  final comments = data['commentCount'] ?? data['commentsCount'];
+  return (comments as num?)?.toInt() ?? 0;
+}
+
 String? _extractFirstImageUrl(String htmlString) {
   if (htmlString.isEmpty) return null;
 
@@ -4741,7 +4751,8 @@ class _PostSection extends StatelessWidget {
                         )
                       : null,
                   likesCount: (data['likesCount'] as num?)?.toInt() ?? 0,
-                  viewCount: (data['viewCount'] as num?)?.toInt() ?? 0,
+                  commentCount: _postCommentCount(data),
+                  viewCount: _postViewsCount(data),
                   onTap: () => onTapPost(doc),
                 );
               },
@@ -4973,8 +4984,7 @@ class _PopularBoardSection extends StatelessWidget {
       ranked[boardId] = current.copyWith(
         likesCount:
             current.likesCount + ((data['likesCount'] as num?)?.toInt() ?? 0),
-        viewCount:
-            current.viewCount + ((data['viewCount'] as num?)?.toInt() ?? 0),
+        viewCount: current.viewCount + _postViewsCount(data),
       );
     }
 
@@ -5074,6 +5084,7 @@ class _PostCard extends StatelessWidget {
   final String boardName;
   final String? thumbnailUrl;
   final int likesCount;
+  final int commentCount;
   final int viewCount;
   final VoidCallback onTap;
 
@@ -5082,6 +5093,7 @@ class _PostCard extends StatelessWidget {
     required this.boardName,
     this.thumbnailUrl,
     required this.likesCount,
+    required this.commentCount,
     required this.viewCount,
     required this.onTap,
   });
@@ -5164,21 +5176,50 @@ class _PostCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.favorite_border, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 3),
-                Text('$likesCount',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                _PostMetric(
+                  icon: Icons.favorite_border,
+                  value: likesCount,
+                ),
                 const SizedBox(width: 10),
-                Icon(Icons.visibility_outlined,
-                    size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 3),
-                Text('$viewCount',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                _PostMetric(
+                  icon: Icons.mode_comment_outlined,
+                  value: commentCount,
+                ),
+                const SizedBox(width: 10),
+                _PostMetric(
+                  icon: Icons.visibility_outlined,
+                  value: viewCount,
+                ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PostMetric extends StatelessWidget {
+  final IconData icon;
+  final int value;
+
+  const _PostMetric({
+    required this.icon,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey[600]),
+        const SizedBox(width: 3),
+        Text(
+          '$value',
+          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+        ),
+      ],
     );
   }
 }
