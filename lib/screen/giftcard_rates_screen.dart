@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+import '../const/colors.dart';
 
 // 추천 대시보드 땅콩 안내 다이얼로그 "다시 보지 않기" 플래그
 const String _kRecommendPeanutDialogDontShowKey =
@@ -22,8 +23,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
         .orderBy('sortOrder', descending: false)
         .get();
 
-    final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-        snap.docs;
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = snap.docs;
     if (docs.isEmpty) return const <String>[];
 
     final List<String> ids = docs.map((d) => d.id).toList();
@@ -38,17 +38,14 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
     final List<String>? result = await showDialog<List<String>>(
       context: context,
       builder: (context) {
-            return StatefulBuilder(
+        return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
               scrollable: false,
               backgroundColor: Colors.white,
               title: const Text(
                 '상품권 선택',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: McTextStyles.appBarTitle,
               ),
               content: SizedBox(
                 width: double.maxFinite,
@@ -59,10 +56,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         '추천을 보고 싶은 상품권을 선택해주세요.',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 13,
-                        ),
+                        style: McTextStyles.meta,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -79,7 +73,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
                                 style: const TextStyle(color: Colors.black),
                               ),
                               value: selected.contains(id),
-                              activeColor: const Color(0xFF74512D),
+                              activeColor: McColors.accent,
                               onChanged: (v) {
                                 setState(() {
                                   if (v == true) {
@@ -98,9 +92,8 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         '선택한 상품권: ${selected.length}개 · 예상 땅콩 소모: ${selected.length * 3}개',
-                        style: const TextStyle(
-                          color: Color(0xFF74512D),
-                          fontSize: 13,
+                        style: McTextStyles.meta.copyWith(
+                          color: McColors.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -119,8 +112,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
                 TextButton(
                   onPressed: () {
                     if (selected.isEmpty) {
-                      Fluttertoast.showToast(
-                          msg: '최소 1개 이상의 상품권을 선택해주세요.');
+                      Fluttertoast.showToast(msg: '최소 1개 이상의 상품권을 선택해주세요.');
                       return;
                     }
                     Navigator.of(context).pop(selected.toList());
@@ -149,7 +141,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
 
 /// 추천 대시보드 진입 전 땅콩 20개 확인 및 차감
 Future<bool> _confirmAndSpendPeanutsForRecommend(
-    BuildContext context, {
+  BuildContext context, {
   int amount = 20,
 }) async {
   try {
@@ -163,8 +155,7 @@ Future<bool> _confirmAndSpendPeanutsForRecommend(
         .collection('users')
         .doc(user.uid)
         .get();
-    final int peanuts =
-        (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
+    final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
     if (peanuts < amount) {
       Fluttertoast.showToast(msg: '땅콩이 부족합니다.');
       return false;
@@ -198,8 +189,7 @@ Future<bool> _confirmAndSpendPeanutsForRecommend(
                   children: [
                     Text(
                       '해당 기능을 사용할 때마다 땅콩 $amount개가 소모됩니다.',
-                      style:
-                          const TextStyle(color: Colors.black, fontSize: 14),
+                      style: const TextStyle(color: Colors.black, fontSize: 14),
                     ),
                     const SizedBox(height: 12),
                     CheckboxListTile(
@@ -220,16 +210,14 @@ Future<bool> _confirmAndSpendPeanutsForRecommend(
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () =>
-                        Navigator.of(context).pop(null),
+                    onPressed: () => Navigator.of(context).pop(null),
                     child: const Text(
                       '취소',
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
                   TextButton(
-                    onPressed: () =>
-                        Navigator.of(context).pop(localDontShow),
+                    onPressed: () => Navigator.of(context).pop(localDontShow),
                     child: const Text(
                       '확인',
                       style: TextStyle(
@@ -252,8 +240,7 @@ Future<bool> _confirmAndSpendPeanutsForRecommend(
 
       proceed = true;
       if (dontShowNext == true) {
-        await prefs.setBool(
-            _kRecommendPeanutDialogDontShowKey, true);
+        await prefs.setBool(_kRecommendPeanutDialogDontShowKey, true);
       }
     } else {
       proceed = true;
@@ -428,8 +415,9 @@ class GiftcardRatesTab extends StatelessWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: docs.length + 1,
-          separatorBuilder: (context, index) =>
-              index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
+          separatorBuilder: (context, index) => index == 0
+              ? const SizedBox(height: 16)
+              : const SizedBox(height: 12),
           itemBuilder: (context, index) {
             if (index == 0) {
               return _RecommendEntryCard();
@@ -443,8 +431,9 @@ class GiftcardRatesTab extends StatelessWidget {
             // 우선 giftcardId 기준 asset 매핑을 시도하고, 없으면 앱 아이콘으로 대체.
             final assetPath =
                 _assetForGiftcard(giftcardId) ?? 'asset/img/app_icon.png';
-            final bool isNhLogo =
-                giftcardId == 'nh' || giftcardId == 'nonghyup' || giftcardId == '농협';
+            final bool isNhLogo = giftcardId == 'nh' ||
+                giftcardId == 'nonghyup' ||
+                giftcardId == '농협';
             final logoUrl = data['logoUrl'] as String?;
 
             final num? bestSellPrice = data['bestSellPrice'] as num?;
@@ -484,7 +473,8 @@ class GiftcardRatesTab extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    if (assetPath.isNotEmpty || (logoUrl != null && logoUrl.isNotEmpty)) ...[
+                    if (assetPath.isNotEmpty ||
+                        (logoUrl != null && logoUrl.isNotEmpty)) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
@@ -537,7 +527,8 @@ class GiftcardRatesTab extends StatelessWidget {
                                   children: [
                                     _RateLabel(
                                       label: '팔 때',
-                                      description: '사용자가 지점에 상품권을 파는 경우 (지점이 금액을 지급합니다).',
+                                      description:
+                                          '사용자가 지점에 상품권을 파는 경우 (지점이 금액을 지급합니다).',
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -563,7 +554,8 @@ class GiftcardRatesTab extends StatelessWidget {
                                   children: [
                                     _RateLabel(
                                       label: '살 때',
-                                      description: '사용자가 지점에서 상품권을 사는 경우 (사용자가 금액을 지불합니다).',
+                                      description:
+                                          '사용자가 지점에서 상품권을 사는 경우 (사용자가 금액을 지불합니다).',
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -620,8 +612,8 @@ class _RecommendEntryCard extends StatelessWidget {
         // 3) 추천 대시보드로 이동
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                GiftcardRecommendDashboardPage(selectedGiftcardIds: selectedIds),
+            builder: (_) => GiftcardRecommendDashboardPage(
+                selectedGiftcardIds: selectedIds),
           ),
         );
       },
@@ -746,14 +738,15 @@ class GiftcardBrandRatesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(giftcardName),
+        title: Text(giftcardName, style: McTextStyles.appBarTitle),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        foregroundColor: McColors.ink,
+        elevation: 0.5,
+        shadowColor: McColors.line,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+      backgroundColor: McColors.background,
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _load(),
         builder: (context, snapshot) {
@@ -763,7 +756,7 @@ class GiftcardBrandRatesPage extends StatelessWidget {
             }
             return const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
               ),
             );
           }
@@ -795,8 +788,8 @@ class GiftcardBrandRatesPage extends StatelessWidget {
                   (row['rate'] as Map<String, dynamic>) ?? {};
               final bool isVerified = (row['verified'] as bool?) ?? false;
 
-              final branchName =
-                  (branch['name'] as String?) ?? (branchId.isNotEmpty ? branchId : '알 수 없음');
+              final branchName = (branch['name'] as String?) ??
+                  (branchId.isNotEmpty ? branchId : '알 수 없음');
               final address = branch['address'] as String?;
 
               final sellPrice = data['sellPrice_general'] as num?;
@@ -1047,9 +1040,8 @@ class _GiftcardRecommendDashboardPageState
         final String branchId = branchDoc.id;
         final Map<String, dynamic> branchData = branchDoc.data();
 
-        final ratesSnap = await branchDoc.reference
-            .collection('giftcardRates_current')
-            .get();
+        final ratesSnap =
+            await branchDoc.reference.collection('giftcardRates_current').get();
 
         for (final rate in ratesSnap.docs) {
           final Map<String, dynamic> rateData = rate.data();
@@ -1095,11 +1087,10 @@ class _GiftcardRecommendDashboardPageState
 
       // 4) 각 상품권별 Top2 선정
       final List<_RecommendItem> items = <_RecommendItem>[];
-      final Set<String>? filter =
-          widget.selectedGiftcardIds == null ||
-                  widget.selectedGiftcardIds!.isEmpty
-              ? null
-              : widget.selectedGiftcardIds!.toSet();
+      final Set<String>? filter = widget.selectedGiftcardIds == null ||
+              widget.selectedGiftcardIds!.isEmpty
+          ? null
+          : widget.selectedGiftcardIds!.toSet();
 
       perGiftcard.forEach((giftcardId, rows) {
         if (filter != null && !filter.contains(giftcardId)) return;
@@ -1118,8 +1109,7 @@ class _GiftcardRecommendDashboardPageState
         items.add(
           _RecommendItem(
             giftcardId: giftcardId,
-            giftName:
-                (giftMeta['name'] as String?) ?? giftcardId.toUpperCase(),
+            giftName: (giftMeta['name'] as String?) ?? giftcardId.toUpperCase(),
             logoUrl: giftMeta['logoUrl'] as String?,
             rows: branchRows,
           ),
@@ -1143,27 +1133,26 @@ class _GiftcardRecommendDashboardPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('추천 대시보드'),
+        title: const Text('추천 대시보드', style: McTextStyles.appBarTitle),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        foregroundColor: McColors.ink,
+        elevation: 0.5,
+        shadowColor: McColors.line,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-      backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
+      backgroundColor: McColors.background,
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
               ),
             )
           : _error != null
               ? Center(
                   child: Text(
                     _error!,
-                    style:
-                        const TextStyle(color: Colors.black54, fontSize: 14),
+                    style: const TextStyle(color: Colors.black54, fontSize: 14),
                   ),
                 )
               : _items.isEmpty
@@ -1203,8 +1192,7 @@ class _GiftcardRecommendDashboardPageState
                                 ],
                               );
                             }
-                            final _RecommendItem item =
-                                _items[index - 1];
+                            final _RecommendItem item = _items[index - 1];
                             return _RecommendCard(
                               item: item,
                               position: _position,
@@ -1359,8 +1347,7 @@ class _RecommendCard extends StatelessWidget {
 
   Widget _buildRow(BuildContext context, _RecommendRow row,
       {required int rank}) {
-    final String branchName =
-        (row.branch['name'] as String?) ?? row.branchId;
+    final String branchName = (row.branch['name'] as String?) ?? row.branchId;
     final double? sellRate = _calcRateFromPrice(row.sellPrice);
     final double? distanceKm = row.distanceKm;
 
@@ -1456,7 +1443,8 @@ class _GiftcardUpdateTimeText extends StatefulWidget {
   const _GiftcardUpdateTimeText();
 
   @override
-  State<_GiftcardUpdateTimeText> createState() => _GiftcardUpdateTimeTextState();
+  State<_GiftcardUpdateTimeText> createState() =>
+      _GiftcardUpdateTimeTextState();
 }
 
 class _GiftcardUpdateTimeTextState extends State<_GiftcardUpdateTimeText> {
@@ -1489,10 +1477,28 @@ class _GiftcardUpdateTimeTextState extends State<_GiftcardUpdateTimeText> {
   String _getLastUpdateTimeText() {
     final now = DateTime.now();
     final currentHour = now.hour;
-    
+
     // 업데이트 시간 목록: 6시부터 1시간 간격으로 22시까지
-    final updateHours = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
-    
+    final updateHours = [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22
+    ];
+
     // 현재 시간보다 작거나 같은 가장 최근 업데이트 시간 찾기
     int? lastUpdateHour;
     for (int hour in updateHours.reversed) {
@@ -1501,13 +1507,13 @@ class _GiftcardUpdateTimeTextState extends State<_GiftcardUpdateTimeText> {
         break;
       }
     }
-    
+
     // 현재 시간이 6시 이전이면 어제 22시로 설정
     if (lastUpdateHour == null) {
       final yesterday = now.subtract(const Duration(days: 1));
       return '최근 업데이트: ${yesterday.year}년 ${yesterday.month}월 ${yesterday.day}일 22시';
     }
-    
+
     // 오늘 날짜로 표시
     return '최근 업데이트: ${now.year}년 ${now.month}월 ${now.day}일 ${lastUpdateHour}시';
   }
@@ -1574,9 +1580,7 @@ class BranchRatesDetailPage extends StatelessWidget {
         .doc(branchId)
         .collection('rates_daily')
         .orderBy(FieldPath.documentId)
-        .startAt([startKey])
-        .endAt([endKey])
-        .get();
+        .startAt([startKey]).endAt([endKey]).get();
 
     final giftcardsSnap =
         await FirebaseFirestore.instance.collection('giftcards').get();
@@ -1592,7 +1596,6 @@ class BranchRatesDetailPage extends StatelessWidget {
       'giftcards': giftcards,
     };
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -1689,230 +1692,229 @@ class BranchRatesDetailPage extends StatelessWidget {
             children: [
               const _GiftcardUpdateTimeText(),
               const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      branchName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          branchName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
+                    const SizedBox(height: 8),
+                    if (address != null) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.place_outlined,
+                            size: 18,
+                            color: Colors.black54,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (address != null) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.place_outlined,
-                                size: 18,
-                                color: Colors.black54,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                '주소',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(address),
-                          const SizedBox(height: 8),
-                          ],
-                        if (phone != null) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.phone_outlined,
-                                size: 18,
-                                color: Colors.black54,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                '연락처',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(phone),
-                          const SizedBox(height: 8),
-                        ],
-                        if (openingHours != null) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.access_time_outlined,
-                                size: 18,
-                                color: Colors.black54,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                '영업시간',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
+                          SizedBox(width: 6),
                           Text(
-                            openingHours.entries
-                                .map((e) => '${e.key}: ${e.value}')
-                                .join('\n'),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                        if (notice != null) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.info_outline,
-                                size: 18,
-                                color: Colors.black54,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                '안내사항',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(notice),
-                          const SizedBox(height: 8),
-                        ],
-                        if (url != null && url.trim().isNotEmpty) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.language,
-                                size: 18,
-                                color: Colors.black54,
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'URL',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          GestureDetector(
-                            onTap: () async {
-                              final uri = Uri.tryParse(url.trim());
-                              if (uri != null) {
-                                await launchUrl(
-                                  uri,
-                                  mode: LaunchMode.externalApplication,
-                                );
-                              }
-                            },
-                            child: Text(
-                              url.trim(),
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
+                            '주소',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (rateDocs.isNotEmpty)
-                    _BranchDailyRatesChartCard(
-                      dailyDocs: dailyDocs,
-                      rateDocs: rateDocs,
-                      giftcards: giftcards,
-                    ),
-                  if (rateDocs.isNotEmpty) const SizedBox(height: 16),
-                  const Text(
-                    '이 지점에서 취급하는 상품권',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(address),
+                      const SizedBox(height: 8),
+                    ],
+                    if (phone != null) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.phone_outlined,
+                            size: 18,
+                            color: Colors.black54,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
+                          SizedBox(width: 6),
+                          Text(
+                            '연락처',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
-                          child: const Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  '상품권',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  '팔 때',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  '살 때',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                            ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(phone),
+                      const SizedBox(height: 8),
+                    ],
+                    if (openingHours != null) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.access_time_outlined,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            '영업시간',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        openingHours.entries
+                            .map((e) => '${e.key}: ${e.value}')
+                            .join('\n'),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (notice != null) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.info_outline,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            '안내사항',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(notice),
+                      const SizedBox(height: 8),
+                    ],
+                    if (url != null && url.trim().isNotEmpty) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.language,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'URL',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      GestureDetector(
+                        onTap: () async {
+                          final uri = Uri.tryParse(url.trim());
+                          if (uri != null) {
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        child: Text(
+                          url.trim(),
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
                           ),
                         ),
-                        for (final doc in rateDocs)
-                          _buildBranchRateRow(doc, giftcards),
-                      ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (rateDocs.isNotEmpty)
+                _BranchDailyRatesChartCard(
+                  dailyDocs: dailyDocs,
+                  rateDocs: rateDocs,
+                  giftcards: giftcards,
+                ),
+              if (rateDocs.isNotEmpty) const SizedBox(height: 16),
+              const Text(
+                '이 지점에서 취급하는 상품권',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              '상품권',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              '팔 때',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              '살 때',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              );
+                    for (final doc in rateDocs)
+                      _buildBranchRateRow(doc, giftcards),
+                  ],
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -2213,9 +2215,9 @@ class _BranchDailyMultiRatesChartData {
 
   bool get isEmpty {
     if (days.isEmpty) return true;
-    final hasAny = sellByGiftcard.values
-            .any((series) => series.any((v) => v != null)) ||
-        buyByGiftcard.values.any((series) => series.any((v) => v != null));
+    final hasAny =
+        sellByGiftcard.values.any((series) => series.any((v) => v != null)) ||
+            buyByGiftcard.values.any((series) => series.any((v) => v != null));
     return !hasAny;
   }
 
@@ -2341,7 +2343,8 @@ class _SingleMetricChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allSpots = <FlSpot>[
-      for (final id in giftcardIds) ...chart.spotsFor(metric: metric, giftcardId: id),
+      for (final id in giftcardIds)
+        ...chart.spotsFor(metric: metric, giftcardId: id),
     ];
     if (allSpots.isEmpty) {
       return Container(
@@ -2436,8 +2439,7 @@ class _SingleMetricChart extends StatelessWidget {
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 44,
-                          interval:
-                              ((maxY - minY) / 4).clamp(500.0, 10000.0),
+                          interval: ((maxY - minY) / 4).clamp(500.0, 10000.0),
                           getTitlesWidget: (value, meta) {
                             final String t = _fmtWonShort(value);
                             return Padding(
@@ -2541,5 +2543,3 @@ String _fmtWonShort(double v) {
   }
   return v.toStringAsFixed(0);
 }
-
-

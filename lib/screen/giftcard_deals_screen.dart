@@ -10,9 +10,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/giftcard_deal_model.dart';
 import '../services/branch_service.dart';
 import '../services/giftcard_deal_service.dart';
+import '../const/colors.dart';
 
-const Color _giftDealAccent = Color(0xFF74512D);
-const Color _giftDealAccentSoft = Color(0xFFF4EEE7);
+const Color _giftDealAccent = McColors.accent;
+const Color _giftDealAccentSoft = McColors.accentSoft;
 const Color _giftDealAccentBorder = Color(0xFFB89B7C);
 
 class GiftcardDealsScreen extends StatefulWidget {
@@ -307,12 +308,13 @@ class GiftcardDealDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FA),
+      backgroundColor: McColors.background,
       appBar: AppBar(
-        title: const Text('상품권 특가'),
+        title: const Text('상품권 특가', style: McTextStyles.appBarTitle),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: McColors.ink,
         elevation: 0.5,
+        shadowColor: McColors.line,
       ),
       body: StreamBuilder<GiftcardDeal?>(
         stream: GiftcardDealService.watchDeal(dealId),
@@ -457,25 +459,21 @@ class _HeaderMetric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F7FA),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          color: McColors.field,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: McColors.line),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+              style: McTextStyles.micro,
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(
-                color: Color(0xFF111827),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: McTextStyles.cardTitle,
             ),
           ],
         ),
@@ -553,11 +551,7 @@ class _GiftcardSourceRequestSheetState
                   const Expanded(
                     child: Text(
                       '상품권 특가 사이트 요청',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
-                      ),
+                      style: McTextStyles.sectionTitle,
                     ),
                   ),
                   IconButton(

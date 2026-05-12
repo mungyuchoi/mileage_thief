@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../const/colors.dart';
 
 class GiftActionPill extends StatelessWidget {
   final IconData icon;
@@ -20,13 +21,13 @@ class GiftActionPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
-            color: const Color(0xFF74512D),
-            borderRadius: BorderRadius.circular(28),
+            color: McColors.accent,
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -42,12 +43,16 @@ class GiftActionPill extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 18, color: Color(0xFF74512D)),
+                child: Icon(icon, size: 18, color: McColors.accent),
               ),
               const SizedBox(width: 10),
               Text(
                 label,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -56,5 +61,3 @@ class GiftActionPill extends StatelessWidget {
     );
   }
 }
-
-

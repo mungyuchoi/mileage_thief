@@ -5,18 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../const/colors.dart';
 import '../models/card_product_model.dart';
 import '../services/card_catalog_service.dart';
 import 'card_catalog_screen.dart';
 
-const Color _hubInk = Color(0xFF111827);
-const Color _hubMuted = Color(0xFF6B7280);
-const Color _hubLine = Color(0xFFE5E7EB);
-const Color _hubPage = Color(0xFFF7F8FA);
-const Color _hubAccent = _hubInk;
-const Color _hubSecondaryAccent = Color(0xFF4B5563);
-const Color _hubSoftSurface = Color(0xFFF8FAFC);
-const Color _hubThumbSurface = Color(0xFFF3F4F6);
+const Color _hubInk = McColors.ink;
+const Color _hubMuted = McColors.muted;
+const Color _hubLine = McColors.line;
+const Color _hubPage = McColors.background;
+const Color _hubAccent = McColors.accent;
+const Color _hubSecondaryAccent = McColors.inkSoft;
+const Color _hubSoftSurface = McColors.field;
+const Color _hubThumbSurface = McColors.field;
 
 const Map<String, String> _spendCategoryLabels = {
   'general': '일반',
@@ -112,29 +113,29 @@ class _CardHubScreenState extends State<CardHubScreen> {
         appBar: AppBar(
           title: const Text(
             '카드',
-            style: TextStyle(fontWeight: FontWeight.w400),
+            style: McTextStyles.appBarTitle,
           ),
           backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          foregroundColor: _hubInk,
           elevation: 0.4,
           actions: [
             IconButton(
               tooltip: '카드 요청',
-              icon: const Icon(Icons.search_outlined),
+              icon: const Icon(Icons.search_outlined, color: _hubAccent),
               onPressed: _openRequest,
             ),
             IconButton(
               tooltip: '관리 목록',
-              icon: const Icon(Icons.table_rows_outlined),
+              icon: const Icon(Icons.table_rows_outlined, color: _hubAccent),
               onPressed: _openLegacyCatalog,
             ),
           ],
           bottom: const TabBar(
             isScrollable: true,
-            labelColor: _hubInk,
+            labelColor: _hubAccent,
             unselectedLabelColor: _hubMuted,
-            labelStyle: TextStyle(fontWeight: FontWeight.w400),
-            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w400),
+            labelStyle: McTextStyles.tabSelected,
+            unselectedLabelStyle: McTextStyles.tab,
             indicatorColor: _hubAccent,
             tabs: [
               Tab(text: '추천'),
@@ -1419,10 +1420,10 @@ class _IssuerCardListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           issuerName,
-          style: const TextStyle(fontWeight: FontWeight.w400),
+          style: McTextStyles.appBarTitle,
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: _hubInk,
         elevation: 0.4,
       ),
       body: ListView(

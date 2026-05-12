@@ -11,15 +11,17 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../const/colors.dart';
 import '../models/card_product_model.dart';
 import '../services/branch_service.dart';
 import '../services/card_catalog_service.dart';
 import 'user_profile_screen.dart';
 
-const Color _cardInk = Color(0xFF111827);
-const Color _cardLine = Color(0xFFE5E7EB);
-const Color _cardMuted = Color(0xFF6B7280);
-const Color _cardPage = Color(0xFFF8F9FB);
+const Color _cardInk = McColors.ink;
+const Color _cardLine = McColors.line;
+const Color _cardMuted = McColors.muted;
+const Color _cardPage = McColors.background;
+const Color _cardAccent = McColors.accent;
 
 class CardCatalogScreen extends StatefulWidget {
   final VoidCallback? onRequireLogin;
@@ -54,10 +56,10 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
       appBar: AppBar(
         title: const Text(
           '카드',
-          style: TextStyle(fontWeight: FontWeight.w400),
+          style: McTextStyles.appBarTitle,
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: _cardAccent,
         elevation: 0.4,
         actions: [
           FutureBuilder<bool>(
@@ -96,7 +98,7 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
           FloatingActionButton.extended(
             heroTag: 'card_request',
             backgroundColor: Colors.white,
-            foregroundColor: _cardInk,
+            foregroundColor: _cardAccent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: const BorderSide(color: _cardLine),
@@ -111,7 +113,7 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
           const SizedBox(height: 10),
           FloatingActionButton.extended(
             heroTag: 'card_create',
-            backgroundColor: _cardInk,
+            backgroundColor: _cardAccent,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_card_outlined),
             label: const Text(
@@ -409,10 +411,10 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
       appBar: AppBar(
         title: const Text(
           '카드 요청',
-          style: TextStyle(fontWeight: FontWeight.w400),
+          style: McTextStyles.appBarTitle,
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: _cardInk,
         elevation: 0.4,
       ),
       body: ListView(
@@ -458,7 +460,7 @@ class _CardSourceRequestScreenState extends State<CardSourceRequestScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 80),
               child: Center(
-                child: CircularProgressIndicator(color: _cardInk),
+                child: CircularProgressIndicator(color: _cardAccent),
               ),
             )
           else if (_searchedQuery != null && _candidates.isEmpty)
@@ -561,10 +563,10 @@ class _CardRequestManageScreenState extends State<CardRequestManageScreen> {
       appBar: AppBar(
         title: const Text(
           '카드 요청',
-          style: TextStyle(fontWeight: FontWeight.w400),
+          style: McTextStyles.appBarTitle,
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: _cardInk,
         elevation: 0.4,
       ),
       body: StreamBuilder<List<CardSourceRequest>>(
@@ -706,10 +708,10 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
             title: Text(
               product?.name ?? '카드 상세',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w400),
+              style: McTextStyles.appBarTitle,
             ),
             backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
+            foregroundColor: _cardInk,
             elevation: 0.4,
             actions: [
               if (product != null) _buildActionMenu(product),
@@ -773,7 +775,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Icon(Icons.more_horiz, color: _cardInk),
+          : const Icon(Icons.more_horiz, color: _cardAccent),
       onSelected: (action) => _handleActionMenuSelection(action, product),
       itemBuilder: (context) => [
         PopupMenuItem(
@@ -1101,19 +1103,19 @@ class _CardProductEditScreenState extends State<CardProductEditScreen> {
     return Theme(
       data: baseTheme.copyWith(
         colorScheme: baseTheme.colorScheme.copyWith(
-          primary: _cardInk,
-          secondary: _cardInk,
+          primary: _cardAccent,
+          secondary: _cardAccent,
           onPrimary: Colors.white,
         ),
         textSelectionTheme: TextSelectionThemeData(
-          cursorColor: _cardInk,
-          selectionColor: _cardInk.withValues(alpha: 0.18),
-          selectionHandleColor: _cardInk,
+          cursorColor: _cardAccent,
+          selectionColor: _cardAccent.withValues(alpha: 0.18),
+          selectionHandleColor: _cardAccent,
         ),
         inputDecorationTheme: const InputDecorationTheme(
-          floatingLabelStyle: TextStyle(color: _cardInk),
+          floatingLabelStyle: TextStyle(color: _cardAccent),
           focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: _cardInk, width: 1.4),
+            borderSide: BorderSide(color: _cardAccent, width: 1.4),
           ),
           enabledBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: _cardMuted),
@@ -1121,14 +1123,14 @@ class _CardProductEditScreenState extends State<CardProductEditScreen> {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: _cardInk,
+            backgroundColor: _cardAccent,
             foregroundColor: Colors.white,
             disabledBackgroundColor: _cardLine,
             disabledForegroundColor: _cardMuted,
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: _cardInk),
+          style: TextButton.styleFrom(foregroundColor: _cardAccent),
         ),
       ),
       child: Scaffold(
@@ -1136,10 +1138,10 @@ class _CardProductEditScreenState extends State<CardProductEditScreen> {
         appBar: AppBar(
           title: Text(
             _isCreate ? '카드 추가' : '카드 수정',
-            style: const TextStyle(fontWeight: FontWeight.w400),
+            style: McTextStyles.appBarTitle,
           ),
           backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          foregroundColor: _cardInk,
           elevation: 0.4,
         ),
         bottomNavigationBar: SafeArea(
@@ -1148,7 +1150,7 @@ class _CardProductEditScreenState extends State<CardProductEditScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: _cardInk,
+                backgroundColor: _cardAccent,
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: _cardLine,
                 disabledForegroundColor: _cardMuted,
@@ -1295,7 +1297,8 @@ class _CardProductEditScreenState extends State<CardProductEditScreen> {
                         ),
                       ),
                       TextButton.icon(
-                        style: TextButton.styleFrom(foregroundColor: _cardInk),
+                        style:
+                            TextButton.styleFrom(foregroundColor: _cardAccent),
                         onPressed: _pickImage,
                         icon: const Icon(Icons.image_outlined),
                         label: const Text('선택'),
@@ -1414,10 +1417,10 @@ class _CardRevisionHistoryScreenState extends State<CardRevisionHistoryScreen> {
       appBar: AppBar(
         title: const Text(
           '수정 히스토리',
-          style: TextStyle(fontWeight: FontWeight.w400),
+          style: McTextStyles.appBarTitle,
         ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: _cardInk,
         elevation: 0.4,
       ),
       body: StreamBuilder<List<CardProductRevision>>(
@@ -1631,7 +1634,7 @@ class _CatalogSearchHeader extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: _cardInk, width: 1.2),
+                borderSide: const BorderSide(color: _cardAccent, width: 1.2),
               ),
             ),
           ),
@@ -1919,7 +1922,7 @@ class _SourceCandidateTile extends StatelessWidget {
             FilledButton(
               onPressed: isRequesting ? null : onRequest,
               style: FilledButton.styleFrom(
-                backgroundColor: _cardInk,
+                backgroundColor: _cardAccent,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
               ),
@@ -2624,7 +2627,7 @@ class _CardSangtechPanelState extends State<_CardSangtechPanel> {
           min: 100000,
           max: 5000000,
           divisions: 49,
-          activeColor: const Color(0xFF74512D),
+          activeColor: _cardAccent,
           onChanged: (value) => setState(() => _monthlyAmount = value),
         ),
         Row(
@@ -2749,7 +2752,7 @@ class _IssuerFloatingButton extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Material(
-          color: const Color(0xFFFFC84A),
+          color: _cardAccent,
           borderRadius: BorderRadius.circular(8),
           elevation: 8,
           shadowColor: Colors.black.withValues(alpha: 0.18),
@@ -2760,20 +2763,20 @@ class _IssuerFloatingButton extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 18, vertical: 15),
               child: Row(
                 children: [
-                  Icon(Icons.language_outlined, color: Colors.black, size: 22),
+                  Icon(Icons.language_outlined, color: Colors.white, size: 22),
                   SizedBox(width: 9),
                   Expanded(
                     child: Text(
                       '카드사 바로가기',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: Colors.black, size: 24),
+                  Icon(Icons.chevron_right, color: Colors.white, size: 24),
                 ],
               ),
             ),
@@ -3542,7 +3545,7 @@ class _CardCommentTile extends StatelessWidget {
                       icon: const Icon(Icons.reply_outlined, size: 17),
                       label: const Text('답글'),
                       style: TextButton.styleFrom(
-                        foregroundColor: _cardInk,
+                        foregroundColor: _cardAccent,
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         minimumSize: const Size(0, 32),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -3651,10 +3654,10 @@ class _StatusChip extends StatelessWidget {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
-              color: selected ? _cardInk : Colors.white,
+              color: selected ? _cardAccent : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: selected ? _cardInk : const Color(0xFFD1D5DB),
+                color: selected ? _cardAccent : const Color(0xFFD1D5DB),
                 width: 1.1,
               ),
             ),

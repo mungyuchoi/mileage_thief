@@ -17,6 +17,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../const/colors.dart';
 import '../screen/community_screen.dart';
 import '../services/remote_config_service.dart';
 import 'giftcard_map_screen.dart';
@@ -363,34 +364,17 @@ class _HomeBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  const Color(0xFF202734).withValues(alpha: 0.88),
-                  const Color(0xFF151A24).withValues(alpha: 0.82),
-                ]
-              : [
-                  Colors.white.withValues(alpha: 0.90),
-                  const Color(0xFFF5F8FE).withValues(alpha: 0.74),
-                ],
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: isDark ? 0.26 : 0.92),
-          width: 1.2,
-        ),
-        borderRadius: BorderRadius.circular(34),
+        color: Colors.white.withValues(alpha: 0.94),
+        border: Border.all(color: McColors.line, width: 0.8),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: isDark ? const Color(0x44000000) : const Color(0x25000000),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -405,23 +389,10 @@ class _HomeBottomNavigationBar extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 7),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? Colors.white.withValues(alpha: isDark ? 0.16 : 0.98)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: isDark
-                                ? const Color(0x55000000)
-                                : const Color(0x12000000),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : const [],
+                  color: selected ? McColors.accentSoft : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -430,14 +401,8 @@ class _HomeBottomNavigationBar extends StatelessWidget {
                       selected
                           ? destination.filledIcon
                           : destination.outlinedIcon,
-                      size: 22,
-                      color: selected
-                          ? (isDark
-                              ? const Color(0xFFF2F5FB)
-                              : const Color(0xFF15161A))
-                          : (isDark
-                              ? const Color(0xFF9BA3B3)
-                              : const Color(0xFF8A8A94)),
+                      size: 21,
+                      color: selected ? McColors.accent : McColors.mutedLight,
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -449,13 +414,7 @@ class _HomeBottomNavigationBar extends StatelessWidget {
                         fontWeight: index == _HomeTab.usefulInfo.index
                             ? _mileageSettingActionTitleTextStyle.fontWeight
                             : FontWeight.w700,
-                        color: selected
-                            ? (isDark
-                                ? const Color(0xFFF2F5FB)
-                                : const Color(0xFF15161A))
-                            : (isDark
-                                ? const Color(0xFF9BA3B3)
-                                : const Color(0xFF8A8A94)),
+                        color: selected ? McColors.accent : McColors.muted,
                       ),
                     ),
                   ],
@@ -680,8 +639,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             )
           : const SizedBox.shrink(),
       backgroundColor: Colors.white,
-      iconTheme: const IconThemeData(color: Colors.black),
-      elevation: 1,
+      iconTheme: const IconThemeData(color: McColors.ink, size: 23),
+      elevation: 0.5,
+      shadowColor: McColors.line,
       actions: actions ??
           (includeGiftcardActions
               ? _buildGiftcardAppBarActions()

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
+import '../const/colors.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/category_service.dart';
@@ -554,11 +555,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         selectedBoardName,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.normal,
-          fontSize: 18,
-        ),
+        style: McTextStyles.appBarTitle.copyWith(fontSize: 17),
       ),
       actions: [
         if (AuthService.currentUser != null && userProfile != null)
@@ -695,19 +692,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _buildCommunityTabs() {
     return Container(
-      height: 56,
+      height: 50,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
+          bottom: BorderSide(color: McColors.line, width: 0.8),
         ),
       ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _communityTabs.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 24),
+        separatorBuilder: (context, index) => const SizedBox(width: 20),
         itemBuilder: (context, index) {
           return _buildCommunityTab(_communityTabs[index]);
         },
@@ -730,21 +727,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
               tab.label,
               maxLines: 1,
               overflow: TextOverflow.visible,
-              style: TextStyle(
-                color: isSelected ? Colors.black : const Color(0xFF858585),
-                fontSize: 17,
-                fontWeight: FontWeight.normal,
-                height: 1.1,
-              ),
+              style: (isSelected ? McTextStyles.tabSelected : McTextStyles.tab)
+                  .copyWith(fontSize: 14),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 9),
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOutCubic,
               width: isSelected ? 32 : 0,
-              height: 3,
+              height: 2.5,
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: McColors.accent,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -1184,27 +1177,29 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
                                 return Card(
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  elevation: 1.5,
+                                  elevation: 0.5,
                                   child: InkWell(
-                                    borderRadius: BorderRadius.circular(18),
+                                    borderRadius: BorderRadius.circular(12),
                                     onTap: () =>
                                         _onPostTap(post, adjustedIndex),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(18),
+                                        borderRadius: BorderRadius.circular(12),
                                         color: Colors.white,
+                                        border:
+                                            Border.all(color: McColors.line),
                                       ),
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 14),
+                                          horizontal: 14, vertical: 12),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           // 프로필 영역 (프로필 이미지, 닉네임, 시간)
                                           _buildCardAuthorRow(post, createdAt),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(height: 10),
 
                                           // 제목 (굵게) + 최신 키워드
                                           Row(
@@ -1212,11 +1207,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               Expanded(
                                                 child: Text(
                                                   post['title'] ?? '제목 없음',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 17,
-                                                    color: Colors.black,
-                                                  ),
+                                                  style: McTextStyles.cardTitle,
                                                   maxLines: 2,
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -1224,31 +1215,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 6),
 
                                           // contentHtml 텍스트로만 1줄
                                           if (plainText.isNotEmpty)
                                             Text(
                                               plainText,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.normal,
-                                                fontSize: 14,
-                                                color: Colors.black54,
-                                              ),
+                                              style: McTextStyles.meta
+                                                  .copyWith(fontSize: 13),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(height: 10),
 
                                           // 조회수, 열람 제한, 댓글, 좋아요
                                           Row(
                                             children: [
                                               Text(
                                                 '조회 ${post['viewsCount'] ?? 0}회',
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black54,
-                                                ),
+                                                style: McTextStyles.meta,
                                               ),
                                               const Spacer(),
                                               if (readRestriction != null) ...[
@@ -1624,7 +1609,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     CommunityAccessLevel restriction, {
     double iconSize = 15,
     double fontSize = 12,
-    Color color = Colors.black54,
+    Color color = McColors.muted,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1638,7 +1623,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           style: TextStyle(
             fontSize: fontSize,
             color: color,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -1650,7 +1635,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     required String value,
     double iconSize = 16,
     double fontSize = 13,
-    Color color = Colors.black54,
+    Color color = McColors.muted,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1779,7 +1764,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         text: '이코노미 레벨 2',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                          color: McColors.accent,
                           fontSize: 20,
                         ),
                       ),
@@ -1957,7 +1942,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           child: InkWell(
             onTap: () => _onPostTap(post, index),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1968,11 +1953,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       Expanded(
                         child: Text(
                           post['title'] ?? '제목 없음',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: Colors.black87,
-                          ),
+                          style: McTextStyles.bodyStrong,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1980,14 +1961,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       const SizedBox(width: 8),
                       Text(
                         _formatTime(createdAt),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
+                        style: McTextStyles.micro,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   // 2줄: displayName displayGrade | 조회수 | 댓글수 | 좋아요수 | 제한
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -1997,67 +1975,62 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       // displayName
                       Text(
                         post['author']?['displayName'] ?? '익명',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.bold,
+                        style: McTextStyles.micro.copyWith(
+                          color: McColors.inkSoft,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(width: 4),
                       // displayGrade
                       Text(
                         post['author']?['displayGrade'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.blueGrey,
+                        style: McTextStyles.micro.copyWith(
+                          color: McColors.muted,
                         ),
                       ),
                       const Text(
                         ' | ',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black45,
+                          fontSize: 11,
+                          color: McColors.mutedLight,
                         ),
                       ),
                       Text(
                         '조회 ${post['viewsCount'] ?? 0}회',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black45,
+                        style: McTextStyles.micro.copyWith(
+                          color: McColors.muted,
                         ),
                       ),
                       const Text(
                         ' | ',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black45,
+                          fontSize: 11,
+                          color: McColors.mutedLight,
                         ),
                       ),
                       const Icon(Icons.comment,
-                          size: 12, color: Colors.black45),
+                          size: 12, color: McColors.muted),
                       const SizedBox(width: 2),
                       Text(
                         '${post['commentCount'] ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black45,
+                        style: McTextStyles.micro.copyWith(
+                          color: McColors.muted,
                         ),
                       ),
                       const Text(
                         ' | ',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black45,
+                          fontSize: 11,
+                          color: McColors.mutedLight,
                         ),
                       ),
                       const Icon(Icons.favorite_border,
-                          size: 12, color: Colors.black45),
+                          size: 12, color: McColors.muted),
                       const SizedBox(width: 2),
                       Text(
                         '${post['likesCount'] ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black45,
+                        style: McTextStyles.micro.copyWith(
+                          color: McColors.muted,
                         ),
                       ),
                       if (readRestriction != null) ...[
@@ -2065,14 +2038,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ' | ',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.black45,
+                            color: McColors.mutedLight,
                           ),
                         ),
                         _buildReadRestrictionMeta(
                           readRestriction,
                           iconSize: 12,
-                          fontSize: 12,
-                          color: Colors.black45,
+                          fontSize: 11,
+                          color: McColors.muted,
                         ),
                       ],
                     ],
@@ -2086,7 +2059,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         const Divider(
           height: 1,
           thickness: 0.5,
-          color: Colors.black12,
+          color: McColors.line,
           indent: 16,
           endIndent: 16,
         ),
@@ -2107,11 +2080,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           padding: EdgeInsets.fromLTRB(8, 8, 8, 4),
           child: Text(
             '베스트 게시글',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+            style: McTextStyles.sectionTitle,
           ),
         ),
         const SizedBox(height: 4),
@@ -2180,9 +2149,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: McColors.ink,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -2197,7 +2166,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontSize: 11,
-                                        color: Colors.black54,
+                                        color: McColors.muted,
                                       ),
                                     ),
                                   ),
@@ -2206,7 +2175,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     _formatTime(createdAt),
                                     style: const TextStyle(
                                       fontSize: 10,
-                                      color: Colors.black45,
+                                      color: McColors.mutedLight,
                                     ),
                                   ),
                                 ],
@@ -2353,18 +2322,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
             if (hasSkyEffect) const SizedBox(width: 4), // 스카이 이펙트가 있을 때만 추가 간격
             Text(
               displayName,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: McTextStyles.bodyStrong,
             ),
             if (isRecent)
               Container(
                 margin: const EdgeInsets.only(left: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orange,
+                  color: McColors.accent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -2381,10 +2346,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         // 우측 상단에 시간
         Text(
           _formatTime(createdAt),
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.black54,
-          ),
+          style: McTextStyles.micro,
         ),
       ],
     );

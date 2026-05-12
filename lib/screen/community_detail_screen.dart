@@ -28,6 +28,7 @@ import '../services/peanut_history_service.dart';
 import '../utils/ad_removal_utils.dart';
 import '../utils/community_access_level.dart';
 import '../widgets/ad_removal_widget.dart';
+import '../const/colors.dart';
 
 // 무지개 그라데이션 텍스트 위젯
 class GradientText extends StatelessWidget {
@@ -1021,7 +1022,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     size: 20,
                     color: _post?['isHidden'] == true
                         ? Colors.green
-                        : Colors.orange,
+                        : McColors.accent,
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -1029,7 +1030,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     style: TextStyle(
                       color: _post?['isHidden'] == true
                           ? Colors.green
-                          : Colors.orange,
+                          : McColors.accent,
                     ),
                   ),
                 ],
@@ -1042,13 +1043,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   Icon(
                     _isBestPost ? Icons.star : Icons.star_border,
                     size: 20,
-                    color: _isBestPost ? Colors.orange : Colors.amber[700],
+                    color: _isBestPost ? McColors.accent : Colors.amber[700],
                   ),
                   const SizedBox(width: 12),
                   Text(
                     _isBestPost ? '베스트 게시글 해지하기' : '베스트 게시글 선정하기',
                     style: TextStyle(
-                      color: _isBestPost ? Colors.orange : Colors.black87,
+                      color: _isBestPost ? McColors.accent : Colors.black87,
                     ),
                   ),
                 ],
@@ -1295,7 +1296,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               Navigator.pop(context);
               await _confirmHidePost();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            style: TextButton.styleFrom(foregroundColor: McColors.accent),
             child: const Text('숨김처리'),
           ),
         ],
@@ -1764,7 +1765,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('이미지 선택이 취소되었습니다.'),
-            backgroundColor: Colors.orange,
+            backgroundColor: McColors.accent,
           ),
         );
       }
@@ -2063,13 +2064,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: McColors.background,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        elevation: 0,
+        elevation: 0.5,
+        shadowColor: McColors.line,
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: McColors.ink),
           onPressed: () => Navigator.pop(context),
         ),
         title: null,
@@ -2077,19 +2079,19 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           IconButton(
             icon: Icon(
               _isLiked ? Icons.favorite : Icons.favorite_border,
-              color: _isLiked ? Colors.red : Colors.grey[600],
+              color: _isLiked ? Colors.red : McColors.muted,
             ),
             onPressed: _toggleLike,
           ),
           IconButton(
             icon: Icon(
               _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: _isBookmarked ? Colors.orange : Colors.grey[600],
+              color: _isBookmarked ? McColors.accent : McColors.muted,
             ),
             onPressed: _toggleBookmark,
           ),
           IconButton(
-            icon: Icon(Icons.share_outlined, color: Colors.grey[600]),
+            icon: const Icon(Icons.share_outlined, color: McColors.muted),
             onPressed: _sharePost,
           ),
           _buildMoreOptionsMenu(),
@@ -2098,14 +2100,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: Color(0xFF74512D),
+                color: McColors.accent,
               ),
             )
           : _post == null
               ? const Center(
                   child: Text(
                     '게시글을 찾을 수 없습니다.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    style: TextStyle(fontSize: 14, color: McColors.muted),
                   ),
                 )
               : Column(
@@ -2121,15 +2123,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                             children: [
                               // 게시글 내용 카드
                               Container(
-                                margin: const EdgeInsets.all(16),
-                                padding: const EdgeInsets.all(16),
+                                margin: const EdgeInsets.all(14),
+                                padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: McColors.line),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
@@ -2140,10 +2143,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     // 1. 카테고리명 (boardId) - 작게
                                     Text(
                                       widget.boardName,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF74512D),
+                                      style: McTextStyles.micro.copyWith(
+                                        color: McColors.accent,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -2151,11 +2153,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     // 2. 게시글 제목 (title) - 크고 굵게
                                     Text(
                                       _post!['title'] ?? '제목 없음',
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.black87,
-                                        height: 1.3,
+                                      style: McTextStyles.appBarTitle.copyWith(
+                                        fontSize: 18,
+                                        height: 1.35,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -2168,17 +2168,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                       as Timestamp?)
                                                   ?.toDate() ??
                                               DateTime.now()),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.grey[600],
-                                          ),
+                                          style: McTextStyles.meta,
                                         ),
                                         Text(
                                           ' | 조회 ${_post!['viewsCount'] ?? 0}회',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.grey[600],
-                                          ),
+                                          style: McTextStyles.meta,
                                         ),
                                       ],
                                     ),
@@ -2284,11 +2278,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 _post!['author']
                                                         ?['displayName'] ??
                                                     '익명',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black87,
-                                                ),
+                                                style: McTextStyles.bodyStrong,
                                               ),
                                               if (_post!['author']
                                                           ?['displayGrade'] !=
@@ -2331,7 +2321,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                           style:
                                                               const TextStyle(
                                                             fontSize: 11,
-                                                            color: Colors.grey,
+                                                            color:
+                                                                McColors.muted,
                                                             fontWeight:
                                                                 FontWeight
                                                                     .normal,
@@ -2406,8 +2397,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                           '')),
                                                   style: {
                                                     "body": Style(
-                                                      fontSize: FontSize(15),
-                                                      color: Colors.black87,
+                                                      fontSize: FontSize(14),
+                                                      color: McColors.inkSoft,
                                                       lineHeight:
                                                           LineHeight(1.4),
                                                       margin: Margins.zero,
@@ -2564,14 +2555,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                               // 댓글 섹션
                               Container(
                                 margin:
-                                    const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                    const EdgeInsets.fromLTRB(14, 0, 14, 14),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: McColors.line),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
@@ -2603,8 +2595,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                   Text(
                                                     '첫 번째 댓글을 작성해보세요!',
                                                     style: TextStyle(
-                                                      fontSize: 16,
-                                                      color: Colors.grey[600],
+                                                      fontSize: 14,
+                                                      color: McColors.muted,
                                                       fontWeight:
                                                           FontWeight.w500,
                                                     ),
@@ -2624,12 +2616,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                   children: [
                                                     Text(
                                                       '댓글 ${_comments.length}',
-                                                      style: const TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: Colors.black87,
-                                                      ),
+                                                      style: McTextStyles
+                                                          .sectionTitle
+                                                          .copyWith(
+                                                              fontSize: 15),
                                                     ),
                                                     const Spacer(),
                                                     DropdownButton<String>(
@@ -2639,8 +2629,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                       dropdownColor:
                                                           Colors.white,
                                                       style: TextStyle(
-                                                        fontSize: 14,
-                                                        color: Colors.grey[600],
+                                                        fontSize: 12,
+                                                        color: McColors.muted,
                                                       ),
                                                       items: ['등록순', '최신순']
                                                           .map((String value) {
@@ -2674,7 +2664,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 separatorBuilder:
                                                     (context, index) => Divider(
                                                   height: 1,
-                                                  color: Colors.grey[200],
+                                                  color: McColors.line,
                                                 ),
                                                 itemBuilder: (context, index) {
                                                   final comment =
@@ -2699,8 +2689,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
                             offset: const Offset(0, -2),
                           ),
                         ],
@@ -2786,10 +2776,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       const Expanded(
                                         child: Text(
                                           '이미지 선택됨',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
-                                          ),
+                                          style: McTextStyles.body,
                                         ),
                                       ),
                                       IconButton(
@@ -2818,8 +2805,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       color:
                                           (_myUserProfile?['isBanned'] == true)
                                               ? Colors.grey[300]
-                                              : Colors.grey[600],
-                                      size: 24, // 기존 24 → 22
+                                              : McColors.muted,
+                                      size: 22,
                                     ),
                                     padding: EdgeInsets.zero, // 여백 최소화
                                     constraints: BoxConstraints(
@@ -2834,7 +2821,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                       enabled: !(_myUserProfile?['isBanned'] ==
                                               true ||
                                           _isAddingComment), // 업로드 중엔 비활성화
-                                      style: const TextStyle(fontSize: 14),
+                                      style: McTextStyles.body,
                                       decoration: InputDecoration(
                                         hintText:
                                             _myUserProfile?['isBanned'] == true
@@ -2842,26 +2829,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                 : (_editingCommentId != null
                                                     ? '댓글 수정'
                                                     : '댓글을 입력하세요'),
-                                        hintStyle: TextStyle(
-                                            color: Colors.grey[500],
-                                            fontSize: 12),
+                                        hintStyle: McTextStyles.meta.copyWith(
+                                          color: McColors.mutedLight,
+                                        ),
                                         border: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(24),
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[300]!),
+                                          borderSide:
+                                              BorderSide(color: McColors.line),
                                         ),
                                         enabledBorder: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(24),
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[300]!),
+                                          borderSide:
+                                              BorderSide(color: McColors.line),
                                         ),
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(24),
                                           borderSide: const BorderSide(
-                                              color: Color(0xFF74512D)),
+                                              color: McColors.accent),
                                         ),
                                         contentPadding:
                                             const EdgeInsets.symmetric(
@@ -2884,8 +2871,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                           ? null
                                           : _updateComment,
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF74512D),
+                                        backgroundColor: McColors.accent,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(20),
@@ -2914,7 +2900,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                             height: 32,
                                             child: CircularProgressIndicator(
                                                 strokeWidth: 2,
-                                                color: Color(0xFF74512D)),
+                                                color: McColors.accent),
                                           )
                                         : ElevatedButton(
                                             onPressed:
@@ -2924,8 +2910,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                     ? null
                                                     : _addComment,
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color(0xFF74512D),
+                                              backgroundColor: McColors.accent,
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(20),
@@ -2970,9 +2955,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
             16.0 + (depth * 24.0), // depth에 따른 들여쓰기
-            16.0,
-            16.0,
-            16.0),
+            12.0,
+            14.0,
+            12.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -3047,27 +3032,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     children: [
                       Text(
                         comment['displayName'] ?? '익명',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
+                        style: McTextStyles.bodyStrong.copyWith(fontSize: 13),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         comment['displayGrade'] ?? '이코노미 Lv.1',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: McTextStyles.micro,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _formatTime(createdAt),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: McTextStyles.micro,
                       ),
                     ],
                   ),
@@ -3098,20 +3073,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                     : (_commentLikes[comment['commentId']] ??
                                             false)
                                         ? Colors.red
-                                        : Colors.grey[500],
+                                        : McColors.muted,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${comment['likesCount'] ?? 0}',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: (_processingCommentLikes
                                           .contains(comment['commentId']))
                                       ? Colors.grey[400] // 처리 중일 때는 회색으로 표시
                                       : (_commentLikes[comment['commentId']] ??
                                               false)
                                           ? Colors.red
-                                          : Colors.grey[500],
+                                          : McColors.muted,
                                 ),
                               ),
                             ],
@@ -3123,8 +3098,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                         onTap: () => _startReply(comment),
                         child: Text(
                           '답글',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          style: const TextStyle(
+                              fontSize: 11, color: McColors.muted),
                         ),
                       ),
                       const Spacer(),
@@ -3183,9 +3158,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.orange[50],
+            color: McColors.accentSoft,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.orange[300]!),
+            border: Border.all(color: McColors.accent),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3193,7 +3168,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               Icon(
                 Icons.warning_amber,
                 size: 16,
-                color: Colors.orange[600],
+                color: McColors.accent,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -3201,7 +3176,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   '신고건 누적으로 일시적으로 감춰진 댓글입니다.',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.orange[700],
+                    color: McColors.accent,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -3268,8 +3243,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       data: finalHtml,
       style: {
         "body": Style(
-          fontSize: FontSize(14),
-          color: Colors.black87,
+          fontSize: FontSize(13),
+          color: McColors.inkSoft,
           lineHeight: LineHeight(1.4),
           margin: Margins.zero,
         ),
@@ -3387,7 +3362,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           const SnackBar(
             content: Text('유효하지 않은 댓글입니다.'),
             duration: Duration(seconds: 2),
-            backgroundColor: Colors.orange,
+            backgroundColor: McColors.accent,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -3481,7 +3456,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     size: 20,
                     color: comment['isHidden'] == true
                         ? Colors.green
-                        : Colors.orange,
+                        : McColors.accent,
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -3489,7 +3464,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     style: TextStyle(
                       color: comment['isHidden'] == true
                           ? Colors.green
-                          : Colors.orange,
+                          : McColors.accent,
                     ),
                   ),
                 ],
@@ -4085,7 +4060,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               Navigator.pop(context);
               await _confirmHideComment(comment);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            style: TextButton.styleFrom(foregroundColor: McColors.accent),
             child: const Text('숨김처리'),
           ),
         ],
@@ -4195,7 +4170,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               Navigator.pop(context);
               _showHiddenCommentContent(comment);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            style: TextButton.styleFrom(foregroundColor: McColors.accent),
             child: const Text('예'),
           ),
         ],
@@ -4221,7 +4196,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         backgroundColor: Colors.white,
         title: Row(
           children: [
-            Icon(Icons.warning_amber, color: Colors.orange[600]),
+            const Icon(Icons.warning_amber, color: McColors.accent),
             const SizedBox(width: 8),
             const Text('숨겨진 댓글 내용'),
           ],

@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../const/colors.dart';
 import '../models/card_product_model.dart';
 import '../models/radar_item_model.dart';
 import '../services/branch_service.dart';
@@ -1404,7 +1405,7 @@ class _RadarTextButton extends StatelessWidget {
         height: 30,
         padding: const EdgeInsets.symmetric(horizontal: 9),
         decoration: BoxDecoration(
-          color: const Color(0xFF111827),
+          color: McColors.accent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(

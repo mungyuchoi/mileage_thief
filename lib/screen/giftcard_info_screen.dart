@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mileage_thief/const/colors.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -28,15 +29,15 @@ class _KpiValue extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      constraints: const BoxConstraints(minHeight: 78),
+      constraints: const BoxConstraints(minHeight: 72),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: McColors.line),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6,
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 5,
               offset: const Offset(0, 2))
         ],
       ),
@@ -48,10 +49,10 @@ class _KpiValue extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: const Color(0x1174512D),
+                color: McColors.accentSoft,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: const Color(0xFF74512D), size: 18),
+              child: Icon(icon, color: McColors.accent, size: 18),
             ),
             const SizedBox(width: 10),
           ],
@@ -59,15 +60,9 @@ class _KpiValue extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style:
-                        const TextStyle(color: Colors.black54, fontSize: 12)),
+                Text(label, style: McTextStyles.micro),
                 const SizedBox(height: 6),
-                Text(value,
-                    style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700)),
+                Text(value, style: McTextStyles.cardTitle),
               ],
             ),
           ),
@@ -1416,11 +1411,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       },
       child: RefreshIndicator(
         onRefresh: () => _load(forceRefresh: true),
-        color: const Color(0xFF74512D),
+        color: McColors.accent,
         backgroundColor: Colors.white,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           children: [
             _buildInfoSegmentTabBar(insideHorizontalPadding: true),
             // 월 헤더: "YYYY년도 MM월"  |  "MM월 ▼" 필터 버튼
@@ -1431,26 +1426,22 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                 children: [
                   Text(
                     _dashboardTitleText(),
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black),
+                    style: McTextStyles.sectionTitle,
                   ),
                   TextButton.icon(
                     onPressed: _showMonthPicker,
                     icon: const Icon(Icons.filter_list,
-                        color: Colors.black, size: 18),
+                        color: McColors.ink, size: 18),
                     label: Text(
                       _dashboardFilterLabel(),
-                      style: const TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.w600),
+                      style: McTextStyles.bodyStrong.copyWith(fontSize: 13),
                     ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(color: Colors.black26),
+                        side: const BorderSide(color: McColors.line),
                       ),
                     ),
                   ),

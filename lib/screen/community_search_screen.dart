@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../services/auth_service.dart';
+import '../const/colors.dart';
 import '../services/category_service.dart';
 import 'community_detail_screen.dart';
 
@@ -16,7 +16,7 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final CategoryService _categoryService = CategoryService();
-  
+
   List<DocumentSnapshot> _searchResults = [];
   bool _isSearching = false;
   String _selectedBoardFilter = 'all';
@@ -76,12 +76,12 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
     try {
       // Firestore 쿼리 생성
       Query baseQuery = FirebaseFirestore.instance.collectionGroup('posts');
-      
+
       // 게시판 필터 적용
       if (_selectedBoardFilter != 'all') {
         baseQuery = baseQuery.where('boardId', isEqualTo: _selectedBoardFilter);
       }
-      
+
       baseQuery = baseQuery
           .where('isDeleted', isEqualTo: false)
           .where('isHidden', isEqualTo: false)
@@ -89,14 +89,15 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
           .limit(50); // 검색 결과 제한
 
       final querySnapshot = await baseQuery.get();
-      
+
       // 클라이언트 사이드에서 제목과 내용 필터링
       final filteredResults = querySnapshot.docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         final title = (data['title'] ?? '').toLowerCase();
-        final content = _removeHtmlTags(data['contentHtml'] ?? '').toLowerCase();
+        final content =
+            _removeHtmlTags(data['contentHtml'] ?? '').toLowerCase();
         final searchQuery = query.toLowerCase();
-        
+
         return title.contains(searchQuery) || content.contains(searchQuery);
       }).toList();
 
@@ -132,21 +133,22 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   }
 
   // 검색어 하이라이팅
-  Widget _highlightSearchText(String text, String searchQuery, {TextStyle? baseStyle}) {
+  Widget _highlightSearchText(String text, String searchQuery,
+      {TextStyle? baseStyle}) {
     if (searchQuery.isEmpty) {
       return Text(text, style: baseStyle);
     }
 
     final lowercaseText = text.toLowerCase();
     final lowercaseQuery = searchQuery.toLowerCase();
-    
+
     if (!lowercaseText.contains(lowercaseQuery)) {
       return Text(text, style: baseStyle);
     }
 
     final spans = <TextSpan>[];
     int start = 0;
-    
+
     while (true) {
       final index = lowercaseText.indexOf(lowercaseQuery, start);
       if (index == -1) {
@@ -159,7 +161,7 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
         }
         break;
       }
-      
+
       // 하이라이트 이전 텍스트 (부모 스타일 적용)
       if (index > start) {
         spans.add(TextSpan(
@@ -167,18 +169,18 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
           style: baseStyle,
         ));
       }
-      
+
       // 하이라이트된 텍스트
       spans.add(TextSpan(
         text: text.substring(index, index + searchQuery.length),
         style: TextStyle(
           backgroundColor: const Color(0xFFE8F5E8), // 연한 초록 배경
-          color: Colors.black,
+          color: McColors.ink,
           fontWeight: FontWeight.w600,
           fontSize: baseStyle?.fontSize ?? 12,
         ),
       ));
-      
+
       start = index + searchQuery.length;
     }
 
@@ -195,28 +197,26 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
+        shadowColor: McColors.line,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: McColors.ink),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           '게시글 검색',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          style: McTextStyles.appBarTitle,
         ),
       ),
       body: Column(
         children: [
           // 검색창
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(
-                bottom: BorderSide(color: Colors.grey, width: 0.5),
+                bottom: BorderSide(color: McColors.line, width: 0.7),
               ),
             ),
             child: Row(
@@ -225,16 +225,10 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                   child: TextField(
                     controller: _searchController,
                     focusNode: _searchFocusNode,
+                    style: McTextStyles.body,
                     decoration: const InputDecoration(
                       hintText: '검색어를 입력하세요 (최소 2글자)',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF74512D)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF74512D), width: 2),
-                      ),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF74512D)),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      prefixIcon: Icon(Icons.search, color: McColors.accent),
                     ),
                     onChanged: (value) {
                       // 500ms 지연 후 검색 (Debounce)
@@ -249,18 +243,18 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
               ],
             ),
           ),
-          
+
           // 게시판 필터
           Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: boards.length,
               itemBuilder: (context, index) {
                 final board = boards[index];
                 final isSelected = _selectedBoardFilter == board['id'];
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
@@ -274,23 +268,25 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                         _performSearch(_searchController.text);
                       }
                     },
-                    selectedColor: Colors.white,
+                    selectedColor: McColors.accentSoft,
                     backgroundColor: Colors.white,
                     side: BorderSide(
-                      color: isSelected ? const Color(0xFF74512D) : Colors.grey,
-                      width: isSelected ? 2 : 1,
+                      color: isSelected ? McColors.accent : McColors.line,
+                      width: isSelected ? 1.2 : 0.8,
                     ),
-                    checkmarkColor: const Color(0xFF74512D),
+                    checkmarkColor: McColors.accent,
                     labelStyle: TextStyle(
-                      color: isSelected ? const Color(0xFF74512D) : Colors.black54,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? McColors.accent : McColors.muted,
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 );
               },
             ),
           ),
-          
+
           // 검색 결과
           Expanded(
             child: _isSearching
@@ -300,23 +296,17 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.search, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
+                            Icon(Icons.search,
+                                size: 48, color: McColors.mutedLight),
+                            SizedBox(height: 14),
                             Text(
                               '검색어를 입력해주세요',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: McTextStyles.bodyStrong,
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 6),
                             Text(
                               '최소 2글자 이상 입력하세요',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
+                              style: McTextStyles.meta,
                             ),
                           ],
                         ),
@@ -326,23 +316,17 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.search_off, size: 64, color: Colors.grey),
-                                SizedBox(height: 16),
+                                Icon(Icons.search_off,
+                                    size: 48, color: McColors.mutedLight),
+                                SizedBox(height: 14),
                                 Text(
                                   '검색 결과가 없습니다',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: McTextStyles.bodyStrong,
                                 ),
-                                SizedBox(height: 8),
+                                SizedBox(height: 6),
                                 Text(
                                   '다른 검색어를 시도해보세요',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
+                                  style: McTextStyles.meta,
                                 ),
                               ],
                             ),
@@ -352,33 +336,37 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                               // 결과 개수 표시
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                color: Colors.grey[100],
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 10),
+                                color: McColors.field,
                                 child: Text(
                                   '검색 결과 ${_searchResults.length}개',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                    fontWeight: FontWeight.w500,
+                                  style: McTextStyles.meta.copyWith(
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                              
+
                               // 검색 결과 리스트
                               Expanded(
                                 child: ListView.separated(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(14),
                                   itemCount: _searchResults.length,
-                                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 10),
                                   itemBuilder: (context, index) {
-                                    final post = _searchResults[index].data() as Map<String, dynamic>;
-                                    final createdAt = (post['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-                                    
+                                    final post = _searchResults[index].data()
+                                        as Map<String, dynamic>;
+                                    final createdAt =
+                                        (post['createdAt'] as Timestamp?)
+                                                ?.toDate() ??
+                                            DateTime.now();
+
                                     return Card(
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      elevation: 2,
+                                      elevation: 0.5,
                                       color: Colors.white,
                                       child: InkWell(
                                         borderRadius: BorderRadius.circular(12),
@@ -386,73 +374,80 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => CommunityDetailScreen(
-                                                postId: _searchResults[index].id,
+                                              builder: (context) =>
+                                                  CommunityDetailScreen(
+                                                postId:
+                                                    _searchResults[index].id,
                                                 boardId: post['boardId'] ?? '',
-                                                boardName: _getBoardName(post['boardId'] ?? ''),
-                                                dateString: _searchResults[index].reference.parent.parent!.id,
+                                                boardName: _getBoardName(
+                                                    post['boardId'] ?? ''),
+                                                dateString:
+                                                    _searchResults[index]
+                                                        .reference
+                                                        .parent
+                                                        .parent!
+                                                        .id,
                                               ),
                                             ),
                                           );
                                         },
                                         child: Padding(
-                                          padding: const EdgeInsets.all(16),
+                                          padding: const EdgeInsets.all(14),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               // 제목 (하이라이팅)
                                               _highlightSearchText(
                                                 post['title'] ?? '제목 없음',
                                                 _searchController.text,
-                                                baseStyle: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black87,
-                                                ),
+                                                baseStyle:
+                                                    McTextStyles.bodyStrong,
                                               ),
                                               const SizedBox(height: 8),
-                                              
+
                                               // 내용 미리보기 (하이라이팅)
                                               _highlightSearchText(
-                                                _removeHtmlTags(post['contentHtml'] ?? ''),
+                                                _removeHtmlTags(
+                                                    post['contentHtml'] ?? ''),
                                                 _searchController.text,
-                                                baseStyle: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey,
-                                                ),
+                                                baseStyle: McTextStyles.meta,
                                               ),
-                                              const SizedBox(height: 12),
-                                              
+                                              const SizedBox(height: 10),
+
                                               // 메타 정보
                                               Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
                                                   Row(
                                                     children: [
                                                       Text(
-                                                        _getBoardName(post['boardId'] ?? ''),
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                          color: Colors.black87,
-                                                          fontWeight: FontWeight.w600,
+                                                        _getBoardName(
+                                                            post['boardId'] ??
+                                                                ''),
+                                                        style: McTextStyles
+                                                            .micro
+                                                            .copyWith(
+                                                          color: McColors.ink,
+                                                          fontWeight:
+                                                              FontWeight.w600,
                                                         ),
                                                       ),
                                                       const SizedBox(width: 8),
                                                       Text(
-                                                        post['author']['displayName'] ?? '익명',
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                          color: Colors.black54,
-                                                        ),
+                                                        post['author'][
+                                                                'displayName'] ??
+                                                            '익명',
+                                                        style:
+                                                            McTextStyles.micro,
                                                       ),
                                                     ],
                                                   ),
                                                   Text(
                                                     _formatTime(createdAt),
-                                                    style: const TextStyle(
-                                                      fontSize: 11,
-                                                      color: Colors.black54,
-                                                    ),
+                                                    style: McTextStyles.micro,
                                                   ),
                                                 ],
                                               ),
@@ -475,9 +470,10 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   // boardId로 게시판 이름 가져오기
   String _getBoardName(String boardId) {
     try {
-      return boards.firstWhere((board) => board['id'] == boardId)['name'] ?? '알 수 없음';
+      return boards.firstWhere((board) => board['id'] == boardId)['name'] ??
+          '알 수 없음';
     } catch (e) {
       return '알 수 없음';
     }
   }
-} 
+}

@@ -21,6 +21,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'const/colors.dart';
 
 // 전역 NavigatorKey (NotificationService에서 사용)
 final GlobalKey<NavigatorState> navigatorKey = NotificationService.navigatorKey;
@@ -281,10 +282,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'NanumGothic',
-      ),
+      theme: MileageTheme.light(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

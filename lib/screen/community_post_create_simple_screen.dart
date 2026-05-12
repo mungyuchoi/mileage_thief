@@ -13,6 +13,7 @@ import '../services/category_service.dart';
 import '../services/peanut_history_service.dart';
 import '../services/user_service.dart';
 import '../utils/community_access_level.dart';
+import '../const/colors.dart';
 
 class CommunityPostCreateSimpleScreen extends StatefulWidget {
   const CommunityPostCreateSimpleScreen({
@@ -926,20 +927,20 @@ class _CommunityPostCreateSimpleScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F1F5),
+      backgroundColor: McColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF0F1F5),
+        backgroundColor: McColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed:
               _isSubmitting ? null : () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: Colors.black,
+          color: McColors.ink,
         ),
         title: const Text(
           '새 게시물',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+          style: McTextStyles.appBarTitle,
         ),
         actions: [
           TextButton(
@@ -947,9 +948,9 @@ class _CommunityPostCreateSimpleScreenState
             child: Text(
               _isSubmitting ? '게시 중' : '게시',
               style: TextStyle(
-                color: _isSubmitting ? Colors.black38 : Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.normal,
+                color: _isSubmitting ? Colors.black38 : McColors.accent,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -959,14 +960,14 @@ class _CommunityPostCreateSimpleScreenState
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+          padding: const EdgeInsets.fromLTRB(14, 6, 14, 24),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F8F8),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE3E3E3)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: McColors.line),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -990,58 +991,37 @@ class _CommunityPostCreateSimpleScreenState
                     Expanded(
                       child: Text(
                         _authorName,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black,
-                        ),
+                        style: McTextStyles.bodyStrong.copyWith(fontSize: 15),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 _buildBoardPill(),
                 if (_canSetReadRestriction) ...[
                   const SizedBox(height: 10),
                   _buildReadRestrictionButton(),
                 ],
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _titleController,
                   textInputAction: TextInputAction.next,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.normal,
-                  ),
+                  style: McTextStyles.sectionTitle,
                   decoration: const InputDecoration(
                     hintText: '제목',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF9D9D9D),
-                      fontSize: 20,
-                      fontWeight: FontWeight.normal,
-                    ),
+                    filled: false,
                     border: InputBorder.none,
                   ),
                 ),
-                const Divider(height: 12, color: Color(0xFFE3E3E3)),
+                const Divider(height: 12, color: McColors.line),
                 TextField(
                   controller: _contentController,
                   minLines: 8,
                   maxLines: 16,
-                  style: const TextStyle(
-                    color: Color(0xFF222222),
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal,
-                    height: 1.35,
-                  ),
+                  style: McTextStyles.body.copyWith(height: 1.5),
                   decoration: const InputDecoration(
                     hintText: '내용을 입력해주세요',
-                    hintStyle: TextStyle(
-                      color: Color(0xFFA0A0A0),
-                      fontSize: 18,
-                      fontWeight: FontWeight.normal,
-                    ),
+                    filled: false,
                     border: InputBorder.none,
                   ),
                 ),
@@ -1194,24 +1174,21 @@ class _CommunityPostCreateSimpleScreenState
       borderRadius: BorderRadius.circular(18),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.black, width: 1.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: McColors.line, width: 1),
         ),
         child: Row(
           children: [
-            const Icon(Icons.dashboard_customize_outlined, color: Colors.black),
+            const Icon(Icons.dashboard_customize_outlined,
+                color: McColors.ink, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 _selectedBoardName,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 17,
-                  fontWeight: FontWeight.normal,
-                ),
+                style: McTextStyles.bodyStrong,
               ),
             ),
             const Icon(Icons.expand_more_rounded, color: Colors.black54),
@@ -1231,11 +1208,11 @@ class _CommunityPostCreateSimpleScreenState
       borderRadius: BorderRadius.circular(18),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFD0D0D0), width: 1.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: McColors.line),
         ),
         child: Row(
           children: [
@@ -1243,16 +1220,13 @@ class _CommunityPostCreateSimpleScreenState
               _selectedReadRestriction == null
                   ? Icons.lock_open_rounded
                   : Icons.lock_rounded,
-              color: Colors.black,
+              color: McColors.ink,
+              size: 20,
             ),
             const SizedBox(width: 8),
             const Text(
               '열람 제한',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.normal,
-              ),
+              style: McTextStyles.bodyStrong,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1260,11 +1234,7 @@ class _CommunityPostCreateSimpleScreenState
                 label,
                 textAlign: TextAlign.right,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF555555),
-                  fontSize: 15,
-                  fontWeight: FontWeight.normal,
-                ),
+                style: McTextStyles.meta,
               ),
             ),
             const SizedBox(width: 4),
@@ -1279,7 +1249,7 @@ class _CommunityPostCreateSimpleScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(height: 18, color: Color(0xFFE3E3E3)),
+        const Divider(height: 18, color: McColors.line),
         InkWell(
           onTap: () => setState(
             () => _structuredMetaExpanded = !_structuredMetaExpanded,
@@ -1289,16 +1259,13 @@ class _CommunityPostCreateSimpleScreenState
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               children: [
-                const Icon(Icons.fact_check_outlined, color: Colors.black87),
+                const Icon(Icons.fact_check_outlined,
+                    color: McColors.inkSoft, size: 20),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     '후기 메타',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                    ),
+                    style: McTextStyles.bodyStrong,
                   ),
                 ),
                 Icon(

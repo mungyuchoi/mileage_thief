@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/peanut_history_service.dart';
+import '../const/colors.dart';
 
 // Milecatch Rich Editor 라이브러리 import
 import '../milecatch_rich_editor/milecatch_rich_editor.dart';
@@ -14,7 +15,7 @@ import '../milecatch_rich_editor/milecatch_rich_editor.dart';
 class CommunityPostCreateScreenV2 extends StatefulWidget {
   final String? initialBoardId;
   final String? initialBoardName;
-  
+
   // 편집 모드 관련 파라미터
   final bool isEditMode;
   final String? postId;
@@ -23,8 +24,8 @@ class CommunityPostCreateScreenV2 extends StatefulWidget {
   final String? editContentHtml;
 
   const CommunityPostCreateScreenV2({
-    Key? key, 
-    this.initialBoardId, 
+    Key? key,
+    this.initialBoardId,
     this.initialBoardName,
     this.isEditMode = false,
     this.postId,
@@ -38,30 +39,31 @@ class CommunityPostCreateScreenV2 extends StatefulWidget {
       _CommunityPostCreateScreenV2State();
 }
 
-class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV2> {
+class _CommunityPostCreateScreenV2State
+    extends State<CommunityPostCreateScreenV2> {
   String? selectedBoardId;
   String? selectedBoardName;
   bool _isLoading = false;
-  
+
   // Milecatch Rich Editor 컨트롤러들
   late PostingController _postingController;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // PostingController 초기화
     _postingController = PostingController();
-    
+
     if (widget.isEditMode) {
       // 편집 모드일 때 기존 데이터로 초기화
       selectedBoardId = widget.initialBoardId;
       selectedBoardName = widget.initialBoardName;
-      
+
       if (widget.editTitle?.isNotEmpty == true) {
         _postingController.updateTitle(widget.editTitle!);
       }
-      
+
       if (widget.editContentHtml?.isNotEmpty == true) {
         _postingController.updateContent(widget.editContentHtml!);
       }
@@ -83,7 +85,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
     if (!_postingController.hasUnsavedChanges) {
       return true; // 변경사항이 없으면 바로 나가기
     }
-    
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -134,7 +136,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
         ],
       ),
     );
-    
+
     // 다이얼로그 결과 처리
     if (result == 'cancel') {
       return false; // 취소 - 나가지 않음
@@ -146,7 +148,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
       await _postingController.saveDraft();
       return true;
     }
-    
+
     return false;
   }
 
@@ -194,13 +196,13 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
 
   Future<void> _handleSubmit() async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     _showLoadingDialog();
-    
+
     try {
       // 1. 로그인 확인
       final currentUser = AuthService.currentUser;
@@ -226,7 +228,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
         setState(() {
           _isLoading = false;
         });
-        
+
         final firstError = validation.values.first;
         Fluttertoast.showToast(
           msg: firstError ?? "입력 내용을 확인해주세요",
@@ -255,7 +257,8 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
       }
 
       // 4. 사용자 정보 가져오기
-      final userProfile = await UserService.getUserFromFirestore(currentUser.uid);
+      final userProfile =
+          await UserService.getUserFromFirestore(currentUser.uid);
       if (userProfile == null) {
         _hideLoadingDialog();
         setState(() {
@@ -274,7 +277,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
       // 5. UUID와 날짜 생성
       String postId;
       String dateString;
-      
+
       if (widget.isEditMode) {
         postId = widget.postId!;
         dateString = widget.dateString!;
@@ -287,7 +290,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
 
       // 6. Firestore에 저장할 데이터 준비
       Map<String, dynamic> postData;
-      
+
       if (widget.isEditMode) {
         postData = {
           'boardId': selectedBoardId,
@@ -305,7 +308,8 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
             'uid': currentUser.uid,
             'displayName': userProfile['displayName'] ?? '익명',
             'photoURL': userProfile['photoURL'] ?? '',
-            'displayGrade': (userProfile['roles'] != null && (userProfile['roles'] as List).contains('admin'))
+            'displayGrade': (userProfile['roles'] != null &&
+                    (userProfile['roles'] as List).contains('admin'))
                 ? '★★★'
                 : (userProfile['displayGrade'] ?? '이코노미 Lv.1'),
             'currentSkyEffect': userProfile['currentSkyEffect'] ?? '',
@@ -330,26 +334,26 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
             .collection('posts')
             .doc(postId)
             .update(postData);
-            
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
             .collection('my_posts')
             .doc(postId)
             .update({
-              'title': _postingController.title,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+          'title': _postingController.title,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       } else {
         final batch = FirebaseFirestore.instance.batch();
-        
+
         final postRef = FirebaseFirestore.instance
             .collection('posts')
             .doc(dateString)
             .collection('posts')
             .doc(postId);
         batch.set(postRef, postData);
-        
+
         final myPostRef = FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
@@ -361,14 +365,13 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
           'boardId': selectedBoardId,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        
-        final userRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid);
+
+        final userRef =
+            FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
         batch.update(userRef, {
           'postsCount': FieldValue.increment(1),
         });
-        
+
         await batch.commit();
       }
 
@@ -379,9 +382,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
 
       // 8. 성공 메시지
       Fluttertoast.showToast(
-        msg: widget.isEditMode 
-            ? "게시글이 성공적으로 수정되었습니다"
-            : "게시글이 성공적으로 등록되었습니다",
+        msg: widget.isEditMode ? "게시글이 성공적으로 수정되었습니다" : "게시글이 성공적으로 등록되었습니다",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.grey[800],
@@ -391,11 +392,12 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
       // 새 글 작성 시 땅콩 10개 추가
       if (!widget.isEditMode) {
         try {
-          final userData = await UserService.getUserFromFirestore(currentUser.uid);
+          final userData =
+              await UserService.getUserFromFirestore(currentUser.uid);
           final currentPeanut = userData?['peanutCount'] ?? 0;
           final newPeanut = currentPeanut + 10;
           await UserService.updatePeanutCount(currentUser.uid, newPeanut);
-          
+
           await PeanutHistoryService.addHistory(
             userId: currentUser.uid,
             type: 'post_create',
@@ -407,7 +409,7 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
               'postTitle': _postingController.title,
             },
           );
-          
+
           Fluttertoast.showToast(
             msg: "땅콩 10개가 추가되었습니다.",
             toastLength: Toast.LENGTH_SHORT,
@@ -422,15 +424,14 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
 
       // 9. 화면 닫기
       Navigator.pop(context, widget.isEditMode ? true : false);
-
     } catch (e) {
       print('게시글 등록 오류: $e');
-      
+
       _hideLoadingDialog();
       setState(() {
         _isLoading = false;
       });
-      
+
       Fluttertoast.showToast(
         msg: "게시글 등록 중 오류가 발생했습니다",
         toastLength: Toast.LENGTH_SHORT,
@@ -460,18 +461,21 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
             },
           ),
           title: Text(
-            widget.isEditMode 
-                ? '게시글 수정 (Milecatch Editor)' 
-                : _postingController.hasUnsavedChanges 
-                    ? '커뮤니티 게시글 작성 (Milecatch Editor) *' 
+            widget.isEditMode
+                ? '게시글 수정 (Milecatch Editor)'
+                : _postingController.hasUnsavedChanges
+                    ? '커뮤니티 게시글 작성 (Milecatch Editor) *'
                     : '커뮤니티 게시글 작성 (Milecatch Editor)',
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.black, fontWeight: FontWeight.bold),
           ),
           actions: [
             TextButton(
-              onPressed: _isLoading ? null : () async {
-                await _handleSubmit();
-              },
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      await _handleSubmit();
+                    },
               child: Text(
                 _isLoading ? '등록 중...' : '등록',
                 style: TextStyle(
@@ -490,10 +494,11 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                
+
                 // 게시판 선택
                 const Text('게시판 선택',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () async {
@@ -524,15 +529,14 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
                                     ? Colors.grey
                                     : Colors.black,
                                 fontSize: 15)),
-                        const Icon(Icons.edit,
-                            color: Colors.black38, size: 20),
+                        const Icon(Icons.edit, color: Colors.black38, size: 20),
                       ],
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // 제목 입력
                 TextField(
                   controller: _postingController.titleController,
@@ -544,9 +548,9 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
                   ),
                   style: const TextStyle(fontSize: 18),
                 ),
-                
+
                 const Divider(height: 32, color: Color(0xFFE0E0E0)),
-                
+
                 // Milecatch Rich Text Editor
                 Container(
                   height: 400,
@@ -565,16 +569,17 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // 첨부파일 추가 버튼
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      await _postingController.attachmentController.pickImageFromGallery();
+                      await _postingController.attachmentController
+                          .pickImageFromGallery();
                     },
                     icon: const Icon(
                       Icons.add_photo_alternate_outlined,
@@ -592,7 +597,8 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF74512D),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 20),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -600,26 +606,26 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // 상태 정보 표시 (디버깅용)
                 if (_postingController.hasUnsavedChanges)
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
+                      color: McColors.accentSoft,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                      border: Border.all(color: McColors.accent),
                     ),
-                    child: Row(
+                    child: const Row(
                       children: [
-                        Icon(Icons.edit, color: Colors.orange[700], size: 16),
-                        const SizedBox(width: 8),
+                        Icon(Icons.edit, color: McColors.accent, size: 16),
+                        SizedBox(width: 8),
                         Text(
                           '변경사항이 있습니다',
                           style: TextStyle(
-                            color: Colors.orange[700],
+                            color: McColors.accent,
                             fontSize: 12,
                           ),
                         ),
@@ -634,4 +640,3 @@ class _CommunityPostCreateScreenV2State extends State<CommunityPostCreateScreenV
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../const/colors.dart';
 
 enum GiftcardLedgerEntryType { buy, sell }
 
@@ -274,7 +275,7 @@ class GiftcardDailyLedger extends StatelessWidget {
             child: Center(
               child: Text(
                 '데이터가 없습니다.',
-                style: TextStyle(color: Colors.black54),
+                style: McTextStyles.meta,
               ),
             ),
           ),
@@ -373,16 +374,13 @@ class _DayHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFFFFFFFF),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 7),
       child: Row(
         children: [
           Expanded(
             child: Text(
               dayText,
-              style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black),
+              style: McTextStyles.bodyStrong.copyWith(fontSize: 13),
             ),
           ),
           Text(
@@ -498,9 +496,9 @@ class _LedgerEntryRow extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0x11000000))),
+        border: Border(bottom: BorderSide(color: McColors.line)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -515,10 +513,7 @@ class _LedgerEntryRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${entry.qty}장 · ${entry.giftcardName}',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black),
+                  style: McTextStyles.bodyStrong.copyWith(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -533,7 +528,7 @@ class _LedgerEntryRow extends StatelessWidget {
               const SizedBox(width: 2),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert,
-                    size: 18, color: Colors.black54),
+                    size: 18, color: McColors.muted),
                 color: Colors.white,
                 surfaceTintColor: Colors.white,
                 shape: RoundedRectangleBorder(
@@ -608,25 +603,25 @@ class _MiniPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: McColors.field,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0x11000000)),
+        border: Border.all(color: McColors.line),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 14, color: Colors.black54),
+            Icon(icon, size: 13, color: McColors.muted),
             const SizedBox(width: 6),
           ],
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 220),
             child: Text(
               text,
-              style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w600),
+              style: McTextStyles.micro.copyWith(
+                color: McColors.inkSoft,
+                fontWeight: FontWeight.w600,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),

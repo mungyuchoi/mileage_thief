@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../const/colors.dart';
 
 class InfoPill extends StatelessWidget {
   final String text;
@@ -17,9 +18,9 @@ class InfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color effectiveFill =
-        fillColor ?? (filled ? const Color(0xFF74512D) : const Color(0x1174512D));
+        fillColor ?? (filled ? McColors.accent : McColors.accentSoft);
     final Color textColor =
-        (fillColor != null || filled) ? Colors.white : Colors.black87;
+        (fillColor != null || filled) ? Colors.white : McColors.inkSoft;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -35,12 +36,14 @@ class InfoPill extends StatelessWidget {
           ],
           Text(
             text,
-            style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 }
-
-
