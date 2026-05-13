@@ -616,6 +616,147 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     });
   }
 
+  String _selectedBranchLabel() {
+    final branchId = _selectedBranchId;
+    if (branchId == null || branchId.isEmpty) return '선택 안 함';
+
+    final branch = _branches.firstWhere(
+      (b) => b['id'] == branchId,
+      orElse: () => <String, dynamic>{},
+    );
+    if (branch.isEmpty) return branchId;
+
+    return (branch['name'] as String?) ?? branchId;
+  }
+
+  Future<void> _showBranchPicker() async {
+    FocusScope.of(context).unfocus();
+
+    if (_branches.isEmpty && !_branchesLoading) {
+      await _loadBranches();
+      if (!mounted) return;
+    }
+
+    if (_branchesLoading) return;
+
+    final selectedId = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final branchItems = [
+          <String, String>{'id': '', 'name': '선택 안 함'},
+          ..._branches.map(
+            (b) => <String, String>{
+              'id': b['id'] as String,
+              'name': b['name'] as String,
+            },
+          ),
+        ];
+
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE1E4EC),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '지점 선택',
+                  style: TextStyle(
+                    color: Color(0xFF1F1F28),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: GridView.builder(
+                    itemCount: branchItems.length,
+                    shrinkWrap: true,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 2.45,
+                    ),
+                    itemBuilder: (context, index) {
+                      final branch = branchItems[index];
+                      final branchId = branch['id']!;
+                      final branchName = branch['name']!;
+                      final isSelected = branchId.isEmpty
+                          ? (_selectedBranchId == null ||
+                              _selectedBranchId!.isEmpty)
+                          : branchId == _selectedBranchId;
+
+                      return InkWell(
+                        onTap: () => Navigator.pop(context, branchId),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F8FC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF74512D)
+                                  : const Color(0xFFE8ECF4),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                branchName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? const Color(0xFF74512D)
+                                      : const Color(0xFF1F1F28),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selectedId != null && mounted) {
+      setState(
+          () => _selectedBranchId = selectedId.isEmpty ? null : selectedId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -793,33 +934,39 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                               fontWeight: FontWeight.w600,
                               color: Colors.black)),
                       const SizedBox(height: 6),
-                      DropdownButtonFormField<String?>(
-                        value: _selectedBranchId,
-                        dropdownColor: Colors.white,
-                        style: const TextStyle(color: Colors.black),
-                        iconEnabledColor: Colors.black54,
-                        items: [
-                          const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text('선택 안 함',
-                                  style: TextStyle(color: Colors.black))),
-                          ..._branches.map((b) => DropdownMenuItem<String?>(
-                                value: b['id'] as String,
-                                child: Text(b['name'] as String,
-                                    style:
-                                        const TextStyle(color: Colors.black)),
-                              )),
-                        ],
-                        onChanged: (v) => setState(() => _selectedBranchId = v),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black26)),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Color(0xFF74512D), width: 1.5)),
-                          filled: true,
-                          fillColor: Colors.white,
+                      InkWell(
+                        onTap: _branchesLoading ? null : _showBranchPicker,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFCFD3DD)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _branchesLoading
+                                      ? '지점 불러오는 중...'
+                                      : _selectedBranchLabel(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: _branchesLoading
+                                        ? const Color(0xFF9AA0AF)
+                                        : const Color(0xFF1F1F28),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const Icon(Icons.keyboard_arrow_down_rounded,
+                                  color: Color(0xFF757B88)),
+                            ],
+                          ),
                         ),
                       ),
                       if (_error != null) ...[

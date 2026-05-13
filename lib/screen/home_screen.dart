@@ -26,6 +26,7 @@ import '../services/notice_preference_service.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_deals_screen.dart';
 import 'giftcard_info_screen.dart';
+import 'giftcard_settlement_screen.dart';
 import 'my_card_dashboard_screen.dart';
 import 'useful_info_screen.dart';
 import 'user_report_history_screen.dart';
@@ -493,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _giftcardTabController = TabController(length: 5, vsync: this);
+    _giftcardTabController = TabController(length: 6, vsync: this);
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
@@ -827,13 +828,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildGiftcardPrimaryTabBar() {
-    return Container(
-      color: Colors.white,
-      child: SegmentTabBar(
-        controller: _giftcardTabController,
-        labels: const ['정보', '특가', '지도', '시세', '지점'],
-        margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      ),
+    return ScrollableUnderlineTabBar(
+      controller: _giftcardTabController,
+      labels: const ['정보', '특가', '지도', '시세', '계산', '지점'],
     );
   }
 
@@ -874,6 +871,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         const GiftcardDealsScreen(),
                         const GiftcardMapScreen(),
                         const GiftcardRatesTab(),
+                        const GiftcardSettlementScreen(),
                         const BranchListTab(),
                       ],
                     ),
@@ -890,7 +888,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               if (_giftFabOpen)
                 Positioned(
                   right: 16,
-                  bottom: 176,
+                  bottom: 232,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [

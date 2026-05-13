@@ -1,0 +1,1292 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
+
+import '../const/colors.dart';
+import '../models/giftcard_settlement_calculator.dart';
+
+class GiftcardSettlementScreen extends StatefulWidget {
+  const GiftcardSettlementScreen({super.key});
+
+  @override
+  State<GiftcardSettlementScreen> createState() =>
+      _GiftcardSettlementScreenState();
+}
+
+class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
+  static const String _noBranchOptionId = '__no_branch__';
+  static const String _noBranchLabel = '지점 선택안함';
+
+  final NumberFormat _won = NumberFormat('#,###');
+  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  final TextEditingController _actualDepositController =
+      TextEditingController();
+  final TextEditingController _memoController = TextEditingController();
+
+  List<_BranchOption> _branches = <_BranchOption>[];
+  List<_GiftcardOption> _giftcards = <_GiftcardOption>[];
+  List<_SettlementLineDraft> _lines = <_SettlementLineDraft>[];
+  DateTime _settlementDate = DateTime.now();
+  String? _selectedBranchId;
+  String? _editingSettlementId;
+  bool _loadingRefs = true;
+  bool _saving = false;
+  bool _completed = false;
+  bool _recountChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lines = <_SettlementLineDraft>[_SettlementLineDraft()];
+    _loadReferenceData();
+  }
+
+  @override
+  void dispose() {
+    for (final line in _lines) {
+      line.dispose();
+    }
+    _actualDepositController.dispose();
+    _memoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadReferenceData() async {
+    setState(() {
+      _loadingRefs = true;
+    });
+    try {
+      final branchesFuture = FirebaseFirestore.instance
+          .collection('branches')
+          .get()
+          .then((snap) => snap.docs.map((doc) {
+                final data = doc.data();
+                return _BranchOption(
+                  id: doc.id,
+                  name: (data['name'] as String?) ?? doc.id,
+                );
+              }).toList()
+                ..sort((a, b) => a.name.compareTo(b.name)));
+
+      final giftcardsFuture = FirebaseFirestore.instance
+          .collection('giftcards')
+          .get()
+          .then((snap) => snap.docs.map((doc) {
+                final data = doc.data();
+                return _GiftcardOption(
+                  id: doc.id,
+                  name: (data['name'] as String?) ?? doc.id,
+                  sortOrder: (data['sortOrder'] as num?)?.toInt() ?? 999,
+                );
+              }).toList()
+                ..sort((a, b) {
+                  final order = a.sortOrder.compareTo(b.sortOrder);
+                  return order != 0 ? order : a.name.compareTo(b.name);
+                }));
+
+      final results = await Future.wait([branchesFuture, giftcardsFuture]);
+      if (!mounted) return;
+      setState(() {
+        _branches = results[0] as List<_BranchOption>;
+        _giftcards = results[1] as List<_GiftcardOption>;
+        _loadingRefs = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingRefs = false;
+      });
+      Fluttertoast.showToast(msg: '계산기 정보를 불러오지 못했습니다.');
+    }
+  }
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) {
+      return int.tryParse(value.replaceAll(RegExp(r'[^0-9-]'), '')) ?? 0;
+    }
+    return 0;
+  }
+
+  DateTime _asDate(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.now();
+  }
+
+  String _formatWon(int value) => '${_won.format(value)}원';
+
+  String _formatRate(double value) {
+    final text = value.toStringAsFixed(2);
+    if (text.endsWith('00')) return text.substring(0, text.length - 3);
+    if (text.endsWith('0')) return text.substring(0, text.length - 1);
+    return text;
+  }
+
+  _BranchOption? get _selectedBranch {
+    final branchId = _selectedBranchId;
+    if (branchId == null) return null;
+    for (final branch in _branches) {
+      if (branch.id == branchId) return branch;
+    }
+    return null;
+  }
+
+  String _giftcardName(String? giftcardId) {
+    if (giftcardId == null || giftcardId.isEmpty) return '';
+    for (final giftcard in _giftcards) {
+      if (giftcard.id == giftcardId) return giftcard.name;
+    }
+    return giftcardId;
+  }
+
+  List<GiftcardSettlementLineInput> _currentLineInputs() {
+    final lines = <GiftcardSettlementLineInput>[];
+    for (final line in _lines) {
+      final giftcardId = line.giftcardId;
+      final faceValue = line.faceValue;
+      final qty = line.qty;
+      final sellUnit = line.sellUnit;
+      if (giftcardId == null || giftcardId.isEmpty) continue;
+      if (faceValue <= 0 || qty <= 0 || sellUnit <= 0) continue;
+      lines.add(
+        GiftcardSettlementLineInput(
+          giftcardId: giftcardId,
+          giftcardName: _giftcardName(giftcardId),
+          faceValue: faceValue,
+          qty: qty,
+          sellUnit: sellUnit,
+          memo: line.memoController.text.trim(),
+        ),
+      );
+    }
+    return lines;
+  }
+
+  GiftcardSettlementSummary _currentSummary() {
+    final actual = _completed ? _asInt(_actualDepositController.text) : null;
+    return GiftcardSettlementCalculator.summarize(
+      lines: _currentLineInputs(),
+      actualDepositTotal: actual,
+    );
+  }
+
+  Future<void> _pickSettlementDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _settlementDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: McColors.accent),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _settlementDate = picked;
+      });
+    }
+  }
+
+  Future<String?> _showSelectionSheet({
+    required String title,
+    required List<_PickerOption> options,
+    required String? selectedId,
+  }) async {
+    FocusScope.of(context).unfocus();
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final sheetHeight = MediaQuery.of(context).size.height * 0.72;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: SizedBox(
+              height: sheetHeight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE1E4EC),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF1F1F28),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: GridView.builder(
+                      itemCount: options.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 2.45,
+                      ),
+                      itemBuilder: (context, index) {
+                        final option = options[index];
+                        final isSelected = option.id == selectedId;
+                        return InkWell(
+                          onTap: () => Navigator.pop(context, option.id),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F8FC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF74512D)
+                                    : const Color(0xFFE8ECF4),
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  option.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? const Color(0xFF74512D)
+                                        : const Color(0xFF1F1F28),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openBranchSheet() async {
+    if (_branches.isEmpty) return;
+    final selectedId = await _showSelectionSheet(
+      title: '지점 선택',
+      options: [
+        const _PickerOption(id: _noBranchOptionId, label: _noBranchLabel),
+        for (final branch in _branches)
+          _PickerOption(id: branch.id, label: branch.name),
+      ],
+      selectedId: _selectedBranchId ?? _noBranchOptionId,
+    );
+    if (selectedId == null || !mounted) return;
+    setState(() {
+      _selectedBranchId = selectedId == _noBranchOptionId ? null : selectedId;
+    });
+    if (_selectedBranchId == null) return;
+    for (final line in _lines) {
+      await _applyCurrentRate(line);
+    }
+  }
+
+  Future<void> _openGiftcardSheet(_SettlementLineDraft line) async {
+    if (_giftcards.isEmpty) return;
+    final selectedId = await _showSelectionSheet(
+      title: '상품권 선택',
+      options: [
+        for (final giftcard in _giftcards)
+          _PickerOption(id: giftcard.id, label: giftcard.name),
+      ],
+      selectedId: line.giftcardId,
+    );
+    if (selectedId == null || !mounted) return;
+    setState(() {
+      line.giftcardId = selectedId;
+    });
+    await _applyCurrentRate(line);
+  }
+
+  Future<void> _applyCurrentRate(
+    _SettlementLineDraft line, {
+    bool overwrite = false,
+  }) async {
+    final branchId = _selectedBranchId;
+    final giftcardId = line.giftcardId;
+    if (branchId == null || branchId.isEmpty) {
+      if (overwrite) {
+        Fluttertoast.showToast(msg: '지점을 선택하면 현재 시세를 불러올 수 있습니다.');
+      }
+      return;
+    }
+    if (giftcardId == null || giftcardId.isEmpty) {
+      if (overwrite) {
+        Fluttertoast.showToast(msg: '상품권을 먼저 선택해주세요.');
+      }
+      return;
+    }
+    if (!overwrite && line.sellUnit > 0) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('branches')
+          .doc(branchId)
+          .collection('giftcardRates_current')
+          .doc(giftcardId)
+          .get();
+      final data = doc.data();
+      final price = (data?['sellPrice_general'] as num?)?.toInt();
+      if (price == null || price <= 0) {
+        if (overwrite) {
+          Fluttertoast.showToast(msg: '현재 시세가 없습니다. 직접 입력해주세요.');
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        line.setSellUnit(price);
+      });
+    } catch (_) {
+      if (overwrite) {
+        Fluttertoast.showToast(msg: '현재 시세를 불러오지 못했습니다.');
+      }
+    }
+  }
+
+  void _addLine() {
+    setState(() {
+      _lines.add(_SettlementLineDraft());
+    });
+  }
+
+  void _removeLine(_SettlementLineDraft line) {
+    if (_lines.length == 1) {
+      Fluttertoast.showToast(msg: '최소 1개 행이 필요합니다.');
+      return;
+    }
+    setState(() {
+      _lines.remove(line);
+      line.dispose();
+    });
+  }
+
+  void _resetDraft() {
+    for (final line in _lines) {
+      line.dispose();
+    }
+    setState(() {
+      _lines = <_SettlementLineDraft>[_SettlementLineDraft()];
+      _settlementDate = DateTime.now();
+      _selectedBranchId = null;
+      _editingSettlementId = null;
+      _completed = false;
+      _recountChecked = false;
+      _actualDepositController.clear();
+      _memoController.clear();
+    });
+  }
+
+  void _loadSettlementForEdit(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final rawItems =
+        data['lineItems'] is List ? List<dynamic>.from(data['lineItems']) : [];
+    final nextLines = <_SettlementLineDraft>[];
+    for (final item in rawItems) {
+      if (item is! Map) continue;
+      final map = Map<String, dynamic>.from(item);
+      final line = _SettlementLineDraft(
+        giftcardId: map['giftcardId'] as String?,
+        faceValue: _asInt(map['faceValue']),
+        qty: _asInt(map['qty']),
+        sellUnit: _asInt(map['sellUnit']),
+        memo: (map['memo'] as String?) ?? '',
+      );
+      final storedRate = (map['sellRate'] as num?)?.toDouble();
+      if (storedRate != null && storedRate > 0) {
+        line.sellRateController.text = _formatRate(storedRate);
+      }
+      nextLines.add(line);
+    }
+    if (nextLines.isEmpty) {
+      nextLines.add(_SettlementLineDraft());
+    }
+
+    for (final line in _lines) {
+      line.dispose();
+    }
+
+    setState(() {
+      _editingSettlementId = doc.id;
+      _selectedBranchId = data['branchId'] as String?;
+      _settlementDate = _asDate(data['settlementDate']);
+      _completed = data['status'] == 'completed';
+      _recountChecked = data['recountChecked'] == true;
+      _actualDepositController.text = data['actualDepositTotal'] == null
+          ? ''
+          : _asInt(data['actualDepositTotal']).toString();
+      _memoController.text = (data['memo'] as String?) ?? '';
+      _lines = nextLines;
+    });
+  }
+
+  Future<void> _save() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+
+    final branch = _selectedBranch;
+
+    final lineInputs = _currentLineInputs();
+    if (lineInputs.isEmpty) {
+      Fluttertoast.showToast(msg: '계산할 상품권 행을 입력해주세요.');
+      return;
+    }
+
+    if (_completed && _asInt(_actualDepositController.text) <= 0) {
+      Fluttertoast.showToast(msg: '실제 입금액을 입력해주세요.');
+      return;
+    }
+
+    for (final line in _lines) {
+      final hasTradeInput = line.giftcardId != null ||
+          line.sellUnit > 0 ||
+          line.memoController.text.trim().isNotEmpty;
+      final isComplete = line.giftcardId != null &&
+          line.faceValue > 0 &&
+          line.qty > 0 &&
+          line.sellUnit > 0;
+      if (hasTradeInput && !isComplete) {
+        Fluttertoast.showToast(msg: '입력 중인 행의 상품권, 수량, 판매가를 확인해주세요.');
+        return;
+      }
+    }
+
+    if (_saving) return;
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      final summary = _currentSummary();
+      final actualDepositTotal =
+          _completed ? _asInt(_actualDepositController.text) : null;
+      final docId = _editingSettlementId ??
+          'settlement_${DateTime.now().millisecondsSinceEpoch}';
+      final ref = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('giftcard_settlements')
+          .doc(docId);
+
+      final payload = <String, dynamic>{
+        'status': _completed ? 'completed' : 'planned',
+        'tradeDirection': 'sell',
+        'branchId': branch?.id,
+        'branchNameSnapshot': branch?.name ?? _noBranchLabel,
+        'settlementDate': Timestamp.fromDate(_settlementDate),
+        'expectedTotal': summary.expectedTotal,
+        'actualDepositTotal': actualDepositTotal,
+        'difference': actualDepositTotal == null ? 0 : summary.difference,
+        'totalQuantity': summary.totalQuantity,
+        'lineItems': lineInputs
+            .map(
+              (line) => <String, dynamic>{
+                'giftcardId': line.giftcardId,
+                'giftcardNameSnapshot': line.giftcardName,
+                'faceValue': line.faceValue,
+                'qty': line.qty,
+                'sellUnit': line.sellUnit,
+                'sellRate': double.parse(line.sellRate.toStringAsFixed(2)),
+                'lineTotal': line.lineTotal,
+                'memo': line.memo,
+              },
+            )
+            .toList(),
+        'recountChecked': _recountChecked,
+        'memo': _memoController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (_editingSettlementId == null)
+          'createdAt': FieldValue.serverTimestamp(),
+        if (_completed) 'completedAt': FieldValue.serverTimestamp(),
+        if (!_completed) 'completedAt': FieldValue.delete(),
+      };
+
+      await ref.set(payload, SetOptions(merge: true));
+      if (!mounted) return;
+      setState(() {
+        _editingSettlementId = docId;
+      });
+      Fluttertoast.showToast(
+          msg: _completed ? '정산 기록이 완료되었습니다.' : '정산 예정이 저장되었습니다.');
+    } catch (e) {
+      Fluttertoast.showToast(msg: '저장 실패: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _historyStream() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return null;
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('giftcard_settlements')
+        .orderBy('updatedAt', descending: true)
+        .limit(30)
+        .snapshots();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loadingRefs) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
+        ),
+      );
+    }
+
+    final stream = _historyStream();
+    if (stream == null) {
+      return const Center(
+        child: Text('로그인 후 상품권 정산 계산기를 사용할 수 있습니다.'),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadReferenceData,
+      color: McColors.accent,
+      backgroundColor: Colors.white,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          120 + MediaQuery.of(context).padding.bottom,
+        ),
+        children: [
+          _buildEditor(),
+          const SizedBox(height: 16),
+          _buildHistory(stream),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditor() {
+    final summary = _currentSummary();
+    final actual = _completed ? _asInt(_actualDepositController.text) : null;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _editingSettlementId == null ? '정산 계산' : '정산 기록 수정',
+                  style: McTextStyles.sectionTitle,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _resetDraft,
+                icon: const Icon(Icons.add_circle_outline, size: 18),
+                label: const Text('새 계산'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '지점',
+            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black),
+          ),
+          const SizedBox(height: 6),
+          _PickerField(
+            text: _branches.isEmpty
+                ? _noBranchLabel
+                : (_selectedBranch?.name ?? _noBranchLabel),
+            muted: _selectedBranch == null,
+            onTap: _branches.isEmpty ? null : _openBranchSheet,
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _pickSettlementDate,
+            icon: const Icon(Icons.calendar_month_outlined, size: 18),
+            label: Text(_dateFormat.format(_settlementDate)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: McColors.ink,
+              side: const BorderSide(color: McColors.line),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (final line in _lines) ...[
+            _buildLineEditor(line),
+            const SizedBox(height: 10),
+          ],
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _addLine,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('행 추가'),
+            ),
+          ),
+          const Divider(height: 24),
+          _buildSummary(summary, actual),
+          const SizedBox(height: 12),
+          SwitchListTile.adaptive(
+            value: _completed,
+            activeThumbColor: McColors.accent,
+            contentPadding: EdgeInsets.zero,
+            title: const Text('정산 완료', style: McTextStyles.bodyStrong),
+            subtitle:
+                const Text('실제 입금액과 차액을 기록합니다.', style: McTextStyles.meta),
+            onChanged: (value) => setState(() => _completed = value),
+          ),
+          if (_completed) ...[
+            const SizedBox(height: 8),
+            TextField(
+              controller: _actualDepositController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '실제 입금액',
+                prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            CheckboxListTile(
+              value: _recountChecked,
+              activeColor: McColors.accent,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('재계수 확인', style: McTextStyles.bodyStrong),
+              onChanged: (value) {
+                setState(() {
+                  _recountChecked = value == true;
+                });
+              },
+            ),
+          ],
+          TextField(
+            controller: _memoController,
+            minLines: 1,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: '메모',
+              prefixIcon: Icon(Icons.note_outlined),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined, size: 18),
+              label: Text(_saving ? '저장 중' : '정산 기록 저장'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: McColors.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLineEditor(_SettlementLineDraft line) {
+    final lineTotal = GiftcardSettlementCalculator.lineTotal(
+      qty: line.qty,
+      sellUnit: line.sellUnit,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: McColors.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _PickerField(
+                  text: _giftcards.isEmpty
+                      ? '등록된 상품권이 없습니다.'
+                      : (line.giftcardId == null
+                          ? '상품권 선택'
+                          : _giftcardName(line.giftcardId)),
+                  muted: _giftcards.isEmpty || line.giftcardId == null,
+                  onTap: _giftcards.isEmpty
+                      ? null
+                      : () => _openGiftcardSheet(line),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: '행 삭제',
+                onPressed: () => _removeLine(line),
+                icon: const Icon(Icons.delete_outline, color: Colors.black54),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  key: ValueKey(
+                      'face_${identityHashCode(line)}_${line.faceValue}'),
+                  initialValue: _SettlementLineDraft.faceValueOptions
+                          .contains(line.faceValue)
+                      ? line.faceValue
+                      : null,
+                  dropdownColor: Colors.white,
+                  decoration: const InputDecoration(labelText: '권종'),
+                  items: [
+                    for (final value in _SettlementLineDraft.faceValueOptions)
+                      DropdownMenuItem<int>(
+                        value: value,
+                        child: Text(_formatWon(value)),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      line.setFaceValue(value);
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: line.qtyController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: '수량'),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: line.sellUnitController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: '판매가'),
+                  onChanged: (_) {
+                    setState(() {
+                      line.syncRateFromUnit();
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: line.sellRateController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: '매입률(%)'),
+                  onChanged: (_) {
+                    setState(() {
+                      line.syncUnitFromRate();
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: line.memoController,
+            decoration: const InputDecoration(
+              labelText: '묶음/봉투 메모',
+              prefixIcon: Icon(Icons.inventory_2_outlined),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '소계 ${_formatWon(lineTotal)}',
+                  style: McTextStyles.bodyStrong,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => _applyCurrentRate(line, overwrite: true),
+                icon: const Icon(Icons.sync, size: 16),
+                label: const Text('현재시세'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummary(GiftcardSettlementSummary summary, int? actual) {
+    final difference = actual == null ? 0 : actual - summary.expectedTotal;
+    final diffColor = difference == 0
+        ? McColors.muted
+        : difference > 0
+            ? Colors.blue
+            : Colors.red;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _SummaryPill(
+              icon: Icons.confirmation_number_outlined,
+              label: '총 ${summary.totalQuantity}장',
+            ),
+            _SummaryPill(
+              icon: Icons.payments_outlined,
+              label: '예상 ${_formatWon(summary.expectedTotal)}',
+            ),
+            if (_completed)
+              _SummaryPill(
+                icon: Icons.compare_arrows_outlined,
+                label: '차액 ${_formatWon(difference)}',
+                color: diffColor,
+              ),
+          ],
+        ),
+        if (summary.subtotalByGiftcard.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final entry in summary.subtotalByGiftcard.entries)
+                _SummaryPill(
+                  icon: Icons.card_giftcard_outlined,
+                  label: '${entry.key} ${_formatWon(entry.value)}',
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildHistory(Stream<QuerySnapshot<Map<String, dynamic>>> stream) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('정산 히스토리를 불러오지 못했습니다.'));
+          }
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final docs = snapshot.data!.docs;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('최근 정산 히스토리', style: McTextStyles.sectionTitle),
+            const SizedBox(height: 10),
+            if (docs.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: McColors.line),
+                ),
+                child: const Text(
+                  '아직 저장된 정산 기록이 없습니다.',
+                  style: McTextStyles.body,
+                ),
+              )
+            else
+              for (final doc in docs) ...[
+                _buildHistoryRow(doc),
+                const SizedBox(height: 10),
+              ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHistoryRow(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final status = (data['status'] as String?) ?? 'planned';
+    final expectedTotal = _asInt(data['expectedTotal']);
+    final actualTotal = data['actualDepositTotal'] == null
+        ? null
+        : _asInt(data['actualDepositTotal']);
+    final difference = _asInt(data['difference']);
+    final date = _asDate(data['settlementDate']);
+    final branchName = (data['branchNameSnapshot'] as String?) ??
+        (data['branchId'] as String?) ??
+        _noBranchLabel;
+
+    return InkWell(
+      onTap: () => _loadSettlementForEdit(doc),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: McColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    branchName,
+                    style: McTextStyles.cardTitle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                _StatusPill(status: status),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${_dateFormat.format(date)} · ${_asInt(data['totalQuantity'])}장 · 예상 ${_formatWon(expectedTotal)}',
+              style: McTextStyles.meta,
+            ),
+            if (status == 'completed' && actualTotal != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                '실입금 ${_formatWon(actualTotal)} · 차액 ${_formatWon(difference)}',
+                style: McTextStyles.bodyStrong.copyWith(
+                  color: difference == 0
+                      ? McColors.ink
+                      : difference > 0
+                          ? Colors.blue
+                          : Colors.red,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  const _SummaryPill({
+    required this.icon,
+    required this.label,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = color ?? McColors.inkSoft;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: McColors.field,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: effectiveColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: McTextStyles.micro.copyWith(
+              color: effectiveColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PickerField extends StatelessWidget {
+  final String text;
+  final bool muted;
+  final VoidCallback? onTap;
+
+  const _PickerField({
+    required this.text,
+    required this.muted,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFCFD3DD)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color:
+                      muted ? const Color(0xFF9AA0AF) : const Color(0xFF1F1F28),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF757B88),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String status;
+
+  const _StatusPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final completed = status == 'completed';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: completed ? const Color(0xFFEAF2FF) : McColors.accentSoft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        completed ? '완료' : '예정',
+        style: McTextStyles.micro.copyWith(
+          color: completed ? Colors.blue : McColors.accent,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _PickerOption {
+  final String id;
+  final String label;
+
+  const _PickerOption({
+    required this.id,
+    required this.label,
+  });
+}
+
+class _BranchOption {
+  final String id;
+  final String name;
+
+  const _BranchOption({
+    required this.id,
+    required this.name,
+  });
+}
+
+class _GiftcardOption {
+  final String id;
+  final String name;
+  final int sortOrder;
+
+  const _GiftcardOption({
+    required this.id,
+    required this.name,
+    required this.sortOrder,
+  });
+}
+
+class _SettlementLineDraft {
+  static const List<int> faceValueOptions = <int>[10000, 50000, 100000, 500000];
+
+  String? giftcardId;
+  final TextEditingController faceValueController;
+  final TextEditingController qtyController;
+  final TextEditingController sellUnitController;
+  final TextEditingController sellRateController;
+  final TextEditingController memoController;
+
+  _SettlementLineDraft({
+    this.giftcardId,
+    int faceValue = 100000,
+    int qty = 1,
+    int sellUnit = 0,
+    String memo = '',
+  })  : faceValueController = TextEditingController(text: faceValue.toString()),
+        qtyController = TextEditingController(text: qty.toString()),
+        sellUnitController = TextEditingController(
+            text: sellUnit > 0 ? sellUnit.toString() : ''),
+        sellRateController = TextEditingController(
+          text: sellUnit > 0
+              ? _formatRateStatic(
+                  GiftcardSettlementCalculator.sellRateFromUnit(
+                    faceValue: faceValue,
+                    sellUnit: sellUnit,
+                  ),
+                )
+              : '',
+        ),
+        memoController = TextEditingController(text: memo);
+
+  int get faceValue =>
+      int.tryParse(
+          faceValueController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+      0;
+
+  int get qty =>
+      int.tryParse(qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+  int get sellUnit =>
+      int.tryParse(sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+      0;
+
+  void setFaceValue(int value) {
+    faceValueController.text = value.toString();
+    if (sellRateController.text.trim().isNotEmpty) {
+      syncUnitFromRate();
+    } else if (sellUnit > 0) {
+      syncRateFromUnit();
+    }
+  }
+
+  void setSellUnit(int value) {
+    sellUnitController.text = value.toString();
+    syncRateFromUnit();
+  }
+
+  void syncRateFromUnit() {
+    final unit = sellUnit;
+    final face = faceValue;
+    if (unit <= 0 || face <= 0) return;
+    final rate = GiftcardSettlementCalculator.sellRateFromUnit(
+      faceValue: face,
+      sellUnit: unit,
+    );
+    sellRateController.text = _formatRateStatic(rate);
+  }
+
+  void syncUnitFromRate() {
+    final rate = double.tryParse(sellRateController.text.trim());
+    final face = faceValue;
+    if (rate == null || face <= 0) return;
+    final unit = GiftcardSettlementCalculator.sellUnitFromRate(
+      faceValue: face,
+      sellRate: rate,
+    );
+    sellUnitController.text = unit.toString();
+  }
+
+  void dispose() {
+    faceValueController.dispose();
+    qtyController.dispose();
+    sellUnitController.dispose();
+    sellRateController.dispose();
+    memoController.dispose();
+  }
+
+  static String _formatRateStatic(double value) {
+    final text = value.toStringAsFixed(2);
+    if (text.endsWith('00')) return text.substring(0, text.length - 3);
+    if (text.endsWith('0')) return text.substring(0, text.length - 1);
+    return text;
+  }
+}
