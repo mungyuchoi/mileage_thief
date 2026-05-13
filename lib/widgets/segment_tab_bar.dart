@@ -77,8 +77,7 @@ class ScrollableUnderlineTabBar extends StatefulWidget {
       _ScrollableUnderlineTabBarState();
 }
 
-class _ScrollableUnderlineTabBarState
-    extends State<ScrollableUnderlineTabBar> {
+class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _viewportKey = GlobalKey();
   late List<GlobalKey> _tabKeys;
@@ -226,7 +225,7 @@ class _UnderlineTabButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.only(top: 6),
+          padding: const EdgeInsets.only(left: 8, top: 6, right: 8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -234,9 +233,8 @@ class _UnderlineTabButton extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.visible,
-                style:
-                    (selected ? McTextStyles.tabSelected : McTextStyles.tab)
-                        .copyWith(fontSize: 14),
+                style: (selected ? McTextStyles.tabSelected : McTextStyles.tab)
+                    .copyWith(fontSize: 14),
               ),
               const SizedBox(height: 9),
               AnimatedContainer(

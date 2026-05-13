@@ -639,18 +639,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     PreferredSizeWidget? bottom,
     bool includeGiftcardActions = false,
     bool showLogo = true,
+    String? titleText,
     List<Widget>? actions,
   }) {
     return AppBar(
       automaticallyImplyLeading: false,
+      centerTitle: false,
       titleSpacing: 12,
-      title: showLogo
-          ? Image.asset(
-              'asset/icon/milecatch_logo.png',
-              height: 24,
-              fit: BoxFit.contain,
-            )
-          : const SizedBox.shrink(),
+      title: titleText != null
+          ? Text(titleText, style: McTextStyles.appBarTitle)
+          : showLogo
+              ? Image.asset(
+                  'asset/icon/milecatch_logo.png',
+                  height: 24,
+                  fit: BoxFit.contain,
+                )
+              : const SizedBox.shrink(),
       backgroundColor: Colors.white,
       iconTheme: const IconThemeData(color: McColors.ink, size: 23),
       elevation: 0.5,
@@ -665,22 +669,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   List<Widget> _buildDefaultAppBarActions() {
     return <Widget>[
-      IconButton(
-        icon: const Icon(Icons.share, color: Colors.black),
-        onPressed: _shareApp,
-      ),
-      IconButton(
-        icon: ClipOval(
-          child: Image.asset(
-            _communityChatIconAsset,
-            width: 30,
-            height: 30,
-            fit: BoxFit.cover,
-          ),
-        ),
-        onPressed: _launchOpenChat,
-      ),
+      _buildShareAppBarAction(),
+      _buildCommunityChatAppBarAction(),
     ];
+  }
+
+  Widget _buildShareAppBarAction() {
+    return IconButton(
+      icon: const Icon(Icons.share, color: Colors.black),
+      onPressed: _shareApp,
+    );
+  }
+
+  Widget _buildCommunityChatAppBarAction() {
+    return IconButton(
+      icon: ClipOval(
+        child: Image.asset(
+          _communityChatIconAsset,
+          width: 30,
+          height: 30,
+          fit: BoxFit.cover,
+        ),
+      ),
+      onPressed: _launchOpenChat,
+    );
   }
 
   List<Widget> _buildGuideAppBarActions() {
@@ -698,7 +710,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   List<Widget> _buildGiftcardAppBarActions() {
     return <Widget>[
-      ..._buildDefaultAppBarActions(),
+      _buildShareAppBarAction(),
       IconButton(
         tooltip: '상품권 사용법',
         icon: const Icon(Icons.info_outline, color: Colors.black),
@@ -850,6 +862,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           appBar: _buildHomeAppBar(
             includeGiftcardActions: true,
             showLogo: false,
+            titleText: '상품권',
           ),
           body: Stack(
             children: [

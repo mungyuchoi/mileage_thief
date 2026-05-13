@@ -1735,12 +1735,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   }
 
   Widget _buildInfoSegmentTabBar({bool insideHorizontalPadding = false}) {
-    return SegmentTabBar(
+    return ScrollableUnderlineTabBar(
       controller: _tabController,
       labels: const ['대시보드', '달력', '일일', '랭킹'],
-      margin: insideHorizontalPadding
-          ? const EdgeInsets.fromLTRB(0, 10, 0, 6)
-          : const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: insideHorizontalPadding
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 16),
     );
   }
 
@@ -1771,7 +1771,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
             'giftcard-dashboard-${_periodType.name}-${_selectedYear}-${_selectedMonth.year}-${_selectedMonth.month}',
           ),
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
           cacheExtent: 900,
           itemCount: sections.length,
           itemBuilder: (context, index) =>

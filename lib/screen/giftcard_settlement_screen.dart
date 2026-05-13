@@ -8,11 +8,60 @@ import '../const/colors.dart';
 import '../models/giftcard_settlement_calculator.dart';
 
 class GiftcardSettlementScreen extends StatefulWidget {
-  const GiftcardSettlementScreen({super.key});
+  final String? initialSettlementId;
+  final bool? _showTrustNotice;
+  final bool? _showHistory;
+  final bool? _popOnSave;
+
+  const GiftcardSettlementScreen({
+    super.key,
+    this.initialSettlementId,
+    bool? showTrustNotice,
+    bool? showHistory,
+    bool? popOnSave,
+  })  : _showTrustNotice = showTrustNotice,
+        _showHistory = showHistory,
+        _popOnSave = popOnSave;
+
+  bool get showTrustNotice => _showTrustNotice ?? true;
+  bool get showHistory => _showHistory ?? true;
+  bool get popOnSave => _popOnSave ?? false;
 
   @override
   State<GiftcardSettlementScreen> createState() =>
       _GiftcardSettlementScreenState();
+}
+
+class GiftcardSettlementDetailScreen extends StatelessWidget {
+  final String settlementId;
+
+  const GiftcardSettlementDetailScreen({
+    super.key,
+    required this.settlementId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: McColors.background,
+      appBar: AppBar(
+        automaticallyImplyLeading: true,
+        centerTitle: false,
+        titleSpacing: 0,
+        title: const Text('정산 기록', style: McTextStyles.appBarTitle),
+        backgroundColor: Colors.white,
+        foregroundColor: McColors.ink,
+        elevation: 0.5,
+        shadowColor: McColors.line,
+      ),
+      body: GiftcardSettlementScreen(
+        initialSettlementId: settlementId,
+        showTrustNotice: false,
+        showHistory: false,
+        popOnSave: true,
+      ),
+    );
+  }
 }
 
 class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
@@ -40,7 +89,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
   void initState() {
     super.initState();
     _lines = <_SettlementLineDraft>[_SettlementLineDraft()];
-    _loadReferenceData();
+    _initialize();
   }
 
   @override
@@ -99,6 +148,14 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         _loadingRefs = false;
       });
       Fluttertoast.showToast(msg: '계산기 정보를 불러오지 못했습니다.');
+    }
+  }
+
+  Future<void> _initialize() async {
+    await _loadReferenceData();
+    final settlementId = widget.initialSettlementId;
+    if (settlementId != null && mounted) {
+      await _loadSettlementById(settlementId);
     }
   }
 
@@ -340,6 +397,29 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     await _applyCurrentRate(line);
   }
 
+  Future<int?> _fetchCurrentSellUnit(String? giftcardId) async {
+    final branchId = _selectedBranchId;
+    if (branchId == null ||
+        branchId.isEmpty ||
+        giftcardId == null ||
+        giftcardId.isEmpty) {
+      return null;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('branches')
+          .doc(branchId)
+          .collection('giftcardRates_current')
+          .doc(giftcardId)
+          .get();
+      final price = (doc.data()?['sellPrice_general'] as num?)?.toInt();
+      return price != null && price > 0 ? price : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _applyCurrentRate(
     _SettlementLineDraft line, {
     bool overwrite = false,
@@ -360,30 +440,264 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     }
     if (!overwrite && line.sellUnit > 0) return;
 
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('branches')
-          .doc(branchId)
-          .collection('giftcardRates_current')
-          .doc(giftcardId)
-          .get();
-      final data = doc.data();
-      final price = (data?['sellPrice_general'] as num?)?.toInt();
-      if (price == null || price <= 0) {
-        if (overwrite) {
-          Fluttertoast.showToast(msg: '현재 시세가 없습니다. 직접 입력해주세요.');
-        }
-        return;
-      }
-      if (!mounted) return;
-      setState(() {
-        line.setSellUnit(price);
-      });
-    } catch (_) {
+    final price = await _fetchCurrentSellUnit(giftcardId);
+    if (price == null) {
       if (overwrite) {
-        Fluttertoast.showToast(msg: '현재 시세를 불러오지 못했습니다.');
+        Fluttertoast.showToast(msg: '현재 시세가 없습니다. 직접 입력해주세요.');
       }
+      return;
     }
+    if (!mounted) return;
+    setState(() {
+      line.setSellUnit(price);
+    });
+  }
+
+  Future<List<_PurchaseLotOption>> _loadOpenPurchaseLots() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const <_PurchaseLotOption>[];
+
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('lots')
+        .where('status', isEqualTo: 'open')
+        .get();
+
+    final lots = <_PurchaseLotOption>[];
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final giftcardId = (data['giftcardId'] as String?) ?? '';
+      final faceValue = _asInt(data['faceValue']);
+      final qty = _asInt(data['qty']);
+      final buyUnit = _asInt(data['buyUnit']);
+      if (giftcardId.isEmpty || faceValue <= 0 || qty <= 0) continue;
+      lots.add(
+        _PurchaseLotOption(
+          giftcardId: giftcardId,
+          giftcardName: _giftcardName(giftcardId),
+          faceValue: faceValue,
+          qty: qty,
+          buyUnit: buyUnit,
+          buyDate: _asDate(data['buyDate']),
+          memo: ((data['memo'] as String?) ?? '').trim(),
+          whereToBuyId: ((data['whereToBuyId'] as String?) ?? '').trim(),
+        ),
+      );
+    }
+    lots.sort((a, b) => b.buyDate.compareTo(a.buyDate));
+    return lots;
+  }
+
+  Future<void> _openPurchaseLotSheet() async {
+    FocusScope.of(context).unfocus();
+    List<_PurchaseLotOption> lots;
+    try {
+      lots = await _loadOpenPurchaseLots();
+    } catch (_) {
+      Fluttertoast.showToast(msg: '구매목록을 불러오지 못했습니다.');
+      return;
+    }
+    if (!mounted) return;
+    if (lots.isEmpty) {
+      Fluttertoast.showToast(msg: '아직 판매하지 않은 구매목록이 없습니다.');
+      return;
+    }
+
+    final selected = await _showPurchaseLotSheet(lots);
+    if (selected == null || !mounted) return;
+    await _applyPurchaseLot(selected);
+  }
+
+  Future<_PurchaseLotOption?> _showPurchaseLotSheet(
+    List<_PurchaseLotOption> lots,
+  ) {
+    return showModalBottomSheet<_PurchaseLotOption>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final sheetHeight = MediaQuery.of(context).size.height * 0.72;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: SizedBox(
+              height: sheetHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE1E4EC),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '구매목록 불러오기',
+                    style: TextStyle(
+                      color: Color(0xFF1F1F28),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '아직 판매하지 않은 상품권만 표시됩니다.',
+                    style: McTextStyles.meta,
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: lots.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final lot = lots[index];
+                        return InkWell(
+                          onTap: () => Navigator.pop(context, lot),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F8FC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFE8ECF4),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: McColors.accentSoft,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.card_giftcard_outlined,
+                                        size: 18,
+                                        color: McColors.accent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        lot.giftcardName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFF1F1F28),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    const _MiniPill(label: '미판매'),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _dateFormat.format(lot.buyDate),
+                                  style: McTextStyles.meta,
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _SummaryPill(
+                                      icon: Icons.confirmation_number_outlined,
+                                      label: '권종 ${_formatWon(lot.faceValue)}',
+                                    ),
+                                    _SummaryPill(
+                                      icon: Icons.inventory_2_outlined,
+                                      label: '수량 ${lot.qty}장',
+                                    ),
+                                    if (lot.buyUnit > 0)
+                                      _SummaryPill(
+                                        icon: Icons.payments_outlined,
+                                        label: '매입가 ${_formatWon(lot.buyUnit)}',
+                                      ),
+                                    if (lot.buyTotal > 0)
+                                      _SummaryPill(
+                                        icon: Icons.receipt_long_outlined,
+                                        label: '합계 ${_formatWon(lot.buyTotal)}',
+                                      ),
+                                    if (lot.whereToBuyId.isNotEmpty)
+                                      _SummaryPill(
+                                        icon: Icons.storefront_outlined,
+                                        label: '구매처 ${lot.whereToBuyId}',
+                                      ),
+                                    if (lot.memo.isNotEmpty)
+                                      _SummaryPill(
+                                        icon: Icons.note_alt_outlined,
+                                        label: '메모 ${lot.memo}',
+                                        maxLabelWidth:
+                                            MediaQuery.of(context).size.width -
+                                                118,
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _applyPurchaseLot(_PurchaseLotOption lot) async {
+    final currentSellUnit = await _fetchCurrentSellUnit(lot.giftcardId);
+    if (!mounted) return;
+
+    final emptyIndex = _lines.indexWhere((line) =>
+        (line.giftcardId == null || line.giftcardId!.isEmpty) &&
+        line.sellUnit <= 0 &&
+        line.memoController.text.trim().isEmpty);
+    final line = emptyIndex >= 0 ? _lines[emptyIndex] : _SettlementLineDraft();
+    final sellUnit = currentSellUnit ?? lot.buyUnit;
+    final memoParts = <String>[
+      '구매목록',
+      _dateFormat.format(lot.buyDate),
+      if (lot.memo.isNotEmpty) lot.memo,
+    ];
+
+    setState(() {
+      if (emptyIndex < 0) {
+        _lines.add(line);
+      }
+      line.giftcardId = lot.giftcardId;
+      line.setFaceValue(lot.faceValue);
+      line.qtyController.text = lot.qty.toString();
+      if (sellUnit > 0) {
+        line.setSellUnit(sellUnit);
+      } else {
+        line.sellUnitController.clear();
+        line.sellRateController.clear();
+      }
+      line.memoController.text = memoParts.join(' · ');
+    });
+    Fluttertoast.showToast(msg: '구매목록을 계산 행에 불러왔습니다.');
   }
 
   void _addLine() {
@@ -419,10 +733,36 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     });
   }
 
-  void _loadSettlementForEdit(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data();
+  Future<void> _loadSettlementById(String settlementId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('giftcard_settlements')
+          .doc(settlementId)
+          .get();
+      if (!mounted) return;
+      final data = doc.data();
+      if (!doc.exists || data == null) {
+        Fluttertoast.showToast(msg: '정산 기록을 찾지 못했습니다.');
+        if (mounted && widget.popOnSave) {
+          Navigator.pop(context);
+        }
+        return;
+      }
+      _loadSettlementData(doc.id, data);
+    } catch (_) {
+      Fluttertoast.showToast(msg: '정산 기록을 불러오지 못했습니다.');
+      if (mounted && widget.popOnSave) {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _loadSettlementData(String settlementId, Map<String, dynamic> data) {
     final rawItems =
         data['lineItems'] is List ? List<dynamic>.from(data['lineItems']) : [];
     final nextLines = <_SettlementLineDraft>[];
@@ -451,7 +791,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     }
 
     setState(() {
-      _editingSettlementId = doc.id;
+      _editingSettlementId = settlementId;
       _selectedBranchId = data['branchId'] as String?;
       _settlementDate = _asDate(data['settlementDate']);
       _completed = data['status'] == 'completed';
@@ -503,6 +843,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       _saving = true;
     });
 
+    var didPopAfterSave = false;
     try {
       final summary = _currentSummary();
       final actualDepositTotal =
@@ -550,15 +891,20 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
 
       await ref.set(payload, SetOptions(merge: true));
       if (!mounted) return;
+      Fluttertoast.showToast(
+          msg: _completed ? '정산 기록이 완료되었습니다.' : '정산 예정이 저장되었습니다.');
+      if (widget.popOnSave) {
+        didPopAfterSave = true;
+        Navigator.pop(context, true);
+        return;
+      }
       setState(() {
         _editingSettlementId = docId;
       });
-      Fluttertoast.showToast(
-          msg: _completed ? '정산 기록이 완료되었습니다.' : '정산 예정이 저장되었습니다.');
     } catch (e) {
       Fluttertoast.showToast(msg: '저장 실패: $e');
     } finally {
-      if (mounted) {
+      if (mounted && !didPopAfterSave) {
         setState(() {
           _saving = false;
         });
@@ -576,6 +922,14 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         .orderBy('updatedAt', descending: true)
         .limit(30)
         .snapshots();
+  }
+
+  Future<void> _refreshData() async {
+    await _loadReferenceData();
+    final settlementId = widget.initialSettlementId;
+    if (settlementId != null && mounted) {
+      await _loadSettlementById(settlementId);
+    }
   }
 
   @override
@@ -596,7 +950,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadReferenceData,
+      onRefresh: _refreshData,
       color: McColors.accent,
       backgroundColor: Colors.white,
       child: ListView(
@@ -605,12 +959,69 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
           16,
           16,
           16,
-          120 + MediaQuery.of(context).padding.bottom,
+          (widget.showHistory ? 120 : 24) +
+              MediaQuery.of(context).padding.bottom,
         ),
         children: [
+          if (widget.showTrustNotice) ...[
+            _buildTrustNotice(),
+            const SizedBox(height: 12),
+          ],
           _buildEditor(),
-          const SizedBox(height: 16),
-          _buildHistory(stream),
+          if (widget.showHistory) ...[
+            const SizedBox(height: 16),
+            _buildHistory(stream),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrustNotice() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: McColors.accentSoft,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.lock_outline,
+              size: 19,
+              color: McColors.accent,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('판매 전, 내가 받을 금액을 먼저 확인하세요.',
+                    style: McTextStyles.bodyStrong),
+                SizedBox(height: 6),
+                Text(
+                  '이 계산은 실제 상품권 판매 기록과 관계없는 개인용 사전 계산입니다. 권종, 수량, 단가를 미리 정리해 현장에서 입금액을 차분히 확인하기 위한 도구예요.',
+                  style: McTextStyles.meta,
+                ),
+                SizedBox(height: 6),
+                Text(
+                  '계산 히스토리는 개인 비공개 기록이며 지점 화면, 후기, 익명 통계에는 노출하지 않습니다.',
+                  style: McTextStyles.meta,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -638,11 +1049,12 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                   style: McTextStyles.sectionTitle,
                 ),
               ),
-              TextButton.icon(
-                onPressed: _resetDraft,
-                icon: const Icon(Icons.add_circle_outline, size: 18),
-                label: const Text('새 계산'),
-              ),
+              if (widget.showHistory)
+                TextButton.icon(
+                  onPressed: _resetDraft,
+                  icon: const Icon(Icons.add_circle_outline, size: 18),
+                  label: const Text('새 계산'),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -671,6 +1083,23 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _openPurchaseLotSheet,
+              icon: const Icon(Icons.playlist_add_check_outlined, size: 18),
+              label: const Text('상품권 구매목록 불러오기'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: McColors.accent,
+                side: const BorderSide(color: McColors.line),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 14),
           for (final line in _lines) ...[
             _buildLineEditor(line),
@@ -694,7 +1123,15 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
             title: const Text('정산 완료', style: McTextStyles.bodyStrong),
             subtitle:
                 const Text('실제 입금액과 차액을 기록합니다.', style: McTextStyles.meta),
-            onChanged: (value) => setState(() => _completed = value),
+            onChanged: (value) {
+              setState(() {
+                _completed = value;
+                if (value && _asInt(_actualDepositController.text) <= 0) {
+                  _actualDepositController.text =
+                      summary.expectedTotal.toString();
+                }
+              });
+            },
           ),
           if (_completed) ...[
             const SizedBox(height: 8),
@@ -707,17 +1144,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            CheckboxListTile(
-              value: _recountChecked,
-              activeColor: McColors.accent,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('재계수 확인', style: McTextStyles.bodyStrong),
-              onChanged: (value) {
-                setState(() {
-                  _recountChecked = value == true;
-                });
-              },
-            ),
+            _buildRecountCheckRow(),
           ],
           TextField(
             controller: _memoController,
@@ -750,6 +1177,81 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecountCheckRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Checkbox(
+            value: _recountChecked,
+            activeColor: McColors.accent,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onChanged: (value) {
+              setState(() {
+                _recountChecked = value == true;
+              });
+            },
+          ),
+          const SizedBox(width: 4),
+          const Text('재계수 확인', style: McTextStyles.bodyStrong),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: '재계수 확인 안내',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(
+              Icons.info_outline,
+              size: 18,
+              color: Colors.black87,
+            ),
+            onPressed: _showRecountInfoDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRecountInfoDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0xFFE5E5E5)),
+        ),
+        title: const Text(
+          '재계수 확인이란?',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: const Text(
+          '지점에서 상품권 장수와 권종을 다시 확인했는지 남기는 개인 체크입니다.\n\n'
+          '계수기나 직원 계산만 믿기보다, 예상 금액과 실제 입금액이 맞는지 확인했다는 안전 기록이에요.\n\n'
+          '실제 판매 데이터, 지점 통계, 후기에는 사용되지 않습니다.',
+          style: TextStyle(
+            color: Color(0xFF333333),
+            fontSize: 14,
+            height: 1.45,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
           ),
         ],
       ),
@@ -987,10 +1489,43 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     );
   }
 
+  Future<void> _openSettlementDetail(String settlementId) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GiftcardSettlementDetailScreen(
+          settlementId: settlementId,
+        ),
+      ),
+    );
+  }
+
+  Map<String, int> _historySubtotalByGiftcard(Map<String, dynamic> data) {
+    final rawItems = data['lineItems'];
+    if (rawItems is! List) return const <String, int>{};
+
+    final subtotalByGiftcard = <String, int>{};
+    for (final item in rawItems) {
+      if (item is! Map) continue;
+      final map = Map<String, dynamic>.from(item);
+      final name = (map['giftcardNameSnapshot'] as String?) ??
+          (map['giftcardId'] as String?) ??
+          '상품권';
+      final lineTotal = _asInt(map['lineTotal']);
+      final fallbackTotal = _asInt(map['sellUnit']) * _asInt(map['qty']);
+      final amount = lineTotal > 0 ? lineTotal : fallbackTotal;
+      if (amount <= 0) continue;
+      subtotalByGiftcard[name] = (subtotalByGiftcard[name] ?? 0) + amount;
+    }
+    return subtotalByGiftcard;
+  }
+
   Widget _buildHistoryRow(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final status = (data['status'] as String?) ?? 'planned';
     final expectedTotal = _asInt(data['expectedTotal']);
+    final totalQuantity = _asInt(data['totalQuantity']);
+    final subtotalByGiftcard = _historySubtotalByGiftcard(data);
     final actualTotal = data['actualDepositTotal'] == null
         ? null
         : _asInt(data['actualDepositTotal']);
@@ -999,9 +1534,10 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     final branchName = (data['branchNameSnapshot'] as String?) ??
         (data['branchId'] as String?) ??
         _noBranchLabel;
+    final memo = ((data['memo'] as String?) ?? '').trim();
 
     return InkWell(
-      onTap: () => _loadSettlementForEdit(doc),
+      onTap: () => _openSettlementDetail(doc.id),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -1023,15 +1559,52 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                   ),
                 ),
                 _StatusPill(status: status),
+                const SizedBox(width: 6),
+                IconButton(
+                  tooltip: '정산 기록 삭제',
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Colors.black54,
+                  ),
+                  onPressed: () => _confirmDeleteSettlement(doc),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              '${_dateFormat.format(date)} · ${_asInt(data['totalQuantity'])}장 · 예상 ${_formatWon(expectedTotal)}',
+              _dateFormat.format(date),
               style: McTextStyles.meta,
             ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _SummaryPill(
+                  icon: Icons.confirmation_number_outlined,
+                  label: '총 $totalQuantity장',
+                ),
+                _SummaryPill(
+                  icon: Icons.payments_outlined,
+                  label: '예상 ${_formatWon(expectedTotal)}',
+                ),
+                for (final entry in subtotalByGiftcard.entries)
+                  _SummaryPill(
+                    icon: Icons.card_giftcard_outlined,
+                    label: '${entry.key} ${_formatWon(entry.value)}',
+                  ),
+                if (memo.isNotEmpty)
+                  _SummaryPill(
+                    icon: Icons.note_alt_outlined,
+                    label: '메모 $memo',
+                    maxLabelWidth: MediaQuery.of(context).size.width - 118,
+                  ),
+              ],
+            ),
             if (status == 'completed' && actualTotal != null) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 '실입금 ${_formatWon(actualTotal)} · 차액 ${_formatWon(difference)}',
                 style: McTextStyles.bodyStrong.copyWith(
@@ -1048,17 +1621,89 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       ),
     );
   }
+
+  Future<void> _confirmDeleteSettlement(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = doc.data();
+    final branchName = (data['branchNameSnapshot'] as String?) ??
+        (data['branchId'] as String?) ??
+        _noBranchLabel;
+    final date = _dateFormat.format(_asDate(data['settlementDate']));
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0xFFE5E5E5)),
+        ),
+        title: const Text(
+          '정산 기록 삭제',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Text(
+          '$date · $branchName 기록을 정말로 삭제하시겠습니까?\n\n'
+          '삭제한 계산 히스토리는 복구할 수 없습니다.',
+          style: const TextStyle(
+            color: Color(0xFF333333),
+            fontSize: 14,
+            height: 1.45,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black54,
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await doc.reference.delete();
+      if (!mounted) return;
+      if (_editingSettlementId == doc.id) {
+        _resetDraft();
+      }
+      Fluttertoast.showToast(msg: '정산 기록을 삭제했습니다.');
+    } catch (_) {
+      Fluttertoast.showToast(msg: '정산 기록을 삭제하지 못했습니다.');
+    }
+  }
 }
 
 class _SummaryPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color? color;
+  final double? maxLabelWidth;
 
   const _SummaryPill({
     required this.icon,
     required this.label,
     this.color,
+    this.maxLabelWidth,
   });
 
   @override
@@ -1076,14 +1721,45 @@ class _SummaryPill extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: effectiveColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: McTextStyles.micro.copyWith(
-              color: effectiveColor,
-              fontWeight: FontWeight.w700,
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxLabelWidth ?? double.infinity,
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: McTextStyles.micro.copyWith(
+                color: effectiveColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MiniPill extends StatelessWidget {
+  final String label;
+
+  const _MiniPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: McColors.accentSoft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: McTextStyles.micro.copyWith(
+          color: McColors.accent,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -1193,6 +1869,30 @@ class _GiftcardOption {
     required this.name,
     required this.sortOrder,
   });
+}
+
+class _PurchaseLotOption {
+  final String giftcardId;
+  final String giftcardName;
+  final int faceValue;
+  final int qty;
+  final int buyUnit;
+  final DateTime buyDate;
+  final String memo;
+  final String whereToBuyId;
+
+  const _PurchaseLotOption({
+    required this.giftcardId,
+    required this.giftcardName,
+    required this.faceValue,
+    required this.qty,
+    required this.buyUnit,
+    required this.buyDate,
+    required this.memo,
+    required this.whereToBuyId,
+  });
+
+  int get buyTotal => buyUnit * qty;
 }
 
 class _SettlementLineDraft {
