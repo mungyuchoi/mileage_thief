@@ -801,10 +801,9 @@ class GiftcardBrandRatesPage extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => BranchRatesDetailPage(
+                      builder: (_) => BranchDetailScreen(
                         branchId: branchId,
                         branchName: branchName,
-                        isVerified: isVerified,
                       ),
                     ),
                   );
@@ -1357,10 +1356,9 @@ class _RecommendCard extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => BranchRatesDetailPage(
+              builder: (_) => BranchDetailScreen(
                 branchId: row.branchId,
                 branchName: branchName,
-                isVerified: (row.branch['verified'] as bool?) ?? false,
               ),
             ),
           );

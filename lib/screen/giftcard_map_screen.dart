@@ -520,18 +520,14 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
     final String monthLabel = DateFormat('yyyy.MM').format(_selectedMonth);
 
-    // Admin 체크 및 특정 UID 편집 권한 체크
+    // 소유자 또는 Admin만 편집 가능
     bool canEdit = false;
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       final currentUid = currentUser.uid;
-
-      // 특정 UID에 편집 권한 부여
-      const allowedUids = ['xhMasz7TbTSAyRkLbFsUKQcQhc33'];
-      if (allowedUids.contains(currentUid)) {
-        canEdit = true;
-      } else {
-        // Admin 권한 체크
+      final ownerUid = branchData['createdByUid'] as String?;
+      canEdit = ownerUid != null && ownerUid == currentUid;
+      if (!canEdit) {
         try {
           final userDoc = await FirebaseFirestore.instance
               .collection('users')
@@ -546,6 +542,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       }
     }
 
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -592,7 +589,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         children: [
                           Builder(
                             builder: (context) {
-                              // 상단 지점 이름 Row (verified일 때는 전체 Row 탭으로 상세 화면 이동)
+                              // 상단 지점 이름 Row
                               Widget titleRow = Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
@@ -664,13 +661,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                                 ],
                               );
 
-                              if (isVerified) {
-                                titleRow = GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: openBranchDetail,
-                                  child: titleRow,
-                                );
-                              }
+                              titleRow = GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: openBranchDetail,
+                                child: titleRow,
+                              );
 
                               return titleRow;
                             },
@@ -711,26 +706,25 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if (isVerified)
-                          TextButton.icon(
-                            onPressed: openBranchDetail,
-                            icon: const Icon(Icons.rate_review_outlined,
-                                size: 18, color: Color(0xFF74512D)),
-                            label: const Text(
-                              '리뷰 쓰기',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF74512D),
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              minimumSize: const Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        TextButton.icon(
+                          onPressed: openBranchDetail,
+                          icon: const Icon(Icons.open_in_new,
+                              size: 18, color: Color(0xFF74512D)),
+                          label: const Text(
+                            '상세 보기',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF74512D),
                             ),
                           ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
                         if (canEdit)
                           IconButton(
                             icon: const Icon(Icons.edit,
@@ -838,7 +832,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         final int total =
                             (u['sellTotal'] as num?)?.toInt() ?? 0;
                         return InkWell(
-                          onTap: isVerified ? openBranchDetail : null,
+                          onTap: openBranchDetail,
                           child: Row(
                             children: [
                               Container(

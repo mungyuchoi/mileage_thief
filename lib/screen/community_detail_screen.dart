@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -22,6 +23,7 @@ import '../helper/AdHelper.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import '../utils/image_compressor.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/peanut_history_service.dart';
@@ -29,6 +31,7 @@ import '../utils/ad_removal_utils.dart';
 import '../utils/community_access_level.dart';
 import '../widgets/ad_removal_widget.dart';
 import '../const/colors.dart';
+import '../models/community_label_model.dart';
 
 // 무지개 그라데이션 텍스트 위젯
 class GradientText extends StatelessWidget {
@@ -1155,6 +1158,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         'editTitle': _post!['title'] ?? '',
         'editContentHtml': _post!['contentHtml'] ?? '',
         'editReadRestriction': _post!['readRestriction'],
+        'labels': (_post!['labels'] as List?)
+                ?.whereType<Map>()
+                .map((map) => Map<String, dynamic>.from(map))
+                .toList() ??
+            const <Map<String, dynamic>>[],
+        'entityRefs': Map<String, dynamic>.from(
+          (_post!['entityRefs'] as Map?) ?? const <String, dynamic>{},
+        ),
       },
     ).then((result) {
       // 수정 완료 후 돌아왔을 때 게시글 새로고침
@@ -2051,6 +2062,119 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return DateFormat('yy.MM.dd').format(dateTime);
   }
 
+  List<CommunityLabel> _postLabels() {
+    if (_post == null) return const <CommunityLabel>[];
+    final labels = CommunityLabel.listFromMaps(_post!['labels']);
+    if (labels.isNotEmpty) return labels;
+
+    final rawRefs = _post!['entityRefs'];
+    if (rawRefs is Map) {
+      return CommunityLabel.listFromEntityRefs(
+        Map<String, dynamic>.from(rawRefs),
+      );
+    }
+    return const <CommunityLabel>[];
+  }
+
+  Widget _buildPostLabelsSection() {
+    final labels = _postLabels();
+    if (labels.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final label in labels)
+            ActionChip(
+              avatar: Icon(
+                _labelIcon(label.type),
+                size: 16,
+                color: McColors.accent,
+              ),
+              label: Text(
+                label.displayName,
+                overflow: TextOverflow.ellipsis,
+              ),
+              labelStyle: const TextStyle(
+                color: McColors.ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              backgroundColor: McColors.accentSoft,
+              side: BorderSide(color: McColors.accent.withValues(alpha: 0.18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+              onPressed: () => _handlePostLabelTap(label),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _handlePostLabelTap(CommunityLabel label) {
+    unawaited(_recordPostLabelClick(label));
+    final handled = BranchService().openInternalDeepLinkValue(
+      label.linkValue,
+      context: context,
+    );
+    if (!handled) {
+      Fluttertoast.showToast(
+        msg: '지원하지 않는 라벨입니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> _recordPostLabelClick(CommunityLabel label) async {
+    try {
+      await FirebaseAnalytics.instance.logEvent(
+        name: 'post_label_clicked',
+        parameters: {
+          'label_key': label.key,
+          'label_type': label.type,
+          'target_id': label.targetId,
+          'post_id': widget.postId,
+          'source_screen': 'post_detail',
+        },
+      );
+    } catch (_) {}
+
+    try {
+      await FirebaseFirestore.instance.collection('labelClicks').add({
+        'labelKey': label.key,
+        'labelType': label.type,
+        'targetId': label.targetId,
+        'displayName': label.displayName,
+        'linkValue': label.linkValue,
+        'postId': widget.postId,
+        'dateString': widget.dateString,
+        'boardId': widget.boardId,
+        'userId': _currentUser?.uid,
+        'sourceScreen': 'post_detail',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+  }
+
+  IconData _labelIcon(String type) {
+    switch (type) {
+      case 'branch':
+        return Icons.storefront_outlined;
+      case 'giftcard':
+        return Icons.card_giftcard_outlined;
+      case 'card':
+        return Icons.credit_card_outlined;
+      case 'calculator':
+        return Icons.calculate_outlined;
+      default:
+        return Icons.label_outline;
+    }
+  }
+
   String _getGradeDisplay(String? grade, int? level) {
     if (grade == null) return '';
     final gradeMap = {
@@ -2178,6 +2302,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                         ),
                                       ],
                                     ),
+                                    _buildPostLabelsSection(),
                                     const SizedBox(height: 12),
 
                                     // 4. 프로필 정보 + 댓글/좋아요 - 한줄로 짧게

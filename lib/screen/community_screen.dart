@@ -327,6 +327,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return boards.where((board) {
       final boardId = (board['id'] ?? '').toString();
       if (boardId == 'notice') return _isAdmin;
+      if (boardId == 'milecatch_guide') return _isAdmin;
       return board['fabEnabled'] == true;
     }).toList();
   }

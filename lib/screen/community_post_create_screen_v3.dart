@@ -17,6 +17,9 @@ import 'dart:io';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/community_access_level.dart';
+import '../models/community_label_model.dart';
+import '../services/community_label_service.dart';
+import '../widgets/community_label_picker_sheet.dart';
 
 class CommunityPostCreateScreenV3 extends StatefulWidget {
   final String? initialBoardId;
@@ -36,6 +39,7 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
   final List<String> sharedImagePaths;
   final String? initialTitle;
   final Map<String, dynamic> entityRefs;
+  final List<Map<String, dynamic>> initialLabels;
 
   const CommunityPostCreateScreenV3({
     Key? key,
@@ -53,6 +57,7 @@ class CommunityPostCreateScreenV3 extends StatefulWidget {
     this.sharedImagePaths = const <String>[],
     this.initialTitle,
     this.entityRefs = const <String, dynamic>{},
+    this.initialLabels = const <Map<String, dynamic>>[],
   }) : super(key: key);
 
   @override
@@ -74,6 +79,9 @@ class _CommunityPostCreateScreenV3State
 
   // 커뮤니티 에디터 컨트롤러
   late CommunityEditorController _editorController;
+  final CommunityLabelService _labelService = CommunityLabelService();
+  static const int _maxCommunityLabels = 5;
+  List<CommunityLabel> _selectedLabels = <CommunityLabel>[];
   // deal 게시판 토글 제거에 따라 타입 상태는 사용하지 않습니다
   // 판매 정보 입력용 상태 (선택 사항)
   String? _selectedBranchId;
@@ -102,6 +110,7 @@ class _CommunityPostCreateScreenV3State
 
     // 커뮤니티 에디터 컨트롤러 초기화
     _editorController = CommunityEditorController();
+    _selectedLabels = _initialCommunityLabels();
     _selectedReadRestriction =
         CommunityAccessLevel.fromRestriction(widget.editReadRestriction);
 
@@ -175,6 +184,16 @@ class _CommunityPostCreateScreenV3State
     // 초기 진입 시 deal 게시판이면 기본 타입을 설정
     // deal 보드 초기 타입 상태 설정 제거
     _loadUserProfile();
+  }
+
+  List<CommunityLabel> _initialCommunityLabels() {
+    final labels = CommunityLabel.listFromMaps(widget.initialLabels);
+    if (labels.isNotEmpty) {
+      return labels.take(_maxCommunityLabels).toList(growable: false);
+    }
+    return CommunityLabel.listFromEntityRefs(widget.entityRefs)
+        .take(_maxCommunityLabels)
+        .toList(growable: false);
   }
 
   String _deriveSharedTitle() {
@@ -384,6 +403,141 @@ class _CommunityPostCreateScreenV3State
         ),
       ),
     );
+  }
+
+  Widget _buildLabelSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.label_outline,
+                  size: 20,
+                  color: Colors.black87,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  '라벨',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 15,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _selectedLabels.length >= _maxCommunityLabels
+                      ? null
+                      : _openLabelPicker,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('추가'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF74512D),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_selectedLabels.isEmpty)
+              const Text(
+                '지점, 상품권, 카드 라벨을 연결할 수 있습니다.',
+                style: TextStyle(
+                  color: Colors.black45,
+                  fontSize: 13,
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final label in _selectedLabels)
+                    InputChip(
+                      avatar: Icon(
+                        _labelIcon(label.type),
+                        size: 16,
+                        color: const Color(0xFF74512D),
+                      ),
+                      label: Text(
+                        label.displayName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      labelStyle: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 13,
+                      ),
+                      backgroundColor: const Color(0xFFF8F4EF),
+                      side: const BorderSide(color: Color(0xFFE7D8C6)),
+                      deleteIcon: const Icon(Icons.close, size: 16),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedLabels = _selectedLabels
+                              .where((item) => item.key != label.key)
+                              .toList(growable: false);
+                        });
+                      },
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openLabelPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return CommunityLabelPickerSheet(
+          selectedLabels: _selectedLabels,
+          maxLabels: _maxCommunityLabels,
+          labelService: _labelService,
+          accentColor: const Color(0xFF74512D),
+          onChanged: (labels) {
+            if (!mounted) return;
+            setState(() {
+              _selectedLabels = labels;
+            });
+          },
+        );
+      },
+    );
+  }
+
+  IconData _labelIcon(String type) {
+    switch (type) {
+      case 'branch':
+        return Icons.storefront_outlined;
+      case 'giftcard':
+        return Icons.card_giftcard_outlined;
+      case 'card':
+        return Icons.credit_card_outlined;
+      case 'calculator':
+        return Icons.calculate_outlined;
+      default:
+        return Icons.label_outline;
+    }
   }
 
   Future<void> _ensureBranchesLoaded() async {
@@ -1203,6 +1357,7 @@ class _CommunityPostCreateScreenV3State
           CommunityAccessLevel.canSetRestriction(userProfile);
       final readRestriction =
           canSetReadRestriction ? _selectedReadRestriction : null;
+      final labelPayload = CommunityLabelPayload.fromLabels(_selectedLabels);
 
       if (widget.isEditMode) {
         // 수정 모드에서는 HTML 처리
@@ -1213,11 +1368,13 @@ class _CommunityPostCreateScreenV3State
           'boardId': _editorController.postData.boardId,
           'title': finalTitle,
           'contentHtml': cleanedHtml.trim(),
+          'labels': labelPayload.labels,
+          'labelKeys': labelPayload.labelKeys,
+          'entityRefs': labelPayload.entityRefs.isEmpty
+              ? FieldValue.delete()
+              : labelPayload.entityRefs,
           'updatedAt': FieldValue.serverTimestamp(),
         };
-        if (widget.entityRefs.isNotEmpty) {
-          postData['entityRefs'] = Map<String, dynamic>.from(widget.entityRefs);
-        }
         if (canSetReadRestriction) {
           postData['readRestriction'] = readRestriction?.toRestrictionMap() ??
               CommunityAccessLevel.unrestrictedMap();
@@ -1268,8 +1425,10 @@ class _CommunityPostCreateScreenV3State
           'hiddenByReport': false,
           'readRestriction': readRestriction?.toRestrictionMap() ??
               CommunityAccessLevel.unrestrictedMap(),
-          if (widget.entityRefs.isNotEmpty)
-            'entityRefs': Map<String, dynamic>.from(widget.entityRefs),
+          'labels': labelPayload.labels,
+          'labelKeys': labelPayload.labelKeys,
+          if (labelPayload.entityRefs.isNotEmpty)
+            'entityRefs': labelPayload.entityRefs,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
@@ -1506,6 +1665,7 @@ class _CommunityPostCreateScreenV3State
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: _buildReadRestrictionBar(),
                   ),
+                _buildLabelSection(),
 
                 // 에디터 영역
                 Expanded(

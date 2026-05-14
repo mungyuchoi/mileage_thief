@@ -9,6 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
 import 'services/branch_service.dart';
 import 'services/share_intent_service.dart';
+import 'screen/splash_screen.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_chat_screen.dart';
 import 'screen/community_detail_screen.dart';
@@ -282,6 +283,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+      initialRoute: '/splash',
       theme: MileageTheme.light(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -293,6 +295,7 @@ class _MyAppState extends State<MyApp> {
         Locale('ko'),
       ],
       routes: {
+        '/splash': (context) => const SplashScreen(),
         '/': (context) => const HomeScreen(),
         '/community_board_select': (context) =>
             const CommunityBoardSelectScreen(),
@@ -329,6 +332,11 @@ class _MyAppState extends State<MyApp> {
             entityRefs: Map<String, dynamic>.from(
               (args?['entityRefs'] as Map?) ?? const <String, dynamic>{},
             ),
+            initialLabels: (args?['labels'] as List?)
+                    ?.whereType<Map>()
+                    .map((map) => Map<String, dynamic>.from(map))
+                    .toList() ??
+                const <Map<String, dynamic>>[],
           );
         },
         '/community/chat': (context) {

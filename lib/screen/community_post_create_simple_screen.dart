@@ -8,11 +8,14 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../community_editor/src/utils/firebase_image_uploader.dart';
+import '../models/community_label_model.dart';
 import '../services/auth_service.dart';
 import '../services/category_service.dart';
+import '../services/community_label_service.dart';
 import '../services/peanut_history_service.dart';
 import '../services/user_service.dart';
 import '../utils/community_access_level.dart';
+import '../widgets/community_label_picker_sheet.dart';
 import '../const/colors.dart';
 
 class CommunityPostCreateSimpleScreen extends StatefulWidget {
@@ -23,6 +26,8 @@ class CommunityPostCreateSimpleScreen extends StatefulWidget {
     this.initialTitle,
     this.initialContentHtml,
     this.initialImageUrls = const <String>[],
+    this.initialLabels = const <Map<String, dynamic>>[],
+    this.entityRefs = const <String, dynamic>{},
     this.sourceChat,
   });
 
@@ -31,6 +36,8 @@ class CommunityPostCreateSimpleScreen extends StatefulWidget {
   final String? initialTitle;
   final String? initialContentHtml;
   final List<String> initialImageUrls;
+  final List<Map<String, dynamic>> initialLabels;
+  final Map<String, dynamic> entityRefs;
   final Map<String, dynamic>? sourceChat;
 
   @override
@@ -41,28 +48,21 @@ class CommunityPostCreateSimpleScreen extends StatefulWidget {
 class _CommunityPostCreateSimpleScreenState
     extends State<CommunityPostCreateSimpleScreen> {
   static const int _maxImages = 30;
+  static const int _maxCommunityLabels = 5;
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  final TextEditingController _metaRouteController = TextEditingController();
-  final TextEditingController _metaCarrierController = TextEditingController();
-  final TextEditingController _metaCabinController = TextEditingController();
-  final TextEditingController _metaMilesController = TextEditingController();
-  final TextEditingController _metaTaxesController = TextEditingController();
-  final TextEditingController _metaCashController = TextEditingController();
-  final TextEditingController _metaCostController = TextEditingController();
-  final TextEditingController _metaGiftcardController = TextEditingController();
   final CategoryService _categoryService = CategoryService();
+  final CommunityLabelService _labelService = CommunityLabelService();
   final ImagePicker _imagePicker = ImagePicker();
   final List<XFile> _selectedImages = <XFile>[];
   final List<String> _initialImageUrls = <String>[];
   final List<String> _links = <String>[];
+  List<CommunityLabel> _selectedLabels = <CommunityLabel>[];
   List<Map<String, dynamic>> _boards = <Map<String, dynamic>>[];
 
   bool _isPickingImages = false;
   bool _isSubmitting = false;
-  bool _structuredMetaExpanded = false;
-  String _structuredMetaType = '발권';
   String lateBoardId = '';
   String lateBoardName = '';
   String _authorName = '익명';
@@ -87,6 +87,7 @@ class _CommunityPostCreateSimpleScreenState
       _contentController.text = _plainTextFromHtml(initialContentHtml);
     }
     _initialImageUrls.addAll(widget.initialImageUrls);
+    _selectedLabels = _initialCommunityLabels();
     _loadAuthorProfile();
   }
 
@@ -94,15 +95,17 @@ class _CommunityPostCreateSimpleScreenState
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
-    _metaRouteController.dispose();
-    _metaCarrierController.dispose();
-    _metaCabinController.dispose();
-    _metaMilesController.dispose();
-    _metaTaxesController.dispose();
-    _metaCashController.dispose();
-    _metaCostController.dispose();
-    _metaGiftcardController.dispose();
     super.dispose();
+  }
+
+  List<CommunityLabel> _initialCommunityLabels() {
+    final labels = CommunityLabel.listFromMaps(widget.initialLabels);
+    if (labels.isNotEmpty) {
+      return labels.take(_maxCommunityLabels).toList(growable: false);
+    }
+    return CommunityLabel.listFromEntityRefs(widget.entityRefs)
+        .take(_maxCommunityLabels)
+        .toList(growable: false);
   }
 
   Future<void> _loadAuthorProfile() async {
@@ -151,6 +154,7 @@ class _CommunityPostCreateSimpleScreenState
     return _boards.where((board) {
       final boardId = (board['id'] ?? '').toString();
       if (boardId == 'notice') return _isAdmin;
+      if (boardId == 'milecatch_guide') return _isAdmin;
       return board['fabEnabled'] == true;
     }).toList();
   }
@@ -173,6 +177,8 @@ class _CommunityPostCreateSimpleScreenState
         return Icons.chat_bubble_outline;
       case 'campaign':
         return Icons.campaign;
+      case 'menu_book_outlined':
+        return Icons.menu_book_outlined;
       case 'local_fire_department':
         return Icons.local_fire_department;
       default:
@@ -596,11 +602,11 @@ class _CommunityPostCreateSimpleScreenState
       );
       final roles = userProfile['roles'];
       final isAdmin = roles is List && roles.contains('admin');
-      final structuredMeta = _buildStructuredMeta();
       final readRestriction =
           CommunityAccessLevel.canSetRestriction(userProfile)
               ? _selectedReadRestriction
               : null;
+      final labelPayload = CommunityLabelPayload.fromLabels(_selectedLabels);
 
       final postData = <String, dynamic>{
         'postId': postId,
@@ -625,6 +631,10 @@ class _CommunityPostCreateSimpleScreenState
         'hiddenByReport': false,
         'readRestriction': readRestriction?.toRestrictionMap() ??
             CommunityAccessLevel.unrestrictedMap(),
+        'labels': labelPayload.labels,
+        'labelKeys': labelPayload.labelKeys,
+        if (labelPayload.entityRefs.isNotEmpty)
+          'entityRefs': labelPayload.entityRefs,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -634,9 +644,6 @@ class _CommunityPostCreateSimpleScreenState
           'promotedBy': widget.sourceChat!['promotedBy'] ?? currentUser.uid,
           'promotedAt': FieldValue.serverTimestamp(),
         };
-      }
-      if (structuredMeta != null) {
-        postData['structuredMeta'] = structuredMeta;
       }
 
       final batch = FirebaseFirestore.instance.batch();
@@ -758,76 +765,6 @@ class _CommunityPostCreateSimpleScreenState
   }
 
   String _escapeHtmlAttribute(String value) => _escapeHtml(value);
-
-  Map<String, dynamic>? _buildStructuredMeta() {
-    final hasTextValue = [
-      _metaRouteController,
-      _metaCarrierController,
-      _metaCabinController,
-      _metaMilesController,
-      _metaTaxesController,
-      _metaCashController,
-      _metaCostController,
-      _metaGiftcardController,
-    ].any((controller) => controller.text.trim().isNotEmpty);
-    if (!hasTextValue) return null;
-
-    final meta = <String, dynamic>{
-      'schemaVersion': 1,
-      'type': _structuredTypeKey,
-      'typeLabel': _structuredMetaType,
-      'createdFrom': 'community_simple_editor',
-    };
-
-    void putString(String key, TextEditingController controller) {
-      final value = controller.text.trim();
-      if (value.isNotEmpty) meta[key] = value;
-    }
-
-    void putInt(String key, TextEditingController controller) {
-      final value = _parseMetaInt(controller.text);
-      if (value != null) meta[key] = value;
-    }
-
-    void putDouble(String key, TextEditingController controller) {
-      final value = _parseMetaDouble(controller.text);
-      if (value != null) meta[key] = value;
-    }
-
-    putString('route', _metaRouteController);
-    putString('carrierOrHotel', _metaCarrierController);
-    putString('cabin', _metaCabinController);
-    putString('giftcardBrand', _metaGiftcardController);
-    putInt('miles', _metaMilesController);
-    putInt('taxes', _metaTaxesController);
-    putInt('cashPrice', _metaCashController);
-    putDouble('costPerMile', _metaCostController);
-    return meta;
-  }
-
-  String get _structuredTypeKey {
-    switch (_structuredMetaType) {
-      case '호텔':
-        return 'hotel';
-      case '상품권':
-        return 'giftcard';
-      case '발권':
-      default:
-        return 'ticketing';
-    }
-  }
-
-  int? _parseMetaInt(String value) {
-    final normalized = value.replaceAll(',', '').trim();
-    if (normalized.isEmpty) return null;
-    return int.tryParse(normalized);
-  }
-
-  double? _parseMetaDouble(String value) {
-    final normalized = value.replaceAll(',', '').trim();
-    if (normalized.isEmpty) return null;
-    return double.tryParse(normalized);
-  }
 
   String _plainTextFromHtml(String html) {
     var text = html
@@ -1026,7 +963,7 @@ class _CommunityPostCreateSimpleScreenState
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildStructuredMetaSection(),
+                _buildLabelSection(),
                 if (_links.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Wrap(
@@ -1245,194 +1182,124 @@ class _CommunityPostCreateSimpleScreenState
     );
   }
 
-  Widget _buildStructuredMetaSection() {
+  Widget _buildLabelSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(height: 18, color: McColors.line),
-        InkWell(
-          onTap: () => setState(
-            () => _structuredMetaExpanded = !_structuredMetaExpanded,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
+        Row(
+          children: [
+            const Icon(Icons.label_outline, color: McColors.inkSoft, size: 20),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                '라벨',
+                style: McTextStyles.bodyStrong,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _selectedLabels.length >= _maxCommunityLabels
+                  ? null
+                  : _openLabelPicker,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('추가'),
+              style: TextButton.styleFrom(
+                foregroundColor: McColors.accent,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        if (_selectedLabels.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              '지점, 상품권, 카드 라벨을 연결할 수 있습니다.',
+              style: McTextStyles.meta,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                const Icon(Icons.fact_check_outlined,
-                    color: McColors.inkSoft, size: 20),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    '후기 메타',
-                    style: McTextStyles.bodyStrong,
+                for (final label in _selectedLabels)
+                  InputChip(
+                    avatar: Icon(
+                      _labelIcon(label.type),
+                      size: 16,
+                      color: McColors.accent,
+                    ),
+                    label: Text(
+                      label.displayName,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    labelStyle: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 13,
+                    ),
+                    backgroundColor: const Color(0xFFF8F4EF),
+                    side: const BorderSide(color: Color(0xFFE7D8C6)),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedLabels = _selectedLabels
+                            .where((item) => item.key != label.key)
+                            .toList(growable: false);
+                      });
+                    },
                   ),
-                ),
-                Icon(
-                  _structuredMetaExpanded
-                      ? Icons.expand_less_rounded
-                      : Icons.expand_more_rounded,
-                  color: Colors.black54,
-                ),
               ],
             ),
           ),
-        ),
-        AnimatedCrossFade(
-          firstChild: const SizedBox.shrink(),
-          secondChild: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ['발권', '호텔', '상품권'].map((type) {
-                  return ChoiceChip(
-                    label: Text(type),
-                    selected: _structuredMetaType == type,
-                    selectedColor: Colors.black,
-                    labelStyle: TextStyle(
-                      color: _structuredMetaType == type
-                          ? Colors.white
-                          : Colors.black,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    onSelected: (_) {
-                      setState(() => _structuredMetaType = type);
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              _buildMetaTextField(
-                controller: _metaRouteController,
-                label: _structuredMetaType == '호텔' ? '호텔/지역' : '노선',
-                hint: _structuredMetaType == '호텔' ? '파크하얏트 부산' : 'ICN-JFK',
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetaTextField(
-                      controller: _metaCarrierController,
-                      label: _structuredMetaType == '호텔'
-                          ? '호텔 체인'
-                          : _structuredMetaType == '상품권'
-                              ? '거래처'
-                              : '항공사',
-                      hint: _structuredMetaType == '발권' ? '대한항공' : '',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildMetaTextField(
-                      controller: _metaCabinController,
-                      label: _structuredMetaType == '호텔' ? '객실' : '좌석',
-                      hint: _structuredMetaType == '발권' ? '비즈니스' : '',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetaTextField(
-                      controller: _metaMilesController,
-                      label: _structuredMetaType == '호텔' ? '포인트' : '마일',
-                      hint: '62500',
-                      suffix: _structuredMetaType == '호텔' ? 'pt' : 'mile',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildMetaTextField(
-                      controller: _metaTaxesController,
-                      label: '세금/수수료',
-                      hint: '180000',
-                      suffix: '원',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetaTextField(
-                      controller: _metaCashController,
-                      label: '현금가',
-                      hint: '1500000',
-                      suffix: '원',
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildMetaTextField(
-                      controller: _metaCostController,
-                      label: '원가',
-                      hint: '9.8',
-                      suffix: '원/마일',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _buildMetaTextField(
-                controller: _metaGiftcardController,
-                label: '상품권/카드',
-                hint: '해피머니, 신한카드',
-              ),
-            ],
-          ),
-          crossFadeState: _structuredMetaExpanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 180),
-        ),
       ],
     );
   }
 
-  Widget _buildMetaTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    String? suffix,
-    TextInputType? keyboardType,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        suffixText: suffix,
-        isDense: true,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDADADA)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDADADA)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.black, width: 1.3),
-        ),
+  Future<void> _openLabelPicker() async {
+    if (_isSubmitting) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
+      builder: (context) {
+        return CommunityLabelPickerSheet(
+          selectedLabels: _selectedLabels,
+          maxLabels: _maxCommunityLabels,
+          labelService: _labelService,
+          accentColor: McColors.accent,
+          onChanged: (labels) {
+            if (!mounted) return;
+            setState(() {
+              _selectedLabels = labels;
+            });
+          },
+        );
+      },
     );
+  }
+
+  IconData _labelIcon(String type) {
+    switch (type) {
+      case 'branch':
+        return Icons.storefront_outlined;
+      case 'giftcard':
+        return Icons.card_giftcard_outlined;
+      case 'card':
+        return Icons.credit_card_outlined;
+      case 'calculator':
+        return Icons.calculate_outlined;
+      default:
+        return Icons.label_outline;
+    }
   }
 }
 

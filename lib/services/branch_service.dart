@@ -7,6 +7,8 @@ import '../screen/community_screen.dart';
 import '../screen/community_detail_screen.dart';
 import '../screen/contest_detail_screen.dart';
 import '../screen/giftcard_deals_screen.dart';
+import '../screen/giftcard_rates_screen.dart';
+import '../screen/giftcard_settlement_screen.dart';
 
 class BranchService {
   static final BranchService _instance = BranchService._internal();
@@ -205,6 +207,17 @@ class BranchService {
       return true;
     }
 
+    final giftcardRateId = _giftcardRateIdFromLinkValue(value);
+    if (giftcardRateId != null) {
+      _navigateToGiftcardRate(giftcardRateId, context: context);
+      return true;
+    }
+
+    if (_isGiftcardCalculatorDestination(value)) {
+      _navigateToGiftcardCalculator(context: context);
+      return true;
+    }
+
     if (_isCardCatalogDestination(value)) {
       _navigateToCards(context: context);
       return true;
@@ -283,6 +296,18 @@ class BranchService {
         normalized == 'giftcard/deals' ||
         normalized == '/giftcard/deals' ||
         normalized == '/giftcard/special';
+  }
+
+  bool _isGiftcardCalculatorDestination(String? value) {
+    if (value == null) return false;
+    final normalized =
+        value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+    return normalized == 'calculator:giftcard' ||
+        normalized == 'giftcard-calculator' ||
+        normalized == 'giftcard/calculator' ||
+        normalized == '/giftcard/calculator' ||
+        normalized == '/giftcard/settlement' ||
+        normalized == 'giftcard-settlement';
   }
 
   bool _isCommunityDestination(String? value) {
@@ -385,6 +410,44 @@ class BranchService {
           uri.queryParameters['giftcardDealId'] ??
           uri.queryParameters['id'];
       return dealId?.trim().isNotEmpty == true ? dealId!.trim() : null;
+    }
+    return null;
+  }
+
+  String? _giftcardRateIdFromLinkValue(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final normalized = trimmed.toLowerCase().replaceAll('_', '-');
+
+    const prefixes = [
+      'giftcard-rate:',
+      'giftcard:',
+      'rate:',
+      'giftcard/rate:',
+      '/giftcard/rate/',
+    ];
+    for (final prefix in prefixes) {
+      if (normalized.startsWith(prefix)) {
+        final giftcardId = trimmed.substring(prefix.length).trim();
+        return giftcardId.isEmpty ? null : giftcardId;
+      }
+    }
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return null;
+    final host = uri.host.toLowerCase();
+    final path = uri.path.toLowerCase();
+    if (host == 'giftcard' || host == 'giftcard-rate' || host == 'rate') {
+      final giftcardId = uri.queryParameters['giftcardId'] ??
+          uri.queryParameters['id'] ??
+          (uri.pathSegments.isNotEmpty ? uri.pathSegments.last : null);
+      return giftcardId?.trim().isNotEmpty == true ? giftcardId!.trim() : null;
+    }
+    if (path == '/giftcard/rate' || path == '/giftcard/rates/detail') {
+      final giftcardId =
+          uri.queryParameters['giftcardId'] ?? uri.queryParameters['id'];
+      return giftcardId?.trim().isNotEmpty == true ? giftcardId!.trim() : null;
     }
     return null;
   }
@@ -545,6 +608,49 @@ class BranchService {
       return;
     }
     navigatorKey.currentState?.pushNamed('/card/detail', arguments: arguments);
+  }
+
+  void _navigateToGiftcardRate(
+    String giftcardId, {
+    BuildContext? context,
+  }) {
+    final screen = GiftcardBrandRatesPage(
+      giftcardId: giftcardId,
+      giftcardName: giftcardId,
+    );
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
+  void _navigateToGiftcardCalculator({
+    BuildContext? context,
+  }) {
+    final screen = Scaffold(
+      backgroundColor: const Color(0xFFF7F7FA),
+      appBar: AppBar(
+        title: const Text('상품권 계산'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+      ),
+      body: const SafeArea(child: GiftcardSettlementScreen()),
+    );
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
   }
 
   void _navigateToGiftcardDeal(

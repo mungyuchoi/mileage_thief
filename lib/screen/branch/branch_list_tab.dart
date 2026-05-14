@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../giftcard_rates_screen.dart';
+import 'branch_detail_screen.dart';
 
 class BranchListTab extends StatefulWidget {
   const BranchListTab({super.key});
@@ -21,7 +21,8 @@ class _BranchListTabState extends State<BranchListTab> {
 
   Future<Map<String, String>> _loadGiftcardNames() async {
     try {
-      final snap = await FirebaseFirestore.instance.collection('giftcards').get();
+      final snap =
+          await FirebaseFirestore.instance.collection('giftcards').get();
       final Map<String, String> m = <String, String>{};
       for (final d in snap.docs) {
         final data = d.data();
@@ -38,9 +39,15 @@ class _BranchListTabState extends State<BranchListTab> {
     required Map<String, dynamic> branch,
   }) async {
     // 1) 브랜치 문서에 명시적으로 있으면 우선 사용
-    final dynamic raw = branch['giftcards'] ?? branch['giftcardIds'] ?? branch['handledGiftcards'];
+    final dynamic raw = branch['giftcards'] ??
+        branch['giftcardIds'] ??
+        branch['handledGiftcards'];
     if (raw is List) {
-      return raw.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toSet().toList();
+      return raw
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toSet()
+          .toList();
     }
 
     // 2) 없으면 branches/{branchId}/giftcardRates_current 문서 목록으로 추론 (doc.id == giftcardId)
@@ -50,7 +57,10 @@ class _BranchListTabState extends State<BranchListTab> {
           .doc(branchId)
           .collection('giftcardRates_current')
           .get();
-      return snap.docs.map((d) => d.id).where((e) => e.trim().isNotEmpty).toList();
+      return snap.docs
+          .map((d) => d.id)
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
     } catch (_) {
       return const <String>[];
     }
@@ -63,7 +73,8 @@ class _BranchListTabState extends State<BranchListTab> {
     return FutureBuilder<Map<String, String>>(
       future: _giftcardNamesFuture,
       builder: (context, giftSnap) {
-        final Map<String, String> giftcardNames = giftSnap.data ?? const <String, String>{};
+        final Map<String, String> giftcardNames =
+            giftSnap.data ?? const <String, String>{};
 
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance.collection('branches').snapshots(),
@@ -107,10 +118,9 @@ class _BranchListTabState extends State<BranchListTab> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => BranchRatesDetailPage(
+                        builder: (_) => BranchDetailScreen(
                           branchId: branchId,
                           branchName: branchName,
-                          isVerified: isVerified,
                         ),
                       ),
                     );
@@ -194,12 +204,14 @@ class _BranchListTabState extends State<BranchListTab> {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right, color: Colors.black38),
+                            const Icon(Icons.chevron_right,
+                                color: Colors.black38),
                           ],
                         ),
                         const SizedBox(height: 10),
                         FutureBuilder<List<String>>(
-                          future: _loadHandledGiftcardIds(branchId: branchId, branch: branch),
+                          future: _loadHandledGiftcardIds(
+                              branchId: branchId, branch: branch),
                           builder: (context, tagSnap) {
                             final ids = (tagSnap.data ?? const <String>[])
                                 .where((e) => e.trim().isNotEmpty)
@@ -213,7 +225,8 @@ class _BranchListTabState extends State<BranchListTab> {
                             labels.sort();
 
                             const int maxShow = 4;
-                            final List<String> shown = labels.take(maxShow).toList();
+                            final List<String> shown =
+                                labels.take(maxShow).toList();
                             final int rest = labels.length - shown.length;
 
                             return Wrap(
@@ -264,4 +277,3 @@ class _TagChip extends StatelessWidget {
     );
   }
 }
-
