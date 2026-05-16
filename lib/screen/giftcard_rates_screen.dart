@@ -10,6 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import '../const/colors.dart';
+import '../models/community_label_model.dart';
+import '../widgets/segment_tab_bar.dart';
+import 'community_detail_screen.dart';
+import 'community_post_create_simple_screen.dart';
 
 // 추천 대시보드 땅콩 안내 다이얼로그 "다시 보지 않기" 플래그
 const String _kRecommendPeanutDialogDontShowKey =
@@ -270,6 +274,43 @@ double? _calcRateFromPrice(num? price, {num faceValue = 100000}) {
   return ((face - p) / face) * 100.0;
 }
 
+String? _giftcardAssetForId(String id) {
+  switch (id.trim().toLowerCase()) {
+    case 'costco':
+      return 'asset/img/costco.png';
+    case 'eland':
+      return 'asset/img/eland.png';
+    case 'galleria':
+      return 'asset/img/galleria.png';
+    case 'hyundai':
+      return 'asset/img/hyundai.png';
+    case 'lotte':
+      return 'asset/img/lotte.png';
+    case 'samsung':
+      return 'asset/img/samsung.png';
+    case 'shinsegae':
+      return 'asset/img/shinsegae.png';
+    case 'kumkang':
+      return 'asset/img/kumkang.png';
+    case 'nh':
+    case 'nonghyup':
+    case '농협':
+      return 'asset/img/nh.jpg';
+    case 'ak':
+      return 'asset/img/ak.jpg';
+    case 'cj':
+    case 'cjgift':
+      return 'asset/img/cj.png';
+    default:
+      return null;
+  }
+}
+
+bool _isNhGiftcard(String id) {
+  final normalized = id.trim().toLowerCase();
+  return normalized == 'nh' || normalized == 'nonghyup' || normalized == '농협';
+}
+
 /// 시세 카드에서 사용하는 설명 아이콘 라벨
 class _RateLabel extends StatelessWidget {
   final String label;
@@ -356,36 +397,7 @@ class GiftcardRatesTab extends StatelessWidget {
 
   /// giftcardId -> asset 경로 매핑
   String? _assetForGiftcard(String id) {
-    switch (id) {
-      case 'costco':
-        return 'asset/img/costco.png';
-      case 'eland':
-        return 'asset/img/eland.png';
-      case 'galleria':
-        return 'asset/img/galleria.png';
-      case 'hyundai':
-        return 'asset/img/hyundai.png';
-      case 'lotte':
-        return 'asset/img/lotte.png';
-      case 'samsung':
-        return 'asset/img/samsung.png';
-      case 'shinsegae':
-        return 'asset/img/shinsegae.png';
-      // 금강/농협/AK/CJ 개별 아이콘
-      case 'kumkang':
-        return 'asset/img/kumkang.png';
-      case 'nh':
-      case 'nonghyup':
-      case '농협':
-        return 'asset/img/nh.jpg';
-      case 'ak':
-        return 'asset/img/ak.jpg';
-      case 'cj':
-      case 'cjgift':
-        return 'asset/img/cj.png';
-      default:
-        return null;
-    }
+    return _giftcardAssetForId(id);
   }
 
   @override
@@ -431,9 +443,7 @@ class GiftcardRatesTab extends StatelessWidget {
             // 우선 giftcardId 기준 asset 매핑을 시도하고, 없으면 앱 아이콘으로 대체.
             final assetPath =
                 _assetForGiftcard(giftcardId) ?? 'asset/img/app_icon.png';
-            final bool isNhLogo = giftcardId == 'nh' ||
-                giftcardId == 'nonghyup' ||
-                giftcardId == '농협';
+            final bool isNhLogo = _isNhGiftcard(giftcardId);
             final logoUrl = data['logoUrl'] as String?;
 
             final num? bestSellPrice = data['bestSellPrice'] as num?;
@@ -481,20 +491,13 @@ class GiftcardRatesTab extends StatelessWidget {
                           width: 40,
                           height: 40,
                           color: Colors.white,
-                          child: assetPath != null
-                              ? Image.asset(
-                                  assetPath,
-                                  // NH 로고는 너무 작게 보여서 박스를 가득 채우도록 확대
-                                  fit: isNhLogo
-                                      ? BoxFit.cover
-                                      : BoxFit.contain, // 기본은 영역 안에서 전체가 보이도록
-                                )
-                              : Image.network(
-                                  logoUrl!,
-                                  fit: BoxFit.contain, // 영역 안에서 전체가 보이도록
-                                  errorBuilder: (_, __, ___) =>
-                                      const SizedBox.shrink(),
-                                ),
+                          child: Image.asset(
+                            assetPath,
+                            // NH 로고는 너무 작게 보여서 박스를 가득 채우도록 확대
+                            fit: isNhLogo
+                                ? BoxFit.cover
+                                : BoxFit.contain, // 기본은 영역 안에서 전체가 보이도록
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -686,8 +689,8 @@ class _RecommendEntryCard extends StatelessWidget {
   }
 }
 
-/// 2단계: 특정 브랜드 선택 시, 지점별 현재 시세 리스트
-class GiftcardBrandRatesPage extends StatelessWidget {
+/// 2단계: 특정 브랜드 선택 시, 상품권 상세 탭 화면
+class GiftcardBrandRatesPage extends StatefulWidget {
   final String giftcardId;
   final String giftcardName;
 
@@ -697,48 +700,336 @@ class GiftcardBrandRatesPage extends StatelessWidget {
     required this.giftcardName,
   });
 
-  NumberFormat get _won => NumberFormat('#,###');
+  @override
+  State<GiftcardBrandRatesPage> createState() => _GiftcardBrandRatesPageState();
+}
+
+class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
+    with SingleTickerProviderStateMixin {
+  static const List<String> _tabs = ['피드', '시세', '정보'];
+
+  final NumberFormat _won = NumberFormat('#,###');
+  late final TabController _tabController;
+
+  Map<String, dynamic>? _giftcard;
+  List<Map<String, dynamic>> _rateRows = <Map<String, dynamic>>[];
+  List<_GiftcardFeedPost> _feedPosts = <_GiftcardFeedPost>[];
+  bool _isLoadingGiftcard = true;
+  bool _isLoadingRates = true;
+  bool _isLoadingFeed = true;
+  int _selectedTabIndex = 0;
+
+  String get _effectiveGiftcardName {
+    final fromDoc = _string(_giftcard?['name']);
+    if (fromDoc.isNotEmpty) return fromDoc;
+    final fromWidget = widget.giftcardName.trim();
+    if (fromWidget.isNotEmpty) return fromWidget;
+    return widget.giftcardId;
+  }
 
   String _fmtPrice(num? v) => v == null ? '-' : '${_won.format(v)}원';
 
-  Future<List<Map<String, dynamic>>> _load() async {
-    // collectionGroup 인덱스/권한 이슈를 피하기 위해
-    // 지점 목록을 먼저 읽고 각 지점의 giftcardRates_current/{giftcardId} 문서를 조회한다.
-    final branchesSnap =
-        await FirebaseFirestore.instance.collection('branches').get();
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(_handleTabChanged);
+    _loadGiftcard();
+    _loadRateRows();
+    _loadFeedPosts();
+  }
 
-    final List<Map<String, dynamic>> rows = [];
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
 
-    for (final branchDoc in branchesSnap.docs) {
-      final branchId = branchDoc.id;
-      final branchData = branchDoc.data();
-      final bool isVerified = (branchData['verified'] as bool?) ?? false;
+  void _handleTabChanged() {
+    final nextIndex = _tabController.index;
+    if (_selectedTabIndex == nextIndex) return;
+    setState(() => _selectedTabIndex = nextIndex);
+  }
 
-      final rateDoc = await branchDoc.reference
-          .collection('giftcardRates_current')
-          .doc(giftcardId)
+  Future<void> _refreshAll() async {
+    await Future.wait([
+      _loadGiftcard(),
+      _loadRateRows(),
+      _loadFeedPosts(),
+    ]);
+  }
+
+  Future<void> _loadGiftcard() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('giftcards')
+          .doc(widget.giftcardId)
           .get();
-
-      if (!rateDoc.exists) continue;
-      final rateData = rateDoc.data();
-      if (rateData == null) continue;
-
-      rows.add({
-        'branchId': branchId,
-        'branch': branchData,
-        'rate': rateData,
-        'verified': isVerified,
+      if (!mounted) return;
+      setState(() {
+        _giftcard = doc.data();
+        _isLoadingGiftcard = false;
       });
+    } catch (e) {
+      debugPrint('상품권 상세 로드 오류: $e');
+      if (!mounted) return;
+      setState(() => _isLoadingGiftcard = false);
+    }
+  }
+
+  Future<void> _loadRateRows() async {
+    try {
+      // collectionGroup 인덱스/권한 이슈를 피하기 위해
+      // 지점 목록을 먼저 읽고 각 지점의 giftcardRates_current/{giftcardId} 문서를 조회한다.
+      final branchesSnap =
+          await FirebaseFirestore.instance.collection('branches').get();
+
+      final List<Map<String, dynamic>> rows = [];
+
+      for (final branchDoc in branchesSnap.docs) {
+        final branchId = branchDoc.id;
+        final branchData = branchDoc.data();
+        final bool isVerified = (branchData['verified'] as bool?) ?? false;
+
+        final rateDoc = await branchDoc.reference
+            .collection('giftcardRates_current')
+            .doc(widget.giftcardId)
+            .get();
+
+        if (!rateDoc.exists) continue;
+        final rateData = rateDoc.data();
+        if (rateData == null) continue;
+
+        rows.add({
+          'branchId': branchId,
+          'branch': branchData,
+          'rate': rateData,
+          'verified': isVerified,
+        });
+      }
+
+      rows.sort((a, b) {
+        final sa =
+            _num((a['rate'] as Map<String, dynamic>?)?['sellPrice_general']) ??
+                0;
+        final sb =
+            _num((b['rate'] as Map<String, dynamic>?)?['sellPrice_general']) ??
+                0;
+        return sb.compareTo(sa);
+      });
+
+      if (!mounted) return;
+      setState(() {
+        _rateRows = rows;
+        _isLoadingRates = false;
+      });
+    } catch (e) {
+      debugPrint('상품권 지점별 시세 로드 오류: $e');
+      if (!mounted) return;
+      setState(() => _isLoadingRates = false);
+    }
+  }
+
+  Future<void> _loadFeedPosts() async {
+    try {
+      final indexedPosts = await _loadIndexedFeedPosts();
+
+      final baseQuery = FirebaseFirestore.instance
+          .collectionGroup('posts')
+          .where('isDeleted', isEqualTo: false)
+          .where('isHidden', isEqualTo: false);
+      final legacyDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[
+        ...await _loadLegacyPostDocs(
+          baseQuery.where(
+            'entityRefs.giftcardId',
+            isEqualTo: widget.giftcardId,
+          ),
+          debugLabel: 'giftcardId',
+        ),
+        ...await _loadLegacyPostDocs(
+          baseQuery.where(
+            'entityRefs.giftcardIds',
+            arrayContains: widget.giftcardId,
+          ),
+          debugLabel: 'giftcardIds',
+        ),
+      ];
+
+      final postsByPath = <String, _GiftcardFeedPost>{};
+      for (final post in indexedPosts) {
+        if (post.isDeleted || post.isHidden) continue;
+        postsByPath[post.postPath] = post;
+      }
+      for (final doc in legacyDocs) {
+        final post = _GiftcardFeedPost.fromPostDoc(doc);
+        if (post == null || post.isDeleted || post.isHidden) continue;
+        postsByPath[post.postPath] = post;
+      }
+
+      final posts = postsByPath.values.toList()
+        ..sort((a, b) {
+          final created = b.createdAt.compareTo(a.createdAt);
+          if (created != 0) return created;
+          return b.commentCount.compareTo(a.commentCount);
+        });
+
+      if (!mounted) return;
+      setState(() {
+        _feedPosts = posts.take(60).toList(growable: false);
+        _isLoadingFeed = false;
+      });
+    } catch (e) {
+      debugPrint('상품권 피드 로드 오류: $e');
+      if (!mounted) return;
+      setState(() => _isLoadingFeed = false);
+    }
+  }
+
+  Future<List<_GiftcardFeedPost>> _loadIndexedFeedPosts() async {
+    final ref = FirebaseFirestore.instance
+        .collection('giftcards')
+        .doc(widget.giftcardId)
+        .collection('labeledPosts');
+
+    try {
+      final snap =
+          await ref.orderBy('createdAt', descending: true).limit(60).get();
+      return snap.docs
+          .map(_GiftcardFeedPost.fromIndexedDoc)
+          .whereType<_GiftcardFeedPost>()
+          .toList(growable: false);
+    } catch (e) {
+      debugPrint('상품권 라벨 인덱스 최신순 조회 오류: $e');
+      try {
+        final snap = await ref.limit(60).get();
+        return snap.docs
+            .map(_GiftcardFeedPost.fromIndexedDoc)
+            .whereType<_GiftcardFeedPost>()
+            .toList(growable: false);
+      } catch (fallbackError) {
+        debugPrint('상품권 라벨 인덱스 기본 조회 오류: $fallbackError');
+        return const <_GiftcardFeedPost>[];
+      }
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLegacyPostDocs(
+    Query<Map<String, dynamic>> query, {
+    required String debugLabel,
+  }) async {
+    try {
+      final snap =
+          await query.orderBy('createdAt', descending: true).limit(60).get();
+      return snap.docs;
+    } catch (e) {
+      debugPrint('상품권 관련 게시글 $debugLabel 최신순 조회 오류: $e');
+      try {
+        final snap = await query.limit(60).get();
+        return snap.docs;
+      } catch (fallbackError) {
+        debugPrint('상품권 관련 게시글 $debugLabel 기본 조회 오류: $fallbackError');
+        return const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      }
+    }
+  }
+
+  void _openFeedPost(_GiftcardFeedPost post) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CommunityDetailScreen(
+          postId: post.postId,
+          dateString: post.dateString,
+          boardId: post.boardId,
+          boardName: _boardNameFor(post.boardId, post.boardName),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openGiftcardFeedPostCreate() async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
     }
 
-    return rows;
+    final giftcardLabel = CommunityLabel.giftcard(
+      giftcardId: widget.giftcardId,
+      name: _effectiveGiftcardName,
+    );
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CommunityPostCreateSimpleScreen(
+          initialBoardId: 'deal',
+          initialBoardName: '적립/카드 혜택',
+          initialLabels: [giftcardLabel.toMap()],
+          entityRefs: {
+            'giftcardIds': [widget.giftcardId],
+            'giftcardId': widget.giftcardId,
+          },
+          lockBoardSelection: true,
+        ),
+      ),
+    );
+    if (mounted) {
+      await _loadFeedPosts();
+    }
+  }
+
+  String _boardNameFor(String boardId, String? providedName) {
+    final trimmed = providedName?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    const names = {
+      'all': '전체글',
+      'free': '자유게시판',
+      'deal': '적립/카드 혜택',
+      'milecatch_guide': '마일캐치 사용법',
+      'hot_deal': '핫딜',
+      'question': '마일리지',
+      'seats': '오늘의 좌석',
+      'news': '오늘의 뉴스',
+      'suggestion': '건의사항',
+      'notice': '운영 공지사항',
+    };
+    return names[boardId] ?? boardId;
+  }
+
+  String _formatTimestamp(Object? raw) {
+    DateTime? date;
+    if (raw is Timestamp) date = raw.toDate();
+    if (raw is DateTime) date = raw;
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    if (date == null) return '-';
+    return DateFormat('yyyy.MM.dd HH:mm').format(date);
+  }
+
+  String _branchLabel(String? branchId) {
+    if (branchId == null || branchId.trim().isEmpty) return '-';
+    final row = _rateRows.cast<Map<String, dynamic>?>().firstWhere(
+          (item) => item?['branchId'] == branchId,
+          orElse: () => null,
+        );
+    final branch = row?['branch'];
+    if (branch is Map<String, dynamic>) {
+      final name = _string(branch['name']);
+      if (name.isNotEmpty) return name;
+    }
+    return branchId;
   }
 
   @override
   Widget build(BuildContext context) {
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final double contentBottomPadding =
+        (_selectedTabIndex == 0 ? 96.0 : 24.0) + bottomInset;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(giftcardName, style: McTextStyles.appBarTitle),
+        title: Text(
+          _effectiveGiftcardName,
+          style: McTextStyles.appBarTitle,
+          overflow: TextOverflow.ellipsis,
+        ),
         backgroundColor: Colors.white,
         foregroundColor: McColors.ink,
         elevation: 0.5,
@@ -747,232 +1038,950 @@ class GiftcardBrandRatesPage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
       ),
       backgroundColor: McColors.background,
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _load(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            if (snapshot.hasError) {
-              return const Center(child: Text('시세를 불러오지 못했습니다.'));
-            }
-            return const Center(
+      floatingActionButton: _selectedTabIndex == 0
+          ? FloatingActionButton.extended(
+              heroTag: 'giftcard_feed_post_create_${widget.giftcardId}',
+              backgroundColor: McColors.accent,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('글쓰기'),
+              onPressed: _openGiftcardFeedPostCreate,
+            )
+          : null,
+      body: _isLoadingGiftcard && _giftcard == null
+          ? const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
               ),
-            );
-          }
-
-          final rows = snapshot.data!;
-
-          if (rows.isEmpty) {
-            return const Center(child: Text('해당 상품권을 취급하는 지점이 없습니다.'));
-          }
-
-          rows.sort((a, b) {
-            final sa = (a['rate']?['sellPrice_general'] as num?) ?? 0;
-            final sb = (b['rate']?['sellPrice_general'] as num?) ?? 0;
-            return sb.compareTo(sa);
-          });
-
-          final double bottomInset = MediaQuery.of(context).padding.bottom;
-
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
-            itemCount: rows.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final row = rows[index];
-              final String branchId = row['branchId'] as String;
-              final Map<String, dynamic> branch =
-                  (row['branch'] as Map<String, dynamic>) ?? {};
-              final Map<String, dynamic> data =
-                  (row['rate'] as Map<String, dynamic>) ?? {};
-              final bool isVerified = (row['verified'] as bool?) ?? false;
-
-              final branchName = (branch['name'] as String?) ??
-                  (branchId.isNotEmpty ? branchId : '알 수 없음');
-              final address = branch['address'] as String?;
-
-              final sellPrice = data['sellPrice_general'] as num?;
-              final buyPrice = data['buyPrice_general'] as num?;
-              final double? sellRate = _calcRateFromPrice(sellPrice);
-              final double? buyRate = _calcRateFromPrice(buyPrice);
-
-              return InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => BranchDetailScreen(
-                        branchId: branchId,
-                        branchName: branchName,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+            )
+          : RefreshIndicator(
+              color: McColors.accent,
+              backgroundColor: Colors.white,
+              onRefresh: _refreshAll,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, contentBottomPadding),
+                children: [
+                  _buildHeroCard(),
+                  const SizedBox(height: 12),
+                  ScrollableUnderlineTabBar(
+                    controller: _tabController,
+                    labels: _tabs,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    separatorWidth: 18,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: const Color(0x1174512D),
-                              borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 12),
+                  _buildSelectedTab(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildSelectedTab() {
+    switch (_selectedTabIndex) {
+      case 1:
+        return _buildRatesTab();
+      case 2:
+        return _buildInfoTab();
+      case 0:
+      default:
+        return _buildFeedTab();
+    }
+  }
+
+  Widget _buildHeroCard() {
+    final data = _giftcard ?? const <String, dynamic>{};
+    final logoUrl = _string(data['logoUrl']);
+    final assetPath = _giftcardAssetForId(widget.giftcardId);
+    final hasImageLogo = assetPath != null || logoUrl.isNotEmpty;
+    final isNhLogo = _isNhGiftcard(widget.giftcardId);
+    final bestSellPrice = _num(data['bestSellPrice']);
+    final bestBuyPrice = _num(data['bestBuyPrice']);
+    final bestUpdatedAt = data['bestUpdatedAt'];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: hasImageLogo ? Colors.white : const Color(0x1174512D),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: assetPath != null
+                    ? Padding(
+                        padding: EdgeInsets.all(isNhLogo ? 0 : 6),
+                        child: Image.asset(
+                          assetPath,
+                          fit: isNhLogo ? BoxFit.cover : BoxFit.contain,
+                        ),
+                      )
+                    : logoUrl.isNotEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Image.network(
+                              logoUrl,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.card_giftcard_outlined,
+                                color: Color(0xFF74512D),
+                                size: 30,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.storefront_outlined,
-                              size: 18,
-                              color: Color(0xFF74512D),
-                            ),
+                          )
+                        : const Icon(
+                            Icons.card_giftcard_outlined,
+                            color: Color(0xFF74512D),
+                            size: 30,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        branchName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    if (isVerified) ...[
-                                      const SizedBox(width: 4),
-                                      SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: Image.asset(
-                                          'asset/img/verified.jpg',
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                if (address != null && address.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: Text(
-                                      address,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right,
-                              color: Colors.black38),
-                        ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _effectiveGiftcardName,
+                      style: const TextStyle(
+                        color: McColors.ink,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(
-                                  Icons.south_west,
-                                  size: 16,
-                                  color: Color(0xFF1E88E5),
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        '팔 때',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${_fmtPrice(sellPrice)}'
-                                        '${sellRate != null ? ' (${sellRate.toStringAsFixed(2)}%)' : ''}',
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(
-                                  Icons.north_east,
-                                  size: 16,
-                                  color: Color(0xFFD81B60),
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        '살 때',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${_fmtPrice(buyPrice)}'
-                                        '${buyRate != null ? ' (${buyRate.toStringAsFixed(2)}%)' : ''}',
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '상품권 ID ${widget.giftcardId}',
+                      style: McTextStyles.meta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _GiftcardSummaryPill(
+                icon: Icons.south_west,
+                label: '팔 때 최고',
+                value: _fmtPrice(bestSellPrice),
+              ),
+              _GiftcardSummaryPill(
+                icon: Icons.north_east,
+                label: '살 때 최저',
+                value: _fmtPrice(bestBuyPrice),
+              ),
+              if (bestUpdatedAt != null)
+                _GiftcardSummaryPill(
+                  icon: Icons.update,
+                  label: '업데이트',
+                  value: _formatTimestamp(bestUpdatedAt),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedTab() {
+    if (_isLoadingFeed) return _buildLoadingCard('피드를 불러오는 중입니다.');
+
+    if (_feedPosts.isEmpty) {
+      return _GiftcardSectionCard(
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.grid_on_outlined,
+                  color: McColors.mutedLight,
+                  size: 38,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '아직 $_effectiveGiftcardName 라벨 글이 없습니다.',
+                  style: McTextStyles.body,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _openGiftcardFeedPostCreate,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('첫 글 남기기'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _feedPosts.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+      ),
+      itemBuilder: (context, index) => _buildFeedTile(_feedPosts[index]),
+    );
+  }
+
+  Widget _buildFeedTile(_GiftcardFeedPost post) {
+    final imageUrl = post.imageUrl;
+    return Material(
+      color: McColors.field,
+      child: InkWell(
+        onTap: () => _openFeedPost(post),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl != null)
+              ColoredBox(
+                color: Colors.white,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) => _buildTextFeedTile(post),
+                ),
+              )
+            else
+              _buildTextFeedTile(post),
+            if (post.commentCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.58),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${post.commentCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
-          );
-        },
+              ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _buildTextFeedTile(_GiftcardFeedPost post) {
+    final preview = post.previewText.trim();
+    return Container(
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            post.title,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: McColors.ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              height: 1.16,
+            ),
+          ),
+          if (preview.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                preview,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: McColors.muted,
+                  fontSize: 11,
+                  height: 1.22,
+                ),
+              ),
+            ),
+          ] else
+            const Spacer(),
+          const SizedBox(height: 4),
+          Text(
+            _boardNameFor(post.boardId, post.boardName),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: McTextStyles.micro,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatesTab() {
+    if (_isLoadingRates) return _buildLoadingCard('시세를 불러오는 중입니다.');
+    if (_rateRows.isEmpty) {
+      return const _GiftcardSectionCard(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(child: Text('해당 상품권을 취급하는 지점이 없습니다.')),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (int i = 0; i < _rateRows.length; i++) ...[
+          _buildRateRowCard(_rateRows[i]),
+          if (i != _rateRows.length - 1) const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRateRowCard(Map<String, dynamic> row) {
+    final branchId = _string(row['branchId']);
+    final branch = row['branch'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(row['branch'] as Map<String, dynamic>)
+        : const <String, dynamic>{};
+    final data = row['rate'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(row['rate'] as Map<String, dynamic>)
+        : const <String, dynamic>{};
+    final bool isVerified = (row['verified'] as bool?) ?? false;
+
+    final branchName = _string(branch['name'],
+        fallback: branchId.isNotEmpty ? branchId : '알 수 없음');
+    final address = _string(branch['address']);
+
+    final sellPrice = _num(data['sellPrice_general']);
+    final buyPrice = _num(data['buyPrice_general']);
+    final double? sellRate = _calcRateFromPrice(sellPrice);
+    final double? buyRate = _calcRateFromPrice(buyPrice);
+
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BranchDetailScreen(
+              branchId: branchId,
+              branchName: branchName,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0x1174512D),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.storefront_outlined,
+                    size: 18,
+                    color: Color(0xFF74512D),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              branchName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isVerified) ...[
+                            const SizedBox(width: 4),
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: Image.asset(
+                                'asset/img/verified.jpg',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (address.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            address,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.black38),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.south_west,
+                        size: 16,
+                        color: Color(0xFF1E88E5),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '팔 때',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '${_fmtPrice(sellPrice)}'
+                              '${sellRate != null ? ' (${sellRate.toStringAsFixed(2)}%)' : ''}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.north_east,
+                        size: 16,
+                        color: Color(0xFFD81B60),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '살 때',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '${_fmtPrice(buyPrice)}'
+                              '${buyRate != null ? ' (${buyRate.toStringAsFixed(2)}%)' : ''}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoTab() {
+    final data = _giftcard ?? const <String, dynamic>{};
+    final bestSellPrice = _num(data['bestSellPrice']);
+    final worstSellPrice = _num(data['worstSellPrice']);
+    final bestBuyPrice = _num(data['bestBuyPrice']);
+    final worstBuyPrice = _num(data['worstBuyPrice']);
+    final logoUrl = _string(data['logoUrl']);
+
+    return Column(
+      children: [
+        _GiftcardSectionCard(
+          title: '시세 요약',
+          child: Column(
+            children: [
+              _GiftcardInfoRow(
+                icon: Icons.south_west,
+                label: '팔 때 최고',
+                value:
+                    '${_fmtPrice(bestSellPrice)} · ${_branchLabel(_string(data['bestSellBranchId']))}',
+              ),
+              _GiftcardInfoRow(
+                icon: Icons.south_west,
+                label: '팔 때 최저',
+                value:
+                    '${_fmtPrice(worstSellPrice)} · ${_branchLabel(_string(data['worstSellBranchId']))}',
+              ),
+              _GiftcardInfoRow(
+                icon: Icons.north_east,
+                label: '살 때 최저',
+                value:
+                    '${_fmtPrice(bestBuyPrice)} · ${_branchLabel(_string(data['bestBuyBranchId']))}',
+              ),
+              _GiftcardInfoRow(
+                icon: Icons.north_east,
+                label: '살 때 최고',
+                value:
+                    '${_fmtPrice(worstBuyPrice)} · ${_branchLabel(_string(data['worstBuyBranchId']))}',
+              ),
+              _GiftcardInfoRow(
+                icon: Icons.update,
+                label: '업데이트',
+                value: _formatTimestamp(data['bestUpdatedAt']),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _GiftcardSectionCard(
+          title: '상품권 정보',
+          child: Column(
+            children: [
+              _GiftcardInfoRow(
+                icon: Icons.card_giftcard_outlined,
+                label: '상품권명',
+                value: _effectiveGiftcardName,
+              ),
+              _GiftcardInfoRow(
+                icon: Icons.tag_outlined,
+                label: '상품권 ID',
+                value: widget.giftcardId,
+              ),
+              _GiftcardInfoRow(
+                icon: Icons.storefront_outlined,
+                label: '취급 지점',
+                value: '${_rateRows.length}곳',
+              ),
+              if (logoUrl.isNotEmpty)
+                _GiftcardInfoRow(
+                  icon: Icons.image_outlined,
+                  label: '로고 URL',
+                  value: logoUrl,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingCard(String text) {
+    return _GiftcardSectionCard(
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: McTextStyles.body)),
+        ],
+      ),
+    );
+  }
+}
+
+class _GiftcardFeedPost {
+  static final RegExp _imgTagPattern = RegExp(
+    r'''<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>''',
+    caseSensitive: false,
+  );
+
+  final String postPath;
+  final String postId;
+  final String dateString;
+  final String title;
+  final String boardId;
+  final String? boardName;
+  final String? imageUrl;
+  final String previewText;
+  final int commentCount;
+  final DateTime createdAt;
+  final bool isDeleted;
+  final bool isHidden;
+
+  const _GiftcardFeedPost({
+    required this.postPath,
+    required this.postId,
+    required this.dateString,
+    required this.title,
+    required this.boardId,
+    required this.boardName,
+    required this.imageUrl,
+    required this.previewText,
+    required this.commentCount,
+    required this.createdAt,
+    required this.isDeleted,
+    required this.isHidden,
+  });
+
+  static _GiftcardFeedPost? fromIndexedDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final postPath = _string(data['postPath']);
+    final postId = _string(data['postId'], fallback: doc.id);
+    final dateString = _string(
+      data['dateString'],
+      fallback: _dateStringFromPostPath(postPath),
+    );
+    if (postId.isEmpty || dateString.isEmpty) return null;
+
+    return _GiftcardFeedPost(
+      postPath: postPath.isEmpty ? 'posts/$dateString/posts/$postId' : postPath,
+      postId: postId,
+      dateString: dateString,
+      title: _string(data['title'], fallback: '제목 없음'),
+      boardId: _string(data['boardId'], fallback: 'free'),
+      boardName: _nullableString(data['boardName']),
+      imageUrl: _cleanUrl(_string(data['imageUrl'])),
+      previewText: _string(data['previewText']),
+      commentCount: _int(data['commentCount'] ?? data['commentsCount']),
+      createdAt: _dateTimeFrom(data['createdAt']),
+      isDeleted: data['isDeleted'] == true,
+      isHidden: data['isHidden'] == true,
+    );
+  }
+
+  static _GiftcardFeedPost? fromPostDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final dateDoc = doc.reference.parent.parent;
+    final dateString = dateDoc?.id;
+    if (dateString == null || dateString.isEmpty) return null;
+    final data = doc.data();
+    final contentHtml = _string(data['contentHtml']);
+    return _GiftcardFeedPost(
+      postPath: doc.reference.path,
+      postId: _string(data['postId'], fallback: doc.id),
+      dateString: dateString,
+      title: _string(data['title'], fallback: '제목 없음'),
+      boardId: _string(data['boardId'], fallback: 'free'),
+      boardName: _nullableString(data['boardName']),
+      imageUrl: _firstImageUrl(data, contentHtml),
+      previewText: _previewTextFromData(data, contentHtml),
+      commentCount: _int(data['commentCount'] ?? data['commentsCount']),
+      createdAt: _dateTimeFrom(data['createdAt']),
+      isDeleted: data['isDeleted'] == true,
+      isHidden: data['isHidden'] == true,
+    );
+  }
+
+  static String? _firstImageUrl(
+    Map<String, dynamic> data,
+    String contentHtml,
+  ) {
+    final htmlMatch = _imgTagPattern.firstMatch(contentHtml);
+    final htmlUrl = htmlMatch == null ? null : _cleanUrl(htmlMatch.group(1));
+    if (htmlUrl != null) return htmlUrl;
+
+    final imageUrl = _cleanUrl(_string(data['imageUrl']));
+    if (imageUrl != null) return imageUrl;
+
+    final fromImageUrls = _firstUrlFromList(data['imageUrls']);
+    if (fromImageUrls != null) return fromImageUrls;
+
+    return _firstUrlFromList(data['attachments']);
+  }
+
+  static String? _firstUrlFromList(Object? raw) {
+    if (raw is! List) return null;
+    for (final item in raw) {
+      if (item is String) {
+        final url = _cleanUrl(item);
+        if (url != null) return url;
+      }
+      if (item is Map) {
+        final url = _cleanUrl(item['url']?.toString());
+        if (url != null) return url;
+      }
+    }
+    return null;
+  }
+
+  static String _previewTextFromData(
+    Map<String, dynamic> data,
+    String contentHtml,
+  ) {
+    final fromHtml = _plainTextFromHtml(contentHtml);
+    if (fromHtml.isNotEmpty) return fromHtml;
+    for (final key in const ['plainText', 'contentText', 'content']) {
+      final text = _string(data[key]);
+      if (text.isNotEmpty) return text;
+    }
+    return '';
+  }
+
+  static String _plainTextFromHtml(String html) {
+    if (html.trim().isEmpty) return '';
+    final withBreaks = html
+        .replaceAll(_imgTagPattern, ' ')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(
+          RegExp(r'</(p|div|li|h[1-6])\s*>', caseSensitive: false),
+          '\n',
+        )
+        .replaceAll(RegExp(r'<[^>]+>'), ' ');
+    return _decodeHtmlEntities(withBreaks)
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static String _decodeHtmlEntities(String value) {
+    return value
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'");
+  }
+
+  static String _dateStringFromPostPath(String path) {
+    final parts = path.split('/');
+    if (parts.length >= 4 && parts[0] == 'posts' && parts[2] == 'posts') {
+      return parts[1];
+    }
+    return '';
+  }
+}
+
+class _GiftcardSectionCard extends StatelessWidget {
+  final String? title;
+  final Widget child;
+
+  const _GiftcardSectionCard({
+    this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Text(title!, style: McTextStyles.sectionTitle),
+            const SizedBox(height: 12),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _GiftcardSummaryPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _GiftcardSummaryPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: McColors.field,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 17, color: McColors.accent),
+          const SizedBox(width: 6),
+          Text(
+            '$label $value',
+            style: McTextStyles.meta.copyWith(
+              color: McColors.ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GiftcardInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _GiftcardInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: McColors.accent),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 84,
+            child: Text(label, style: McTextStyles.meta),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: McTextStyles.bodyStrong,
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _string(Object? value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  final text = value.toString().trim();
+  return text.isEmpty ? fallback : text;
+}
+
+String? _nullableString(Object? value) {
+  final text = _string(value);
+  return text.isEmpty ? null : text;
+}
+
+num? _num(Object? value) {
+  if (value is num) return value;
+  return num.tryParse(_string(value));
+}
+
+int _int(Object? value) {
+  if (value is num) return value.toInt();
+  return int.tryParse(_string(value)) ?? 0;
+}
+
+DateTime _dateTimeFrom(Object? value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  return DateTime.fromMillisecondsSinceEpoch(0);
+}
+
+String? _cleanUrl(String? value) {
+  final url = value?.trim();
+  if (url == null || url.isEmpty) return null;
+  return url.replaceAll('&amp;', '&');
 }
 
 class GiftcardRecommendDashboardPage extends StatefulWidget {
@@ -1243,43 +2252,13 @@ class _RecommendCard extends StatelessWidget {
   String _fmtWon(double v) => NumberFormat('#,###').format(v);
 
   String? _assetForGiftcard(String id) {
-    switch (id) {
-      case 'costco':
-        return 'asset/img/costco.png';
-      case 'eland':
-        return 'asset/img/eland.png';
-      case 'galleria':
-        return 'asset/img/galleria.png';
-      case 'hyundai':
-        return 'asset/img/hyundai.png';
-      case 'lotte':
-        return 'asset/img/lotte.png';
-      case 'samsung':
-        return 'asset/img/samsung.png';
-      case 'shinsegae':
-        return 'asset/img/shinsegae.png';
-      case 'kumkang':
-        return 'asset/img/kumkang.png';
-      case 'nh':
-      case 'nonghyup':
-      case '농협':
-        return 'asset/img/nh.jpg';
-      case 'ak':
-        return 'asset/img/ak.jpg';
-      case 'cj':
-      case 'cjgift':
-        return 'asset/img/cj.png';
-      default:
-        return 'asset/img/app_icon.png';
-    }
+    return _giftcardAssetForId(id) ?? 'asset/img/app_icon.png';
   }
 
   @override
   Widget build(BuildContext context) {
     final String? assetPath = _assetForGiftcard(item.giftcardId);
-    final bool isNhLogo = item.giftcardId == 'nh' ||
-        item.giftcardId == 'nonghyup' ||
-        item.giftcardId == '농협';
+    final bool isNhLogo = _isNhGiftcard(item.giftcardId);
 
     return InkWell(
       onTap: () {

@@ -27,6 +27,7 @@ import 'dart:async';
 import '../utils/image_compressor.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/peanut_history_service.dart';
+import '../services/community_labeled_post_index_service.dart';
 import '../utils/ad_removal_utils.dart';
 import '../utils/community_access_level.dart';
 import '../widgets/ad_removal_widget.dart';
@@ -295,10 +296,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         // 신고 수가 5건 이상이면 자동으로 숨김처리
         final reportsCount = postData['reportsCount'] ?? 0;
         if (reportsCount >= 5 && postData['isHidden'] != true) {
-          await docSnapshot.reference.update({
+          final batch = FirebaseFirestore.instance.batch();
+          batch.update(docSnapshot.reference, {
             'isHidden': true,
             'updatedAt': FieldValue.serverTimestamp(),
           });
+          CommunityLabeledPostIndexService.updatePostStatusInBatch(
+            batch: batch,
+            postRef: docSnapshot.reference,
+            postData: postData,
+            isHidden: true,
+          );
+          await batch.commit();
           postData['isHidden'] = true;
         }
 
@@ -1205,16 +1214,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _confirmDeletePost() async {
     try {
-      // 소프트 삭제: isDeleted 필드를 true로 변경
-      await FirebaseFirestore.instance
+      final postRef = FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
           .collection('posts')
-          .doc(widget.postId)
-          .update({
+          .doc(widget.postId);
+      final batch = FirebaseFirestore.instance.batch();
+      // 소프트 삭제: isDeleted 필드를 true로 변경
+      batch.update(postRef, {
         'isDeleted': true,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      if (_post != null) {
+        CommunityLabeledPostIndexService.updatePostStatusInBatch(
+          batch: batch,
+          postRef: postRef,
+          postData: _post!,
+          isDeleted: true,
+        );
+      }
+      await batch.commit();
 
       // 관리자용 삭제된 게시글 백업 생성
       if (_post != null) {
@@ -1344,15 +1363,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _confirmHidePost() async {
     try {
-      await FirebaseFirestore.instance
+      final postRef = FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
           .collection('posts')
-          .doc(widget.postId)
-          .update({
+          .doc(widget.postId);
+      final batch = FirebaseFirestore.instance.batch();
+      batch.update(postRef, {
         'isHidden': true,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      if (_post != null) {
+        CommunityLabeledPostIndexService.updatePostStatusInBatch(
+          batch: batch,
+          postRef: postRef,
+          postData: _post!,
+          isHidden: true,
+        );
+      }
+      await batch.commit();
 
       // 게시글 데이터 새로고침
       await _loadPostDetail();
@@ -1370,15 +1399,25 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _confirmUnhidePost() async {
     try {
-      await FirebaseFirestore.instance
+      final postRef = FirebaseFirestore.instance
           .collection('posts')
           .doc(widget.dateString)
           .collection('posts')
-          .doc(widget.postId)
-          .update({
+          .doc(widget.postId);
+      final batch = FirebaseFirestore.instance.batch();
+      batch.update(postRef, {
         'isHidden': false,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      if (_post != null) {
+        CommunityLabeledPostIndexService.updatePostStatusInBatch(
+          batch: batch,
+          postRef: postRef,
+          postData: _post!,
+          isHidden: false,
+        );
+      }
+      await batch.commit();
 
       // 게시글 데이터 새로고침
       await _loadPostDetail();

@@ -18,6 +18,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/community_access_level.dart';
 import '../models/community_label_model.dart';
+import '../services/community_labeled_post_index_service.dart';
 import '../services/community_label_service.dart';
 import '../widgets/community_label_picker_sheet.dart';
 
@@ -1436,32 +1437,63 @@ class _CommunityPostCreateScreenV3State
       }
 
       // 5. Firestore에 저장
+      final postRef = FirebaseFirestore.instance
+          .collection('posts')
+          .doc(dateString)
+          .collection('posts')
+          .doc(postId);
       if (widget.isEditMode) {
-        await FirebaseFirestore.instance
-            .collection('posts')
-            .doc(dateString)
-            .collection('posts')
-            .doc(postId)
-            .update(postData);
+        final previousPostSnap = await postRef.get();
+        final previousPostData =
+            previousPostSnap.data() ?? const <String, dynamic>{};
+        final previousLabels =
+            CommunityLabeledPostIndexService.labelsFromPostData(
+          previousPostData,
+        );
+        final indexPostData = <String, dynamic>{
+          ...previousPostData,
+          ...postData,
+          'postId': postId,
+          'boardId': _editorController.postData.boardId,
+          'boardName': _editorController.postData.boardName,
+        };
 
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .collection('my_posts')
-            .doc(postId)
-            .update({
-          'title': finalTitle,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        final batch = FirebaseFirestore.instance.batch();
+        batch.update(postRef, postData);
+        batch.update(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.uid)
+              .collection('my_posts')
+              .doc(postId),
+          {
+            'title': finalTitle,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
+        CommunityLabeledPostIndexService.syncPostIndexesInBatch(
+          batch: batch,
+          postRef: postRef,
+          postData: indexPostData,
+          labels: _selectedLabels,
+          previousLabels: previousLabels,
+          boardName: _editorController.postData.boardName,
+        );
+        await batch.commit();
       } else {
         final batch = FirebaseFirestore.instance.batch();
 
-        final postRef = FirebaseFirestore.instance
-            .collection('posts')
-            .doc(dateString)
-            .collection('posts')
-            .doc(postId);
         batch.set(postRef, postData);
+        CommunityLabeledPostIndexService.syncPostIndexesInBatch(
+          batch: batch,
+          postRef: postRef,
+          postData: {
+            ...postData,
+            'boardName': _editorController.postData.boardName,
+          },
+          labels: _selectedLabels,
+          boardName: _editorController.postData.boardName,
+        );
 
         final myPostRef = FirebaseFirestore.instance
             .collection('users')

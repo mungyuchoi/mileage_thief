@@ -11,6 +11,7 @@ import '../community_editor/src/utils/firebase_image_uploader.dart';
 import '../models/community_label_model.dart';
 import '../services/auth_service.dart';
 import '../services/category_service.dart';
+import '../services/community_labeled_post_index_service.dart';
 import '../services/community_label_service.dart';
 import '../services/peanut_history_service.dart';
 import '../services/user_service.dart';
@@ -651,6 +652,13 @@ class _CommunityPostCreateSimpleScreenState
           .collection('posts')
           .doc(postId);
       batch.set(postRef, postData);
+      CommunityLabeledPostIndexService.syncPostIndexesInBatch(
+        batch: batch,
+        postRef: postRef,
+        postData: postData,
+        labels: _selectedLabels,
+        boardName: _selectedBoardName,
+      );
 
       final myPostRef = FirebaseFirestore.instance
           .collection('users')
