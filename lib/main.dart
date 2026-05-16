@@ -26,6 +26,7 @@ import 'const/colors.dart';
 
 // 전역 NavigatorKey (NotificationService에서 사용)
 final GlobalKey<NavigatorState> navigatorKey = NotificationService.navigatorKey;
+late final Future<void> _firebaseInitialization;
 
 // 백그라운드 알림 생성 함수
 Future<void> _showBackgroundNotification(RemoteMessage message) async {
@@ -220,21 +221,26 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 백그라운드 메시지 핸들러는 항상 등록 (핸들러 내에서 설정값 확인)
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  _firebaseInitialization = _initializeFirebase();
+
+  // 스플래시 첫 프레임을 최대한 빨리 그린 뒤, Firebase는 뒤에서 준비한다.
+  runApp(const MyApp());
+
+  // 나머지 경량 초기화는 병렬/비차단으로 수행
+  unawaited(_postFirstFrameInitializations());
+}
+
+Future<void> _initializeFirebase() async {
   try {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
   } catch (e) {
     debugPrint("Firebase already initialized: $e");
   }
-
-  // 백그라운드 메시지 핸들러는 항상 등록 (핸들러 내에서 설정값 확인)
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // 첫 프레임을 먼저 그리도록 runApp을 우선 호출
-  runApp(const MyApp());
-
-  // 나머지 경량 초기화는 병렬/비차단으로 수행
-  unawaited(_postFirstFrameInitializations());
 }
 
 Future<void> _postFirstFrameInitializations() async {
@@ -265,6 +271,7 @@ class _MyAppState extends State<MyApp> {
         debugPrint('ShareIntentService init error: $e');
       }
       try {
+        await _firebaseInitialization;
         await NotificationService().initialize();
         NotificationService().setupTokenRefresh();
       } catch (e) {
@@ -284,6 +291,14 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       initialRoute: '/splash',
+      onGenerateInitialRoutes: (_) => [
+        MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/splash'),
+          builder: (_) => SplashScreen(
+            startupReady: _firebaseInitialization,
+          ),
+        ),
+      ],
       theme: MileageTheme.light(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -295,7 +310,9 @@ class _MyAppState extends State<MyApp> {
         Locale('ko'),
       ],
       routes: {
-        '/splash': (context) => const SplashScreen(),
+        '/splash': (context) => SplashScreen(
+              startupReady: _firebaseInitialization,
+            ),
         '/': (context) => const HomeScreen(),
         '/community_board_select': (context) =>
             const CommunityBoardSelectScreen(),

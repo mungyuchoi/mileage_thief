@@ -28,6 +28,7 @@ class CommunityPostCreateSimpleScreen extends StatefulWidget {
     this.initialImageUrls = const <String>[],
     this.initialLabels = const <Map<String, dynamic>>[],
     this.entityRefs = const <String, dynamic>{},
+    this.lockBoardSelection = false,
     this.sourceChat,
   });
 
@@ -38,6 +39,7 @@ class CommunityPostCreateSimpleScreen extends StatefulWidget {
   final List<String> initialImageUrls;
   final List<Map<String, dynamic>> initialLabels;
   final Map<String, dynamic> entityRefs;
+  final bool lockBoardSelection;
   final Map<String, dynamic>? sourceChat;
 
   @override
@@ -357,11 +359,7 @@ class _CommunityPostCreateSimpleScreenState
 
     setState(() => _isPickingImages = true);
     try {
-      final picked = await _imagePicker.pickMultiImage(
-        imageQuality: 82,
-        maxWidth: 1800,
-        maxHeight: 1800,
-      );
+      final picked = await _imagePicker.pickMultiImage();
       if (picked.isEmpty || !mounted) return;
 
       final remain = _maxImages - _selectedImages.length;
@@ -1106,8 +1104,9 @@ class _CommunityPostCreateSimpleScreenState
   }
 
   Widget _buildBoardPill() {
+    final isLocked = widget.lockBoardSelection;
     return InkWell(
-      onTap: _openBoardSheet,
+      onTap: isLocked ? null : _openBoardSheet,
       borderRadius: BorderRadius.circular(18),
       child: Container(
         width: double.infinity,
@@ -1128,7 +1127,12 @@ class _CommunityPostCreateSimpleScreenState
                 style: McTextStyles.bodyStrong,
               ),
             ),
-            const Icon(Icons.expand_more_rounded, color: Colors.black54),
+            Icon(
+              isLocked
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.expand_more_rounded,
+              color: Colors.black54,
+            ),
           ],
         ),
       ),

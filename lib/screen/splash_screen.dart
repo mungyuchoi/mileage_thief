@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:mileage_thief/const/colors.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.startupReady,
+  });
+
+  final Future<void>? startupReady;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -17,7 +22,6 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _controller;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
-  Timer? _routeTimer;
 
   @override
   void initState() {
@@ -40,7 +44,19 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(entranceCurve);
 
     _controller.forward();
-    _routeTimer = Timer(_splashDuration, _route);
+    unawaited(_completeSplash());
+  }
+
+  Future<void> _completeSplash() async {
+    try {
+      await Future.wait<void>([
+        Future<void>.delayed(_splashDuration),
+        widget.startupReady ?? Future<void>.value(),
+      ]);
+    } catch (e) {
+      debugPrint('Splash startup wait error: $e');
+    }
+    _route();
   }
 
   void _route() {
@@ -50,7 +66,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _routeTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

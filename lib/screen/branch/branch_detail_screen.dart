@@ -12,9 +12,11 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../const/colors.dart';
+import '../../models/community_label_model.dart';
 import '../../services/user_service.dart';
 import '../../widgets/segment_tab_bar.dart';
 import '../community_detail_screen.dart';
+import '../community_post_create_simple_screen.dart';
 import 'branch_event_manage_screen.dart';
 
 /// 상품권 지점 통합 상세 화면.
@@ -40,7 +42,7 @@ class BranchDetailScreen extends StatefulWidget {
 class _BranchDetailScreenState extends State<BranchDetailScreen>
     with SingleTickerProviderStateMixin {
   static const List<String> _tabs = <String>[
-    '홈',
+    '피드',
     '취급 상품권',
     '시세·차트',
     '리뷰',
@@ -69,6 +71,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
   bool _isLoadingRelatedPosts = true;
   bool _isLoadingEvents = true;
   bool _isEventManager = false;
+  bool _canEditBranch = false;
   bool _isAddingComment = false;
   File? _selectedImage;
 
@@ -234,18 +237,32 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
 
   Future<void> _loadRelatedPosts() async {
     try {
-      final snap = await FirebaseFirestore.instance
+      final baseQuery = FirebaseFirestore.instance
           .collectionGroup('posts')
-          .where('entityRefs.branchId', isEqualTo: widget.branchId)
           .where('isDeleted', isEqualTo: false)
-          .where('isHidden', isEqualTo: false)
-          .limit(8)
-          .get();
+          .where('isHidden', isEqualTo: false);
+      final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[
+        ...await _loadRelatedPostDocs(
+          baseQuery.where('entityRefs.branchId', isEqualTo: widget.branchId),
+          debugLabel: 'branchId',
+        ),
+        ...await _loadRelatedPostDocs(
+          baseQuery.where(
+            'entityRefs.branchIds',
+            arrayContains: widget.branchId,
+          ),
+          debugLabel: 'branchIds',
+        ),
+      ];
 
-      final posts = snap.docs
-          .map(_RelatedPost.fromFirestore)
-          .whereType<_RelatedPost>()
-          .toList()
+      final postByPath = <String, _RelatedPost>{};
+      for (final doc in docs) {
+        final post = _RelatedPost.fromFirestore(doc);
+        if (post == null) continue;
+        postByPath[doc.reference.path] = post;
+      }
+
+      final posts = postByPath.values.toList()
         ..sort((a, b) {
           final created = b.createdAt.compareTo(a.createdAt);
           if (created != 0) return created;
@@ -254,7 +271,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
 
       if (!mounted) return;
       setState(() {
-        _relatedPosts = posts;
+        _relatedPosts = posts.take(60).toList(growable: false);
         _isLoadingRelatedPosts = false;
       });
     } catch (e) {
@@ -266,11 +283,33 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
     }
   }
 
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadRelatedPostDocs(
+    Query<Map<String, dynamic>> query, {
+    required String debugLabel,
+  }) async {
+    try {
+      final snap =
+          await query.orderBy('createdAt', descending: true).limit(60).get();
+      return snap.docs;
+    } catch (e) {
+      debugPrint('관련 게시글 $debugLabel 최신순 조회 오류: $e');
+      try {
+        final snap = await query.limit(60).get();
+        return snap.docs;
+      } catch (fallbackError) {
+        debugPrint('관련 게시글 $debugLabel 기본 조회 오류: $fallbackError');
+        return const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      }
+    }
+  }
+
   Future<void> _loadUserRole() async {
     if (_currentUser == null) {
       if (!mounted) return;
       setState(() {
         _isEventManager = false;
+        _canEditBranch = false;
       });
       return;
     }
@@ -288,12 +327,14 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
       if (!mounted) return;
       setState(() {
         _isEventManager = isAdmin || isGlobalBranchManager || isBranchOwnerById;
+        _canEditBranch = isAdmin;
       });
     } catch (e) {
       debugPrint('지점 이벤트 권한 로드 오류: $e');
       if (!mounted) return;
       setState(() {
         _isEventManager = false;
+        _canEditBranch = false;
       });
     }
   }
@@ -411,14 +452,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
 
   Future<String?> _uploadImage(File imageFile, String commentId) async {
     try {
-      FirebaseStorage storage;
-      if (Platform.isIOS) {
-        storage = FirebaseStorage.instanceFor(
-          bucket: 'mileagethief.firebasestorage.app',
-        );
-      } else {
-        storage = FirebaseStorage.instance;
-      }
+      final storage = _branchStorage();
 
       if (!await imageFile.exists()) return null;
 
@@ -433,6 +467,34 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
           : null;
     } catch (e) {
       debugPrint('지점 리뷰 이미지 업로드 오류: $e');
+      return null;
+    }
+  }
+
+  FirebaseStorage _branchStorage() {
+    if (Platform.isIOS) {
+      return FirebaseStorage.instanceFor(
+        bucket: 'mileagethief.firebasestorage.app',
+      );
+    }
+    return FirebaseStorage.instance;
+  }
+
+  Future<String?> _uploadBranchThumbnail(File imageFile) async {
+    try {
+      if (!await imageFile.exists()) return null;
+      final fileName = 'thumbnail_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = 'branches/${widget.branchId}/thumbnail/$fileName';
+      final ref = _branchStorage().ref().child(storagePath);
+      final snapshot = await ref.putFile(
+        imageFile,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      return snapshot.state == TaskState.success
+          ? snapshot.ref.getDownloadURL()
+          : null;
+    } catch (e) {
+      debugPrint('지점 썸네일 업로드 오류: $e');
       return null;
     }
   }
@@ -862,6 +924,62 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
     passwordController.dispose();
   }
 
+  Future<void> _showBranchEditSheet() async {
+    if (!_canEditBranch) {
+      Fluttertoast.showToast(msg: '관리자만 지점 정보를 편집할 수 있습니다.');
+      return;
+    }
+
+    final data = _branch ?? const <String, dynamic>{};
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return _BranchEditSheet(
+          initialName: _effectiveBranchName,
+          initialAddress: (data['address'] as String?) ?? '',
+          initialThumbnailUrl: (data['thumbnailUrl'] as String?) ?? '',
+          uploadThumbnail: _uploadBranchThumbnail,
+          thumbnailPreviewBuilder: (thumbnailUrl) {
+            return _buildBranchThumbnailBanner(
+              thumbnailUrl,
+              showPlaceholder: true,
+            );
+          },
+          onSave: ({
+            required String name,
+            required String address,
+            required String thumbnailUrl,
+          }) async {
+            final updateData = <String, dynamic>{
+              'name': name,
+              'address': address,
+              'thumbnailUrl': thumbnailUrl,
+              'updatedAt': FieldValue.serverTimestamp(),
+              if (_currentUser != null) 'updatedBy': _currentUser!.uid,
+            };
+            await FirebaseFirestore.instance
+                .collection('branches')
+                .doc(widget.branchId)
+                .set(updateData, SetOptions(merge: true));
+
+            if (!mounted) return;
+            final nextBranch = <String, dynamic>{};
+            if (_branch != null) nextBranch.addAll(_branch!);
+            nextBranch
+              ..['name'] = name
+              ..['address'] = address
+              ..['thumbnailUrl'] = thumbnailUrl;
+            setState(() {
+              _branch = nextBranch;
+            });
+          },
+        );
+      },
+    );
+  }
+
   void _openReviewTab() {
     _tabController.animateTo(3);
   }
@@ -877,6 +995,35 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _openBranchFeedPostCreate() async {
+    if (_currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+
+    final branchLabel = CommunityLabel.branch(
+      branchId: widget.branchId,
+      name: _effectiveBranchName,
+    );
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CommunityPostCreateSimpleScreen(
+          initialBoardId: 'deal',
+          initialBoardName: '적립/카드 혜택',
+          initialLabels: [branchLabel.toMap()],
+          entityRefs: {
+            'branchIds': [widget.branchId],
+            'branchId': widget.branchId,
+          },
+          lockBoardSelection: true,
+        ),
+      ),
+    );
+    if (result == true || result == false) {
+      await _loadRelatedPosts();
+    }
   }
 
   String _boardNameFor(String boardId, String? providedName) {
@@ -901,6 +1048,9 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
+    final contentBottomPadding =
+        (_selectedTabIndex == 0 ? 96.0 : 24.0) + bottomInset;
+
     return Scaffold(
       backgroundColor: McColors.background,
       appBar: AppBar(
@@ -914,6 +1064,11 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
         shadowColor: McColors.line,
         surfaceTintColor: Colors.transparent,
         actions: [
+          if (_canEditBranch)
+            TextButton(
+              onPressed: _showBranchEditSheet,
+              child: const Text('편집'),
+            ),
           if (_isEventManager)
             TextButton(
               onPressed: () {
@@ -936,6 +1091,16 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
           const SizedBox(width: 4),
         ],
       ),
+      floatingActionButton: _selectedTabIndex == 0
+          ? FloatingActionButton.extended(
+              heroTag: 'branch_feed_post_create_${widget.branchId}',
+              backgroundColor: McColors.accent,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('글쓰기'),
+              onPressed: _openBranchFeedPostCreate,
+            )
+          : null,
       body: _isLoadingBranch
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -952,7 +1117,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
               },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomInset),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, contentBottomPadding),
                 children: [
                   _buildHeroCard(),
                   const SizedBox(height: 12),
@@ -982,8 +1147,57 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
         return _buildInfoTab();
       case 0:
       default:
-        return _buildHomeTab();
+        return _buildFeedTab();
     }
+  }
+
+  Widget _buildBranchThumbnailBanner(
+    String thumbnailUrl, {
+    bool showPlaceholder = false,
+  }) {
+    final imageUrl = thumbnailUrl.trim();
+    if (imageUrl.isEmpty && !showPlaceholder) return const SizedBox.shrink();
+
+    Widget child;
+    if (imageUrl.isEmpty) {
+      child = Container(
+        color: McColors.field,
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.image_outlined,
+          color: McColors.mutedLight,
+          size: 34,
+        ),
+      );
+    } else {
+      child = ColoredBox(
+        color: Colors.white,
+        child: Image.network(
+          imageUrl,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          errorBuilder: (_, __, ___) => Container(
+            color: McColors.field,
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.broken_image_outlined,
+              color: McColors.mutedLight,
+              size: 34,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: AspectRatio(
+        aspectRatio: 16 / 6,
+        child: child,
+      ),
+    );
   }
 
   Widget _buildHeroCard() {
@@ -991,11 +1205,16 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
     final address = data['address'] as String?;
     final phone = data['phone'] as String?;
     final url = data['url'] as String?;
+    final thumbnailUrl = (data['thumbnailUrl'] as String?)?.trim() ?? '';
 
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (thumbnailUrl.isNotEmpty) ...[
+            _buildBranchThumbnailBanner(thumbnailUrl),
+            const SizedBox(height: 14),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1131,25 +1350,166 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
     );
   }
 
-  Widget _buildHomeTab() {
-    final notice = (_branch?['notice'] as String?)?.trim();
+  Widget _buildFeedTab() {
+    if (_isLoadingRelatedPosts) {
+      return _buildLoadingCard('피드를 불러오는 중입니다.');
+    }
+    if (_relatedPosts.isEmpty) {
+      return _SectionCard(
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.grid_on_outlined,
+                  color: McColors.mutedLight,
+                  size: 38,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '아직 이 지점을 라벨링한 글이 없습니다.',
+                  style: McTextStyles.body,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _openBranchFeedPostCreate,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('첫 글 남기기'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHomeRateCard(),
-        if (notice != null && notice.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _SectionCard(
-            title: '안내사항',
-            child: Text(notice, style: McTextStyles.body),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _relatedPosts.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+      ),
+      itemBuilder: (context, index) {
+        return _buildFeedTile(_relatedPosts[index]);
+      },
+    );
+  }
+
+  Widget _buildFeedTile(_RelatedPost post) {
+    final imageUrl = post.imageUrl;
+    return Material(
+      color: McColors.field,
+      child: InkWell(
+        onTap: () => _openRelatedPost(post),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl != null)
+              ColoredBox(
+                color: Colors.white,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) => _buildTextFeedTile(post),
+                ),
+              )
+            else
+              _buildTextFeedTile(post),
+            if (post.commentCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.58),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${post.commentCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextFeedTile(_RelatedPost post) {
+    final preview = post.previewText.trim();
+    return Container(
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            post.title,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: McColors.ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              height: 1.16,
+            ),
+          ),
+          if (preview.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                preview,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: McColors.muted,
+                  fontSize: 11,
+                  height: 1.22,
+                ),
+              ),
+            ),
+          ] else
+            const Spacer(),
+          const SizedBox(height: 4),
+          Text(
+            _boardNameFor(post.boardId, post.boardName),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: McTextStyles.micro,
           ),
         ],
-        const SizedBox(height: 12),
-        _buildRecentReviewsPreview(),
-        const SizedBox(height: 12),
-        _buildRelatedPostsSection(),
-      ],
+      ),
     );
   }
 
@@ -1246,80 +1606,6 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
             if (i != shown.length - 1) const SizedBox(height: 8),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildRelatedPostsSection() {
-    if (_isLoadingRelatedPosts) {
-      return _buildLoadingCard('관련 커뮤니티 글을 불러오는 중입니다.');
-    }
-    if (_relatedPosts.isEmpty) {
-      return const _SectionCard(
-        title: '관련 커뮤니티 글',
-        child: Text(
-          '아직 이 지점과 연결된 커뮤니티 글이 없습니다.',
-          style: McTextStyles.body,
-        ),
-      );
-    }
-
-    return _SectionCard(
-      title: '관련 커뮤니티 글',
-      child: Column(
-        children: [
-          for (int i = 0; i < _relatedPosts.length; i++) ...[
-            _buildRelatedPostItem(_relatedPosts[i]),
-            if (i != _relatedPosts.length - 1) const Divider(height: 18),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRelatedPostItem(_RelatedPost post) {
-    return InkWell(
-      onTap: () => _openRelatedPost(post),
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: McColors.field,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.forum_outlined,
-                size: 18,
-                color: McColors.accent,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    post.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: McTextStyles.bodyStrong,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${_boardNameFor(post.boardId, post.boardName)} · 댓글 ${post.commentCount}',
-                    style: McTextStyles.micro,
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: McColors.mutedLight),
-          ],
-        ),
       ),
     );
   }
@@ -1766,53 +2052,66 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
         ? Map<String, dynamic>.from(data['openingHours'] as Map)
         : null;
 
-    return _SectionCard(
-      title: '지점 정보',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _InfoRow(
-            icon: Icons.storefront_outlined,
-            label: '지점명',
-            value: _effectiveBranchName,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionCard(
+          title: '지점 정보',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _InfoRow(
+                icon: Icons.storefront_outlined,
+                label: '지점명',
+                value: _effectiveBranchName,
+              ),
+              if (address != null && address.trim().isNotEmpty)
+                _InfoRow(
+                  icon: Icons.place_outlined,
+                  label: '주소',
+                  value: address,
+                  onTap: _launchMap,
+                ),
+              if (phone != null && phone.trim().isNotEmpty)
+                _InfoRow(
+                  icon: Icons.phone_outlined,
+                  label: '연락처',
+                  value: phone,
+                  onTap: () => _launchPhone(phone),
+                ),
+              if (openingHours != null && openingHours.isNotEmpty)
+                _InfoRow(
+                  icon: Icons.access_time_outlined,
+                  label: '영업시간',
+                  value: openingHours.entries
+                      .map((entry) => '${entry.key}: ${entry.value}')
+                      .join('\n'),
+                ),
+              if (url != null && url.trim().isNotEmpty)
+                _InfoRow(
+                  icon: Icons.language,
+                  label: 'URL',
+                  value: url,
+                  onTap: () => _launchExternalUrl(url),
+                ),
+            ],
           ),
-          if (address != null && address.trim().isNotEmpty)
-            _InfoRow(
-              icon: Icons.place_outlined,
-              label: '주소',
-              value: address,
-              onTap: _launchMap,
+        ),
+        const SizedBox(height: 12),
+        _buildHomeRateCard(),
+        if (notice != null && notice.trim().isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _SectionCard(
+            title: '안내사항',
+            child: Text(
+              notice.trim(),
+              style: McTextStyles.body,
             ),
-          if (phone != null && phone.trim().isNotEmpty)
-            _InfoRow(
-              icon: Icons.phone_outlined,
-              label: '연락처',
-              value: phone,
-              onTap: () => _launchPhone(phone),
-            ),
-          if (openingHours != null && openingHours.isNotEmpty)
-            _InfoRow(
-              icon: Icons.access_time_outlined,
-              label: '영업시간',
-              value: openingHours.entries
-                  .map((entry) => '${entry.key}: ${entry.value}')
-                  .join('\n'),
-            ),
-          if (url != null && url.trim().isNotEmpty)
-            _InfoRow(
-              icon: Icons.language,
-              label: 'URL',
-              value: url,
-              onTap: () => _launchExternalUrl(url),
-            ),
-          if (notice != null && notice.trim().isNotEmpty)
-            _InfoRow(
-              icon: Icons.info_outline,
-              label: '안내사항',
-              value: notice,
-            ),
+          ),
         ],
-      ),
+        const SizedBox(height: 12),
+        _buildRecentReviewsPreview(),
+      ],
     );
   }
 
@@ -1828,6 +2127,235 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
           const SizedBox(width: 10),
           Expanded(child: Text(text, style: McTextStyles.body)),
         ],
+      ),
+    );
+  }
+}
+
+typedef _BranchThumbnailUploader = Future<String?> Function(File imageFile);
+typedef _BranchEditSaver = Future<void> Function({
+  required String name,
+  required String address,
+  required String thumbnailUrl,
+});
+typedef _BranchThumbnailPreviewBuilder = Widget Function(String thumbnailUrl);
+
+class _BranchEditSheet extends StatefulWidget {
+  final String initialName;
+  final String initialAddress;
+  final String initialThumbnailUrl;
+  final _BranchThumbnailUploader uploadThumbnail;
+  final _BranchEditSaver onSave;
+  final _BranchThumbnailPreviewBuilder thumbnailPreviewBuilder;
+
+  const _BranchEditSheet({
+    required this.initialName,
+    required this.initialAddress,
+    required this.initialThumbnailUrl,
+    required this.uploadThumbnail,
+    required this.onSave,
+    required this.thumbnailPreviewBuilder,
+  });
+
+  @override
+  State<_BranchEditSheet> createState() => _BranchEditSheetState();
+}
+
+class _BranchEditSheetState extends State<_BranchEditSheet> {
+  final ImagePicker _picker = ImagePicker();
+  late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _thumbnailController;
+
+  bool _isSaving = false;
+  bool _isUploading = false;
+  late String _previewUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+    _addressController = TextEditingController(text: widget.initialAddress);
+    _thumbnailController =
+        TextEditingController(text: widget.initialThumbnailUrl);
+    _previewUrl = widget.initialThumbnailUrl.trim();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _thumbnailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _uploadThumbnail() async {
+    if (_isSaving || _isUploading) return;
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2200,
+      maxHeight: 1400,
+      imageQuality: 88,
+    );
+    if (picked == null || !mounted) return;
+
+    setState(() => _isUploading = true);
+    try {
+      final uploadedUrl = await widget.uploadThumbnail(File(picked.path));
+      if (!mounted) return;
+      if (uploadedUrl == null || uploadedUrl.isEmpty) {
+        Fluttertoast.showToast(msg: '이미지 업로드에 실패했습니다.');
+        return;
+      }
+      _thumbnailController.text = uploadedUrl;
+      setState(() {
+        _previewUrl = uploadedUrl;
+      });
+      Fluttertoast.showToast(msg: '이미지가 업로드되었습니다.');
+    } catch (e) {
+      debugPrint('지점 썸네일 업로드 처리 오류: $e');
+      Fluttertoast.showToast(msg: '이미지 업로드 중 오류가 발생했습니다.');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _save() async {
+    if (_isSaving || _isUploading) return;
+    final name = _nameController.text.trim();
+    final address = _addressController.text.trim();
+    final thumbnailUrl = _thumbnailController.text.trim();
+    if (name.isEmpty) {
+      Fluttertoast.showToast(msg: '지점명을 입력해주세요.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    var didSave = false;
+    try {
+      await widget.onSave(
+        name: name,
+        address: address,
+        thumbnailUrl: thumbnailUrl,
+      );
+      if (!mounted) return;
+      didSave = true;
+      Navigator.of(context).pop();
+      Fluttertoast.showToast(msg: '지점 정보가 저장되었습니다.');
+    } catch (e) {
+      debugPrint('지점 정보 저장 오류: $e');
+      Fluttertoast.showToast(msg: '지점 정보 저장 중 오류가 발생했습니다.');
+    } finally {
+      if (mounted && !didSave) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 46,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: McColors.line,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('지점 편집', style: McTextStyles.sectionTitle),
+                const SizedBox(height: 14),
+                widget.thumbnailPreviewBuilder(_previewUrl),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _nameController,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: '상품권 지점명',
+                    hintText: '예: 고고 상품권',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _addressController,
+                  minLines: 1,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: '주소',
+                    hintText: '지점 주소',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _thumbnailController,
+                  minLines: 1,
+                  maxLines: 3,
+                  onChanged: (value) {
+                    setState(() => _previewUrl = value.trim());
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'thumbnailUrl',
+                    hintText: '이미지 URL을 입력하거나 업로드하세요',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed:
+                          _isUploading || _isSaving ? null : _uploadThumbnail,
+                      icon: _isUploading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.upload_outlined),
+                      label: Text(_isUploading ? '업로드 중' : '업로드'),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: _isSaving || _isUploading
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: const Text('취소'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _isSaving || _isUploading ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: McColors.accent,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(_isSaving ? '저장 중' : '저장'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1883,11 +2411,19 @@ class _DailyRateSnapshot {
 }
 
 class _RelatedPost {
+  static final RegExp _imgTagPattern = RegExp(
+    r'''<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>''',
+    caseSensitive: false,
+  );
+
   final String postId;
   final String dateString;
   final String title;
   final String boardId;
   final String? boardName;
+  final String contentHtml;
+  final String? imageUrl;
+  final String previewText;
   final int commentCount;
   final DateTime createdAt;
 
@@ -1897,6 +2433,9 @@ class _RelatedPost {
     required this.title,
     required this.boardId,
     required this.boardName,
+    required this.contentHtml,
+    required this.imageUrl,
+    required this.previewText,
     required this.commentCount,
     required this.createdAt,
   });
@@ -1911,17 +2450,100 @@ class _RelatedPost {
     final createdAt = data['createdAt'] is Timestamp
         ? (data['createdAt'] as Timestamp).toDate()
         : DateTime.fromMillisecondsSinceEpoch(0);
+    final contentHtml = (data['contentHtml'] as String?) ?? '';
+    final previewText = _previewTextFromData(data, contentHtml);
     return _RelatedPost(
       postId: (data['postId'] as String?) ?? doc.id,
       dateString: dateString,
       title: (data['title'] as String?) ?? '제목 없음',
       boardId: (data['boardId'] as String?) ?? 'free',
       boardName: data['boardName'] as String?,
+      contentHtml: contentHtml,
+      imageUrl: _firstImageUrl(data, contentHtml),
+      previewText: previewText,
       commentCount: (data['commentCount'] as num?)?.toInt() ??
           (data['commentsCount'] as num?)?.toInt() ??
           0,
       createdAt: createdAt,
     );
+  }
+
+  static String? _firstImageUrl(
+    Map<String, dynamic> data,
+    String contentHtml,
+  ) {
+    final htmlMatch = _imgTagPattern.firstMatch(contentHtml);
+    final htmlUrl = htmlMatch == null ? null : _cleanUrl(htmlMatch.group(1));
+    if (htmlUrl != null) return htmlUrl;
+
+    final fromImageUrls = _firstUrlFromList(data['imageUrls']);
+    if (fromImageUrls != null) return fromImageUrls;
+
+    return _firstUrlFromList(data['attachments']);
+  }
+
+  static String? _firstUrlFromList(Object? raw) {
+    if (raw is! List) return null;
+    for (final item in raw) {
+      if (item is String) {
+        final url = _cleanUrl(item);
+        if (url != null) return url;
+      }
+      if (item is Map) {
+        final url = _cleanUrl(item['url']?.toString());
+        if (url != null) return url;
+      }
+    }
+    return null;
+  }
+
+  static String _previewTextFromData(
+    Map<String, dynamic> data,
+    String contentHtml,
+  ) {
+    final fromHtml = _plainTextFromHtml(contentHtml);
+    if (fromHtml.isNotEmpty) return fromHtml;
+
+    for (final key in const ['plainText', 'contentText', 'content']) {
+      final text = data[key]?.toString().trim() ?? '';
+      if (text.isNotEmpty) return text;
+    }
+    return '';
+  }
+
+  static String _plainTextFromHtml(String html) {
+    if (html.trim().isEmpty) return '';
+    final withBreaks = html
+        .replaceAll(_imgTagPattern, ' ')
+        .replaceAll(
+          RegExp(r'<br\s*/?>', caseSensitive: false),
+          '\n',
+        )
+        .replaceAll(
+          RegExp(r'</(p|div|li|h[1-6])\s*>', caseSensitive: false),
+          '\n',
+        )
+        .replaceAll(RegExp(r'<[^>]+>'), ' ');
+    return _decodeHtmlEntities(withBreaks)
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static String _decodeHtmlEntities(String value) {
+    return value
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'");
+  }
+
+  static String? _cleanUrl(String? value) {
+    final url = value?.trim();
+    if (url == null || url.isEmpty) return null;
+    return url.replaceAll('&amp;', '&');
   }
 }
 
