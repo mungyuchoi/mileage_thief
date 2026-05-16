@@ -17,6 +17,7 @@ class CardCatalogService {
   static const int _maxProductWatchLimit = 240;
   static final Map<int, Stream<List<CatalogCardProduct>>> _productStreams = {};
   static final Map<int, List<CatalogCardProduct>> _productCache = {};
+  static final Map<int, Future<List<CatalogCardProduct>>> _productWarmups = {};
 
   static const String cardProductsPath = 'cards/catalog/cardProducts';
   static const String cardRankingsPath = 'cards/catalog/cardRankings';
@@ -99,6 +100,28 @@ class CardCatalogService {
           );
           Error.throwWithStackTrace(error, stackTrace);
         }).asBroadcastStream();
+      },
+    );
+  }
+
+  Future<List<CatalogCardProduct>> warmProducts({
+    int limit = _maxProductWatchLimit,
+  }) {
+    final effectiveLimit = _effectiveProductLimit(limit);
+    final cached = _productCache[effectiveLimit];
+    if (cached != null) {
+      return Future.value(List<CatalogCardProduct>.unmodifiable(cached));
+    }
+
+    return _productWarmups.putIfAbsent(
+      effectiveLimit,
+      () async {
+        try {
+          final products = await watchProducts(limit: effectiveLimit).first;
+          return List<CatalogCardProduct>.unmodifiable(products);
+        } finally {
+          _productWarmups.remove(effectiveLimit);
+        }
       },
     );
   }

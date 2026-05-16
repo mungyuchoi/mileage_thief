@@ -13,8 +13,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../const/colors.dart';
 import '../models/card_product_model.dart';
+import '../models/community_label_model.dart';
 import '../services/branch_service.dart';
 import '../services/card_catalog_service.dart';
+import '../widgets/segment_tab_bar.dart';
+import 'community_detail_screen.dart';
+import 'community_post_create_simple_screen.dart';
 import 'user_profile_screen.dart';
 
 const Color _cardInk = McColors.ink;
@@ -25,10 +29,14 @@ const Color _cardAccent = McColors.accent;
 
 class CardCatalogScreen extends StatefulWidget {
   final VoidCallback? onRequireLogin;
+  final bool showAppBar;
+  final List<CatalogCardProduct>? products;
 
   const CardCatalogScreen({
     super.key,
     this.onRequireLogin,
+    this.showAppBar = true,
+    this.products,
   });
 
   @override
@@ -53,44 +61,47 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _cardPage,
-      appBar: AppBar(
-        title: const Text(
-          '카드',
-          style: McTextStyles.appBarTitle,
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: _cardAccent,
-        elevation: 0.4,
-        actions: [
-          FutureBuilder<bool>(
-            future: _adminFuture,
-            builder: (context, snapshot) {
-              if (snapshot.data != true) return const SizedBox.shrink();
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: '카드 요청',
-                    icon: const Icon(Icons.inbox_outlined),
-                    onPressed: _openAdminRequests,
-                  ),
-                  IconButton(
-                    tooltip: '카드 정보 수집',
-                    icon: _importing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.cloud_download_outlined),
-                    onPressed: _importing ? null : _openImportDialog,
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text(
+                '카드',
+                style: McTextStyles.appBarTitle,
+              ),
+              backgroundColor: Colors.white,
+              foregroundColor: _cardAccent,
+              elevation: 0.4,
+              actions: [
+                FutureBuilder<bool>(
+                  future: _adminFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.data != true) return const SizedBox.shrink();
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: '카드 요청',
+                          icon: const Icon(Icons.inbox_outlined),
+                          onPressed: _openAdminRequests,
+                        ),
+                        IconButton(
+                          tooltip: '카드 정보 수집',
+                          icon: _importing
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.cloud_download_outlined),
+                          onPressed: _importing ? null : _openImportDialog,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            )
+          : null,
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -124,87 +135,102 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<List<CatalogCardProduct>>(
-        stream: _service.watchProducts(),
-        initialData: _service.peekProducts(),
-        builder: (context, snapshot) {
-          final header = _CatalogSearchHeader(
-            controller: _queryController,
-            statusFilter: _statusFilter,
-            sortOrder: _sortOrder,
-            onStatusChanged: (value) => setState(() => _statusFilter = value),
-            onSortChanged: (value) => setState(() => _sortOrder = value),
-            onQueryChanged: (_) => setState(() {}),
-          );
+      body: widget.products != null
+          ? _buildCatalogBody(products: widget.products!)
+          : StreamBuilder<List<CatalogCardProduct>>(
+              stream: _service.watchProducts(),
+              initialData: _service.peekProducts(),
+              builder: (context, snapshot) {
+                return _buildCatalogBody(
+                  products: snapshot.data ?? const [],
+                  isLoading:
+                      snapshot.connectionState == ConnectionState.waiting,
+                  error: snapshot.error,
+                );
+              },
+            ),
+    );
+  }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: header),
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ],
-            );
-          }
-          if (snapshot.hasError) {
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: header),
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _EmptyState(
-                    icon: Icons.error_outline,
-                    title: '카드 정보를 불러오지 못했습니다.',
-                    message: '${snapshot.error}',
-                  ),
-                ),
-              ],
-            );
-          }
+  Widget _buildCatalogBody({
+    required List<CatalogCardProduct> products,
+    bool isLoading = false,
+    Object? error,
+  }) {
+    final header = _CatalogSearchHeader(
+      controller: _queryController,
+      statusFilter: _statusFilter,
+      sortOrder: _sortOrder,
+      onStatusChanged: (value) => setState(() => _statusFilter = value),
+      onSortChanged: (value) => setState(() => _sortOrder = value),
+      onQueryChanged: (_) => setState(() {}),
+    );
 
-          final products = _filterAndSort(snapshot.data ?? const []);
-          if (products.isEmpty) {
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: header),
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _EmptyState(
-                    icon: Icons.credit_card_off_outlined,
-                    title: '표시할 카드가 없습니다.',
-                    message: '필수 정보만으로도 새 카드를 추가할 수 있습니다.',
-                  ),
-                ),
-              ],
-            );
-          }
+    if (isLoading && products.isEmpty) {
+      return CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: header),
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      );
+    }
+    if (error != null && products.isEmpty) {
+      return CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: header),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyState(
+              icon: Icons.error_outline,
+              title: '카드 정보를 불러오지 못했습니다.',
+              message: '$error',
+            ),
+          ),
+        ],
+      );
+    }
 
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: header),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (index.isOdd) return const SizedBox(height: 10);
-                      final product = products[index ~/ 2];
-                      return _CardProductTile(
-                        product: product,
-                        service: _service,
-                        onTap: () => _openDetail(product.id),
-                      );
-                    },
-                    childCount: products.length * 2 - 1,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+    final filteredProducts = _filterAndSort(products);
+    if (filteredProducts.isEmpty) {
+      return CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: header),
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyState(
+              icon: Icons.credit_card_off_outlined,
+              title: '표시할 카드가 없습니다.',
+              message: '필수 정보만으로도 새 카드를 추가할 수 있습니다.',
+            ),
+          ),
+        ],
+      );
+    }
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: header),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index.isOdd) return const SizedBox(height: 10);
+                final product = filteredProducts[index ~/ 2];
+                return _CardProductTile(
+                  product: product,
+                  service: _service,
+                  onTap: () => _openDetail(product.id),
+                );
+              },
+              childCount: filteredProducts.length * 2 - 1,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -685,12 +711,40 @@ class CardProductDetailScreen extends StatefulWidget {
 
 enum _CardDetailAction { like, share, edit, history }
 
-class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
+class _CardProductDetailScreenState extends State<CardProductDetailScreen>
+    with SingleTickerProviderStateMixin {
+  static const List<String> _tabs = ['피드', '정보', '혜택', '댓글'];
+
   final CardCatalogService _service = CardCatalogService();
   late final Future<bool> _adminFuture = _canAccessAdmin();
+  late final TabController _tabController;
+  List<_CardFeedPost> _feedPosts = <_CardFeedPost>[];
   bool _sharing = false;
   bool _likeToggling = false;
   bool _viewIncremented = false;
+  bool _isLoadingFeed = true;
+  int _selectedTabIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(_handleTabChanged);
+    _loadFeedPosts();
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _handleTabChanged() {
+    final nextIndex = _tabController.index;
+    if (_selectedTabIndex == nextIndex) return;
+    setState(() => _selectedTabIndex = nextIndex);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -704,6 +758,16 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
         }
         return Scaffold(
           backgroundColor: _cardPage,
+          floatingActionButton: product != null && _selectedTabIndex == 0
+              ? FloatingActionButton.extended(
+                  heroTag: 'card_feed_post_create_${product.id}',
+                  backgroundColor: _cardAccent,
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('글쓰기'),
+                  onPressed: () => _openCardFeedPostCreate(product),
+                )
+              : null,
           appBar: AppBar(
             title: Text(
               product?.name ?? '카드 상세',
@@ -854,56 +918,460 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
         message: '삭제되었거나 아직 동기화되지 않은 카드입니다.',
       );
     }
+
     final issuerUrl = _cardIssuerUrl(product);
     final showSangtechPanel = _estimatedPerMileKRW(product) > 0;
-    return Stack(
-      children: [
-        ListView(
-          padding:
-              EdgeInsets.fromLTRB(16, 16, 16, issuerUrl == null ? 28 : 112),
-          children: [
-            _CardHeroImage(product: product, service: _service),
-            const SizedBox(height: 12),
-            _CardFactsPanel(product: product),
-            const SizedBox(height: 12),
-            _BenefitsPanel(
-              title: '주요 혜택',
-              values: product.primaryBenefits,
-              emptyMessage: '아직 입력된 혜택 정보가 없습니다.',
-            ),
-            const SizedBox(height: 12),
-            _CardTravelPanel(product: product),
-            const SizedBox(height: 12),
-            _CardEventSummarySection(
-              service: _service,
-              product: product,
-            ),
-            if (showSangtechPanel) ...[
-              const SizedBox(height: 12),
-              _CardSangtechPanel(product: product),
-            ],
-            const SizedBox(height: 12),
-            _NoticePanel(values: product.exclusions),
-            const SizedBox(height: 12),
-            _DetailSummaryPanel(product: product),
-            _DetailSectionsList(
-              service: _service,
-              cardId: product.id,
-            ),
-            const SizedBox(height: 12),
-            _CardCommentsSection(
-              service: _service,
-              cardId: product.id,
-              onRequireLogin: widget.onRequireLogin,
-            ),
-          ],
-        ),
-        if (issuerUrl != null)
-          _IssuerFloatingButton(
-            onTap: () => _openIssuerUrl(issuerUrl),
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final contentBottomPadding =
+        (_selectedTabIndex == 0 ? 96.0 : 28.0) + bottomInset;
+
+    return RefreshIndicator(
+      color: _cardAccent,
+      backgroundColor: Colors.white,
+      onRefresh: _loadFeedPosts,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, contentBottomPadding),
+        children: [
+          _CardHeroImage(product: product, service: _service),
+          const SizedBox(height: 12),
+          ScrollableUnderlineTabBar(
+            controller: _tabController,
+            labels: _tabs,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            separatorWidth: 18,
           ),
+          const SizedBox(height: 12),
+          _buildSelectedTab(
+            product: product,
+            issuerUrl: issuerUrl,
+            showSangtechPanel: showSangtechPanel,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedTab({
+    required CatalogCardProduct product,
+    required String? issuerUrl,
+    required bool showSangtechPanel,
+  }) {
+    switch (_selectedTabIndex) {
+      case 1:
+        return _buildInfoTab(product: product, issuerUrl: issuerUrl);
+      case 2:
+        return _buildBenefitsTab(
+          product: product,
+          showSangtechPanel: showSangtechPanel,
+        );
+      case 3:
+        return _CardCommentsSection(
+          service: _service,
+          cardId: product.id,
+          onRequireLogin: widget.onRequireLogin,
+        );
+      case 0:
+      default:
+        return _buildFeedTab(product);
+    }
+  }
+
+  Widget _buildInfoTab({
+    required CatalogCardProduct product,
+    required String? issuerUrl,
+  }) {
+    return Column(
+      children: [
+        _CardFactsPanel(product: product),
+        const SizedBox(height: 12),
+        _CardEventSummarySection(
+          service: _service,
+          product: product,
+        ),
+        const SizedBox(height: 12),
+        _DetailSummaryPanel(product: product),
+        _DetailSectionsList(
+          service: _service,
+          cardId: product.id,
+        ),
+        if (issuerUrl != null) ...[
+          const SizedBox(height: 12),
+          _IssuerLinkPanel(onTap: () => _openIssuerUrl(issuerUrl)),
+        ],
       ],
     );
+  }
+
+  Widget _buildBenefitsTab({
+    required CatalogCardProduct product,
+    required bool showSangtechPanel,
+  }) {
+    return Column(
+      children: [
+        _BenefitsPanel(
+          title: '주요 혜택',
+          values: product.primaryBenefits,
+          emptyMessage: '아직 입력된 혜택 정보가 없습니다.',
+        ),
+        const SizedBox(height: 12),
+        _CardTravelPanel(product: product),
+        if (showSangtechPanel) ...[
+          const SizedBox(height: 12),
+          _CardSangtechPanel(product: product),
+        ],
+        const SizedBox(height: 12),
+        _NoticePanel(values: product.exclusions),
+      ],
+    );
+  }
+
+  Widget _buildFeedTab(CatalogCardProduct product) {
+    if (_isLoadingFeed) {
+      return const _SectionPanel(
+        title: '피드',
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '피드를 불러오는 중입니다.',
+                  style: TextStyle(color: _cardMuted),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    if (_feedPosts.isEmpty) {
+      return _SectionPanel(
+        title: '피드',
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.grid_on_outlined,
+                    color: _cardMuted,
+                    size: 38,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '아직 ${product.name} 라벨 글이 없습니다.',
+                    style: const TextStyle(
+                      color: _cardMuted,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _openCardFeedPostCreate(product),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('첫 글 남기기'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _feedPosts.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+      ),
+      itemBuilder: (context, index) => _buildFeedTile(_feedPosts[index]),
+    );
+  }
+
+  Widget _buildFeedTile(_CardFeedPost post) {
+    final imageUrl = post.imageUrl;
+    return Material(
+      color: const Color(0xFFF4F5F7),
+      child: InkWell(
+        onTap: () => _openFeedPost(post),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl != null)
+              ColoredBox(
+                color: Colors.white,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) => _buildTextFeedTile(post),
+                ),
+              )
+            else
+              _buildTextFeedTile(post),
+            if (post.commentCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.58),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${post.commentCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextFeedTile(_CardFeedPost post) {
+    final preview = post.previewText.trim();
+    return Container(
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _cardLine),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            post.title,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: _cardInk,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              height: 1.16,
+            ),
+          ),
+          if (preview.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                preview,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _cardMuted,
+                  fontSize: 11,
+                  height: 1.22,
+                ),
+              ),
+            ),
+          ] else
+            const Spacer(),
+          const SizedBox(height: 4),
+          Text(
+            _boardNameFor(post.boardId, post.boardName),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: McTextStyles.micro,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadFeedPosts() async {
+    try {
+      final indexedPosts = await _loadIndexedFeedPosts();
+      final baseQuery = FirebaseFirestore.instance
+          .collectionGroup('posts')
+          .where('isDeleted', isEqualTo: false)
+          .where('isHidden', isEqualTo: false);
+      final legacyDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[
+        ...await _loadLegacyPostDocs(
+          baseQuery.where('entityRefs.cardId', isEqualTo: widget.cardId),
+          debugLabel: 'cardId',
+        ),
+        ...await _loadLegacyPostDocs(
+          baseQuery.where('entityRefs.cardIds', arrayContains: widget.cardId),
+          debugLabel: 'cardIds',
+        ),
+      ];
+
+      final postsByPath = <String, _CardFeedPost>{};
+      for (final post in indexedPosts) {
+        if (post.isDeleted || post.isHidden) continue;
+        postsByPath[post.postPath] = post;
+      }
+      for (final doc in legacyDocs) {
+        final post = _CardFeedPost.fromPostDoc(doc);
+        if (post == null || post.isDeleted || post.isHidden) continue;
+        postsByPath[post.postPath] = post;
+      }
+
+      final posts = postsByPath.values.toList()
+        ..sort((a, b) {
+          final created = b.createdAt.compareTo(a.createdAt);
+          if (created != 0) return created;
+          return b.commentCount.compareTo(a.commentCount);
+        });
+
+      if (!mounted) return;
+      setState(() {
+        _feedPosts = posts.take(60).toList(growable: false);
+        _isLoadingFeed = false;
+      });
+    } catch (e) {
+      debugPrint('카드 피드 로드 오류: $e');
+      if (!mounted) return;
+      setState(() => _isLoadingFeed = false);
+    }
+  }
+
+  Future<List<_CardFeedPost>> _loadIndexedFeedPosts() async {
+    final ref = FirebaseFirestore.instance
+        .collection('cards')
+        .doc('catalog')
+        .collection('cardProducts')
+        .doc(widget.cardId)
+        .collection('labeledPosts');
+
+    try {
+      final snap =
+          await ref.orderBy('createdAt', descending: true).limit(60).get();
+      return snap.docs
+          .map(_CardFeedPost.fromIndexedDoc)
+          .whereType<_CardFeedPost>()
+          .toList(growable: false);
+    } catch (e) {
+      debugPrint('카드 라벨 인덱스 최신순 조회 오류: $e');
+      try {
+        final snap = await ref.limit(60).get();
+        return snap.docs
+            .map(_CardFeedPost.fromIndexedDoc)
+            .whereType<_CardFeedPost>()
+            .toList(growable: false);
+      } catch (fallbackError) {
+        debugPrint('카드 라벨 인덱스 기본 조회 오류: $fallbackError');
+        return const <_CardFeedPost>[];
+      }
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLegacyPostDocs(
+    Query<Map<String, dynamic>> query, {
+    required String debugLabel,
+  }) async {
+    try {
+      final snap =
+          await query.orderBy('createdAt', descending: true).limit(60).get();
+      return snap.docs;
+    } catch (e) {
+      debugPrint('카드 관련 게시글 $debugLabel 최신순 조회 오류: $e');
+      try {
+        final snap = await query.limit(60).get();
+        return snap.docs;
+      } catch (fallbackError) {
+        debugPrint('카드 관련 게시글 $debugLabel 기본 조회 오류: $fallbackError');
+        return const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      }
+    }
+  }
+
+  void _openFeedPost(_CardFeedPost post) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CommunityDetailScreen(
+          postId: post.postId,
+          dateString: post.dateString,
+          boardId: post.boardId,
+          boardName: _boardNameFor(post.boardId, post.boardName),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCardFeedPostCreate(CatalogCardProduct product) async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      widget.onRequireLogin?.call();
+      return;
+    }
+
+    final cardLabel = CommunityLabel.card(
+      cardId: product.id,
+      name: product.name,
+      issuerName: product.issuerName,
+    );
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CommunityPostCreateSimpleScreen(
+          initialBoardId: 'deal',
+          initialBoardName: '적립/카드 혜택',
+          initialLabels: [cardLabel.toMap()],
+          entityRefs: {
+            'cardIds': [product.id],
+            'cardId': product.id,
+          },
+          lockBoardSelection: true,
+        ),
+      ),
+    );
+    if (mounted) {
+      await _loadFeedPosts();
+    }
+  }
+
+  String _boardNameFor(String boardId, String? providedName) {
+    final trimmed = providedName?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    const names = {
+      'all': '전체글',
+      'free': '자유게시판',
+      'deal': '적립/카드 혜택',
+      'milecatch_guide': '마일캐치 사용법',
+      'hot_deal': '핫딜',
+      'question': '마일리지',
+      'seats': '오늘의 좌석',
+      'news': '오늘의 뉴스',
+      'suggestion': '건의사항',
+      'notice': '운영 공지사항',
+    };
+    return names[boardId] ?? boardId;
   }
 
   Future<void> _openIssuerUrl(String url) async {
@@ -1015,6 +1483,202 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen> {
     widget.onRequireLogin?.call();
     return false;
   }
+}
+
+class _CardFeedPost {
+  static final RegExp _imgTagPattern = RegExp(
+    r'''<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>''',
+    caseSensitive: false,
+  );
+
+  final String postPath;
+  final String postId;
+  final String dateString;
+  final String title;
+  final String boardId;
+  final String? boardName;
+  final String? imageUrl;
+  final String previewText;
+  final int commentCount;
+  final DateTime createdAt;
+  final bool isDeleted;
+  final bool isHidden;
+
+  const _CardFeedPost({
+    required this.postPath,
+    required this.postId,
+    required this.dateString,
+    required this.title,
+    required this.boardId,
+    required this.boardName,
+    required this.imageUrl,
+    required this.previewText,
+    required this.commentCount,
+    required this.createdAt,
+    required this.isDeleted,
+    required this.isHidden,
+  });
+
+  static _CardFeedPost? fromIndexedDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final postPath = _feedString(data['postPath']);
+    final postId = _feedString(data['postId'], fallback: doc.id);
+    final dateString = _feedString(
+      data['dateString'],
+      fallback: _dateStringFromPostPath(postPath),
+    );
+    if (postId.isEmpty || dateString.isEmpty) return null;
+
+    return _CardFeedPost(
+      postPath: postPath.isEmpty ? 'posts/$dateString/posts/$postId' : postPath,
+      postId: postId,
+      dateString: dateString,
+      title: _feedString(data['title'], fallback: '제목 없음'),
+      boardId: _feedString(data['boardId'], fallback: 'free'),
+      boardName: _nullableFeedString(data['boardName']),
+      imageUrl: _cleanFeedUrl(_feedString(data['imageUrl'])),
+      previewText: _feedString(data['previewText']),
+      commentCount: _feedInt(data['commentCount'] ?? data['commentsCount']),
+      createdAt: _feedDateTime(data['createdAt']),
+      isDeleted: data['isDeleted'] == true,
+      isHidden: data['isHidden'] == true,
+    );
+  }
+
+  static _CardFeedPost? fromPostDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final dateDoc = doc.reference.parent.parent;
+    final dateString = dateDoc?.id;
+    if (dateString == null || dateString.isEmpty) return null;
+    final data = doc.data();
+    final contentHtml = _feedString(data['contentHtml']);
+    return _CardFeedPost(
+      postPath: doc.reference.path,
+      postId: _feedString(data['postId'], fallback: doc.id),
+      dateString: dateString,
+      title: _feedString(data['title'], fallback: '제목 없음'),
+      boardId: _feedString(data['boardId'], fallback: 'free'),
+      boardName: _nullableFeedString(data['boardName']),
+      imageUrl: _firstImageUrl(data, contentHtml),
+      previewText: _previewTextFromData(data, contentHtml),
+      commentCount: _feedInt(data['commentCount'] ?? data['commentsCount']),
+      createdAt: _feedDateTime(data['createdAt']),
+      isDeleted: data['isDeleted'] == true,
+      isHidden: data['isHidden'] == true,
+    );
+  }
+
+  static String? _firstImageUrl(
+    Map<String, dynamic> data,
+    String contentHtml,
+  ) {
+    final htmlMatch = _imgTagPattern.firstMatch(contentHtml);
+    final htmlUrl =
+        htmlMatch == null ? null : _cleanFeedUrl(htmlMatch.group(1));
+    if (htmlUrl != null) return htmlUrl;
+
+    final imageUrl = _cleanFeedUrl(_feedString(data['imageUrl']));
+    if (imageUrl != null) return imageUrl;
+
+    final fromImageUrls = _firstUrlFromList(data['imageUrls']);
+    if (fromImageUrls != null) return fromImageUrls;
+
+    return _firstUrlFromList(data['attachments']);
+  }
+
+  static String? _firstUrlFromList(Object? raw) {
+    if (raw is! List) return null;
+    for (final item in raw) {
+      if (item is String) {
+        final url = _cleanFeedUrl(item);
+        if (url != null) return url;
+      }
+      if (item is Map) {
+        final url = _cleanFeedUrl(item['url']?.toString());
+        if (url != null) return url;
+      }
+    }
+    return null;
+  }
+
+  static String _previewTextFromData(
+    Map<String, dynamic> data,
+    String contentHtml,
+  ) {
+    final fromHtml = _plainTextFromHtml(contentHtml);
+    if (fromHtml.isNotEmpty) return fromHtml;
+    for (final key in const ['plainText', 'contentText', 'content']) {
+      final text = _feedString(data[key]);
+      if (text.isNotEmpty) return text;
+    }
+    return '';
+  }
+
+  static String _plainTextFromHtml(String html) {
+    if (html.trim().isEmpty) return '';
+    final withBreaks = html
+        .replaceAll(_imgTagPattern, ' ')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(
+          RegExp(r'</(p|div|li|h[1-6])\s*>', caseSensitive: false),
+          '\n',
+        )
+        .replaceAll(RegExp(r'<[^>]+>'), ' ');
+    return _decodeHtmlEntities(withBreaks)
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static String _decodeHtmlEntities(String value) {
+    return value
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'");
+  }
+
+  static String _dateStringFromPostPath(String path) {
+    final parts = path.split('/');
+    if (parts.length >= 4 && parts[0] == 'posts' && parts[2] == 'posts') {
+      return parts[1];
+    }
+    return '';
+  }
+}
+
+String _feedString(Object? value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  final text = value.toString().trim();
+  return text.isEmpty ? fallback : text;
+}
+
+String? _nullableFeedString(Object? value) {
+  final text = _feedString(value);
+  return text.isEmpty ? null : text;
+}
+
+int _feedInt(Object? value) {
+  if (value is num) return value.toInt();
+  return int.tryParse(_feedString(value)) ?? 0;
+}
+
+DateTime _feedDateTime(Object? value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  return DateTime.fromMillisecondsSinceEpoch(0);
+}
+
+String? _cleanFeedUrl(String? value) {
+  final url = value?.trim();
+  if (url == null || url.isEmpty) return null;
+  return url.replaceAll('&amp;', '&');
 }
 
 class CardProductEditScreen extends StatefulWidget {
@@ -2736,50 +3400,40 @@ class _BenefitIcon extends StatelessWidget {
   }
 }
 
-class _IssuerFloatingButton extends StatelessWidget {
+class _IssuerLinkPanel extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _IssuerFloatingButton({
-    required this.onTap,
-  });
+  const _IssuerLinkPanel({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 14,
-      child: SafeArea(
-        top: false,
-        child: Material(
-          color: _cardAccent,
-          borderRadius: BorderRadius.circular(8),
-          elevation: 8,
-          shadowColor: Colors.black.withValues(alpha: 0.18),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-              child: Row(
-                children: [
-                  Icon(Icons.language_outlined, color: Colors.white, size: 22),
-                  SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      '카드사 바로가기',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+    return Material(
+      color: _cardAccent,
+      borderRadius: BorderRadius.circular(8),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+          child: Row(
+            children: [
+              Icon(Icons.language_outlined, color: Colors.white, size: 22),
+              SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  '카드사 바로가기',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
                   ),
-                  Icon(Icons.chevron_right, color: Colors.white, size: 24),
-                ],
+                ),
               ),
-            ),
+              Icon(Icons.chevron_right, color: Colors.white, size: 24),
+            ],
           ),
         ),
       ),

@@ -200,6 +200,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   @override
   void initState() {
     super.initState();
+    CardCatalogService().warmProducts();
     _loadSections();
   }
 

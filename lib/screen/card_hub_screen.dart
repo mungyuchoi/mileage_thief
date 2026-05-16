@@ -84,30 +84,10 @@ class _CardHubScreenState extends State<CardHubScreen> {
     );
   }
 
-  Future<void> _openRequest() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CardSourceRequestScreen(
-          onRequireLogin: widget.onRequireLogin,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openLegacyCatalog() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CardCatalogScreen(
-          onRequireLogin: widget.onRequireLogin,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         backgroundColor: _hubPage,
         appBar: AppBar(
@@ -118,18 +98,6 @@ class _CardHubScreenState extends State<CardHubScreen> {
           backgroundColor: Colors.white,
           foregroundColor: _hubInk,
           elevation: 0.4,
-          actions: [
-            IconButton(
-              tooltip: '카드 요청',
-              icon: const Icon(Icons.search_outlined, color: _hubAccent),
-              onPressed: _openRequest,
-            ),
-            IconButton(
-              tooltip: '관리 목록',
-              icon: const Icon(Icons.table_rows_outlined, color: _hubAccent),
-              onPressed: _openLegacyCatalog,
-            ),
-          ],
           bottom: const TabBar(
             isScrollable: true,
             labelColor: _hubAccent,
@@ -138,6 +106,7 @@ class _CardHubScreenState extends State<CardHubScreen> {
             unselectedLabelStyle: McTextStyles.tab,
             indicatorColor: _hubAccent,
             tabs: [
+              Tab(text: '전체 카드'),
               Tab(text: '추천'),
               Tab(text: '랭킹'),
               Tab(text: '카드사'),
@@ -165,6 +134,11 @@ class _CardHubScreenState extends State<CardHubScreen> {
             }
             return TabBarView(
               children: [
+                CardCatalogScreen(
+                  onRequireLogin: widget.onRequireLogin,
+                  showAppBar: false,
+                  products: products,
+                ),
                 _RecommendTab(
                   products: products,
                   service: _service,
