@@ -30,6 +30,7 @@ import 'giftcard_settlement_screen.dart';
 import 'my_card_dashboard_screen.dart';
 import 'notification_settings_screen.dart';
 import 'useful_info_screen.dart';
+import 'user_scrap_upload_screen.dart';
 import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
 import '../widgets/segment_tab_bar.dart';
@@ -412,6 +413,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _lastGiftcardTabIndex = 0;
   String _communityInitialBoardId = 'all';
   String _communityInitialBoardName = '전체글';
+  int _communityRefreshNonce = 0;
   static const String _giftcardGuideBoardId = 'milecatch_guide';
   static const String _giftcardGuideBoardName = '마일캐치 사용법';
 
@@ -468,6 +470,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       params: {
         'board_id': nextBoardId,
         'source': 'home_shortcut',
+      },
+    ));
+  }
+
+  Future<void> _openUserScrapUpload() async {
+    if (AuthService.currentUser == null) {
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(returnToPreviousOnSuccess: true),
+        ),
+      );
+      if (!mounted || AuthService.currentUser == null) return;
+    }
+
+    unawaited(AnalyticsService.instance.logAction(
+      'user_scrap_upload_open',
+      params: {'source': 'profile_app_bar'},
+    ));
+    final result = await Navigator.of(context).push<UserScrapUploadResult>(
+      MaterialPageRoute<UserScrapUploadResult>(
+        settings: const RouteSettings(name: 'user_scrap_upload'),
+        builder: (_) => const UserScrapUploadScreen(),
+      ),
+    );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _communityInitialBoardId =
+          result.boardId.trim().isEmpty ? 'all' : result.boardId.trim();
+      _communityInitialBoardName = result.boardName.trim().isEmpty
+          ? _communityInitialBoardId
+          : result.boardName.trim();
+      _communityRefreshNonce++;
+      _giftFabOpen = false;
+      _isScrolling = false;
+      _currentTab = _HomeTab.community;
+    });
+    unawaited(AnalyticsService.instance.logTabSelected(
+      'home',
+      'community',
+      source: 'user_scrap_upload_success',
+    ));
+    unawaited(AnalyticsService.instance.logAction(
+      'community_board_selected',
+      params: {
+        'board_id': _communityInitialBoardId,
+        'source': 'user_scrap_upload_success',
       },
     ));
   }
@@ -725,6 +774,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Widget> _buildProfileAppBarActions() {
     return <Widget>[
       IconButton(
+        tooltip: '블로그 스크랩',
+        icon: const Icon(Icons.add_rounded, color: Colors.black),
+        onPressed: _openUserScrapUpload,
+      ),
+      IconButton(
+        tooltip: '설정',
         icon: const Icon(Icons.settings, color: Colors.black),
         onPressed: _openSettingsScreen,
       ),
@@ -1185,6 +1240,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return CommunityScreen(
           initialBoardId: _communityInitialBoardId,
           initialBoardName: _communityInitialBoardName,
+          refreshNonce: _communityRefreshNonce,
         );
       case _HomeTab.usefulInfo:
         return UsefulInfoScreen(

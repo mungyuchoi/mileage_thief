@@ -1086,14 +1086,22 @@ async function validateScrapPayload(rawUrl, rawSourceType) {
 }
 
 /**
+ * Realtime Database 카테고리 목록을 읽는다.
+ * @return {Promise<Array<unknown>>}
+ */
+async function loadScrapBoards() {
+  const snapshot = await admin.database().ref("CATEGORIES").get();
+  const raw = snapshot.val();
+  return Array.isArray(raw) ? raw : Object.values(raw || {});
+}
+
+/**
  * Realtime Database 카테고리를 찾아 발행 가능 여부를 확인한다.
  * @param {string} boardId
  * @return {Promise<Object>}
  */
 async function requireScrapBoard(boardId) {
-  const snapshot = await admin.database().ref("CATEGORIES").get();
-  const raw = snapshot.val();
-  const entries = Array.isArray(raw) ? raw : Object.values(raw || {});
+  const entries = await loadScrapBoards();
   for (const entry of entries) {
     if (!entry || String(entry.id || "") !== boardId) continue;
     if (boardId === "seats") {
@@ -1105,6 +1113,26 @@ async function requireScrapBoard(boardId) {
     return entry;
   }
   throw new HttpsError("invalid-argument", "카테고리를 찾을 수 없습니다.");
+}
+
+/**
+ * 일반 사용자 스크랩 업로드에서 허용되는 카테고리인지 확인한다.
+ * @param {string} boardId
+ * @return {Promise<Object>}
+ */
+async function requireUserScrapBoard(boardId) {
+  const entry = await requireScrapBoard(boardId);
+  if (
+    boardId === "notice" ||
+    boardId === "milecatch_guide" ||
+    entry.fabEnabled !== true
+  ) {
+    throw new HttpsError(
+        "permission-denied",
+        "이 카테고리에는 스크랩 업로드를 할 수 없습니다.",
+    );
+  }
+  return entry;
 }
 
 /**
@@ -1202,6 +1230,19 @@ function requireCardText(value, fieldName) {
     throw new HttpsError("invalid-argument", `${fieldName}은 필수입니다.`);
   }
   return text.slice(0, 200);
+}
+
+/**
+ * 카드 상세 댓글 본문 검증
+ * @param {unknown} value
+ * @return {string}
+ */
+function requireCardCommentBody(value) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) {
+    throw new HttpsError("invalid-argument", "댓글은 필수입니다.");
+  }
+  return text.slice(0, 2000);
 }
 
 /**
@@ -3190,41 +3231,26 @@ setGlobalOptions({maxInstances: 10});
 // https://firebase.google.com/docs/functions/get-started
 
 /**
- * 관리자 스크랩 URL을 검증하고 미리보기 데이터를 반환한다.
+ * 스크랩 글을 커뮤니티 게시글로 발행한다.
+ * @param {Object} params
+ * @param {string} params.boardId
+ * @param {string} params.authorUid
+ * @param {string} params.publisherUid
+ * @param {unknown} params.rawUrl
+ * @param {unknown} params.rawSourceType
+ * @param {string} params.titleOverride
+ * @param {boolean} params.adminPublish
+ * @return {Promise<Object>}
  */
-exports.validateScrapPost = onCall({
-  region: CARD_REGION,
-  timeoutSeconds: 60,
-  memory: "512MiB",
-}, async (request) => {
-  const uid = requireAuthUid(request);
-  await requireCardAdmin(uid);
-  const data = request.data || {};
-  return validateScrapPayload(data.url, data.sourceType);
-});
+async function publishScrapPayload(params) {
+  const boardId = params.boardId;
+  const authorUid = params.authorUid;
+  const publisherUid = params.publisherUid;
+  const rawUrl = params.rawUrl;
+  const rawSourceType = params.rawSourceType;
+  const titleOverride = params.titleOverride;
+  const adminPublish = params.adminPublish === true;
 
-/**
- * 관리자 스크랩 글을 선택 사용자 명의의 커뮤니티 게시글로 발행한다.
- */
-exports.publishScrapPost = onCall({
-  region: CARD_REGION,
-  timeoutSeconds: 90,
-  memory: "512MiB",
-}, async (request) => {
-  const adminUid = requireAuthUid(request);
-  await requireCardAdmin(adminUid);
-  const data = request.data || {};
-  const boardId = asIdString(data.boardId);
-  const authorUid = asIdString(data.authorUid);
-  const titleOverride = asOptionalString(data.titleOverride);
-  if (!boardId) {
-    throw new HttpsError("invalid-argument", "카테고리를 선택해주세요.");
-  }
-  if (!authorUid) {
-    throw new HttpsError("invalid-argument", "작성자를 선택해주세요.");
-  }
-
-  await requireScrapBoard(boardId);
   const db = admin.firestore();
   const authorRef = db.collection("users").doc(authorUid);
   const authorDoc = await authorRef.get();
@@ -3232,7 +3258,7 @@ exports.publishScrapPost = onCall({
     throw new HttpsError("not-found", "작성자 사용자를 찾을 수 없습니다.");
   }
 
-  const validated = await validateScrapPayload(data.url, data.sourceType);
+  const validated = await validateScrapPayload(rawUrl, rawSourceType);
   if (!validated.canPublish) {
     throw new HttpsError(
         "failed-precondition",
@@ -3261,6 +3287,9 @@ exports.publishScrapPost = onCall({
     contentHtml: validated.contentHtml,
   };
   const contentHtml = buildScrapPublishHtml(parsedForHtml, sourceUrl);
+  const publisherFields = adminPublish ?
+    {scrapedByAdminUid: publisherUid} :
+    {scrapedByUid: publisherUid};
   let postNumber = "";
   const postRef = db.collection("posts")
       .doc(dateString)
@@ -3329,7 +3358,7 @@ exports.publishScrapPost = onCall({
       sourceType: validated.sourceType,
       scrapedAuthor: validated.scrapedAuthor,
       scrapedDateText: validated.scrapedDateText,
-      scrapedByAdminUid: adminUid,
+      ...publisherFields,
       createdAt: now,
       updatedAt: now,
     };
@@ -3384,6 +3413,94 @@ exports.publishScrapPost = onCall({
     dateString,
     postPath,
   };
+}
+
+/**
+ * 관리자 스크랩 URL을 검증하고 미리보기 데이터를 반환한다.
+ */
+exports.validateScrapPost = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 60,
+  memory: "512MiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+  const data = request.data || {};
+  return validateScrapPayload(data.url, data.sourceType);
+});
+
+/**
+ * 일반 사용자용 네이버 블로그 스크랩 URL을 검증한다.
+ */
+exports.validateUserScrapPost = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 60,
+  memory: "512MiB",
+}, async (request) => {
+  requireAuthUid(request);
+  const data = request.data || {};
+  return validateScrapPayload(data.url, SCRAP_NAVER);
+});
+
+/**
+ * 관리자 스크랩 글을 선택 사용자 명의의 커뮤니티 게시글로 발행한다.
+ */
+exports.publishScrapPost = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 90,
+  memory: "512MiB",
+}, async (request) => {
+  const adminUid = requireAuthUid(request);
+  await requireCardAdmin(adminUid);
+  const data = request.data || {};
+  const boardId = asIdString(data.boardId);
+  const authorUid = asIdString(data.authorUid);
+  const titleOverride = asOptionalString(data.titleOverride);
+  if (!boardId) {
+    throw new HttpsError("invalid-argument", "카테고리를 선택해주세요.");
+  }
+  if (!authorUid) {
+    throw new HttpsError("invalid-argument", "작성자를 선택해주세요.");
+  }
+
+  await requireScrapBoard(boardId);
+  return publishScrapPayload({
+    boardId,
+    authorUid,
+    publisherUid: adminUid,
+    rawUrl: data.url,
+    rawSourceType: data.sourceType,
+    titleOverride,
+    adminPublish: true,
+  });
+});
+
+/**
+ * 일반 사용자용 네이버 블로그 스크랩 글을 본인 명의로 발행한다.
+ */
+exports.publishUserScrapPost = onCall({
+  region: CARD_REGION,
+  timeoutSeconds: 90,
+  memory: "512MiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const boardId = asIdString(data.boardId);
+  const titleOverride = asOptionalString(data.titleOverride);
+  if (!boardId) {
+    throw new HttpsError("invalid-argument", "카테고리를 선택해주세요.");
+  }
+
+  await requireUserScrapBoard(boardId);
+  return publishScrapPayload({
+    boardId,
+    authorUid: uid,
+    publisherUid: uid,
+    rawUrl: data.url,
+    rawSourceType: SCRAP_NAVER,
+    titleOverride,
+    adminPublish: false,
+  });
 });
 
 /**
@@ -4874,7 +4991,7 @@ exports.addCardProductComment = onCall({
   const data = request.data || {};
   const cardId = asIdString(data.cardId);
   const parentCommentId = asIdString(data.parentCommentId);
-  const body = requireCardText(data.body, "댓글");
+  const body = requireCardCommentBody(data.body);
 
   if (!cardId) {
     throw new HttpsError("invalid-argument", "cardId는 필수입니다.");

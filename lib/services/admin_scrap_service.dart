@@ -201,6 +201,19 @@ class AdminScrapService {
     return AdminScrapValidationResult.fromJson(_mapValue(result.data));
   }
 
+  static Future<AdminScrapValidationResult> validateUserScrapPost({
+    required String url,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'validateUserScrapPost',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 70)),
+    );
+    final result = await callable.call(<String, dynamic>{
+      'url': url,
+    });
+    return AdminScrapValidationResult.fromJson(_mapValue(result.data));
+  }
+
   static Future<AdminScrapPublishResult> publishScrapPost({
     required String url,
     required AdminScrapSource source,
@@ -217,6 +230,23 @@ class AdminScrapService {
       'sourceType': source.functionValue,
       'boardId': boardId,
       'authorUid': authorUid,
+      'titleOverride': titleOverride,
+    });
+    return AdminScrapPublishResult.fromJson(_mapValue(result.data));
+  }
+
+  static Future<AdminScrapPublishResult> publishUserScrapPost({
+    required String url,
+    required String boardId,
+    required String titleOverride,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'publishUserScrapPost',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 100)),
+    );
+    final result = await callable.call(<String, dynamic>{
+      'url': url,
+      'boardId': boardId,
       'titleOverride': titleOverride,
     });
     return AdminScrapPublishResult.fromJson(_mapValue(result.data));

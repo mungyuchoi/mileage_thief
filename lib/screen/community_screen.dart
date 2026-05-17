@@ -36,10 +36,12 @@ class CommunityScreen extends StatefulWidget {
     super.key,
     this.initialBoardId = 'all',
     this.initialBoardName,
+    this.refreshNonce = 0,
   });
 
   final String initialBoardId;
   final String? initialBoardName;
+  final int refreshNonce;
 
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
@@ -254,6 +256,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (oldWidget.initialBoardId != widget.initialBoardId ||
         oldWidget.initialBoardName != widget.initialBoardName) {
       _applyInitialBoardSelection(reload: true);
+    } else if (oldWidget.refreshNonce != widget.refreshNonce) {
+      _refreshPosts();
     }
   }
 

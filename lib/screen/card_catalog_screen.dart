@@ -771,6 +771,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
 
   final CardCatalogService _service = CardCatalogService();
   late final Future<bool> _adminFuture = _canAccessAdmin();
+  late final Stream<CatalogCardProduct?> _productStream;
   late final TabController _tabController;
   List<_CardFeedPost> _feedPosts = <_CardFeedPost>[];
   bool _sharing = false;
@@ -782,6 +783,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
   @override
   void initState() {
     super.initState();
+    _productStream = _service.watchProduct(widget.cardId);
     AnalyticsService.instance.logScreenView(
       'card_detail',
       screenClass: 'CardProductDetailScreen',
@@ -814,7 +816,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<CatalogCardProduct?>(
-      stream: _service.watchProduct(widget.cardId),
+      stream: _productStream,
       builder: (context, snapshot) {
         final product = snapshot.data;
         if (product != null && !_viewIncremented) {
@@ -823,6 +825,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
         }
         return Scaffold(
           backgroundColor: _cardPage,
+          resizeToAvoidBottomInset: false,
           floatingActionButton: product != null && _selectedTabIndex == 0
               ? FloatingActionButton.extended(
                   heroTag: 'card_feed_post_create_${product.id}',
@@ -966,7 +969,8 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
     AsyncSnapshot<CatalogCardProduct?> snapshot,
     CatalogCardProduct? product,
   ) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
+    if (snapshot.connectionState == ConnectionState.waiting &&
+        product == null) {
       return const Center(child: CircularProgressIndicator());
     }
     if (snapshot.hasError) {
@@ -986,9 +990,12 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
 
     final issuerUrl = _cardIssuerUrl(product);
     final showSangtechPanel = _estimatedPerMileKRW(product) > 0;
-    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.padding.bottom;
+    final keyboardInset =
+        _selectedTabIndex == 3 ? mediaQuery.viewInsets.bottom : 0.0;
     final contentBottomPadding =
-        (_selectedTabIndex == 0 ? 96.0 : 28.0) + bottomInset;
+        (_selectedTabIndex == 0 ? 96.0 : 28.0) + bottomInset + keyboardInset;
 
     return RefreshIndicator(
       color: _cardAccent,
@@ -996,6 +1003,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
       onRefresh: _loadFeedPosts,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
         padding: EdgeInsets.fromLTRB(16, 16, 16, contentBottomPadding),
         children: [
           _CardHeroImage(product: product, service: _service),
@@ -3212,7 +3220,7 @@ class _CardTravelPanel extends StatelessWidget {
         title: '마일리지/라운지/여행',
         children: [
           Text(
-            '아직 여행 특화 정보가 정리되지 않았습니다. 댓글과 토론으로 실제 혜택을 검증해보세요.',
+            '아직 여행 특화 정보가 정리되지 않았습니다. 댓글과 피드로 실제 혜택을 검증해보세요.',
             style: TextStyle(
               color: _cardMuted,
               fontWeight: FontWeight.w400,
@@ -4028,13 +4036,79 @@ class _CardCommentsSection extends StatefulWidget {
 
 class _CardCommentsSectionState extends State<_CardCommentsSection> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _inputFocusNode = FocusNode();
+  final GlobalKey _inputKey = GlobalKey();
+  late Stream<List<CardProductComment>> _commentsStream;
   CardProductComment? _replyTarget;
   bool _sending = false;
 
   @override
+  void initState() {
+    super.initState();
+    _commentsStream = widget.service.watchComments(widget.cardId);
+    _inputFocusNode.addListener(_handleInputFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _CardCommentsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cardId != widget.cardId ||
+        oldWidget.service != widget.service) {
+      _commentsStream = widget.service.watchComments(widget.cardId);
+      _replyTarget = null;
+      _controller.clear();
+    }
+  }
+
+  @override
   void dispose() {
+    _inputFocusNode.removeListener(_handleInputFocusChanged);
+    _inputFocusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleInputFocusChanged() {
+    if (_inputFocusNode.hasFocus) {
+      _scheduleEnsureInputVisible();
+    }
+  }
+
+  void _scheduleEnsureInputVisible() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureInputVisible();
+    });
+    Future<void>.delayed(const Duration(milliseconds: 280), () {
+      if (mounted && _inputFocusNode.hasFocus) {
+        _ensureInputVisible();
+      }
+    });
+  }
+
+  void _ensureInputVisible() {
+    final inputContext = _inputKey.currentContext;
+    if (!mounted || inputContext == null) return;
+
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+    final visibleFraction = screenHeight <= 0
+        ? 0.6
+        : ((screenHeight - keyboardInset) / screenHeight).clamp(0.35, 1.0);
+    final alignment = (visibleFraction - 0.16).clamp(0.16, 0.72);
+
+    Scrollable.ensureVisible(
+      inputContext,
+      alignment: alignment,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _startReply(CardProductComment comment) {
+    setState(() => _replyTarget = comment);
+    _inputFocusNode.requestFocus();
+    _scheduleEnsureInputVisible();
   }
 
   @override
@@ -4043,9 +4117,10 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
       title: '댓글',
       children: [
         StreamBuilder<List<CardProductComment>>(
-          stream: widget.service.watchComments(widget.cardId),
+          stream: _commentsStream,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Center(child: CircularProgressIndicator()),
@@ -4091,7 +4166,7 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
                 for (final comment in parents) ...[
                   _CardCommentTile(
                     comment: comment,
-                    onReply: () => setState(() => _replyTarget = comment),
+                    onReply: () => _startReply(comment),
                   ),
                   for (final reply in repliesByParent[comment.id] ??
                       const <CardProductComment>[])
@@ -4142,10 +4217,18 @@ class _CardCommentsSectionState extends State<_CardCommentsSection> {
         Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: TextField(
+            key: _inputKey,
             controller: _controller,
+            focusNode: _inputFocusNode,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
             minLines: 1,
             maxLines: 4,
             maxLength: 2000,
+            scrollPadding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 96,
+            ),
+            onTap: _scheduleEnsureInputVisible,
             decoration: InputDecoration(
               counterText: '',
               hintText: _replyTarget == null ? '댓글을 입력하세요' : '답글을 입력하세요',
