@@ -8,12 +8,12 @@ import 'package:mileage_thief/screen/cancellation_notification_screen.dart';
 import '../custom/CustomDropdownButton2.dart';
 import '../model/search_model.dart';
 import '../model/search_history.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/analytics_service.dart';
 
 class SearchDanScreen extends StatefulWidget {
   const SearchDanScreen({super.key});
@@ -66,10 +66,18 @@ class _SearchDanScreen extends State<SearchDanScreen> {
     _banner = BannerAd(
       listener: BannerAdListener(
         onAdFailedToLoad: (Ad ad, LoadAdError err) {
-          FirebaseAnalytics.instance
-              .logEvent(name: "banner", parameters: {'error': err.message});
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'dan_mileage_search',
+            'ad_format': 'banner',
+            'error_code': err.code,
+          });
         },
-        onAdLoaded: (_) {},
+        onAdLoaded: (_) {
+          AnalyticsService.instance.logAction('ad_loaded', params: {
+            'screen': 'dan_mileage_search',
+            'ad_format': 'banner',
+          });
+        },
       ),
       size: AdSize.banner,
       adUnitId: AdHelper.bannerDanAdUnitId,
@@ -110,7 +118,13 @@ class _SearchDanScreen extends State<SearchDanScreen> {
               });
               _loadFullScreenAd();
             },
-            onAdImpression: (InterstitialAd ad) => print('전면광고 impression 발생'),
+            onAdImpression: (InterstitialAd ad) {
+              print('전면광고 impression 발생');
+              AnalyticsService.instance.logAction('ad_impression', params: {
+                'screen': 'dan_mileage_search',
+                'ad_format': 'interstitial',
+              });
+            },
           );
           setState(() {
             _interstitialAd = ad;
@@ -176,8 +190,11 @@ class _SearchDanScreen extends State<SearchDanScreen> {
         },
         onAdFailedToLoad: (err) {
           print('Failed to load a rewarded ad: ${err.message}');
-          FirebaseAnalytics.instance
-              .logEvent(name: "rewards", parameters: {'error': err.message});
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'dan_mileage_search',
+            'ad_format': 'rewarded',
+            'error_code': err.code,
+          });
         },
       ),
     );

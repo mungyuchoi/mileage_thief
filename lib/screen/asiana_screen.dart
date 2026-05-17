@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -10,6 +9,7 @@ import '../custom/CustomDropdownButton2.dart';
 import '../model/search_history.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/analytics_service.dart';
 import 'package:mileage_thief/screen/detail/search_detail_asiana_round_screen.dart';
 import 'package:mileage_thief/screen/detail/search_detail_asiana_one_way_screen.dart';
 import '../model/search_model.dart';
@@ -63,10 +63,18 @@ class _AsianaScreenState extends State<AsianaScreen> {
     _banner = BannerAd(
       listener: BannerAdListener(
         onAdFailedToLoad: (Ad ad, LoadAdError err) {
-          FirebaseAnalytics.instance
-              .logEvent(name: "banner", parameters: {'error': err.message});
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'asiana_mileage_search',
+            'ad_format': 'banner',
+            'error_code': err.code,
+          });
         },
-        onAdLoaded: (_) {},
+        onAdLoaded: (_) {
+          AnalyticsService.instance.logAction('ad_loaded', params: {
+            'screen': 'asiana_mileage_search',
+            'ad_format': 'banner',
+          });
+        },
       ),
       size: AdSize.banner,
       adUnitId: AdHelper.bannerAdUnitId,
@@ -97,7 +105,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
               });
               _loadFullScreenAd();
             },
-            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+            onAdFailedToShowFullScreenContent:
+                (InterstitialAd ad, AdError error) {
               print('전면광고 표시 실패: $error');
               ad.dispose();
               setState(() {
@@ -105,7 +114,13 @@ class _AsianaScreenState extends State<AsianaScreen> {
               });
               _loadFullScreenAd();
             },
-            onAdImpression: (InterstitialAd ad) => print('전면광고 impression 발생'),
+            onAdImpression: (InterstitialAd ad) {
+              print('전면광고 impression 발생');
+              AnalyticsService.instance.logAction('ad_impression', params: {
+                'screen': 'asiana_mileage_search',
+                'ad_format': 'interstitial',
+              });
+            },
           );
           setState(() {
             _interstitialAd = ad;
@@ -125,7 +140,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
     final currentUser = AuthService.currentUser;
     if (currentUser != null) {
       try {
-        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
+        final userData =
+            await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
         setState(() {
           _counter = userData?['peanutCount'] ?? 0;
         });
@@ -166,8 +182,11 @@ class _AsianaScreenState extends State<AsianaScreen> {
         },
         onAdFailedToLoad: (err) {
           print('Failed to load a rewarded ad: ${err.message}');
-          FirebaseAnalytics.instance
-              .logEvent(name: "rewards", parameters: {'error': err.message});
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'asiana_mileage_search',
+            'ad_format': 'rewarded',
+            'error_code': err.code,
+          });
         },
       ),
     );
@@ -210,7 +229,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
 
       final currentUser = AuthService.currentUser;
       if (currentUser != null) {
-        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+        UserService.updatePeanutCount(currentUser.uid, _counter)
+            .catchError((error) {
           print('Firestore 업데이트 오류: $error');
         });
       }
@@ -234,7 +254,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
       prefs.setInt('counter', _counter);
       final currentUser = AuthService.currentUser;
       if (currentUser != null) {
-        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+        UserService.updatePeanutCount(currentUser.uid, _counter)
+            .catchError((error) {
           print('Firestore 업데이트 오류: $error');
         });
       }
@@ -251,7 +272,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
 
       final currentUser = AuthService.currentUser;
       if (currentUser != null) {
-        UserService.updatePeanutCount(currentUser.uid, _counter).catchError((error) {
+        UserService.updatePeanutCount(currentUser.uid, _counter)
+            .catchError((error) {
           print('Firestore 업데이트 오류: $error');
         });
       }
@@ -287,7 +309,7 @@ class _AsianaScreenState extends State<AsianaScreen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
+        child: Column(
       children: [
         Container(
           width: double.infinity,
@@ -469,7 +491,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                               padding: EdgeInsets.only(left: 8.0, top: 4.0),
                               child: Text(
                                 '도착지를 선택하세요.',
-                                style: TextStyle(color: Colors.red, fontSize: 12),
+                                style:
+                                    TextStyle(color: Colors.red, fontSize: 12),
                               ),
                             ),
                         ],
@@ -486,55 +509,71 @@ class _AsianaScreenState extends State<AsianaScreen> {
                   Padding(
                     padding: const EdgeInsets.all(4),
                     child: Column(
-                      children: searchHistory.map((h) => Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[200],
-                            foregroundColor: Colors.black54,
-                            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              departureSelectedValue = h.departure;
-                              arrivalSelectedValue = h.arrival;
-                              startYear = h.startYear;
-                              startMonth = h.startMonth;
-                              endYear = h.endYear;
-                              endMonth = h.endMonth;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                      children: searchHistory
+                          .map((h) => Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey[200],
+                                    foregroundColor: Colors.black54,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 0, horizontal: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      departureSelectedValue = h.departure;
+                                      arrivalSelectedValue = h.arrival;
+                                      startYear = h.startYear;
+                                      startMonth = h.startMonth;
+                                      endYear = h.endYear;
+                                      endMonth = h.endMonth;
+                                    });
+                                  },
+                                  child: Row(
                                     children: [
-                                      Text('${h.departure} - ${h.arrival}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
-                                      Text('${h.startYear}.${h.startMonth} ~ ${h.endYear}.${h.endMonth}', style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                                      Expanded(
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                  '${h.departure} - ${h.arrival}',
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.black54)),
+                                              Text(
+                                                  '${h.startYear}.${h.startMonth} ~ ${h.endYear}.${h.endMonth}',
+                                                  style: const TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.black54)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close,
+                                            size: 16, color: Colors.black54),
+                                        splashRadius: 10,
+                                        onPressed: () {
+                                          setState(() {
+                                            searchHistory.remove(h);
+                                          });
+                                        },
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 16, color: Colors.black54),
-                                splashRadius: 10,
-                                onPressed: () {
-                                  setState(() {
-                                    searchHistory.remove(h);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      )).toList(),
+                              ))
+                          .toList(),
                     ),
                   ),
                   const Padding(padding: EdgeInsets.all(4)),
@@ -554,7 +593,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                             initialDate: DateTime(startYear, startMonth),
                             firstDate: DateTime(DateTime.now().year, 1),
                             lastDate: DateTime(DateTime.now().year + 1, 12),
-                            monthPickerDialogSettings: MonthPickerDialogSettings(
+                            monthPickerDialogSettings:
+                                MonthPickerDialogSettings(
                               dialogSettings: PickerDialogSettings(
                                 dialogBackgroundColor: Colors.white,
                                 locale: Locale('ko'),
@@ -593,7 +633,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                           }
                         },
                         style: TextButton.styleFrom(
-                            foregroundColor: Colors.white, backgroundColor: Color(0x80D60815),
+                            foregroundColor: Colors.white,
+                            backgroundColor: Color(0x80D60815),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "시작일 $startYear년 $startMonth월",
@@ -607,7 +648,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                             initialDate: DateTime(endYear, endMonth),
                             firstDate: DateTime(DateTime.now().year, 1),
                             lastDate: DateTime(DateTime.now().year + 1, 12),
-                            monthPickerDialogSettings: MonthPickerDialogSettings(
+                            monthPickerDialogSettings:
+                                MonthPickerDialogSettings(
                               dialogSettings: PickerDialogSettings(
                                 dialogBackgroundColor: Colors.white,
                                 locale: Locale('ko'),
@@ -646,7 +688,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                           }
                         },
                         style: TextButton.styleFrom(
-                            foregroundColor: Colors.white, backgroundColor: Color(0x80D60815),
+                            foregroundColor: Colors.white,
+                            backgroundColor: Color(0x80D60815),
                             minimumSize: const Size(110, 40)),
                         child: Text(
                           "종료일 $endYear년 $endMonth월",
@@ -677,22 +720,32 @@ class _AsianaScreenState extends State<AsianaScreen> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   backgroundColor: Colors.white,
-                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
-                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  title: const Text('알림',
+                                      style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?',
+                                      style: TextStyle(color: Colors.black)),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
-                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('아니오',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('예',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                   ],
                                 ),
                               );
                               if (result == true) {
-                                setState(() { isLoading = true; });
+                                setState(() {
+                                  isLoading = true;
+                                });
                                 try {
                                   _interstitialAd?.show();
                                 } finally {
@@ -702,8 +755,11 @@ class _AsianaScreenState extends State<AsianaScreen> {
                                 }
                               }
                             },
-                      label: const Text("+ 10", style: TextStyle(color: Colors.black87)),
-                      backgroundColor: _interstitialAd == null ? Colors.grey[300] : Colors.white,
+                      label: const Text("+ 10",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor: _interstitialAd == null
+                          ? Colors.grey[300]
+                          : Colors.white,
                       elevation: 3,
                       icon: Image.asset('asset/img/peanut.png', scale: 19),
                     ),
@@ -715,16 +771,24 @@ class _AsianaScreenState extends State<AsianaScreen> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   backgroundColor: Colors.white,
-                                  title: const Text('알림', style: TextStyle(color: Colors.black)),
-                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?', style: TextStyle(color: Colors.black)),
+                                  title: const Text('알림',
+                                      style: TextStyle(color: Colors.black)),
+                                  content: const Text('광고를 시청하고 땅콩을 얻겠습니까?',
+                                      style: TextStyle(color: Colors.black)),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
-                                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('아니오',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      child: const Text('예', style: TextStyle(color: Colors.black)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('예',
+                                          style:
+                                              TextStyle(color: Colors.black)),
                                     ),
                                   ],
                                 ),
@@ -733,19 +797,23 @@ class _AsianaScreenState extends State<AsianaScreen> {
                                 showRewardsAd();
                               }
                             },
-                      label: const Text("+ 30", style: TextStyle(color: Colors.black87)),
-                      backgroundColor: _rewardedAd == null ? Colors.grey[300] : Colors.white,
+                      label: const Text("+ 30",
+                          style: TextStyle(color: Colors.black87)),
+                      backgroundColor:
+                          _rewardedAd == null ? Colors.grey[300] : Colors.white,
                       elevation: 3,
                       icon: Image.asset('asset/img/peanuts.png', scale: 19),
                     ),
                   ],
                 ),
                 const Padding(padding: EdgeInsets.all(3)),
-                const Text("땅콩을 모아서 커뮤니티의 다양한 혜택을 누려보세요!", textAlign: TextAlign.center),
+                const Text("땅콩을 모아서 커뮤니티의 다양한 혜택을 누려보세요!",
+                    textAlign: TextAlign.center),
                 const Padding(padding: EdgeInsets.all(3)),
                 ElevatedButton(
                   onPressed: () async {
-                    if (arrivalSelectedValue == null || arrivalSelectedValue!.isEmpty) {
+                    if (arrivalSelectedValue == null ||
+                        arrivalSelectedValue!.isEmpty) {
                       setState(() {
                         _arrivalError = true;
                       });
@@ -757,7 +825,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                       );
                       return;
                     }
-                    if (departureSelectedValue == null || departureSelectedValue!.isEmpty) {
+                    if (departureSelectedValue == null ||
+                        departureSelectedValue!.isEmpty) {
                       Fluttertoast.showToast(
                         msg: "출발지를 선택해주세요.",
                         gravity: ToastGravity.BOTTOM,
@@ -769,7 +838,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                     final int requiredPeanuts = (xAlign == loginAlign) ? 3 : 5;
                     if (_counter < requiredPeanuts) {
                       Fluttertoast.showToast(
-                        msg: "땅콩이 ${requiredPeanuts - _counter}개 부족합니다. 광고를 시청하고 땅콩을 얻으세요!",
+                        msg:
+                            "땅콩이 ${requiredPeanuts - _counter}개 부족합니다. 광고를 시청하고 땅콩을 얻으세요!",
                         gravity: ToastGravity.BOTTOM,
                         backgroundColor: Colors.black54,
                         textColor: Colors.white,
@@ -781,40 +851,38 @@ class _AsianaScreenState extends State<AsianaScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                            SearchDetailAsianaOneWayScreen(
-                              SearchModel(
-                                isRoundTrip: xAlign == -1.0 ? true : false,
-                                departureAirport: departureSelectedValue,
-                                arrivalAirport: arrivalSelectedValue,
-                                seatClass: '',
-                                searchDate: dateSelectedValue,
-                                startMonth: startMonth.toString().padLeft(2, '0'),
-                                startYear: startYear.toString(),
-                                endMonth: endMonth.toString().padLeft(2, '0'),
-                                endYear: endYear.toString(),
-                              ),
+                          builder: (context) => SearchDetailAsianaOneWayScreen(
+                            SearchModel(
+                              isRoundTrip: xAlign == -1.0 ? true : false,
+                              departureAirport: departureSelectedValue,
+                              arrivalAirport: arrivalSelectedValue,
+                              seatClass: '',
+                              searchDate: dateSelectedValue,
+                              startMonth: startMonth.toString().padLeft(2, '0'),
+                              startYear: startYear.toString(),
+                              endMonth: endMonth.toString().padLeft(2, '0'),
+                              endYear: endYear.toString(),
                             ),
+                          ),
                         ),
                       );
                     } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                            SearchDetailAsianaRoundScreen(
-                              SearchModel(
-                                isRoundTrip: xAlign == -1.0 ? true : false,
-                                departureAirport: departureSelectedValue,
-                                arrivalAirport: arrivalSelectedValue,
-                                seatClass: '',
-                                searchDate: dateSelectedValue,
-                                startMonth: startMonth.toString().padLeft(2, '0'),
-                                startYear: startYear.toString(),
-                                endMonth: endMonth.toString().padLeft(2, '0'),
-                                endYear: endYear.toString(),
-                              ),
+                          builder: (context) => SearchDetailAsianaRoundScreen(
+                            SearchModel(
+                              isRoundTrip: xAlign == -1.0 ? true : false,
+                              departureAirport: departureSelectedValue,
+                              arrivalAirport: arrivalSelectedValue,
+                              seatClass: '',
+                              searchDate: dateSelectedValue,
+                              startMonth: startMonth.toString().padLeft(2, '0'),
+                              startYear: startYear.toString(),
+                              endMonth: endMonth.toString().padLeft(2, '0'),
+                              endYear: endYear.toString(),
                             ),
+                          ),
                         ),
                       );
                     }
@@ -835,7 +903,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                     });
                   },
                   style: TextButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: const Color(0xFFD60815),
+                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFD60815),
                       minimumSize: const Size.fromHeight(56.0)),
                   child: Stack(
                     alignment: Alignment.center,
@@ -853,7 +922,8 @@ class _AsianaScreenState extends State<AsianaScreen> {
                           padding: const EdgeInsets.only(right: 16.0),
                           child: Text(
                             '땅콩 ${xAlign == loginAlign ? 3 : 5}개',
-                            style: const TextStyle(fontSize: 12, color: Colors.white70),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white70),
                           ),
                         ),
                       ),
@@ -865,4 +935,4 @@ class _AsianaScreenState extends State<AsianaScreen> {
       ],
     ));
   }
-} 
+}

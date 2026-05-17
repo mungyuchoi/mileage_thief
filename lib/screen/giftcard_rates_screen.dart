@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import '../const/colors.dart';
 import '../models/community_label_model.dart';
+import '../services/analytics_service.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
@@ -732,6 +733,12 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'giftcard_rates',
+      screenClass: 'GiftcardBrandRatesPage',
+      source: 'screen_init',
+      parameters: {'giftcard_id': widget.giftcardId},
+    );
     _tabController = TabController(length: _tabs.length, vsync: this);
     _tabController.addListener(_handleTabChanged);
     _loadGiftcard();
@@ -750,6 +757,12 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     final nextIndex = _tabController.index;
     if (_selectedTabIndex == nextIndex) return;
     setState(() => _selectedTabIndex = nextIndex);
+    const tabNames = ['feed', 'rates', 'info'];
+    AnalyticsService.instance.logAction('sub_tab_selected', params: {
+      'tab_group': 'giftcard_rates',
+      'tab': tabNames[nextIndex],
+      'giftcard_id': widget.giftcardId,
+    });
   }
 
   Future<void> _refreshAll() async {
@@ -935,8 +948,15 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
   }
 
   void _openFeedPost(_GiftcardFeedPost post) {
+    AnalyticsService.instance.logAction('giftcard_rate_open', params: {
+      'screen': 'giftcard_rates',
+      'giftcard_id': widget.giftcardId,
+      'post_id': post.postId,
+      'source': 'feed_post',
+    });
     Navigator.of(context).push(
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_detail'),
         builder: (_) => CommunityDetailScreen(
           postId: post.postId,
           dateString: post.dateString,
@@ -952,6 +972,11 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
       Fluttertoast.showToast(msg: '로그인이 필요합니다.');
       return;
     }
+    AnalyticsService.instance.logAction('community_create_start', params: {
+      'screen': 'giftcard_rates',
+      'giftcard_id': widget.giftcardId,
+      'source': 'giftcard_feed',
+    });
 
     final giftcardLabel = CommunityLabel.giftcard(
       giftcardId: widget.giftcardId,
@@ -959,6 +984,7 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     );
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_post_create'),
         builder: (_) => CommunityPostCreateSimpleScreen(
           initialBoardId: 'deal',
           initialBoardName: '적립/카드 혜택',

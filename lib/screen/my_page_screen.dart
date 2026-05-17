@@ -8,6 +8,7 @@ import 'dart:io';
 import '../services/auth_service.dart';
 import 'branch/branch_detail_screen.dart';
 import '../services/user_service.dart';
+import '../services/analytics_service.dart';
 import '../helper/AdHelper.dart';
 import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
@@ -180,6 +181,11 @@ class _MyPageScreenState extends State<MyPageScreen>
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'profile',
+      screenClass: 'MyPageScreen',
+      source: 'screen_init',
+    );
     WidgetsBinding.instance.addObserver(this);
     _initializeTabController();
     _loadUserProfile();
@@ -670,6 +676,9 @@ class _MyPageScreenState extends State<MyPageScreen>
 
       // 6. 로컬 상태 업데이트
       await _loadUserProfile(); // 전체 프로필 다시 로드하여 변경된 데이터 반영
+      AnalyticsService.instance.logAction('profile_image_updated', params: {
+        'screen': 'profile',
+      });
 
       setState(() {
         _isUpdatingProfileImage = false;
@@ -682,6 +691,12 @@ class _MyPageScreenState extends State<MyPageScreen>
         ),
       );
     } catch (e) {
+      AnalyticsService.instance.logResult(
+        'profile_image_updated',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'screen': 'profile'},
+      );
       print('프로필 이미지 업데이트 오류: $e');
       setState(() {
         _isUpdatingProfileImage = false;
@@ -980,6 +995,9 @@ class _MyPageScreenState extends State<MyPageScreen>
 
       // 4. 로컬 상태 업데이트
       await _loadUserProfile(); // 전체 프로필 다시 로드하여 변경된 데이터 반영
+      AnalyticsService.instance.logAction('display_name_updated', params: {
+        'screen': 'profile',
+      });
 
       setState(() {
         _isUpdatingDisplayName = false;
@@ -992,6 +1010,12 @@ class _MyPageScreenState extends State<MyPageScreen>
         ),
       );
     } catch (e) {
+      AnalyticsService.instance.logResult(
+        'display_name_updated',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'screen': 'profile'},
+      );
       setState(() {
         _isUpdatingDisplayName = false;
       });
@@ -1187,11 +1211,20 @@ class _MyPageScreenState extends State<MyPageScreen>
       request: AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
+          AnalyticsService.instance.logAction('ad_loaded', params: {
+            'screen': 'profile',
+            'ad_format': 'banner',
+          });
           setState(() {
             _isMyPageBannerAdLoaded = true;
           });
         },
         onAdFailedToLoad: (ad, error) {
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'profile',
+            'ad_format': 'banner',
+            'error_code': error.code,
+          });
           ad.dispose();
         },
       ),
@@ -1314,10 +1347,25 @@ class _MyPageScreenState extends State<MyPageScreen>
       request: AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
+          AnalyticsService.instance.logAction('ad_loaded', params: {
+            'screen': 'profile',
+            'ad_format': 'interstitial',
+          });
           _interstitialAd = ad;
           ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdImpression: (InterstitialAd ad) {
+              AnalyticsService.instance.logAction('ad_impression', params: {
+                'screen': 'profile',
+                'ad_format': 'interstitial',
+              });
+            },
             onAdDismissedFullScreenContent: (InterstitialAd ad) {
               _givePeanuts(10);
+              AnalyticsService.instance.logAction('ad_reward_granted', params: {
+                'screen': 'profile',
+                'ad_format': 'interstitial',
+                'reward_qty_bucket': AnalyticsService.quantityBucket(10),
+              });
               ad.dispose();
               setState(() {
                 _interstitialAd = null;
@@ -1335,6 +1383,11 @@ class _MyPageScreenState extends State<MyPageScreen>
           );
         },
         onAdFailedToLoad: (LoadAdError error) {
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'profile',
+            'ad_format': 'interstitial',
+            'error_code': error.code,
+          });
           _interstitialAd = null;
         },
       ),
@@ -1348,8 +1401,18 @@ class _MyPageScreenState extends State<MyPageScreen>
       request: AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
+          AnalyticsService.instance.logAction('ad_loaded', params: {
+            'screen': 'profile',
+            'ad_format': 'rewarded',
+          });
           _rewardedAd = ad;
           ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdImpression: (RewardedAd ad) {
+              AnalyticsService.instance.logAction('ad_impression', params: {
+                'screen': 'profile',
+                'ad_format': 'rewarded',
+              });
+            },
             onAdDismissedFullScreenContent: (RewardedAd ad) {
               ad.dispose();
               setState(() {
@@ -1367,6 +1430,11 @@ class _MyPageScreenState extends State<MyPageScreen>
           );
         },
         onAdFailedToLoad: (LoadAdError error) {
+          AnalyticsService.instance.logAction('ad_failed', params: {
+            'screen': 'profile',
+            'ad_format': 'rewarded',
+            'error_code': error.code,
+          });
           _rewardedAd = null;
         },
       ),
@@ -1486,6 +1554,15 @@ class _MyPageScreenState extends State<MyPageScreen>
                         ? () {
                             Navigator.of(context).pop();
                             _rewardedAd?.show(onUserEarnedReward: (_, reward) {
+                              AnalyticsService.instance.logAction(
+                                'ad_reward_granted',
+                                params: {
+                                  'screen': 'profile',
+                                  'ad_format': 'rewarded',
+                                  'reward_qty_bucket':
+                                      AnalyticsService.quantityBucket(30),
+                                },
+                              );
                               _givePeanuts(30);
                             });
                           }
@@ -1547,6 +1624,9 @@ class _MyPageScreenState extends State<MyPageScreen>
 
       // 광고 없애기 활성화
       await AdRemovalUtils.activateAdRemoval();
+      AnalyticsService.instance.logAction('ad_removal_activated', params: {
+        'screen': 'profile',
+      });
 
       // UI 업데이트
       await _checkAdRemovalStatus();
@@ -1583,9 +1663,15 @@ class _MyPageScreenState extends State<MyPageScreen>
     final user = FirebaseAuth.instance.currentUser;
     return GestureDetector(
       onTap: () async {
+        AnalyticsService.instance.logAction('my_card_dashboard_open', params: {
+          'source': 'profile',
+        });
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const MyCardDashboardScreen()),
+          MaterialPageRoute(
+            settings: const RouteSettings(name: 'my_card_dashboard'),
+            builder: (_) => const MyCardDashboardScreen(),
+          ),
         );
         if (mounted) setState(() {});
       },
@@ -2351,9 +2437,13 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
     return GestureDetector(
       onTap: () async {
+        AnalyticsService.instance.logAction('level_detail_open', params: {
+          'screen': 'profile',
+        });
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
+            settings: const RouteSettings(name: 'level_detail'),
             builder: (context) => LevelDetailScreen(userProfile: userProfile!),
           ),
         );
@@ -2408,9 +2498,13 @@ class _MyPageScreenState extends State<MyPageScreen>
     final currentEffect = userProfile!["currentSkyEffect"] as String?;
     return GestureDetector(
       onTap: () async {
+        AnalyticsService.instance.logAction('sky_effect_open', params: {
+          'screen': 'profile',
+        });
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
+            settings: const RouteSettings(name: 'sky_effect'),
             builder: (context) => SkyEffectScreen(userProfile: userProfile!),
           ),
         );

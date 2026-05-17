@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../services/analytics_service.dart';
+
 class GiftSellScreen extends StatefulWidget {
   final String? editSaleId;
   const GiftSellScreen({super.key, this.editSaleId});
@@ -32,6 +34,12 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'gift_sell',
+      screenClass: 'GiftSellScreen',
+      source: 'screen_init',
+      parameters: {'mode': widget.editSaleId == null ? 'create' : 'edit'},
+    );
     _loadOpenLots();
     _loadBranches();
     _sellUnitController.addListener(_onSellUnitChanged);
@@ -449,9 +457,22 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
       Fluttertoast.showToast(
           msg: widget.editSaleId == null ? '판매가 저장되었습니다.' : '판매가 수정되었습니다.');
+      AnalyticsService.instance.logAction('gift_sell_saved', params: {
+        'mode': widget.editSaleId == null ? 'create' : 'edit',
+        'branch_id': _selectedBranchId ?? '',
+        'qty': qty,
+        'sell_total': sellTotal,
+        'buy_total': buyTotal,
+      });
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       Fluttertoast.showToast(msg: '저장 실패: $e');
+      AnalyticsService.instance.logResult(
+        'gift_sell_failed',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'mode': widget.editSaleId == null ? 'create' : 'edit'},
+      );
     } finally {
       if (mounted)
         setState(() {

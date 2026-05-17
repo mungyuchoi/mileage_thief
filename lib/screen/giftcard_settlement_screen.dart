@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../const/colors.dart';
 import '../models/giftcard_settlement_calculator.dart';
+import '../services/analytics_service.dart';
 
 class GiftcardSettlementScreen extends StatefulWidget {
   final String? initialSettlementId;
@@ -88,6 +89,12 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'giftcard_settlement',
+      screenClass: 'GiftcardSettlementScreen',
+      source: widget.initialSettlementId == null ? 'screen_init' : 'detail',
+      parameters: {'entity_id': widget.initialSettlementId},
+    );
     _lines = <_SettlementLineDraft>[_SettlementLineDraft()];
     _initialize();
   }
@@ -848,6 +855,17 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       final summary = _currentSummary();
       final actualDepositTotal =
           _completed ? _asInt(_actualDepositController.text) : null;
+      AnalyticsService.instance
+          .logAction('giftcard_settlement_calculated', params: {
+        'screen': 'giftcard_settlement',
+        'mode': _editingSettlementId == null ? 'create' : 'edit',
+        'status': _completed ? 'completed' : 'planned',
+        'expected_total': summary.expectedTotal,
+        'actual_deposit_total': actualDepositTotal,
+        'qty_bucket': AnalyticsService.quantityBucket(summary.totalQuantity),
+        'line_count_bucket': AnalyticsService.quantityBucket(_lines.length),
+        'has_branch': branch != null,
+      });
       final docId = _editingSettlementId ??
           'settlement_${DateTime.now().millisecondsSinceEpoch}';
       final ref = FirebaseFirestore.instance
@@ -890,6 +908,14 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       };
 
       await ref.set(payload, SetOptions(merge: true));
+      AnalyticsService.instance.logAction('giftcard_settlement_saved', params: {
+        'screen': 'giftcard_settlement',
+        'entity_id': docId,
+        'mode': _editingSettlementId == null ? 'create' : 'edit',
+        'status': _completed ? 'completed' : 'planned',
+        'expected_total': summary.expectedTotal,
+        'qty_bucket': AnalyticsService.quantityBucket(summary.totalQuantity),
+      });
       if (!mounted) return;
       Fluttertoast.showToast(
           msg: _completed ? '정산 기록이 완료되었습니다.' : '정산 예정이 저장되었습니다.');
@@ -902,6 +928,12 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         _editingSettlementId = docId;
       });
     } catch (e) {
+      AnalyticsService.instance.logResult(
+        'giftcard_settlement_saved',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'screen': 'giftcard_settlement'},
+      );
       Fluttertoast.showToast(msg: '저장 실패: $e');
     } finally {
       if (mounted && !didPopAfterSave) {
@@ -1490,9 +1522,15 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
   }
 
   Future<void> _openSettlementDetail(String settlementId) async {
+    AnalyticsService.instance.logAction('giftcard_ledger_item_open', params: {
+      'screen': 'giftcard_settlement',
+      'entity_id': settlementId,
+      'source': 'history',
+    });
     await Navigator.push<bool>(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'giftcard_settlement_detail'),
         builder: (_) => GiftcardSettlementDetailScreen(
           settlementId: settlementId,
         ),

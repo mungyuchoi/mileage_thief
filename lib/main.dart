@@ -4,11 +4,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
+import 'services/notification_preference_service.dart';
 import 'services/branch_service.dart';
 import 'services/share_intent_service.dart';
+import 'services/analytics_service.dart';
 import 'screen/splash_screen.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_chat_screen.dart';
@@ -183,32 +184,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   debugPrint("Handling a background message: ${message.messageId}");
 
-  // 개별 알림 설정 확인
-  SharedPreferences prefs = await SharedPreferences.getInstance();
   final type = message.data['type'];
-  bool specificNotificationEnabled = true;
-
-  switch (type) {
-    case 'post_like':
-      specificNotificationEnabled =
-          prefs.getBool('post_like_notification') ?? true;
-      break;
-    case 'post_comment':
-      specificNotificationEnabled =
-          prefs.getBool('post_comment_notification') ?? true;
-      break;
-    case 'comment_reply':
-      specificNotificationEnabled =
-          prefs.getBool('comment_reply_notification') ?? true;
-      break;
-    case 'comment_like':
-      specificNotificationEnabled =
-          prefs.getBool('comment_like_notification') ?? true;
-      break;
-    case 'radar_match':
-      specificNotificationEnabled = prefs.getBool('radar_notification') ?? true;
-      break;
-  }
+  final specificNotificationEnabled =
+      await NotificationPreferenceService.isLocalEnabledForRemoteMessage(
+    message.data,
+  );
 
   if (!specificNotificationEnabled) {
     debugPrint('$type 알림이 꺼져있어서 백그라운드 알림을 생성하지 않습니다.');
@@ -272,6 +252,8 @@ class _MyAppState extends State<MyApp> {
       }
       try {
         await _firebaseInitialization;
+        await AnalyticsService.instance.startUserTracking();
+        unawaited(AnalyticsService.instance.logAction('app_open'));
         await NotificationService().initialize();
         NotificationService().setupTokenRefresh();
       } catch (e) {
@@ -289,6 +271,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
+      navigatorObservers: [AnalyticsService.routeObserver],
       debugShowCheckedModeBanner: false,
       initialRoute: '/splash',
       onGenerateInitialRoutes: (_) => [

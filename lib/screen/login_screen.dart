@@ -8,6 +8,7 @@ import '../helper/AdHelper.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/fcm_service.dart';
+import '../services/analytics_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'my_page_screen.dart';
 
@@ -58,6 +59,30 @@ class _LoginScreenState extends State<LoginScreen> {
   void _goHome() {
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
+  Future<void> _recordLoginSuccess(String provider, User user) async {
+    await AnalyticsService.instance.setUserId(user.uid);
+    await AnalyticsService.instance.setUserProperties({
+      'is_logged_in': true,
+      'auth_provider': provider,
+    });
+    await AnalyticsService.instance.logAction('login_success', params: {
+      'provider': provider,
+    });
+  }
+
+  Future<void> _recordLoginFailure(
+    String provider,
+    Object error, {
+    String result = 'failed',
+  }) {
+    return AnalyticsService.instance.logResult(
+      'login_failed',
+      result: result,
+      errorCode: error.runtimeType.toString(),
+      params: {'provider': provider},
+    );
   }
 
   @override
@@ -121,6 +146,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final provider = Platform.isIOS ? 'apple' : 'google';
+    await AnalyticsService.instance.logAction('login_attempt', params: {
+      'provider': provider,
+      'source': 'platform',
+    });
     _setLoading(true);
 
     try {
@@ -171,10 +201,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         _getCurrentUser();
+        await _recordLoginSuccess(provider, user);
 
         _completeLogin();
+      } else {
+        await _recordLoginFailure(provider, 'cancelled', result: 'cancelled');
       }
     } catch (e) {
+      await _recordLoginFailure(provider, e);
       Fluttertoast.showToast(
         msg: "로그인 실패: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -190,6 +224,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleAppleLogin() async {
+    const provider = 'apple';
+    await AnalyticsService.instance.logAction('login_attempt', params: {
+      'provider': provider,
+    });
     _setLoading(true);
 
     try {
@@ -240,10 +278,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         _getCurrentUser();
+        await _recordLoginSuccess(provider, user);
 
         _completeLogin();
+      } else {
+        await _recordLoginFailure(provider, 'cancelled', result: 'cancelled');
       }
     } catch (e) {
+      await _recordLoginFailure(provider, e);
       Fluttertoast.showToast(
         msg: "Apple 로그인 실패: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -259,6 +301,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
+    const provider = 'google';
+    await AnalyticsService.instance.logAction('login_attempt', params: {
+      'provider': provider,
+    });
     _setLoading(true);
 
     try {
@@ -309,10 +355,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         _getCurrentUser();
+        await _recordLoginSuccess(provider, user);
 
         _completeLogin();
+      } else {
+        await _recordLoginFailure(provider, 'cancelled', result: 'cancelled');
       }
     } catch (e) {
+      await _recordLoginFailure(provider, e);
       Fluttertoast.showToast(
         msg: "Google 로그인 실패: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -328,6 +378,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleNaverLogin() async {
+    const provider = 'naver';
+    await AnalyticsService.instance.logAction('login_attempt', params: {
+      'provider': provider,
+    });
     _setLoading(true);
 
     try {
@@ -378,10 +432,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         _getCurrentUser();
+        await _recordLoginSuccess(provider, user);
 
         _completeLogin();
+      } else {
+        await _recordLoginFailure(provider, 'cancelled', result: 'cancelled');
       }
     } catch (e, st) {
+      await _recordLoginFailure(provider, e);
       print('[네이버 로그인] UI catch error: $e');
       print('[네이버 로그인] UI catch stack: $st');
       Fluttertoast.showToast(
@@ -399,6 +457,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleKakaoLogin() async {
+    const provider = 'kakao';
+    await AnalyticsService.instance.logAction('login_attempt', params: {
+      'provider': provider,
+    });
     _setLoading(true);
 
     try {
@@ -444,10 +506,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         _getCurrentUser();
+        await _recordLoginSuccess(provider, user);
 
         _completeLogin();
+      } else {
+        await _recordLoginFailure(provider, 'cancelled', result: 'cancelled');
       }
     } catch (e) {
+      await _recordLoginFailure(provider, e);
       Fluttertoast.showToast(
         msg: "Kakao 로그인 실패: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -505,6 +571,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogout() async {
     try {
       await AuthService.signOut();
+      await AnalyticsService.instance.clearUserId();
+      await AnalyticsService.instance
+          .setUserProperties({'is_logged_in': false});
+      await AnalyticsService.instance.logAction('logout', params: {
+        'source': 'login_screen',
+      });
       _getCurrentUser();
 
       Fluttertoast.showToast(
@@ -517,6 +589,12 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } catch (e) {
+      await AnalyticsService.instance.logResult(
+        'logout',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'source': 'login_screen'},
+      );
       Fluttertoast.showToast(
         msg: "로그아웃 실패: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -601,6 +679,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Firestore에서 displayName만 업데이트
       await UserService.updateDisplayName(user.uid, newName);
+      await AnalyticsService.instance
+          .logAction('display_name_updated', params: {
+        'screen': 'login_screen',
+      });
 
       // 로컬 상태 업데이트
       setState(() {
@@ -617,6 +699,12 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 16.0,
       );
     } catch (e) {
+      await AnalyticsService.instance.logResult(
+        'display_name_updated',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'screen': 'login_screen'},
+      );
       Fluttertoast.showToast(
         msg: "이름 변경 실패: ${e.toString()}",
         toastLength: Toast.LENGTH_SHORT,
@@ -772,6 +860,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (confirm != true) return;
 
     try {
+      await AnalyticsService.instance
+          .logAction('account_delete_requested', params: {
+        'source': 'login_screen',
+      });
       // Firestore 유저 데이터 삭제
       await UserService.deleteUserFromFirestore(user.uid);
       // Firebase Auth 계정 삭제
@@ -779,6 +871,12 @@ class _LoginScreenState extends State<LoginScreen> {
       // SharedPreferences(로컬) 데이터 삭제
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      await AnalyticsService.instance.logAction('account_deleted', params: {
+        'source': 'login_screen',
+      });
+      await AnalyticsService.instance.clearUserId();
+      await AnalyticsService.instance
+          .setUserProperties({'is_logged_in': false});
       // 상태 초기화
       setState(() {
         _currentUser = null;
@@ -795,6 +893,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       // 로그인 화면으로 이동(필요시)
     } catch (e) {
+      await AnalyticsService.instance.logResult(
+        'account_deleted',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'source': 'login_screen'},
+      );
       Fluttertoast.showToast(
         msg: "회원탈퇴 실패: " + e.toString(),
         toastLength: Toast.LENGTH_SHORT,
@@ -1122,6 +1226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     FloatingActionButton.extended(
+                      heroTag: null,
                       onPressed: _interstitialAd == null || _isAdLoading
                           ? null
                           : () async {
@@ -1175,6 +1280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Image.asset('asset/img/peanut.png', scale: 19),
                     ),
                     FloatingActionButton.extended(
+                      heroTag: null,
                       onPressed: _rewardedAd == null
                           ? null
                           : () async {

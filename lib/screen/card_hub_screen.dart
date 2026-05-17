@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../const/colors.dart';
 import '../models/card_product_model.dart';
+import '../services/analytics_service.dart';
 import '../services/card_catalog_service.dart';
 import 'card_catalog_screen.dart';
 
@@ -44,9 +45,25 @@ class CardHubScreen extends StatefulWidget {
 class _CardHubScreenState extends State<CardHubScreen> {
   final CardCatalogService _service = CardCatalogService();
 
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreenView(
+      'card_hub',
+      screenClass: 'CardHubScreen',
+      source: 'screen_init',
+    );
+  }
+
   Future<void> _openDetail(CatalogCardProduct product) async {
+    AnalyticsService.instance.logAction('card_recommendation_open', params: {
+      'screen': 'card_hub',
+      'card_id': product.id,
+      'source': 'card_hub',
+    });
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'card_detail'),
         builder: (_) => CardProductDetailScreen(
           cardId: product.id,
           onRequireLogin: widget.onRequireLogin,
@@ -56,8 +73,14 @@ class _CardHubScreenState extends State<CardHubScreen> {
   }
 
   Future<void> _openDetailCommunity(CatalogCardProduct product) async {
+    AnalyticsService.instance.logAction('card_feed_post_open', params: {
+      'screen': 'card_hub',
+      'card_id': product.id,
+      'source': 'community_preview',
+    });
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'card_detail'),
         builder: (_) => CardProductDetailScreen(
           cardId: product.id,
           onRequireLogin: widget.onRequireLogin,
@@ -71,8 +94,14 @@ class _CardHubScreenState extends State<CardHubScreen> {
     CardIssuer? issuer,
     List<CatalogCardProduct> products,
   ) async {
+    AnalyticsService.instance.logAction('card_hub_filter_changed', params: {
+      'screen': 'card_hub',
+      'filter': 'issuer',
+      'result_count_bucket': AnalyticsService.quantityBucket(products.length),
+    });
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'card_issuer_cards'),
         builder: (_) => _IssuerCardListScreen(
           issuerName: issuerName,
           issuer: issuer,
@@ -1489,6 +1518,16 @@ class _EventTile extends StatelessWidget {
     if (url == null || url.trim().isEmpty) return;
     final uri = Uri.tryParse(url);
     if (uri == null) return;
+    AnalyticsService.instance.logAction('card_apply_clicked', params: {
+      'screen': 'card_hub',
+      'source': 'event',
+      'entity_id': event.id,
+    });
+    AnalyticsService.instance.logAction('external_link_open', params: {
+      'screen': 'card_hub',
+      'source': 'card_event',
+      'entity_id': event.id,
+    });
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

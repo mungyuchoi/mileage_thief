@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../services/deal_notification_service.dart';
+import '../../services/analytics_service.dart';
 import '../../milecatch_rich_editor/src/constants/color_constants.dart';
 import '../../utils/deal_image_utils.dart';
 import 'widgets/city_selection_modal.dart';
@@ -15,10 +16,12 @@ class DealNotificationRegisterScreen extends StatefulWidget {
   const DealNotificationRegisterScreen({super.key});
 
   @override
-  State<DealNotificationRegisterScreen> createState() => _DealNotificationRegisterScreenState();
+  State<DealNotificationRegisterScreen> createState() =>
+      _DealNotificationRegisterScreenState();
 }
 
-class _DealNotificationRegisterScreenState extends State<DealNotificationRegisterScreen> {
+class _DealNotificationRegisterScreenState
+    extends State<DealNotificationRegisterScreen> {
   int _currentStep = 1;
   final int _totalSteps = 4;
 
@@ -83,7 +86,12 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
       {'code': 'SG', 'city': '싱가포르(창이공항)', 'airport': 'SIN', 'country': '싱가포르'},
       {'code': 'HK', 'city': '홍콩', 'airport': 'HKG', 'country': '홍콩'},
       {'code': 'TW', 'city': '대만(타이페이)', 'airport': 'TPE', 'country': '대만'},
-      {'code': 'BN', 'city': '반다르세리베가완(브루나이)', 'airport': 'BWN', 'country': '브루나이'},
+      {
+        'code': 'BN',
+        'city': '반다르세리베가완(브루나이)',
+        'airport': 'BWN',
+        'country': '브루나이'
+      },
     ],
     '중국': [
       {'code': 'CN', 'city': '제남', 'airport': 'TNA', 'country': '중국'},
@@ -104,7 +112,12 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
       {'code': 'MP', 'city': '사이판', 'airport': 'SPN', 'country': '사이판'},
     ],
     '유럽': [
-      {'code': 'IT', 'city': '로마(레오나르도다빈치)', 'airport': 'FCO', 'country': '이탈리아'},
+      {
+        'code': 'IT',
+        'city': '로마(레오나르도다빈치)',
+        'airport': 'FCO',
+        'country': '이탈리아'
+      },
       {'code': 'PT', 'city': '리스본', 'airport': 'LIS', 'country': '포르투갈'},
       {'code': 'IT', 'city': '밀라노(말펜사)', 'airport': 'MXP', 'country': '이탈리아'},
       {'code': 'ES', 'city': '바르셀로나', 'airport': 'BCN', 'country': '스페인'},
@@ -135,6 +148,11 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'deal_notification_register',
+      screenClass: 'DealNotificationRegisterScreen',
+      source: 'screen_init',
+    );
     _loadUserPeanutCount();
     _priceController.addListener(_onPriceChanged);
   }
@@ -149,7 +167,8 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
     final currentUser = AuthService.currentUser;
     if (currentUser != null) {
       try {
-        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
+        final userData =
+            await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
         setState(() {
           _userPeanutCount = userData?['peanutCount'] ?? 0;
         });
@@ -199,16 +218,28 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
 
   void _nextStep() {
     if (_canProceedToNextStep() && _currentStep < _totalSteps) {
+      final previousStep = _currentStep;
       setState(() {
         _currentStep++;
+      });
+      AnalyticsService.instance.logAction('deal_alert_step_changed', params: {
+        'from_step': previousStep,
+        'to_step': _currentStep,
+        'direction': 'next',
       });
     }
   }
 
   void _previousStep() {
     if (_currentStep > 1) {
+      final previousStep = _currentStep;
       setState(() {
         _currentStep--;
+      });
+      AnalyticsService.instance.logAction('deal_alert_step_changed', params: {
+        'from_step': previousStep,
+        'to_step': _currentStep,
+        'direction': 'previous',
       });
     }
   }
@@ -307,6 +338,18 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
         peanutUsed: peanutUsed,
       );
 
+      AnalyticsService.instance.logAction('deal_alert_created', params: {
+        'screen': 'deal_notification_register',
+        'origin_mode': _isAllOriginAirports ? 'all' : 'selected',
+        'destination_count_bucket':
+            AnalyticsService.quantityBucket(_selectedAirports.length),
+        'country_count_bucket':
+            AnalyticsService.quantityBucket(_selectedCountries.length),
+        'days_bucket': AnalyticsService.quantityBucket(_selectedDays),
+        'max_price': _maxPrice,
+        'peanut_used_bucket': AnalyticsService.quantityBucket(peanutUsed),
+      });
+
       // 로딩 닫기
       Navigator.of(context).pop();
 
@@ -321,6 +364,13 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
       // 페이지 닫기
       Navigator.of(context).pop();
     } catch (e) {
+      AnalyticsService.instance.logResult(
+        'deal_alert_failed',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'screen': 'deal_notification_register'},
+      );
+
       // 로딩 닫기
       Navigator.of(context).pop();
 
@@ -427,7 +477,9 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
                   color: !_isAllOriginAirports && _selectedOriginAirport != null
                       ? ColorConstants.milecatchBrown
                       : Colors.grey[300]!,
-                  width: !_isAllOriginAirports && _selectedOriginAirport != null ? 2 : 1,
+                  width: !_isAllOriginAirports && _selectedOriginAirport != null
+                      ? 2
+                      : 1,
                 ),
               ),
               child: Row(
@@ -436,9 +488,10 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
                     !_isAllOriginAirports && _selectedOriginAirport != null
                         ? Icons.check_circle
                         : Icons.radio_button_unchecked,
-                    color: !_isAllOriginAirports && _selectedOriginAirport != null
-                        ? ColorConstants.milecatchBrown
-                        : Colors.grey,
+                    color:
+                        !_isAllOriginAirports && _selectedOriginAirport != null
+                            ? ColorConstants.milecatchBrown
+                            : Colors.grey,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -555,7 +608,8 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
               children: _selectedAirports.map((airport) {
                 final cityData = _findCityData(airport);
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: ColorConstants.milecatchBrown.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -745,9 +799,8 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected
-                ? ColorConstants.milecatchBrown
-                : Colors.grey[300]!,
+            color:
+                isSelected ? ColorConstants.milecatchBrown : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -757,9 +810,8 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isSelected
-                  ? ColorConstants.milecatchBrown
-                  : Colors.black87,
+              color:
+                  isSelected ? ColorConstants.milecatchBrown : Colors.black87,
             ),
           ),
         ),
@@ -770,7 +822,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
   Widget _buildBottomBar() {
     // 현재 단계에서 추가되는 땅콩 계산
     int currentStepPeanuts = 0;
-    
+
     // Step 1: 출발지 선택
     if (_currentStep == 1) {
       if (_isAllOriginAirports) {
@@ -779,19 +831,19 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
         currentStepPeanuts = 1;
       }
     }
-    
+
     // Step 2: 도착지 선택
     if (_currentStep == 2) {
       currentStepPeanuts = _selectedAirports.length * 5;
     }
-    
+
     // Step 3: 가격 설정
     if (_currentStep == 3) {
       if (_maxPrice != null && _maxPrice! > 0) {
         currentStepPeanuts = 10;
       }
     }
-    
+
     // Step 4: 기간 선택
     if (_currentStep == 4) {
       if (_selectedDays == 7) {
@@ -802,10 +854,10 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
         currentStepPeanuts = 20;
       }
     }
-    
+
     // 전체 누적 합계 계산
     int totalPeanuts = 0;
-    
+
     // Step 1: 출발지 선택
     if (_currentStep >= 1) {
       if (_isAllOriginAirports) {
@@ -814,19 +866,19 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
         totalPeanuts += 1;
       }
     }
-    
+
     // Step 2: 도착지 선택
     if (_currentStep >= 2) {
       totalPeanuts += _selectedAirports.length * 5;
     }
-    
+
     // Step 3: 가격 설정
     if (_currentStep >= 3) {
       if (_maxPrice != null && _maxPrice! > 0) {
         totalPeanuts += 10;
       }
     }
-    
+
     // Step 4: 기간 선택
     if (_currentStep >= 4) {
       if (_selectedDays == 7) {
@@ -837,7 +889,7 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
         totalPeanuts += 20;
       }
     }
-    
+
     final canProceed = _canProceedToNextStep();
 
     return Container(
@@ -1014,4 +1066,3 @@ class _DealNotificationRegisterScreenState extends State<DealNotificationRegiste
     );
   }
 }
-

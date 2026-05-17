@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import '../screen/radar_notification_screen.dart';
+import 'analytics_service.dart';
+import 'notification_preference_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -99,6 +100,7 @@ class NotificationService {
 
     // FCM 토큰 저장
     await _saveFCMToken();
+    await NotificationPreferenceService.loadPreferences();
   }
 
   /// 로컬 알림 초기화
@@ -143,37 +145,11 @@ class NotificationService {
   void _handleForegroundMessage(RemoteMessage message) async {
     print('포그라운드 메시지 수신: ${message.data}');
 
-    // 개별 알림 설정 확인
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     final type = message.data['type'];
-    bool specificNotificationEnabled = true;
-
-    switch (type) {
-      case 'post_like':
-        specificNotificationEnabled =
-            prefs.getBool('post_like_notification') ?? true;
-        break;
-      case 'post_comment':
-        specificNotificationEnabled =
-            prefs.getBool('post_comment_notification') ?? true;
-        break;
-      case 'comment_reply':
-        specificNotificationEnabled =
-            prefs.getBool('comment_reply_notification') ?? true;
-        break;
-      case 'comment_like':
-        specificNotificationEnabled =
-            prefs.getBool('comment_like_notification') ?? true;
-        break;
-      case 'radar_match':
-        specificNotificationEnabled =
-            prefs.getBool('radar_notification') ?? true;
-        break;
-      case 'giftcard_deal':
-        specificNotificationEnabled =
-            prefs.getBool('radar_notification') ?? true;
-        break;
-    }
+    final specificNotificationEnabled =
+        await NotificationPreferenceService.isEnabledForRemoteMessage(
+      message.data,
+    );
 
     if (specificNotificationEnabled) {
       // 개별 알림이 켜져있을 때만 로컬 알림 생성
@@ -221,12 +197,14 @@ class NotificationService {
   /// 백그라운드 메시지 처리 (앱이 백그라운드에서 알림 클릭)
   void _handleBackgroundMessage(RemoteMessage message) {
     print('백그라운드 메시지 클릭: ${message.data}');
+    _logNotificationOpen(message.data, 'fcm_background');
     _handleDeepLink(message.data);
   }
 
   /// 초기 메시지 처리 (앱이 종료된 상태에서 알림 클릭으로 실행)
   void _handleInitialMessage(RemoteMessage message) {
     print('초기 메시지: ${message.data}');
+    _logNotificationOpen(message.data, 'fcm_initial');
     // 앱이 완전히 로드된 후 딥링크 처리
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleDeepLink(message.data);
@@ -244,6 +222,7 @@ class NotificationService {
         final data = _parsePayloadToMap(payloadString);
 
         if (data.isNotEmpty) {
+          _logNotificationOpen(data, 'local_notification');
           _handleDeepLink(data);
         }
       } catch (e) {
@@ -268,6 +247,13 @@ class NotificationService {
   /// 딥링크 처리
   void _handleDeepLink(Map<String, dynamic> data) {
     final type = data['type'];
+    AnalyticsService.instance.logAction('deep_link_open', params: {
+      'source': 'notification',
+      'notification_type': type?.toString(),
+      'post_id': data['postId']?.toString(),
+      'board_id': data['boardId']?.toString(),
+      'deal_id': (data['dealId'] ?? data['giftcardDealId'])?.toString(),
+    });
 
     if (type == 'radar_match') {
       _navigateToRadarNotifications();
@@ -331,6 +317,17 @@ class NotificationService {
         print('알 수 없는 알림 타입: $type');
         _showErrorToast('알 수 없는 알림 타입입니다.');
     }
+  }
+
+  void _logNotificationOpen(Map<String, dynamic> data, String source) {
+    AnalyticsService.instance.logAction('notification_open', params: {
+      'source': source,
+      'notification_type': data['type']?.toString(),
+      'channel_id': data['channelId']?.toString(),
+      'post_id': data['postId']?.toString(),
+      'board_id': data['boardId']?.toString(),
+      'deal_id': (data['dealId'] ?? data['giftcardDealId'])?.toString(),
+    });
   }
 
   /// 게시글 상세 페이지로 이동 (좋아요 알림)

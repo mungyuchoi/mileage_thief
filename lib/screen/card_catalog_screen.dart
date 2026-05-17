@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../const/colors.dart';
 import '../models/card_product_model.dart';
 import '../models/community_label_model.dart';
+import '../services/analytics_service.dart';
 import '../services/branch_service.dart';
 import '../services/card_catalog_service.dart';
 import '../widgets/segment_tab_bar.dart';
@@ -50,6 +51,16 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
   String _statusFilter = 'active';
   String _sortOrder = 'popular';
   bool _importing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreenView(
+      'card_catalog',
+      screenClass: 'CardCatalogScreen',
+      source: 'screen_init',
+    );
+  }
 
   @override
   void dispose() {
@@ -161,9 +172,34 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
       controller: _queryController,
       statusFilter: _statusFilter,
       sortOrder: _sortOrder,
-      onStatusChanged: (value) => setState(() => _statusFilter = value),
-      onSortChanged: (value) => setState(() => _sortOrder = value),
-      onQueryChanged: (_) => setState(() {}),
+      onStatusChanged: (value) {
+        setState(() => _statusFilter = value);
+        AnalyticsService.instance
+            .logAction('card_catalog_filter_changed', params: {
+          'screen': 'card_catalog',
+          'filter': 'status',
+          'value': value,
+        });
+      },
+      onSortChanged: (value) {
+        setState(() => _sortOrder = value);
+        AnalyticsService.instance
+            .logAction('card_catalog_filter_changed', params: {
+          'screen': 'card_catalog',
+          'filter': 'sort',
+          'value': value,
+        });
+      },
+      onQueryChanged: (value) {
+        setState(() {});
+        final trimmed = value.trim();
+        if (trimmed.length >= 2) {
+          AnalyticsService.instance.logAction('card_search_performed', params: {
+            'screen': 'card_catalog',
+            'query_length': trimmed.length,
+          });
+        }
+      },
     );
 
     if (isLoading && products.isEmpty) {
@@ -291,8 +327,14 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
   }
 
   Future<void> _openDetail(String cardId) async {
+    AnalyticsService.instance.logAction('card_detail_open', params: {
+      'screen': 'card_catalog',
+      'card_id': cardId,
+      'source': 'catalog_list',
+    });
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'card_detail'),
         builder: (_) => CardProductDetailScreen(
           cardId: cardId,
           onRequireLogin: widget.onRequireLogin,
@@ -686,8 +728,14 @@ class _CardRequestManageScreenState extends State<CardRequestManageScreen> {
   }
 
   Future<void> _openImported(String cardId) async {
+    AnalyticsService.instance.logAction('card_detail_open', params: {
+      'screen': 'card_catalog',
+      'card_id': cardId,
+      'source': 'import_result',
+    });
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'card_detail'),
         builder: (_) => CardProductDetailScreen(cardId: cardId),
       ),
     );
@@ -714,6 +762,12 @@ enum _CardDetailAction { like, share, edit, history }
 class _CardProductDetailScreenState extends State<CardProductDetailScreen>
     with SingleTickerProviderStateMixin {
   static const List<String> _tabs = ['피드', '정보', '혜택', '댓글'];
+  static const List<String> _tabAnalyticsNames = [
+    'feed',
+    'info',
+    'benefits',
+    'comments',
+  ];
 
   final CardCatalogService _service = CardCatalogService();
   late final Future<bool> _adminFuture = _canAccessAdmin();
@@ -728,6 +782,12 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'card_detail',
+      screenClass: 'CardProductDetailScreen',
+      source: 'screen_init',
+      parameters: {'card_id': widget.cardId},
+    );
     _tabController = TabController(length: _tabs.length, vsync: this);
     _tabController.addListener(_handleTabChanged);
     _loadFeedPosts();
@@ -744,6 +804,11 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
     final nextIndex = _tabController.index;
     if (_selectedTabIndex == nextIndex) return;
     setState(() => _selectedTabIndex = nextIndex);
+    AnalyticsService.instance.logAction('sub_tab_selected', params: {
+      'tab_group': 'card_detail',
+      'tab': _tabAnalyticsNames[nextIndex],
+      'card_id': widget.cardId,
+    });
   }
 
   @override
@@ -1313,8 +1378,15 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
   }
 
   void _openFeedPost(_CardFeedPost post) {
+    AnalyticsService.instance.logAction('card_feed_post_open', params: {
+      'screen': 'card_detail',
+      'card_id': widget.cardId,
+      'post_id': post.postId,
+      'board_id': post.boardId,
+    });
     Navigator.of(context).push(
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_detail'),
         builder: (_) => CommunityDetailScreen(
           postId: post.postId,
           dateString: post.dateString,
@@ -1380,6 +1452,15 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
       Fluttertoast.showToast(msg: '카드사 링크를 열 수 없습니다.');
       return;
     }
+    AnalyticsService.instance.logAction('issuer_link_open', params: {
+      'screen': 'card_detail',
+      'card_id': widget.cardId,
+    });
+    AnalyticsService.instance.logAction('external_link_open', params: {
+      'screen': 'card_detail',
+      'source': 'issuer_link',
+      'card_id': widget.cardId,
+    });
     try {
       final launched =
           await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -1414,6 +1495,10 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
   Future<void> _shareCard(CatalogCardProduct product) async {
     setState(() => _sharing = true);
     try {
+      AnalyticsService.instance.logAction('card_shared', params: {
+        'screen': 'card_detail',
+        'card_id': product.id,
+      });
       final imageUrl = product.mainDownloadUrl ??
           await _service.downloadUrlForStoragePath(product.mainStoragePath);
       final description = [
@@ -1449,6 +1534,11 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
     setState(() => _likeToggling = true);
     try {
       final result = await _service.toggleCardProductLike(cardId: product.id);
+      AnalyticsService.instance.logAction('card_liked', params: {
+        'screen': 'card_detail',
+        'card_id': product.id,
+        'state': result.liked ? 'on' : 'off',
+      });
       Fluttertoast.showToast(
         msg: result.liked ? '좋아요를 눌렀습니다.' : '좋아요를 취소했습니다.',
       );

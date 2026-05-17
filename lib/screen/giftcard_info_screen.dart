@@ -10,6 +10,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mileage_thief/model/giftcard_info_data.dart';
 import 'package:mileage_thief/model/giftcard_period.dart';
+import 'package:mileage_thief/services/analytics_service.dart';
 import 'package:mileage_thief/services/giftcard_service.dart';
 import 'package:mileage_thief/services/user_service.dart';
 import 'package:mileage_thief/widgets/giftcard_daily_ledger.dart';
@@ -423,10 +424,16 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   List<Map<String, dynamic>> _userRankings = <Map<String, dynamic>>[];
   bool _rankingLoading = false;
   DateTime? _rankingUpdatedAt; // 랭킹 데이터 업데이트 시간
+  int _lastInfoTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'giftcard_info',
+      screenClass: 'GiftcardInfoScreen',
+      source: 'screen_init',
+    );
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -434,10 +441,24 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         _isCalendarScrolling = false;
         _isDailyListScrolling = false;
         _ensureLazyTabLoaded(_tabController.index);
+        if (_lastInfoTabIndex != _tabController.index) {
+          _lastInfoTabIndex = _tabController.index;
+          AnalyticsService.instance.logTabSelected(
+            'giftcard_info',
+            _infoTabAnalyticsName(_tabController.index),
+            source: 'giftcard_info_tab_bar',
+          );
+        }
       }
     });
     _load();
     _loadMinDataMonth(); // 가장 오래된 데이터 월 계산
+  }
+
+  String _infoTabAnalyticsName(int index) {
+    const names = ['dashboard', 'calendar', 'daily', 'ranking'];
+    if (index < 0 || index >= names.length) return 'unknown';
+    return names[index];
   }
 
   void _ensureLazyTabLoaded(int index) {
@@ -777,6 +798,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         currentPeanuts - _monthlyTrendExpansionPeanutCost,
       );
       await _loadMonthlyTrendExpandedData();
+      AnalyticsService.instance.logAction(
+        'giftcard_monthly_trend_expanded',
+        params: {'period_type': _periodType.name},
+      );
       if (mounted) {
         Fluttertoast.showToast(
           msg: '땅콩 ${_monthlyTrendExpansionPeanutCost}개가 사용되었습니다.',
@@ -1039,6 +1064,17 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     }
   }
 
+  void _logDashboardPeriodChanged() {
+    AnalyticsService.instance.logAction(
+      'giftcard_dashboard_period_changed',
+      params: {
+        'period_type': _periodType.name,
+        'year': _selectedYear,
+        'month': _selectedMonth.month,
+      },
+    );
+  }
+
   Future<void> _showMonthPicker() async {
     final DateTime now = DateTime.now();
     // lots/sales에서 가장 오래된 월 기준, 없으면 현재 월 기준
@@ -1122,6 +1158,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                     _rankingLoaded = false;
                   });
                   await _load();
+                  _logDashboardPeriodChanged();
                 },
               );
             } else if (mode == DashboardPeriodType.year) {
@@ -1153,6 +1190,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                         _rankingLoaded = false;
                       });
                       await _load();
+                      _logDashboardPeriodChanged();
                     },
                   );
                 },
@@ -1188,6 +1226,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                         _rankingLoaded = false;
                       });
                       await _load();
+                      _logDashboardPeriodChanged();
                       _ensureLazyTabLoaded(_tabController.index);
                     },
                   );
@@ -1640,9 +1679,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   }
 
   Future<void> _openKpiDetail(GiftcardKpiType kpiType) async {
+    AnalyticsService.instance.logAction(
+      'giftcard_kpi_open',
+      params: {'kpi_type': kpiType.name},
+    );
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'giftcard_kpi_detail'),
         builder: (_) => GiftcardKpiDetailScreen(
           kpiType: kpiType,
           periodType: _periodType,
@@ -1661,6 +1705,10 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     required String description,
   }) async {
     if (!mounted) return;
+    AnalyticsService.instance.logAction(
+      'giftcard_section_info_open',
+      params: {'section': title},
+    );
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -3178,6 +3226,14 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         _selectedGiftcardIdsForDaily = result;
         _rebuildDailyLedgerCache();
       });
+      AnalyticsService.instance.logAction(
+        'giftcard_daily_filter_applied',
+        params: {
+          'giftcard_count_bucket': AnalyticsService.quantityBucket(
+            result.isEmpty ? giftcardList.length : result.length,
+          ),
+        },
+      );
     }
   }
 
@@ -3502,17 +3558,27 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           physics: const AlwaysScrollableScrollPhysics(),
           onEdit: (entry) async {
+            AnalyticsService.instance.logAction(
+              'giftcard_ledger_item_open',
+              params: {
+                'entry_type':
+                    entry.type == GiftcardLedgerEntryType.buy ? 'buy' : 'sell',
+                'giftcard_id': (entry.raw['giftcardId'] ?? '').toString(),
+              },
+            );
             await _confirmAndConsumePeanutsThen(() async {
               if (entry.type == GiftcardLedgerEntryType.buy) {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
+                      settings: const RouteSettings(name: 'gift_buy'),
                       builder: (_) => GiftBuyScreen(editLotId: entry.id)),
                 );
               } else {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
+                      settings: const RouteSettings(name: 'gift_sell'),
                       builder: (_) => GiftSellScreen(editSaleId: entry.id)),
                 );
               }

@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../milecatch_rich_editor/src/constants/color_constants.dart';
 import '../../models/deal_model.dart';
+import '../../services/analytics_service.dart';
 import '../../services/deals_service.dart';
 import 'widgets/deal_card.dart';
 import 'widgets/departure_airport_modal.dart';
@@ -26,8 +27,9 @@ class FlightDealsScreen extends StatefulWidget {
 }
 
 class _FlightDealsScreenState extends State<FlightDealsScreen> {
-  static const String _kPriceChangeSortDialogDontShowKey = 'deals_price_change_sort_dialog_dont_show';
-  
+  static const String _kPriceChangeSortDialogDontShowKey =
+      'deals_price_change_sort_dialog_dont_show';
+
   String? _selectedOriginAirport = 'ICN'; // 기본값: 인천국제공항
   bool _isAllCitiesMode = false;
   List<String> _selectedDestAirports = []; // 선택된 도착지 공항들
@@ -37,8 +39,9 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
   List<String> _selectedAirlines = []; // 선택된 항공사
   List<String> _selectedAgencies = []; // 선택된 여행사
   String _sortBy = 'price'; // 기본: 가격 낮은순
-  final TextEditingController _destinationSearchController = TextEditingController();
-  
+  final TextEditingController _destinationSearchController =
+      TextEditingController();
+
   // 페이지네이션 관련 변수
   final ScrollController _scrollController = ScrollController();
   int _currentLimit = 20; // 초기 로드 개수
@@ -46,14 +49,19 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
   bool _hasMoreData = true; // 더 불러올 데이터가 있는지
   List<DealModel> _allDeals = []; // 모든 로드된 데이터
   StreamSubscription<List<DealModel>>? _dealsSubscription;
-  
+
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.instance.logScreenView(
+      'flight_deals',
+      screenClass: 'FlightDealsScreen',
+      source: 'screen_init',
+    ));
     _scrollController.addListener(_onScroll);
     _loadInitialDeals();
   }
-  
+
   @override
   void dispose() {
     _destinationSearchController.dispose();
@@ -61,9 +69,9 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
     _dealsSubscription?.cancel();
     super.dispose();
   }
-  
+
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       // 스크롤이 끝에서 200px 전에 도달하면 다음 페이지 로드
       if (!_isLoadingMore && _hasMoreData) {
@@ -71,19 +79,21 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
       }
     }
   }
-  
+
   void _loadInitialDeals() {
     _currentLimit = 20;
     _allDeals = [];
     _hasMoreData = true;
     _dealsSubscription?.cancel();
-    
+
     _dealsSubscription = DealsService.getDealsStream(
       originAirport: _isAllCitiesMode ? null : _selectedOriginAirport,
-      destAirports: _selectedDestAirports.isEmpty ? null : _selectedDestAirports,
+      destAirports:
+          _selectedDestAirports.isEmpty ? null : _selectedDestAirports,
       selectedMonths: _selectedMonths.isEmpty ? null : _selectedMonths,
       departureDate: _selectedDepartureDate,
-      travelDurations: _selectedTravelDurations.isEmpty ? null : _selectedTravelDurations,
+      travelDurations:
+          _selectedTravelDurations.isEmpty ? null : _selectedTravelDurations,
       airlines: _selectedAirlines.isEmpty ? null : _selectedAirlines,
       agencies: _selectedAgencies.isEmpty ? null : _selectedAgencies,
       sortBy: _sortBy,
@@ -98,22 +108,24 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
       }
     });
   }
-  
+
   void _loadMoreDeals() {
     if (_isLoadingMore || !_hasMoreData) return;
-    
+
     setState(() {
       _isLoadingMore = true;
       _currentLimit += 20;
     });
-    
+
     _dealsSubscription?.cancel();
     _dealsSubscription = DealsService.getDealsStream(
       originAirport: _isAllCitiesMode ? null : _selectedOriginAirport,
-      destAirports: _selectedDestAirports.isEmpty ? null : _selectedDestAirports,
+      destAirports:
+          _selectedDestAirports.isEmpty ? null : _selectedDestAirports,
       selectedMonths: _selectedMonths.isEmpty ? null : _selectedMonths,
       departureDate: _selectedDepartureDate,
-      travelDurations: _selectedTravelDurations.isEmpty ? null : _selectedTravelDurations,
+      travelDurations:
+          _selectedTravelDurations.isEmpty ? null : _selectedTravelDurations,
       airlines: _selectedAirlines.isEmpty ? null : _selectedAirlines,
       agencies: _selectedAgencies.isEmpty ? null : _selectedAgencies,
       sortBy: _sortBy,
@@ -198,7 +210,8 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
                   onTap: () => _showCitySelectionModal(),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
@@ -247,7 +260,8 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
@@ -256,7 +270,8 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.notifications_outlined, size: 18, color: Colors.grey[600]),
+                        Icon(Icons.notifications_outlined,
+                            size: 18, color: Colors.grey[600]),
                         const SizedBox(width: 6),
                         const Text(
                           '특가 알림',
@@ -343,12 +358,15 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
   }
 
   String _getScheduleLabel() {
-    if (_selectedMonths.isEmpty && _selectedTravelDurations.isEmpty && _selectedDepartureDate == null) {
+    if (_selectedMonths.isEmpty &&
+        _selectedTravelDurations.isEmpty &&
+        _selectedDepartureDate == null) {
       return '일정 선택';
     }
     final parts = <String>[];
     if (_selectedDepartureDate != null) {
-      parts.add('${_selectedDepartureDate!.month}/${_selectedDepartureDate!.day}');
+      parts.add(
+          '${_selectedDepartureDate!.month}/${_selectedDepartureDate!.day}');
     }
     if (_selectedMonths.isNotEmpty) {
       parts.add(_getMonthFilterLabel());
@@ -455,7 +473,8 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
     // 가격 변동순일 때 할인율이 있는 항목만 필터링
     final filteredDeals = _sortBy == 'price_change'
         ? _allDeals.where((deal) {
-            final discountPercent = deal.priceChangePercent ?? deal.discountPercent;
+            final discountPercent =
+                deal.priceChangePercent ?? deal.discountPercent;
             return discountPercent != null && discountPercent < 0;
           }).toList()
         : _allDeals;
@@ -466,7 +485,8 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
         hasScrollBody: false,
         child: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(ColorConstants.milecatchBrown),
+            valueColor:
+                AlwaysStoppedAnimation<Color>(ColorConstants.milecatchBrown),
           ),
         ),
       );
@@ -509,13 +529,14 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
                 padding: const EdgeInsets.all(20),
                 alignment: Alignment.center,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(ColorConstants.milecatchBrown),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      ColorConstants.milecatchBrown),
                 ),
               );
             }
             return const SizedBox.shrink();
           }
-          
+
           return DealCard(
             deal: filteredDeals[index],
             index: index + 1,
@@ -570,6 +591,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
             _selectedOriginAirport = airport;
           });
           _loadInitialDeals();
+          unawaited(_logFlightDealFilterApplied('origin_airport'));
         },
       ),
     );
@@ -591,6 +613,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
             }
           });
           _loadInitialDeals();
+          unawaited(_logFlightDealFilterApplied('destination_city'));
         },
       ),
     );
@@ -612,6 +635,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
             _selectedDepartureDate = departureDate;
           });
           _loadInitialDeals();
+          unawaited(_logFlightDealFilterApplied('schedule'));
         },
       ),
     );
@@ -650,9 +674,12 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
                   ),
                 ),
               ),
-              _buildSortOption('가격 낮은순', 'price', Icons.arrow_upward, setModalState),
-              _buildSortOption('가격 높은순', 'price_desc', Icons.arrow_downward, setModalState),
-              _buildSortOption('가격 변동순', 'price_change', Icons.swap_vert, setModalState),
+              _buildSortOption(
+                  '가격 낮은순', 'price', Icons.arrow_upward, setModalState),
+              _buildSortOption(
+                  '가격 높은순', 'price_desc', Icons.arrow_downward, setModalState),
+              _buildSortOption(
+                  '가격 변동순', 'price_change', Icons.swap_vert, setModalState),
               SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
             ],
           ),
@@ -661,10 +688,12 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
     );
   }
 
-  Widget _buildSortOption(String label, String value, IconData icon, StateSetter? setModalState) {
+  Widget _buildSortOption(
+      String label, String value, IconData icon, StateSetter? setModalState) {
     final isSelected = _sortBy == value;
     return ListTile(
-      leading: Icon(icon, color: isSelected ? ColorConstants.milecatchBrown : Colors.grey),
+      leading: Icon(icon,
+          color: isSelected ? ColorConstants.milecatchBrown : Colors.grey),
       title: Text(
         label,
         style: TextStyle(
@@ -685,10 +714,14 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
               return;
             }
           }
-          
+
           setState(() {
             _sortBy = value;
           });
+          unawaited(AnalyticsService.instance.logAction(
+            'flight_deal_sort_changed',
+            params: {'sort': value},
+          ));
           // 모달 상태도 업데이트
           setModalState?.call(() {});
           // 정렬 변경 시 즉시 데이터 재로드
@@ -711,6 +744,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
             _selectedAirlines = airlines;
           });
           _loadInitialDeals();
+          unawaited(_logFlightDealFilterApplied('airline'));
         },
       ),
     );
@@ -728,8 +762,20 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
             _selectedAgencies = agencies;
           });
           _loadInitialDeals();
+          unawaited(_logFlightDealFilterApplied('agency'));
         },
       ),
+    );
+  }
+
+  Future<void> _logFlightDealFilterApplied(String filterType) async {
+    await AnalyticsService.instance.logAction(
+      'flight_deal_filter_applied',
+      params: {
+        'filter_type': filterType,
+        'result_count_bucket':
+            AnalyticsService.quantityBucket(_allDeals.length),
+      },
     );
   }
 
@@ -741,7 +787,10 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
         return false;
       }
 
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
       if (peanuts < 10) {
         Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
@@ -804,8 +853,7 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(localDontShow),
+                      onPressed: () => Navigator.of(context).pop(localDontShow),
                       child: const Text(
                         '확인',
                         style: TextStyle(
@@ -842,9 +890,18 @@ class _FlightDealsScreenState extends State<FlightDealsScreen> {
           .update({'peanutCount': FieldValue.increment(-10)});
 
       Fluttertoast.showToast(msg: '땅콩 10개가 사용되었습니다.');
+      unawaited(AnalyticsService.instance.logResult(
+        'price_change_sort_unlocked',
+        result: 'success',
+      ));
       return true;
     } catch (_) {
       Fluttertoast.showToast(msg: '처리 중 오류가 발생했습니다.');
+      unawaited(AnalyticsService.instance.logResult(
+        'price_change_sort_unlocked',
+        result: 'failed',
+        errorCode: 'exception',
+      ));
       return false;
     }
   }
@@ -888,10 +945,10 @@ class _UpdateTimeTextState extends State<_UpdateTimeText> {
   String _getLastUpdateTimeText() {
     final now = DateTime.now();
     final currentHour = now.hour;
-    
+
     // 업데이트 시간 목록: 6시부터 2시간 간격으로 22시까지
     final updateHours = [6, 8, 10, 12, 14, 16, 18, 20, 22];
-    
+
     // 현재 시간보다 작거나 같은 가장 최근 업데이트 시간 찾기
     int? lastUpdateHour;
     for (int hour in updateHours.reversed) {
@@ -900,13 +957,13 @@ class _UpdateTimeTextState extends State<_UpdateTimeText> {
         break;
       }
     }
-    
+
     // 현재 시간이 6시 이전이면 어제 22시로 설정
     if (lastUpdateHour == null) {
       final yesterday = now.subtract(const Duration(days: 1));
       return '최근 업데이트: ${yesterday.year}년 ${yesterday.month}월 ${yesterday.day}일 22시';
     }
-    
+
     // 오늘 날짜로 표시
     return '최근 업데이트: ${now.year}년 ${now.month}월 ${now.day}일 ${lastUpdateHour}시';
   }
@@ -926,5 +983,3 @@ class _UpdateTimeTextState extends State<_UpdateTimeText> {
     );
   }
 }
-
-

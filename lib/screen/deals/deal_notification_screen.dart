@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../services/deal_notification_service.dart';
+import '../../services/analytics_service.dart';
 import '../../milecatch_rich_editor/src/constants/color_constants.dart';
 import '../../utils/deal_image_utils.dart';
 import 'deal_notification_register_screen.dart';
@@ -22,6 +23,11 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'deal_notification',
+      screenClass: 'DealNotificationScreen',
+      source: 'screen_init',
+    );
     _loadUserPeanutCount();
   }
 
@@ -29,7 +35,8 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
     final currentUser = AuthService.currentUser;
     if (currentUser != null) {
       try {
-        final userData = await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
+        final userData =
+            await UserService.getUserFromFirestoreWithLimit(currentUser.uid);
         setState(() {
           _userPeanutCount = userData?['peanutCount'] ?? 0;
         });
@@ -54,9 +61,15 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
       return;
     }
 
+    AnalyticsService.instance.logAction('deal_alert_step_changed', params: {
+      'screen': 'deal_notification',
+      'source': 'fab',
+      'to_step': 1,
+    });
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'deal_notification_register'),
         builder: (context) => const DealNotificationRegisterScreen(),
       ),
     ).then((_) {
@@ -263,7 +276,8 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
                 // 만료 상태
                 if (isExpired)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.red[50],
                       borderRadius: BorderRadius.circular(12),
@@ -280,7 +294,8 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
                   )
                 else if (isExpiringSoon)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.orange[50],
                       borderRadius: BorderRadius.circular(12),
@@ -364,7 +379,8 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isExpiringSoon ? Colors.orange : Colors.grey[600],
-                    fontWeight: isExpiringSoon ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isExpiringSoon ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],
@@ -411,12 +427,34 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
   String? _getCountryCodeByAirport(String airportCode) {
     // 간단한 매핑 (실제로는 더 정확한 데이터가 필요)
     final mapping = {
-      'LHR': 'GB', 'CDG': 'FR', 'FCO': 'IT', 'BCN': 'ES', 'MAD': 'ES',
-      'ZRH': 'CH', 'CPH': 'DK', 'FRA': 'DE', 'HEL': 'FI', 'IST': 'TR',
-      'ATH': 'GR', 'LIS': 'PT', 'MXP': 'IT',
-      'NRT': 'JP', 'HND': 'JP', 'KIX': 'JP', 'FUK': 'JP', 'OKA': 'JP',
-      'BKK': 'TH', 'DMK': 'TH', 'SIN': 'SG', 'HKG': 'HK', 'TPE': 'TW',
-      'SYD': 'AU', 'BNE': 'AU', 'JFK': 'US', 'LAX': 'US', 'HNL': 'US',
+      'LHR': 'GB',
+      'CDG': 'FR',
+      'FCO': 'IT',
+      'BCN': 'ES',
+      'MAD': 'ES',
+      'ZRH': 'CH',
+      'CPH': 'DK',
+      'FRA': 'DE',
+      'HEL': 'FI',
+      'IST': 'TR',
+      'ATH': 'GR',
+      'LIS': 'PT',
+      'MXP': 'IT',
+      'NRT': 'JP',
+      'HND': 'JP',
+      'KIX': 'JP',
+      'FUK': 'JP',
+      'OKA': 'JP',
+      'BKK': 'TH',
+      'DMK': 'TH',
+      'SIN': 'SG',
+      'HKG': 'HK',
+      'TPE': 'TW',
+      'SYD': 'AU',
+      'BNE': 'AU',
+      'JFK': 'US',
+      'LAX': 'US',
+      'HNL': 'US',
     };
     return mapping[airportCode];
   }
@@ -549,7 +587,8 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
                     ? null
                     : () {
                         Navigator.of(context).pop();
-                        _extendSubscription(subscriptionId, selectedDays, extensionPeanuts);
+                        _extendSubscription(
+                            subscriptionId, selectedDays, extensionPeanuts);
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorConstants.milecatchBrown,
@@ -587,14 +626,11 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? ColorConstants.milecatchBrown
-              : Colors.grey[50],
+          color: isSelected ? ColorConstants.milecatchBrown : Colors.grey[50],
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected
-                ? ColorConstants.milecatchBrown
-                : Colors.grey[300]!,
+            color:
+                isSelected ? ColorConstants.milecatchBrown : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -694,7 +730,8 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
     );
   }
 
-  Future<void> _extendSubscription(String subscriptionId, int days, int peanuts) async {
+  Future<void> _extendSubscription(
+      String subscriptionId, int days, int peanuts) async {
     final currentUser = AuthService.currentUser;
     if (currentUser == null) return;
 
@@ -778,4 +815,3 @@ class _DealNotificationScreenState extends State<DealNotificationScreen> {
     }
   }
 }
-

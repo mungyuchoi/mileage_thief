@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/giftcard_deal_model.dart';
+import '../services/analytics_service.dart';
 import '../services/branch_service.dart';
 import '../services/giftcard_deal_service.dart';
 import '../const/colors.dart';
@@ -76,6 +77,11 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'giftcard_deals',
+      screenClass: 'GiftcardDealsScreen',
+      source: 'screen_init',
+    );
     _dealsStream = GiftcardDealService.watchDeals();
     _initialDeals = GiftcardDealService.peekDeals();
   }
@@ -137,7 +143,17 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
                       return ChoiceChip(
                         label: Text(brand),
                         selected: selected,
-                        onSelected: (_) => setState(() => _brandFilter = brand),
+                        onSelected: (_) {
+                          setState(() => _brandFilter = brand);
+                          AnalyticsService.instance.logAction(
+                            'giftcard_rate_filter_applied',
+                            params: {
+                              'screen': 'giftcard_deals',
+                              'filter': 'brand',
+                              'value': brand == '전체' ? 'all' : 'brand',
+                            },
+                          );
+                        },
                         selectedColor: _giftDealAccentSoft,
                         checkmarkColor: _giftDealAccent,
                         labelStyle: TextStyle(
@@ -252,12 +268,28 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
       Fluttertoast.showToast(msg: '구매 링크가 올바르지 않습니다.');
       return;
     }
+    AnalyticsService.instance.logAction('giftcard_rate_open', params: {
+      'screen': 'giftcard_deals',
+      'deal_id': deal.id,
+      'source': 'buy_url',
+      'price_krw': deal.priceKRW,
+    });
+    AnalyticsService.instance.logAction('external_link_open', params: {
+      'screen': 'giftcard_deals',
+      'deal_id': deal.id,
+      'source': 'giftcard_deal_buy',
+    });
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       Fluttertoast.showToast(msg: '구매 링크를 열 수 없습니다.');
     }
   }
 
   Future<void> _shareDeal(GiftcardDeal deal) async {
+    AnalyticsService.instance.logAction('share_started', params: {
+      'screen': 'giftcard_deals',
+      'entity_type': 'giftcard_deal',
+      'deal_id': deal.id,
+    });
     final link = await BranchService().createGiftcardDealShareLink(
       dealId: deal.id,
       title: deal.displayTitle,

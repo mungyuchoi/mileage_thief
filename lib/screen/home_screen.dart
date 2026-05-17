@@ -12,10 +12,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/auth_service.dart';
+import '../services/analytics_service.dart';
 import '../services/user_service.dart';
 import '../const/colors.dart';
 import '../screen/community_screen.dart';
@@ -28,6 +28,7 @@ import 'giftcard_deals_screen.dart';
 import 'giftcard_info_screen.dart';
 import 'giftcard_settlement_screen.dart';
 import 'my_card_dashboard_screen.dart';
+import 'notification_settings_screen.dart';
 import 'useful_info_screen.dart';
 import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
@@ -175,44 +176,6 @@ class _MileageSettingActionTile extends StatelessWidget {
         color: Color(0xFFC0C5CF),
       ),
       onTap: onTap,
-    );
-  }
-}
-
-class _MileageSettingSwitchTile extends StatelessWidget {
-  const _MileageSettingSwitchTile({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      minLeadingWidth: 32,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      leading: Icon(icon, color: const Color(0xFFAEB4C0)),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Color(0xFF1D212C),
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      trailing: Switch.adaptive(
-        value: value,
-        activeThumbColor: Colors.black,
-        activeTrackColor: Colors.black26,
-        onChanged: onChanged,
-      ),
-      onTap: () => onChanged(!value),
     );
   }
 }
@@ -446,6 +409,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final GlobalKey<State<GiftcardInfoScreen>> _giftcardInfoKey =
       GlobalKey<State<GiftcardInfoScreen>>();
   late TabController _giftcardTabController; // 상품권 탭 전용 TabController
+  int _lastGiftcardTabIndex = 0;
   String _communityInitialBoardId = 'all';
   String _communityInitialBoardName = '전체글';
   static const String _giftcardGuideBoardId = 'milecatch_guide';
@@ -471,6 +435,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
       _currentTab = tab;
     });
+    unawaited(AnalyticsService.instance.logTabSelected(
+      'home',
+      _homeTabAnalyticsName(tab),
+      source: 'guide',
+    ));
   }
 
   void _openCommunityTab({String? boardId, String? boardName}) {
@@ -489,23 +458,72 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _isScrolling = false;
       _currentTab = _HomeTab.community;
     });
+    unawaited(AnalyticsService.instance.logTabSelected(
+      'home',
+      'community',
+      source: 'community_shortcut',
+    ));
+    unawaited(AnalyticsService.instance.logAction(
+      'community_board_selected',
+      params: {
+        'board_id': nextBoardId,
+        'source': 'home_shortcut',
+      },
+    ));
   }
 
   @override
   void initState() {
     super.initState();
     _giftcardTabController = TabController(length: 6, vsync: this);
+    _giftcardTabController.addListener(_handleGiftcardTabChanged);
+    unawaited(AnalyticsService.instance.logScreenView(
+      'home',
+      screenClass: 'HomeScreen',
+      source: 'screen_init',
+    ));
+    unawaited(AnalyticsService.instance.logTabSelected(
+      'home',
+      _homeTabAnalyticsName(_currentTab),
+      source: 'initial',
+    ));
     getVersion();
     _loadVersionFirebase();
     _loadCommunityNoticeTitle();
-    _loadNotificationSettings();
     _checkForceUpdateAndNotice();
   }
 
   @override
   void dispose() {
+    _giftcardTabController.removeListener(_handleGiftcardTabChanged);
     _giftcardTabController.dispose();
     super.dispose();
+  }
+
+  String _homeTabAnalyticsName(_HomeTab tab) {
+    return switch (tab) {
+      _HomeTab.usefulInfo => 'guide',
+      _HomeTab.community => 'community',
+      _HomeTab.giftcard => 'giftcard',
+      _HomeTab.profile => 'profile',
+    };
+  }
+
+  String _giftcardTabAnalyticsName(int index) {
+    const names = ['info', 'deal', 'map', 'rates', 'settlement', 'branch'];
+    if (index < 0 || index >= names.length) return 'unknown';
+    return names[index];
+  }
+
+  void _handleGiftcardTabChanged() {
+    final index = _giftcardTabController.index;
+    if (index == _lastGiftcardTabIndex) return;
+    _lastGiftcardTabIndex = index;
+    unawaited(AnalyticsService.instance.logTabSelected(
+      'giftcard',
+      _giftcardTabAnalyticsName(index),
+      source: 'giftcard_tab_bar',
+    ));
   }
 
   Future<void> _checkForceUpdateAndNotice() async {
@@ -633,6 +651,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
       _currentTab = nextTab;
     });
+    unawaited(AnalyticsService.instance.logTabSelected(
+      'home',
+      _homeTabAnalyticsName(nextTab),
+      source: 'bottom_nav',
+    ));
   }
 
   PreferredSizeWidget _buildHomeAppBar({
@@ -793,6 +816,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       appLink = 'https://apps.apple.com/app/myapp/6446247689';
     }
     String description = "마일리지 항공 앱을 공유해보세요! $appLink";
+    unawaited(AnalyticsService.instance.logAction('share_started', params: {
+      'screen': 'home',
+      'entity_type': 'app',
+      'source': Platform.isAndroid ? 'android' : 'ios',
+    }));
     SharePlus.instance.share(ShareParams(text: description));
   }
 
@@ -810,9 +838,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _openCommunityChat() {
+    unawaited(
+        AnalyticsService.instance.logAction('community_chat_open', params: {
+      'source': 'home_fab',
+    }));
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const CommunityChatScreen()),
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_chat'),
+        builder: (_) => const CommunityChatScreen(),
+      ),
     );
   }
 
@@ -910,9 +945,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         label: '지점 생성',
                         onTap: () {
                           setState(() => _giftFabOpen = false);
+                          unawaited(AnalyticsService.instance.logAction(
+                            'branch_created',
+                            params: {'source': 'giftcard_fab'},
+                          ));
                           Navigator.push(
                             context,
                             MaterialPageRoute(
+                                settings:
+                                    const RouteSettings(name: 'branch_create'),
                                 builder: (_) => const BranchStep1Page()),
                           );
                         },
@@ -923,9 +964,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         label: '카드 생성',
                         onTap: () {
                           setState(() => _giftFabOpen = false);
+                          unawaited(AnalyticsService.instance.logAction(
+                            'cta_tapped',
+                            params: {
+                              'screen': 'giftcard',
+                              'cta': 'card_create',
+                              'source': 'giftcard_fab',
+                            },
+                          ));
                           Navigator.push(
                             context,
                             MaterialPageRoute(
+                              settings:
+                                  const RouteSettings(name: 'card_create'),
                               builder: (_) => const CardStepPage(),
                             ),
                           );
@@ -937,9 +988,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         label: '구매처 생성',
                         onTap: () {
                           setState(() => _giftFabOpen = false);
+                          unawaited(AnalyticsService.instance.logAction(
+                            'cta_tapped',
+                            params: {
+                              'screen': 'giftcard',
+                              'cta': 'where_to_buy_create',
+                              'source': 'giftcard_fab',
+                            },
+                          ));
                           Navigator.push(
                             context,
                             MaterialPageRoute(
+                              settings: const RouteSettings(
+                                  name: 'where_to_buy_create'),
                               builder: (_) => const WhereToBuyStepPage(),
                             ),
                           );
@@ -951,9 +1012,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         label: '상품권 구매',
                         onTap: () async {
                           setState(() => _giftFabOpen = false);
+                          unawaited(AnalyticsService.instance.logAction(
+                            'gift_buy_started',
+                            params: {
+                              'mode': 'create',
+                              'source': 'giftcard_fab',
+                            },
+                          ));
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
+                                settings: const RouteSettings(name: 'gift_buy'),
                                 builder: (_) => const GiftBuyScreen()),
                           );
                           _refreshGiftcardInfoIfNeeded(result);
@@ -965,9 +1034,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         label: '상품권 판매',
                         onTap: () async {
                           setState(() => _giftFabOpen = false);
+                          unawaited(AnalyticsService.instance.logAction(
+                            'gift_sell_started',
+                            params: {
+                              'mode': 'create',
+                              'source': 'giftcard_fab',
+                            },
+                          ));
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
+                                settings:
+                                    const RouteSettings(name: 'gift_sell'),
                                 builder: (_) => const GiftSellScreen()),
                           );
                           _refreshGiftcardInfoIfNeeded(result);
@@ -1123,10 +1201,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   // 대한항공/아시아나 관련 위젯은 제거되었습니다
 
-  bool _postLikeNotification = true;
-  bool _postCommentNotification = true;
-  bool _commentReplyNotification = true;
-  bool _commentLikeNotification = true;
   String _version = '';
   String _latestVersion = '';
 
@@ -1249,44 +1323,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const _MileageSettingSectionLabel('알림 설정'),
+                    const _MileageSettingSectionLabel('알림'),
                     const SizedBox(height: 6),
                     _MileageSettingSection(
                       children: [
-                        _MileageSettingSwitchTile(
-                          icon: Icons.thumb_up_outlined,
-                          title: '게시글 좋아요 알림',
-                          value: _postLikeNotification,
-                          onChanged: (value) {
-                            setPostLikeNotification(value);
-                            setState(() => _postLikeNotification = value);
-                          },
-                        ),
-                        _MileageSettingSwitchTile(
-                          icon: Icons.comment_outlined,
-                          title: '게시글 댓글 알림',
-                          value: _postCommentNotification,
-                          onChanged: (value) {
-                            setPostCommentNotification(value);
-                            setState(() => _postCommentNotification = value);
-                          },
-                        ),
-                        _MileageSettingSwitchTile(
-                          icon: Icons.reply_outlined,
-                          title: '대댓글 알림',
-                          value: _commentReplyNotification,
-                          onChanged: (value) {
-                            setCommentReplyNotification(value);
-                            setState(() => _commentReplyNotification = value);
-                          },
-                        ),
-                        _MileageSettingSwitchTile(
-                          icon: Icons.favorite_border_outlined,
-                          title: '댓글 좋아요 알림',
-                          value: _commentLikeNotification,
-                          onChanged: (value) {
-                            setCommentLikeNotification(value);
-                            setState(() => _commentLikeNotification = value);
+                        _MileageSettingActionTile(
+                          icon: Icons.notifications_none_outlined,
+                          title: '알림 설정',
+                          subtitle: '커뮤니티와 레이더 푸시 수신을 관리합니다.',
+                          onTap: () {
+                            Navigator.push(
+                              settingsContext,
+                              MaterialPageRoute(
+                                settings: const RouteSettings(
+                                  name: 'notification_settings',
+                                ),
+                                builder: (_) =>
+                                    const NotificationSettingsScreen(),
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -1483,62 +1538,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  void setPostLikeNotification(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('post_like_notification', value);
-    Fluttertoast.showToast(
-      msg: value ? "게시글 좋아요 알림을 켰습니다." : "게시글 좋아요 알림을 껐습니다.",
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 3,
-      backgroundColor: Colors.black38,
-      fontSize: 16,
-      textColor: Colors.white,
-      toastLength: Toast.LENGTH_SHORT,
-    );
-  }
-
-  void setPostCommentNotification(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('post_comment_notification', value);
-    Fluttertoast.showToast(
-      msg: value ? "게시글 댓글 알림을 켰습니다." : "게시글 댓글 알림을 껐습니다.",
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 3,
-      backgroundColor: Colors.black38,
-      fontSize: 16,
-      textColor: Colors.white,
-      toastLength: Toast.LENGTH_SHORT,
-    );
-  }
-
-  void setCommentReplyNotification(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('comment_reply_notification', value);
-    Fluttertoast.showToast(
-      msg: value ? "대댓글 알림을 켰습니다." : "대댓글 알림을 껐습니다.",
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 3,
-      backgroundColor: Colors.black38,
-      fontSize: 16,
-      textColor: Colors.white,
-      toastLength: Toast.LENGTH_SHORT,
-    );
-  }
-
-  void setCommentLikeNotification(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('comment_like_notification', value);
-    Fluttertoast.showToast(
-      msg: value ? "댓글 좋아요 알림을 켰습니다." : "댓글 좋아요 알림을 껐습니다.",
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 3,
-      backgroundColor: Colors.black38,
-      fontSize: 16,
-      textColor: Colors.white,
-      toastLength: Toast.LENGTH_SHORT,
-    );
-  }
-
   void _loadVersionFirebase() {
     _versionReference.once().then((event) {
       final snapshot = event.snapshot;
@@ -1570,19 +1569,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     } catch (e) {
       print('공지사항 제목 로드 실패: $e');
     }
-  }
-
-  void _loadNotificationSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _postLikeNotification = prefs.getBool('post_like_notification') ?? true;
-      _postCommentNotification =
-          prefs.getBool('post_comment_notification') ?? true;
-      _commentReplyNotification =
-          prefs.getBool('comment_reply_notification') ?? true;
-      _commentLikeNotification =
-          prefs.getBool('comment_like_notification') ?? true;
-    });
   }
 
   Future<void> _launchMileageThief() async {

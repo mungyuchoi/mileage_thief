@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../models/chat_message_model.dart';
+import '../services/analytics_service.dart';
 import '../services/chat_service.dart';
 import '../services/user_service.dart';
 import '../widgets/image_viewer.dart';
@@ -60,6 +61,14 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(
+      AnalyticsService.instance.logScreenView(
+        'community_chat',
+        screenClass: 'CommunityChatScreen',
+        source: 'screen_init',
+        parameters: {'entity_id': widget.roomId},
+      ),
+    );
     unawaited(_bootstrap());
   }
 
@@ -240,6 +249,14 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         text: text,
         images: List<XFile>.from(_pendingImages),
       );
+      unawaited(
+          AnalyticsService.instance.logAction('chat_message_sent', params: {
+        'screen': 'community_chat',
+        'entity_id': widget.roomId,
+        'has_text': text.trim().isNotEmpty,
+        'image_count_bucket':
+            AnalyticsService.quantityBucket(_pendingImages.length),
+      }));
       if (!mounted) return;
       setState(() {
         _textController.clear();

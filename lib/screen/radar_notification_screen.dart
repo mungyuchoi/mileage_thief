@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../models/giftcard_deal_model.dart';
 import '../models/radar_item_model.dart';
+import '../services/analytics_service.dart';
 import '../services/giftcard_deal_service.dart';
 import '../services/radar_service.dart';
 import 'login_screen.dart';
@@ -20,7 +21,18 @@ class RadarNotificationScreen extends StatefulWidget {
 
 class _RadarNotificationScreenState extends State<RadarNotificationScreen> {
   static const _tabs = ['알림 조건', '매칭 내역'];
+  static const _tabAnalyticsNames = ['subscriptions', 'matches'];
   int _selectedTabIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreenView(
+      'radar_notification',
+      screenClass: 'RadarNotificationScreen',
+      source: 'screen_init',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +49,14 @@ class _RadarNotificationScreenState extends State<RadarNotificationScreen> {
               child: _RadarSegmentedTabs(
                 tabs: _tabs,
                 selectedIndex: _selectedTabIndex,
-                onChanged: (index) => setState(() => _selectedTabIndex = index),
+                onChanged: (index) {
+                  setState(() => _selectedTabIndex = index);
+                  AnalyticsService.instance
+                      .logAction('radar_tab_selected', params: {
+                    'screen': 'radar_notification',
+                    'tab': _tabAnalyticsNames[index],
+                  });
+                },
               ),
             ),
             const SizedBox(height: 10),
@@ -532,6 +551,12 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
           pushEnabled: value,
         );
       }
+      AnalyticsService.instance.logAction('radar_push_toggled', params: {
+        'screen': 'radar_notification',
+        'entity_id': widget.entry.id,
+        'entity_type': widget.entry.type,
+        'state': value ? 'on' : 'off',
+      });
       Fluttertoast.showToast(msg: value ? '레이더 알림을 켰습니다.' : '레이더 알림을 껐습니다.');
     } catch (_) {
       Fluttertoast.showToast(msg: '알림 상태 변경에 실패했습니다.');
@@ -545,6 +570,12 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
     try {
       await RadarService.extendRadarSubscription(
           subscriptionId: widget.entry.id);
+      AnalyticsService.instance
+          .logAction('radar_subscription_extended', params: {
+        'screen': 'radar_notification',
+        'entity_id': widget.entry.id,
+        'entity_type': widget.entry.type,
+      });
       Fluttertoast.showToast(msg: '레이더 알림을 30일 연장했습니다.');
     } catch (_) {
       Fluttertoast.showToast(msg: '알림 연장에 실패했습니다.');
@@ -592,6 +623,12 @@ class _RadarSubscriptionCardState extends State<_RadarSubscriptionCard> {
         await RadarService.deleteRadarSubscription(widget.entry.id);
         Fluttertoast.showToast(msg: '레이더 알림을 삭제했습니다.');
       }
+      AnalyticsService.instance
+          .logAction('radar_subscription_deleted', params: {
+        'screen': 'radar_notification',
+        'entity_id': widget.entry.id,
+        'entity_type': widget.entry.type,
+      });
     } catch (_) {
       Fluttertoast.showToast(msg: '알림 삭제에 실패했습니다.');
     } finally {
@@ -610,7 +647,14 @@ class _RadarMatchCard extends StatelessWidget {
     final accent = _radarAccent(entry.type);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => RadarService.markRadarNotificationRead(entry.id),
+      onTap: () {
+        AnalyticsService.instance.logAction('radar_match_open', params: {
+          'screen': 'radar_notification',
+          'entity_id': entry.id,
+          'entity_type': entry.type,
+        });
+        RadarService.markRadarNotificationRead(entry.id);
+      },
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(

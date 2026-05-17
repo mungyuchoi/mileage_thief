@@ -18,6 +18,7 @@ import '../const/colors.dart';
 import '../models/card_product_model.dart';
 import '../models/radar_item_model.dart';
 import '../services/branch_service.dart';
+import '../services/analytics_service.dart';
 import '../services/card_catalog_service.dart';
 import '../services/category_service.dart';
 import '../services/giftcard_deal_service.dart';
@@ -200,6 +201,11 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.instance.logScreenView(
+      'guide',
+      screenClass: 'UsefulInfoScreen',
+      source: 'screen_init',
+    ));
     CardCatalogService().warmProducts();
     _loadSections();
   }
@@ -331,55 +337,99 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                 assetIcon: _cardQuickActionIconAsset,
                 title: '카드',
                 subtitle: '혜택 DB',
-                onTap: () => _push(CardHubScreen(
-                  onRequireLogin: _openProfileTabForLogin,
-                )),
+                onTap: () => _trackQuickAction(
+                  action: 'card',
+                  targetScreen: 'card_hub',
+                  open: () => _push(CardHubScreen(
+                    onRequireLogin: _openProfileTabForLogin,
+                  )),
+                ),
               ),
               _QuickAction(
                 icon: Icons.forum_outlined,
                 assetIcon: _chatQuickActionIconAsset,
                 title: '채팅',
                 subtitle: '실시간 정보',
-                onTap: () => _push(const CommunityChatScreen()),
+                onTap: () => _trackQuickAction(
+                  action: 'chat',
+                  targetScreen: 'community_chat',
+                  open: () => _push(const CommunityChatScreen()),
+                ),
               ),
               _QuickAction(
                 icon: Icons.card_giftcard,
                 assetIcon: _giftcardQuickActionIconAsset,
                 title: '상품권',
                 subtitle: '시세/지도',
-                onTap: widget.onOpenGiftcard,
+                onTap: () => _trackQuickAction(
+                  action: 'giftcard',
+                  targetScreen: 'giftcard',
+                  open: widget.onOpenGiftcard,
+                ),
               ),
               _QuickAction(
                 icon: Icons.flight_takeoff,
                 assetIcon: _dealsQuickActionIconAsset,
                 title: '특가',
                 subtitle: '항공권/호텔',
-                onTap: () => _push(const DealsScreen()),
+                onTap: () => _trackQuickAction(
+                  action: 'deals',
+                  targetScreen: 'deals',
+                  open: () => _push(const DealsScreen()),
+                ),
               ),
               _QuickAction(
                 icon: Icons.airplane_ticket_outlined,
                 assetIcon: _koreanAirQuickActionIconAsset,
                 title: '대한항공',
                 subtitle: '마일리지 검색',
-                onTap: () => _push(const SearchDanScreen()),
+                onTap: () => _trackQuickAction(
+                  action: 'dan_mileage_search',
+                  targetScreen: 'dan_mileage_search',
+                  open: () => _push(const SearchDanScreen()),
+                ),
               ),
               _QuickAction(
                 icon: Icons.shopping_cart_outlined,
                 title: '구매 등록',
                 subtitle: '상품권',
-                onTap: () => _push(const GiftBuyScreen()),
+                onTap: () => _trackQuickAction(
+                  action: 'gift_buy',
+                  targetScreen: 'gift_buy',
+                  open: () {
+                    unawaited(AnalyticsService.instance.logAction(
+                      'gift_buy_started',
+                      params: {'mode': 'create', 'source': 'guide'},
+                    ));
+                    _push(const GiftBuyScreen());
+                  },
+                ),
               ),
               _QuickAction(
                 icon: Icons.attach_money_outlined,
                 title: '판매 등록',
                 subtitle: '상품권',
-                onTap: () => _push(const GiftSellScreen()),
+                onTap: () => _trackQuickAction(
+                  action: 'gift_sell',
+                  targetScreen: 'gift_sell',
+                  open: () {
+                    unawaited(AnalyticsService.instance.logAction(
+                      'gift_sell_started',
+                      params: {'mode': 'create', 'source': 'guide'},
+                    ));
+                    _push(const GiftSellScreen());
+                  },
+                ),
               ),
               _QuickAction(
                 icon: Icons.person_outline,
                 title: '프로필',
                 subtitle: '내 활동',
-                onTap: widget.onOpenProfile,
+                onTap: () => _trackQuickAction(
+                  action: 'profile',
+                  targetScreen: 'profile',
+                  open: widget.onOpenProfile,
+                ),
               ),
             ],
           ),
@@ -606,10 +656,19 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     final data = doc.data();
     final dateString = doc.reference.parent.parent?.id;
     if (dateString == null) return;
+    unawaited(AnalyticsService.instance.logAction(
+      'guide_section_post_open',
+      params: {
+        'post_id': _postId(doc),
+        'board_id': (data['boardId'] as String?) ?? 'free',
+        'source': 'guide',
+      },
+    ));
 
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_detail'),
         builder: (_) => CommunityDetailScreen(
           postId: _postId(doc),
           boardId: (data['boardId'] as String?) ?? 'free',
@@ -621,7 +680,29 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   }
 
   void _push(Widget screen) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings:
+            RouteSettings(name: AnalyticsService.screenNameForWidget(screen)),
+        builder: (_) => screen,
+      ),
+    );
+  }
+
+  void _trackQuickAction({
+    required String action,
+    required String targetScreen,
+    required VoidCallback open,
+  }) {
+    unawaited(AnalyticsService.instance.logAction(
+      'guide_quick_action_clicked',
+      params: {
+        'action': action,
+        'target_screen': targetScreen,
+      },
+    ));
+    open();
   }
 
   void _openProfileTabForLogin() {
@@ -657,6 +738,14 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   }
 
   Future<void> _handleRadarTap(RadarItem item) async {
+    unawaited(AnalyticsService.instance.logAction(
+      'radar_item_open',
+      params: {
+        'item_type': item.itemType,
+        'entity_id': item.id,
+        'source': 'guide_radar',
+      },
+    ));
     if (item.itemType == RadarItemType.valueCalculator ||
         item.itemType == RadarItemType.cardCalculator) {
       await _openRadarCalculator(item);
@@ -784,6 +873,13 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   }
 
   Future<void> _saveRadarSubscription(RadarItem item) async {
+    unawaited(AnalyticsService.instance.logAction(
+      'radar_subscribe_start',
+      params: {
+        'item_type': item.itemType,
+        'entity_id': item.id,
+      },
+    ));
     if (_isGiftcardDealRadarItem(item)) {
       await _openGiftcardDealAlertSheet(item);
       return;
@@ -791,6 +887,13 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
 
     try {
       await RadarService.saveRadarSubscription(item);
+      unawaited(AnalyticsService.instance.logAction(
+        'radar_subscribe_success',
+        params: {
+          'item_type': item.itemType,
+          'entity_id': item.id,
+        },
+      ));
       Fluttertoast.showToast(msg: '레이더 알림 조건을 저장했습니다.');
     } on StateError {
       Fluttertoast.showToast(msg: '로그인 후 레이더 알림을 저장할 수 있습니다.');
@@ -828,8 +931,23 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     final linkValue = (ad['linkValue'] as String?) ?? '';
 
     if (linkValue.isEmpty) return;
+    unawaited(AnalyticsService.instance.logAction(
+      'guide_ad_clicked',
+      params: {
+        'ad_id': (ad['id'] ?? '').toString(),
+        'link_type': linkType,
+      },
+    ));
 
     if (linkType == 'web') {
+      unawaited(AnalyticsService.instance.logAction(
+        'external_link_open',
+        params: {
+          'screen': 'guide',
+          'entity_type': 'guide_ad',
+          'entity_id': (ad['id'] ?? '').toString(),
+        },
+      ));
       launchUrl(Uri.parse(linkValue), mode: LaunchMode.externalApplication);
       return;
     }

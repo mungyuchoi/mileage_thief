@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
+import '../../services/analytics_service.dart';
 import '../../services/card_transaction_service.dart';
 
 class GiftBuyScreen extends StatefulWidget {
@@ -51,6 +52,12 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'gift_buy',
+      screenClass: 'GiftBuyScreen',
+      source: 'screen_init',
+      parameters: {'mode': widget.editLotId == null ? 'create' : 'edit'},
+    );
     _loadCardsAndGiftcards();
     _loadWhereToBuys();
     _loadTemplates();
@@ -532,6 +539,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   }
 
   Future<void> _applyTemplate(Map<String, dynamic> template) async {
+    AnalyticsService.instance.logAction(
+      'gift_buy_template_applied',
+      params: {'source': 'template_sheet'},
+    );
     final payload = (template['payload'] is Map)
         ? Map<String, dynamic>.from(template['payload'] as Map)
         : <String, dynamic>{};
@@ -1018,9 +1029,23 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
 
       Fluttertoast.showToast(
           msg: widget.editLotId == null ? '구매가 저장되었습니다.' : '구매가 수정되었습니다.');
+      AnalyticsService.instance.logAction('gift_buy_saved', params: {
+        'mode': widget.editLotId == null ? 'create' : 'edit',
+        'giftcard_id': _selectedGiftcardId ?? '',
+        'card_id': _selectedCardId ?? '',
+        'qty': qty,
+        'buy_total': buyTotal,
+        'face_value': faceValue,
+      });
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       Fluttertoast.showToast(msg: '저장 실패: $e');
+      AnalyticsService.instance.logResult(
+        'gift_buy_failed',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'mode': widget.editLotId == null ? 'create' : 'edit'},
+      );
     } finally {
       if (mounted)
         setState(() {

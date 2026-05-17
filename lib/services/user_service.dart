@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'notification_preference_service.dart';
+
 class UserService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _usersCollection = 'users';
@@ -187,6 +189,7 @@ class UserService {
           .collection(_usersCollection)
           .doc(user.uid)
           .set(userData, SetOptions(merge: true));
+      await NotificationPreferenceService.loadPreferences();
 
       print('사용자 정보 저장 완료: ${user.uid}');
     } catch (e) {

@@ -18,6 +18,7 @@ import 'branch/branch_edit_screen.dart';
 import 'user_profile_screen.dart';
 import 'branch/branch_detail_screen.dart';
 import 'my_page_screen.dart';
+import '../services/analytics_service.dart';
 
 String _maskGiftcardRankingName(String name) {
   final String trimmed = name.trim();
@@ -92,6 +93,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'giftcard_map',
+      screenClass: 'GiftcardMapScreen',
+      source: 'screen_init',
+    );
     _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
     _markerHueBrown = HSVColor.fromColor(const Color(0xFF73532E)).hue;
     _initLocation();
@@ -554,9 +560,15 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         // verified 지점인 경우 지점 상세 화면으로 이동하는 공통 함수
         Future<void> openBranchDetail() async {
           Navigator.pop(ctx);
+          AnalyticsService.instance.logAction('giftcard_branch_open', params: {
+            'screen': 'giftcard_map',
+            'branch_id': branchId,
+            'source': 'map_marker',
+          });
           await Navigator.push(
             context,
             MaterialPageRoute(
+              settings: const RouteSettings(name: 'branch_detail'),
               builder: (context) => BranchDetailScreen(
                 branchId: branchId,
                 branchName: name,
@@ -734,6 +746,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
+                                  settings:
+                                      const RouteSettings(name: 'branch_edit'),
                                   builder: (context) => BranchEditScreen(
                                     branchId: branchId,
                                     branchData: branchData,
@@ -741,6 +755,11 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                                 ),
                               );
                               if (result == true) {
+                                AnalyticsService.instance
+                                    .logAction('branch_updated', params: {
+                                  'screen': 'giftcard_map',
+                                  'branch_id': branchId,
+                                });
                                 // 수정 후 마커 다시 로드
                                 _loadMonthlyMarkers();
                               }

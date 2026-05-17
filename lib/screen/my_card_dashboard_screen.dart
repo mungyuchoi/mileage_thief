@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
 import '../branch/card_manage.dart';
+import '../services/analytics_service.dart';
 import '../services/card_transaction_service.dart';
 
 class MyCardDashboardScreen extends StatefulWidget {
@@ -25,6 +26,11 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      'my_card_dashboard',
+      screenClass: 'MyCardDashboardScreen',
+      source: 'screen_init',
+    );
     final now = DateTime.now();
     _visibleMonth = DateTime(now.year, now.month);
     _reload();
@@ -63,6 +69,10 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
   Future<void> _openManualSheet(CardDashboardData data) async {
     final uid = _uid;
     if (uid == null) return;
+    AnalyticsService.instance.logAction('cta_tapped', params: {
+      'screen': 'my_card_dashboard',
+      'cta': 'manual_transaction',
+    });
     if (data.cards.isEmpty) {
       Fluttertoast.showToast(msg: '카드를 먼저 추가해주세요.');
       await _openCardSettings();
@@ -87,9 +97,15 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
   Future<void> _openCardDetail(CardDashboardCardSummary summary) async {
     final uid = _uid;
     if (uid == null) return;
+    AnalyticsService.instance.logAction('card_detail_open', params: {
+      'screen': 'my_card_dashboard',
+      'card_id': summary.card.id,
+      'source': 'dashboard_summary',
+    });
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'my_card_detail'),
         builder: (_) => _CardDetailScreen(
           uid: uid,
           month: _visibleMonth,
@@ -467,6 +483,11 @@ class _ManualTransactionSheetState extends State<_ManualTransactionSheet> {
         rewardEligible: _rewardEligible,
         mileRuleUsedPerMileKRW: _defaultRule,
       );
+      AnalyticsService.instance.logAction('manual_transaction_saved', params: {
+        'screen': 'my_card_dashboard',
+        'card_id': _cardId,
+        'amount_krw': amount,
+      });
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       Fluttertoast.showToast(msg: '저장 실패: $error');
@@ -643,6 +664,14 @@ class _TransactionOverrideSheetState extends State<_TransactionOverrideSheet> {
         applyToFuture: _applyToFuture,
         memo: _memoController.text,
       );
+      AnalyticsService.instance
+          .logAction('transaction_override_saved', params: {
+        'screen': 'my_card_dashboard',
+        'card_id': widget.card.id,
+        'entity_id': widget.transaction.id,
+        'amount_krw': widget.transaction.amountKRW,
+        'apply_to_future': _applyToFuture,
+      });
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       Fluttertoast.showToast(msg: '저장 실패: $error');

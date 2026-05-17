@@ -216,6 +216,18 @@ const RADAR_SUPPORTED_TYPES = new Set([
   "giftcard",
   "benefitNews",
 ]);
+const NOTIFICATION_PREF_KEYS = {
+  communityPostLike: "community_post_like",
+  communityPostComment: "community_post_comment",
+  communityCommentReply: "community_comment_reply",
+  communityCommentLike: "community_comment_like",
+  radarAll: "radar_all",
+  radarMileageSeat: "radar_mileage_seat",
+  radarCancelAlert: "radar_cancel_alert",
+  radarFlightDeal: "radar_flight_deal",
+  radarGiftcard: "radar_giftcard",
+  radarBenefitNews: "radar_benefit_news",
+};
 const CARD_REGION = "asia-northeast3";
 const CARD_CATALOG_DOC_ID = "catalog";
 const CARD_PRODUCT_FIELDS = new Set([
@@ -2180,6 +2192,88 @@ function asFcmString(value) {
 }
 
 /**
+ * 사용자 알림 설정 값 확인. 누락된 값은 기본 ON으로 처리한다.
+ * @param {Record<string, unknown>} userData
+ * @param {string} key
+ * @return {boolean}
+ */
+function isNotificationPreferenceEnabled(userData, key) {
+  const preferences = userData &&
+    typeof userData.notificationPreferences === "object" &&
+    userData.notificationPreferences !== null ?
+      userData.notificationPreferences :
+      {};
+  return preferences[key] !== false;
+}
+
+/**
+ * 커뮤니티 알림 type을 사용자 설정 key로 변환
+ * @param {string} type
+ * @return {string|null}
+ */
+function communityNotificationPreferenceKey(type) {
+  switch (type) {
+    case "post_like":
+      return NOTIFICATION_PREF_KEYS.communityPostLike;
+    case "post_comment":
+      return NOTIFICATION_PREF_KEYS.communityPostComment;
+    case "comment_reply":
+      return NOTIFICATION_PREF_KEYS.communityCommentReply;
+    case "comment_like":
+      return NOTIFICATION_PREF_KEYS.communityCommentLike;
+    default:
+      return null;
+  }
+}
+
+/**
+ * 레이더 item type을 사용자 설정 key로 변환
+ * @param {string} itemType
+ * @return {string|null}
+ */
+function radarNotificationPreferenceKey(itemType) {
+  switch (itemType) {
+    case "mileageSeat":
+      return NOTIFICATION_PREF_KEYS.radarMileageSeat;
+    case "cancelAlert":
+      return NOTIFICATION_PREF_KEYS.radarCancelAlert;
+    case "flightDeal":
+      return NOTIFICATION_PREF_KEYS.radarFlightDeal;
+    case "giftcard":
+      return NOTIFICATION_PREF_KEYS.radarGiftcard;
+    case "benefitNews":
+      return NOTIFICATION_PREF_KEYS.radarBenefitNews;
+    default:
+      return null;
+  }
+}
+
+/**
+ * 커뮤니티 FCM 발송 여부
+ * @param {Record<string, unknown>} userData
+ * @param {string} type
+ * @return {boolean}
+ */
+function shouldSendCommunityPush(userData, type) {
+  const key = communityNotificationPreferenceKey(type);
+  return !key || isNotificationPreferenceEnabled(userData, key);
+}
+
+/**
+ * 레이더 FCM 발송 여부
+ * @param {Record<string, unknown>} userData
+ * @param {string} itemType
+ * @return {boolean}
+ */
+function shouldSendRadarPush(userData, itemType) {
+  const key = radarNotificationPreferenceKey(itemType);
+  return isNotificationPreferenceEnabled(
+      userData,
+      NOTIFICATION_PREF_KEYS.radarAll,
+  ) && (!key || isNotificationPreferenceEnabled(userData, key));
+}
+
+/**
  * 비교용 문자열 정규화
  * @param {unknown} value
  * @return {string}
@@ -2943,8 +3037,10 @@ async function notifyRadarSubscriptionIfMatches(
   const userDoc = await userRef.get();
   const userData = userDoc.exists ? userDoc.data() : {};
   const fcmToken = userData && userData.fcmToken;
-  if (!fcmToken || subscription.pushEnabled === false) {
-    logger.info(`레이더 알림 저장 완료, FCM 없음: uid=${uid}`);
+  if (!fcmToken ||
+      subscription.pushEnabled === false ||
+      !shouldSendRadarPush(userData, item.itemType)) {
+    logger.info(`레이더 알림 저장 완료, FCM 발송 생략: uid=${uid}`);
     return;
   }
 
@@ -3615,11 +3711,6 @@ exports.onPostLikeCreated = onDocumentCreated({
     const authorData = authorDoc.data();
     const fcmToken = authorData.fcmToken;
 
-    if (!fcmToken) {
-      logger.info(`게시글 작성자의 FCM 토큰이 없음: ${authorUid}`);
-      return;
-    }
-
     // 5. 알림 데이터를 사용자의 notifications 서브컬렉션에 저장
     const notificationData = {
       type: "post_like",
@@ -3644,6 +3735,11 @@ exports.onPostLikeCreated = onDocumentCreated({
         .add(notificationData);
 
     logger.info(`알림 데이터 저장 완료: authorUid=${authorUid}, type=post_like`);
+
+    if (!fcmToken || !shouldSendCommunityPush(authorData, "post_like")) {
+      logger.info(`좋아요 알림 FCM 발송 생략: authorUid=${authorUid}`);
+      return;
+    }
 
     // 6. FCM 메시지 발송
     const message = {
@@ -3766,11 +3862,6 @@ exports.onCommentCreated = onDocumentCreated({
     const authorData = authorDoc.data();
     const fcmToken = authorData.fcmToken;
 
-    if (!fcmToken) {
-      logger.info(`게시글 작성자의 FCM 토큰이 없음: ${authorUid}`);
-      return;
-    }
-
     // 6. 알림 데이터를 사용자의 notifications 서브컬렉션에 저장
     const notificationData = {
       type: "post_comment",
@@ -3796,6 +3887,11 @@ exports.onCommentCreated = onDocumentCreated({
         .add(notificationData);
 
     logger.info(`알림 데이터 저장 완료: authorUid=${authorUid}, type=post_comment`);
+
+    if (!fcmToken || !shouldSendCommunityPush(authorData, "post_comment")) {
+      logger.info(`댓글 알림 FCM 발송 생략: authorUid=${authorUid}`);
+      return;
+    }
 
     // 7. FCM 메시지 발송
     const message = {
@@ -3920,11 +4016,6 @@ exports.onReplyCreated = onDocumentCreated({
     const parentCommenterData = parentCommenterDoc.data();
     const fcmToken = parentCommenterData.fcmToken;
 
-    if (!fcmToken) {
-      logger.info(`부모 댓글 작성자의 FCM 토큰이 없음: ${parentCommenterUid}`);
-      return;
-    }
-
     // 5. 게시글 정보 조회 (boardId, boardName용)
     const postDoc = await admin.firestore()
         .doc(`posts/${date}/posts/${postId}`)
@@ -3979,6 +4070,12 @@ exports.onReplyCreated = onDocumentCreated({
         `알림 데이터 저장 완료: parentCommenterUid=${parentCommenterUid}, ` +
         `type=comment_reply`,
     );
+
+    if (!fcmToken ||
+        !shouldSendCommunityPush(parentCommenterData, "comment_reply")) {
+      logger.info(`대댓글 알림 FCM 발송 생략: uid=${parentCommenterUid}`);
+      return;
+    }
 
     // 7. FCM 메시지 발송
     const message = {
@@ -4094,11 +4191,6 @@ exports.onCommentLikeCreated = onDocumentCreated({
     const commenterUserData = commenterDoc.data();
     const fcmToken = commenterUserData.fcmToken;
 
-    if (!fcmToken) {
-      logger.info(`댓글 작성자의 FCM 토큰이 없음: ${commenterUid}`);
-      return;
-    }
-
     // 5. 게시글 정보 조회 (boardId, boardName용)
     const postDoc = await admin.firestore()
         .doc(`posts/${date}/posts/${postId}`)
@@ -4153,6 +4245,12 @@ exports.onCommentLikeCreated = onDocumentCreated({
         `알림 데이터 저장 완료: commenterUid=${commenterUid}, ` +
         `type=comment_like`,
     );
+
+    if (!fcmToken ||
+        !shouldSendCommunityPush(commenterUserData, "comment_like")) {
+      logger.info(`댓글 좋아요 알림 FCM 발송 생략: uid=${commenterUid}`);
+      return;
+    }
 
     // 7. FCM 메시지 발송
     const message = {

@@ -6,6 +6,7 @@ import '../const/colors.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/category_service.dart';
+import '../services/analytics_service.dart';
 import '../services/community_notification_history_service.dart';
 import '../utils/community_access_level.dart';
 import '../widgets/community_chat_floating_button.dart';
@@ -239,6 +240,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
     _loadInitialPosts();
     _loadBestPostsIfNeeded();
     _scrollController.addListener(_onScroll);
+    AnalyticsService.instance.logScreenView(
+      'community',
+      screenClass: 'CommunityScreen',
+      source: 'screen_init',
+      parameters: {'board_id': selectedBoardId},
+    );
   }
 
   @override
@@ -503,9 +510,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
     final boardId = (selectedBoard['id'] ?? '').toString();
     final boardName = (selectedBoard['name'] ?? '').toString();
     if (boardId.isEmpty || boardName.isEmpty) return;
+    AnalyticsService.instance.logAction(
+      'community_create_start',
+      params: {
+        'board_id': boardId,
+        'source': 'community_fab',
+      },
+    );
 
     final result = await Navigator.of(context).push(
       MaterialPageRoute<bool>(
+        settings: const RouteSettings(name: 'community_post_create'),
         builder: (context) => CommunityPostCreateSimpleScreen(
           initialBoardId: boardId,
           initialBoardName: boardName,
@@ -624,9 +639,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
           surfaceTintColor: Colors.white,
           onSelected: (value) {
             if (value == 'search') {
+              AnalyticsService.instance.logAction(
+                'community_search_open',
+                params: {'source': 'community_app_bar'},
+              );
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  settings: const RouteSettings(name: 'community_search'),
                   builder: (context) => const CommunitySearchScreen(),
                 ),
               );
@@ -634,6 +654,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               setState(() {
                 isCompactView = !isCompactView;
               });
+              AnalyticsService.instance.logAction(
+                'community_view_mode_changed',
+                params: {'mode': isCompactView ? 'compact' : 'card'},
+              );
             }
           },
           itemBuilder: (BuildContext context) => [
@@ -705,6 +729,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
     _loadInitialPosts();
     _loadBestPostsIfNeeded();
+    AnalyticsService.instance.logAction(
+      'community_board_selected',
+      params: {
+        'board_id': boardId,
+        'source': closeDrawer ? 'drawer' : 'tab',
+      },
+    );
   }
 
   Widget _buildCommunityTabs() {
@@ -1883,10 +1914,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
     // 통과 시 상세화면 이동
     _incrementViewCount(doc.id, doc.reference.parent.parent!.id);
+    AnalyticsService.instance.logAction(
+      'community_post_open',
+      params: {
+        'post_id': doc.id,
+        'board_id': boardId,
+        'source': selectedBoardId,
+      },
+    );
 
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_detail'),
         builder: (context) => CommunityDetailScreen(
           postId: doc.id,
           boardId: boardId,

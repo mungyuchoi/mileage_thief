@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -13,6 +12,7 @@ import 'dart:io';
 import '../services/user_service.dart';
 import '../services/branch_service.dart';
 import '../services/category_service.dart';
+import '../services/analytics_service.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:video_player/video_player.dart';
 import 'package:any_link_preview/any_link_preview.dart';
@@ -151,6 +151,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.instance.logScreenView(
+      'community_detail',
+      screenClass: 'CommunityDetailScreen',
+      source: 'screen_init',
+      parameters: {
+        'post_id': widget.postId,
+        'board_id': widget.boardId,
+      },
+    ));
     _loadPostDetail();
     _loadComments();
     _checkUserStatus();
@@ -330,6 +339,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           _post!['viewsCount'] = (_post!['viewsCount'] ?? 0) + 1;
           _isLoading = false;
         });
+        unawaited(AnalyticsService.instance.logAction('post_view', params: {
+          'post_id': widget.postId,
+          'board_id': widget.boardId,
+        }));
       } else {
         setState(() {
           _isLoading = false;
@@ -655,6 +668,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 (_comments[commentIndex]['likesCount'] ?? 0) - 1;
           }
         });
+        unawaited(AnalyticsService.instance.logAction(
+          'comment_liked',
+          params: {
+            'post_id': widget.postId,
+            'comment_id': commentId,
+            'state': 'off',
+          },
+        ));
       } else {
         // 좋아요 추가
         await likeRef.set({
@@ -675,6 +696,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 (_comments[commentIndex]['likesCount'] ?? 0) + 1;
           }
         });
+        unawaited(AnalyticsService.instance.logAction(
+          'comment_liked',
+          params: {
+            'post_id': widget.postId,
+            'comment_id': commentId,
+            'state': 'on',
+          },
+        ));
       }
     } catch (e) {
       print('댓글 좋아요 처리 오류: $e');
@@ -694,6 +723,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       _replyingToCommentId = comment['commentId'];
       _replyingToComment = comment;
     });
+    unawaited(AnalyticsService.instance.logAction('reply_started', params: {
+      'post_id': widget.postId,
+      'comment_id': (comment['commentId'] ?? '').toString(),
+    }));
 
     // 답글 입력창으로 스크롤
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -832,6 +865,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       }
 
       await batch.commit();
+      unawaited(AnalyticsService.instance.logAction(
+        'post_like_toggled',
+        params: {
+          'post_id': widget.postId,
+          'board_id': widget.boardId,
+          'state': _isLiked ? 'on' : 'off',
+        },
+      ));
     } catch (e) {
       print('좋아요 처리 오류: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -858,6 +899,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('북마크에서 제거되었습니다.')),
         );
+        unawaited(AnalyticsService.instance.logAction(
+          'post_bookmark_toggled',
+          params: {
+            'post_id': widget.postId,
+            'board_id': widget.boardId,
+            'state': 'off',
+          },
+        ));
       } else {
         // 북마크 추가
         await UserService.addBookmark(_currentUser!.uid, widget.postId,
@@ -868,6 +917,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('북마크에 추가되었습니다.')),
         );
+        unawaited(AnalyticsService.instance.logAction(
+          'post_bookmark_toggled',
+          params: {
+            'post_id': widget.postId,
+            'board_id': widget.boardId,
+            'state': 'on',
+          },
+        ));
       }
     } catch (e) {
       print('북마크 처리 오류: $e');
@@ -905,6 +962,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       final content = _getPlainTextFromHtml(_post!['contentHtml'] ?? '');
 
       try {
+        unawaited(AnalyticsService.instance.logAction('post_shared', params: {
+          'post_id': widget.postId,
+          'board_id': widget.boardId,
+        }));
         // Branch.io 딥링크 생성
         await BranchService().showShareSheet(
           postId: widget.postId,
@@ -2061,6 +2122,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           duration: Duration(seconds: 1),
         ),
       );
+      unawaited(AnalyticsService.instance.logAction(
+        'comment_created',
+        params: {
+          'post_id': widget.postId,
+          'board_id': widget.boardId,
+          'is_reply': isReply,
+          'has_image': attachments.isNotEmpty,
+        },
+      ));
     } catch (e) {
       setState(() {
         _isAddingComment = false;
@@ -2072,6 +2142,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           backgroundColor: Colors.red,
         ),
       );
+      unawaited(AnalyticsService.instance.logResult(
+        'comment_created',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {
+          'post_id': widget.postId,
+          'board_id': widget.boardId,
+        },
+      ));
     }
   }
 
@@ -2170,14 +2249,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _recordPostLabelClick(CommunityLabel label) async {
     try {
-      await FirebaseAnalytics.instance.logEvent(
-        name: 'post_label_clicked',
-        parameters: {
+      await AnalyticsService.instance.logAction(
+        'post_label_clicked',
+        params: {
           'label_key': label.key,
           'label_type': label.type,
           'target_id': label.targetId,
           'post_id': widget.postId,
-          'source_screen': 'post_detail',
+          'source': 'post_detail',
         },
       );
     } catch (_) {}
@@ -4079,6 +4158,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       if (type == 'comment') {
         await _loadMyReportedComments();
       }
+      unawaited(AnalyticsService.instance.logAction(
+        'report_submitted',
+        params: {
+          'entity_type': type,
+          'post_id': widget.postId,
+          'board_id': widget.boardId,
+          'reason': reason,
+        },
+      ));
     } catch (e) {
       print('신고 제출 오류: $e');
       Future.delayed(const Duration(milliseconds: 100), () {

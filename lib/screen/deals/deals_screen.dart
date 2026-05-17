@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/analytics_service.dart';
 import 'flight_deals_screen.dart';
 import 'hotel_deals_screen.dart';
 import '../../widgets/shopping_mall_grid.dart';
@@ -49,6 +50,16 @@ class DealsScreen extends StatefulWidget {
 }
 
 class _DealsScreenState extends State<DealsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreenView(
+      'deals',
+      screenClass: 'DealsScreen',
+      source: 'screen_init',
+    );
+  }
+
   void _showInfoDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -158,9 +169,15 @@ class _DealsScreenState extends State<DealsScreen> {
                       height: 140,
                       child: _PressScale(
                         onTap: () {
+                          AnalyticsService.instance.logAction(
+                            'deals_category_open',
+                            params: {'category': 'flight'},
+                          );
                           Navigator.push(
                             context,
                             MaterialPageRoute(
+                              settings:
+                                  const RouteSettings(name: 'flight_deals'),
                               builder: (context) => const FlightDealsScreen(),
                             ),
                           );
@@ -215,9 +232,15 @@ class _DealsScreenState extends State<DealsScreen> {
                       height: 140,
                       child: _PressScale(
                         onTap: () {
+                          AnalyticsService.instance.logAction(
+                            'deals_category_open',
+                            params: {'category': 'hotel'},
+                          );
                           Navigator.push(
                             context,
                             MaterialPageRoute(
+                              settings:
+                                  const RouteSettings(name: 'hotel_deals'),
                               builder: (context) => const HotelDealsScreen(),
                             ),
                           );

@@ -9,6 +9,7 @@ import '../screen/contest_detail_screen.dart';
 import '../screen/giftcard_deals_screen.dart';
 import '../screen/giftcard_rates_screen.dart';
 import '../screen/giftcard_settlement_screen.dart';
+import 'analytics_service.dart';
 
 class BranchService {
   static final BranchService _instance = BranchService._internal();
@@ -101,6 +102,8 @@ class BranchService {
       'deepLink',
       'path',
     ]);
+    _logBranchDeepLinkOpen(data, destination: destination);
+
     if (_isChatDestination(destination) ||
         _chatRoomIdFromLinkValue(linkValue) != null) {
       final roomId = _firstStringValue(data, const [
@@ -196,6 +199,7 @@ class BranchService {
 
     final roomId = _chatRoomIdFromLinkValue(value);
     if (roomId != null) {
+      _logInternalDeepLinkOpen('community_chat', entityId: roomId);
       _navigateToChat(roomId, context: context);
       return true;
     }
@@ -203,45 +207,53 @@ class BranchService {
     if (value.startsWith('branch:')) {
       final branchId = value.substring('branch:'.length).trim();
       if (branchId.isEmpty) return false;
+      _logInternalDeepLinkOpen('branch', entityId: branchId);
       _navigateToBranch(branchId, context: context);
       return true;
     }
 
     final giftcardRateId = _giftcardRateIdFromLinkValue(value);
     if (giftcardRateId != null) {
+      _logInternalDeepLinkOpen('giftcard_rate', entityId: giftcardRateId);
       _navigateToGiftcardRate(giftcardRateId, context: context);
       return true;
     }
 
     if (_isGiftcardCalculatorDestination(value)) {
+      _logInternalDeepLinkOpen('giftcard_calculator');
       _navigateToGiftcardCalculator(context: context);
       return true;
     }
 
     if (_isCardCatalogDestination(value)) {
+      _logInternalDeepLinkOpen('card_catalog');
       _navigateToCards(context: context);
       return true;
     }
 
     final cardId = _cardIdFromLinkValue(value);
     if (cardId != null) {
+      _logInternalDeepLinkOpen('card', entityId: cardId);
       _navigateToCard(cardId, context: context);
       return true;
     }
 
     final giftcardDealId = _giftcardDealIdFromLinkValue(value);
     if (giftcardDealId != null) {
+      _logInternalDeepLinkOpen('giftcard_deal', entityId: giftcardDealId);
       _navigateToGiftcardDeal(giftcardDealId, context: context);
       return true;
     }
 
     if (_isGiftcardDealDestination(value)) {
+      _logInternalDeepLinkOpen('giftcard_deal_list');
       _navigateToGiftcardDealList(context: context);
       return true;
     }
 
     final communityBoardId = _communityBoardIdFromLinkValue(value);
     if (communityBoardId != null) {
+      _logInternalDeepLinkOpen('community_board', entityId: communityBoardId);
       _navigateToCommunityBoard(communityBoardId, context: context);
       return true;
     }
@@ -260,6 +272,29 @@ class BranchService {
       if (text.isNotEmpty) return text;
     }
     return null;
+  }
+
+  void _logBranchDeepLinkOpen(
+    Map<dynamic, dynamic> data, {
+    String? destination,
+  }) {
+    AnalyticsService.instance.logAction('deep_link_open', params: {
+      'source': 'branch',
+      'destination': destination,
+      'post_id': data['postId']?.toString(),
+      'board_id': data['boardId']?.toString(),
+      'card_id': data['cardId']?.toString(),
+      'deal_id': (data['giftcardDealId'] ?? data['dealId'] ?? data['contestId'])
+          ?.toString(),
+    });
+  }
+
+  void _logInternalDeepLinkOpen(String destination, {String? entityId}) {
+    AnalyticsService.instance.logAction('deep_link_open', params: {
+      'source': 'internal_value',
+      'destination': destination,
+      if (entityId != null) 'entity_id': entityId,
+    });
   }
 
   bool _isChatDestination(String? value) {

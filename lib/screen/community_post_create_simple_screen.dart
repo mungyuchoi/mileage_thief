@@ -10,6 +10,7 @@ import 'package:uuid/uuid.dart';
 import '../community_editor/src/utils/firebase_image_uploader.dart';
 import '../models/community_label_model.dart';
 import '../services/auth_service.dart';
+import '../services/analytics_service.dart';
 import '../services/category_service.dart';
 import '../services/community_labeled_post_index_service.dart';
 import '../services/community_label_service.dart';
@@ -538,6 +539,13 @@ class _CommunityPostCreateSimpleScreenState
 
   Future<void> _submitPost() async {
     if (_isSubmitting) return;
+    AnalyticsService.instance.logAction(
+      'post_create_started',
+      params: {
+        'board_id': _selectedBoardId,
+        'source': widget.sourceChat == null ? 'community' : 'chat',
+      },
+    );
 
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -560,6 +568,14 @@ class _CommunityPostCreateSimpleScreenState
 
     setState(() => _isSubmitting = true);
     _showLoadingDialog();
+    AnalyticsService.instance.logAction(
+      'post_create_submitted',
+      params: {
+        'board_id': _selectedBoardId,
+        'has_image': _selectedImages.isNotEmpty || _initialImageUrls.isNotEmpty,
+        'label_count': _selectedLabels.length,
+      },
+    );
 
     try {
       final userProfile =
@@ -703,6 +719,15 @@ class _CommunityPostCreateSimpleScreenState
       _hideLoadingDialog();
       setState(() => _isSubmitting = false);
       _showToast('게시글이 성공적으로 등록되었습니다');
+      AnalyticsService.instance.logAction(
+        'post_create_success',
+        params: {
+          'board_id': _selectedBoardId,
+          'post_id': postId,
+          'has_image': imageUrls.isNotEmpty,
+          'label_count': _selectedLabels.length,
+        },
+      );
       Navigator.of(context).pop(false);
     } catch (e) {
       debugPrint('게시글 등록 오류: $e');
@@ -710,6 +735,12 @@ class _CommunityPostCreateSimpleScreenState
       _hideLoadingDialog();
       setState(() => _isSubmitting = false);
       _showToast('게시글 등록 중 오류가 발생했습니다');
+      AnalyticsService.instance.logResult(
+        'post_create_failed',
+        result: 'failed',
+        errorCode: e.runtimeType.toString(),
+        params: {'board_id': _selectedBoardId},
+      );
     }
   }
 

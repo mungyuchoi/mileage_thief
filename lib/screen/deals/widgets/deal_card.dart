@@ -5,13 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../models/deal_model.dart';
+import '../../../services/analytics_service.dart';
 import '../../../utils/deal_image_utils.dart';
 import '../../../milecatch_rich_editor/src/constants/color_constants.dart';
 import 'price_graph_dialog.dart';
 
 class DealCard extends StatelessWidget {
-  static const String _kPriceGraphDialogDontShowKey = 'deals_price_graph_dialog_dont_show';
-  
+  static const String _kPriceGraphDialogDontShowKey =
+      'deals_price_graph_dialog_dont_show';
+
   final DealModel deal;
   final int index;
 
@@ -29,8 +31,9 @@ class DealCard extends StatelessWidget {
       airportCode: deal.destAirport,
       cityName: deal.destCity,
     );
-    final firstDate = deal.availableDates.isNotEmpty ? deal.availableDates.first : null;
-    
+    final firstDate =
+        deal.availableDates.isNotEmpty ? deal.availableDates.first : null;
+
     // 디버깅: 실제 데이터 확인
     print('=== Deal Debug Info ===');
     print('Deal ID: ${deal.dealId}');
@@ -45,44 +48,50 @@ class DealCard extends StatelessWidget {
     print('Inbound: ${deal.inbound?.toString() ?? "NULL"}');
     print('Available Dates count: ${deal.availableDates.length}');
     if (deal.availableDates.isNotEmpty) {
-      print('First available date - departure: ${firstDate?.departure}, return: ${firstDate?.returnDate}');
-      print('First available date - departureDate: ${firstDate?.departureDate}, returnDateStr: ${firstDate?.returnDateStr}');
+      print(
+          'First available date - departure: ${firstDate?.departure}, return: ${firstDate?.returnDate}');
+      print(
+          'First available date - departureDate: ${firstDate?.departureDate}, returnDateStr: ${firstDate?.returnDateStr}');
     }
     print('Date Ranges count: ${deal.dateRanges.length}');
     if (deal.dateRanges.isNotEmpty) {
-      print('First date range - start: ${deal.dateRanges.first.start}, end: ${deal.dateRanges.first.end}');
+      print(
+          'First date range - start: ${deal.dateRanges.first.start}, end: ${deal.dateRanges.first.end}');
     }
-    print('Supply dates - start: ${deal.supplyStartDate}, end: ${deal.supplyEndDate}');
-    
+    print(
+        'Supply dates - start: ${deal.supplyStartDate}, end: ${deal.supplyEndDate}');
+
     // 특가 항공권 여행사 목록 (출발일만 표시해야 하는 여행사)
     const specialDealAgencies = ['ttangdeal', 'yellowtour'];
     final isSpecialDealAgency = specialDealAgencies.contains(deal.agencyCode);
-    
+
     // 특가 항공권 처리 로직:
     // 특가 항공권 여행사는 항상 출발일만 표시 (available_dates가 비어있을 때만 편도로 처리)
     // 일반 여행사의 경우: inbound가 있고 available_dates에 returnDateStr이 있으면 왕복
-    final hasActualReturnDate = firstDate?.returnDateStr != null && 
-                                 firstDate?.returnDateStr?.isNotEmpty == true;
-    
+    final hasActualReturnDate = firstDate?.returnDateStr != null &&
+        firstDate?.returnDateStr?.isNotEmpty == true;
+
     // 특가 항공권 여행사의 경우: available_dates가 비어있으면 항상 편도로 처리
     // 일반 여행사의 경우: inbound가 있고 returnDateStr이 있으면 왕복
-    final shouldShowRoundTrip = isSpecialDealAgency 
-        ? false  // 특가 항공권 여행사는 항상 편도로 처리
-        : ((deal.tripType == 'VV' || deal.tripType == 'RT') && deal.inbound != null && hasActualReturnDate);
-    
+    final shouldShowRoundTrip = isSpecialDealAgency
+        ? false // 특가 항공권 여행사는 항상 편도로 처리
+        : ((deal.tripType == 'VV' || deal.tripType == 'RT') &&
+            deal.inbound != null &&
+            hasActualReturnDate);
+
     final isRoundTrip = shouldShowRoundTrip;
-    
+
     print('Is Special Deal Agency: $isSpecialDealAgency');
     print('Has Actual Return Date: $hasActualReturnDate');
     print('Is Round Trip: $isRoundTrip');
     print('========================');
-    
+
     // availableDates가 비어있을 때 date_ranges나 supply_start_date/supply_end_date로 날짜 생성
     String? fallbackDepartureDate;
     String? fallbackDepartureDateStr;
     String? fallbackReturnDate;
     String? fallbackReturnDateStr;
-    
+
     if (firstDate == null) {
       // date_ranges 우선 사용
       if (deal.dateRanges.isNotEmpty) {
@@ -91,20 +100,22 @@ class DealCard extends StatelessWidget {
           final startDate = DateTime.parse(dateRange.start);
           final endDate = DateTime.parse(dateRange.end);
           final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-          
-          fallbackDepartureDate = '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
+
+          fallbackDepartureDate =
+              '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
           fallbackDepartureDateStr = dateRange.start;
-          
+
           // date_ranges의 end는 공급 종료일일 수 있으므로, inbound가 있을 때만 귀국일로 사용
           if (isRoundTrip && deal.inbound != null) {
-            fallbackReturnDate = '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
+            fallbackReturnDate =
+                '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
             fallbackReturnDateStr = dateRange.end;
           }
         } catch (e) {
           // 파싱 실패 시 무시
         }
       }
-      
+
       // date_ranges도 없으면 supply_start_date/supply_end_date 사용
       if (fallbackDepartureDateStr == null && deal.supplyStartDate.isNotEmpty) {
         try {
@@ -114,20 +125,26 @@ class DealCard extends StatelessWidget {
             final day = int.parse(deal.supplyStartDate.substring(6, 8));
             final startDate = DateTime(year, month, day);
             final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-            
-            fallbackDepartureDate = '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
-            fallbackDepartureDateStr = '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+
+            fallbackDepartureDate =
+                '${startDate.month}-${startDate.day.toString().padLeft(2, '0')}(${weekdays[startDate.weekday - 1]})';
+            fallbackDepartureDateStr =
+                '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
           }
-          
-          if (isRoundTrip && deal.supplyEndDate.isNotEmpty && deal.supplyEndDate.length == 8) {
+
+          if (isRoundTrip &&
+              deal.supplyEndDate.isNotEmpty &&
+              deal.supplyEndDate.length == 8) {
             final year = int.parse(deal.supplyEndDate.substring(0, 4));
             final month = int.parse(deal.supplyEndDate.substring(4, 6));
             final day = int.parse(deal.supplyEndDate.substring(6, 8));
             final endDate = DateTime(year, month, day);
             final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-            
-            fallbackReturnDate = '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
-            fallbackReturnDateStr = '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+
+            fallbackReturnDate =
+                '${endDate.month}-${endDate.day.toString().padLeft(2, '0')}(${weekdays[endDate.weekday - 1]})';
+            fallbackReturnDateStr =
+                '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
           }
         } catch (e) {
           // 파싱 실패 시 무시
@@ -198,12 +215,16 @@ class DealCard extends StatelessWidget {
                             destAirport: deal.destAirport,
                             flightInfo: deal.outbound,
                             date: firstDate?.departure ?? fallbackDepartureDate,
-                            dateStr: firstDate?.departureDate ?? fallbackDepartureDateStr,
+                            dateStr: firstDate?.departureDate ??
+                                fallbackDepartureDateStr,
                             duration: deal.flightDuration,
                             isDirect: deal.isDirect,
                           ),
                           // 편도인 경우 출발 가능 기간 표시
-                          if (!isRoundTrip && (deal.dateRanges.isNotEmpty || (deal.supplyStartDate.isNotEmpty && deal.supplyEndDate.isNotEmpty)))
+                          if (!isRoundTrip &&
+                              (deal.dateRanges.isNotEmpty ||
+                                  (deal.supplyStartDate.isNotEmpty &&
+                                      deal.supplyEndDate.isNotEmpty)))
                             Padding(
                               padding: const EdgeInsets.only(top: 4, left: 0),
                               child: _buildSupplyPeriodText(deal),
@@ -221,8 +242,10 @@ class DealCard extends StatelessWidget {
                             destAirport: deal.originAirport,
                             flightInfo: deal.inbound,
                             date: firstDate?.returnDate ?? fallbackReturnDate,
-                            dateStr: firstDate?.returnDateStr ?? fallbackReturnDateStr,
-                            duration: deal.inbound?.durationText ?? deal.flightDuration,
+                            dateStr: firstDate?.returnDateStr ??
+                                fallbackReturnDateStr,
+                            duration: deal.inbound?.durationText ??
+                                deal.flightDuration,
                             isDirect: deal.isDirect,
                           ),
                         ),
@@ -233,9 +256,11 @@ class DealCard extends StatelessWidget {
                           // 편도인 경우 여행 기간 표시하지 않음
                           if (isRoundTrip)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: ColorConstants.milecatchBrown.withOpacity(0.1),
+                                color: ColorConstants.milecatchBrown
+                                    .withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -247,10 +272,10 @@ class DealCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          if (isRoundTrip)
-                            const SizedBox(width: 8),
+                          if (isRoundTrip) const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(6),
@@ -316,8 +341,8 @@ class DealCard extends StatelessWidget {
                     children: [
                       // 가격
                       Text(
-                        deal.priceDisplay.isNotEmpty 
-                            ? deal.priceDisplay 
+                        deal.priceDisplay.isNotEmpty
+                            ? deal.priceDisplay
                             : '${deal.price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
                         style: TextStyle(
                           fontSize: 16,
@@ -340,7 +365,8 @@ class DealCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue[400],
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -363,7 +389,8 @@ class DealCard extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[400],
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -401,14 +428,15 @@ class DealCard extends StatelessWidget {
   }) {
     final departureTime = flightInfo?.departureTime ?? '';
     final arrivalTime = flightInfo?.arrivalTime ?? '';
-    
+
     // 날짜 파싱 (예: "1/22(목)" -> "01-22(목)")
     String formattedDate = date ?? '';
     if (dateStr != null) {
       try {
         final dateTime = DateTime.parse(dateStr);
         final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-        formattedDate = '${dateTime.month}-${dateTime.day.toString().padLeft(2, '0')}(${weekdays[dateTime.weekday - 1]})';
+        formattedDate =
+            '${dateTime.month}-${dateTime.day.toString().padLeft(2, '0')}(${weekdays[dateTime.weekday - 1]})';
       } catch (e) {
         formattedDate = date ?? '';
       }
@@ -534,7 +562,8 @@ class DealCard extends StatelessWidget {
     }
   }
 
-  Future<bool> _confirmAndSpendPeanutsForPriceGraph(BuildContext context) async {
+  Future<bool> _confirmAndSpendPeanutsForPriceGraph(
+      BuildContext context) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
@@ -542,7 +571,10 @@ class DealCard extends StatelessWidget {
         return false;
       }
 
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       final int peanuts = (doc.data()?['peanutCount'] as num?)?.toInt() ?? 0;
       if (peanuts < 5) {
         Fluttertoast.showToast(msg: '땅콩이 모자랍니다.');
@@ -605,8 +637,7 @@ class DealCard extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(localDontShow),
+                      onPressed: () => Navigator.of(context).pop(localDontShow),
                       child: const Text(
                         '확인',
                         style: TextStyle(
@@ -653,24 +684,25 @@ class DealCard extends StatelessWidget {
   Widget _buildSupplyPeriodText(DealModel deal) {
     String? startDateStr;
     String? endDateStr;
-    
+
     // date_ranges 우선 사용
     if (deal.dateRanges.isNotEmpty) {
       final dateRange = deal.dateRanges.first;
       startDateStr = dateRange.start;
       endDateStr = dateRange.end;
-    } 
+    }
     // date_ranges가 없으면 supply_start_date/supply_end_date 사용
     else if (deal.supplyStartDate.isNotEmpty && deal.supplyEndDate.isNotEmpty) {
       try {
-        if (deal.supplyStartDate.length == 8 && deal.supplyEndDate.length == 8) {
+        if (deal.supplyStartDate.length == 8 &&
+            deal.supplyEndDate.length == 8) {
           final startYear = deal.supplyStartDate.substring(0, 4);
           final startMonth = deal.supplyStartDate.substring(4, 6);
           final startDay = deal.supplyStartDate.substring(6, 8);
           final endYear = deal.supplyEndDate.substring(0, 4);
           final endMonth = deal.supplyEndDate.substring(4, 6);
           final endDay = deal.supplyEndDate.substring(6, 8);
-          
+
           startDateStr = '$startYear-$startMonth-$startDay';
           endDateStr = '$endYear-$endMonth-$endDay';
         }
@@ -678,11 +710,11 @@ class DealCard extends StatelessWidget {
         // 파싱 실패 시 무시
       }
     }
-    
+
     if (startDateStr == null || endDateStr == null) {
       return const SizedBox.shrink();
     }
-    
+
     // 날짜 포맷팅 (예: "2026-01-13" -> "1/13")
     String formatDate(String dateStr) {
       try {
@@ -692,10 +724,10 @@ class DealCard extends StatelessWidget {
         return dateStr;
       }
     }
-    
+
     final formattedStart = formatDate(startDateStr);
     final formattedEnd = formatDate(endDateStr);
-    
+
     return Text(
       '출발 가능: $formattedStart ~ $formattedEnd',
       style: const TextStyle(
@@ -707,8 +739,24 @@ class DealCard extends StatelessWidget {
 
   void _handleBooking(BuildContext context) async {
     try {
+      await AnalyticsService.instance.logAction(
+        'flight_deal_open',
+        params: {
+          'deal_id': deal.dealId,
+          'agency_code': deal.agencyCode,
+          'airline_code': deal.airlineCode,
+        },
+      );
       final url = Uri.parse(deal.bookingUrl);
       if (await canLaunchUrl(url)) {
+        await AnalyticsService.instance.logAction(
+          'external_link_open',
+          params: {
+            'screen': 'flight_deals',
+            'entity_type': 'flight_deal',
+            'entity_id': deal.dealId,
+          },
+        );
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
@@ -726,4 +774,3 @@ class DealCard extends StatelessWidget {
     }
   }
 }
-
