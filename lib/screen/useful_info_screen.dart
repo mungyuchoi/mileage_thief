@@ -31,10 +31,10 @@ import 'community_detail_screen.dart';
 import 'dan_screen.dart';
 import 'deals/deals_screen.dart';
 import 'deals/flight_deals_screen.dart';
-import 'deals/hotel_deals_screen.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'giftcard_deals_screen.dart';
+import 'point_stay_screen.dart';
 
 typedef _PostDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>;
 typedef _BoardDocs = List<Map<String, dynamic>>;
@@ -49,6 +49,7 @@ const String _koreanAirQuickActionIconAsset = 'asset/icon/quick_korean_air.png';
 const String _dealsQuickActionIconAsset = 'asset/icon/quick_deals.png';
 const String _cardQuickActionIconAsset = 'asset/icon/quick_card.png';
 const String _giftcardQuickActionIconAsset = 'asset/icon/quick_giftcard.png';
+const String _hotelQuickActionIconAsset = 'asset/icon/quick_hotel.png';
 
 const Map<String, String> _boardNameById = {
   'question': '마일리지',
@@ -333,6 +334,17 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
           _QuickActionsSection(
             actions: [
               _QuickAction(
+                icon: Icons.hotel_outlined,
+                assetIcon: _hotelQuickActionIconAsset,
+                title: '포숙',
+                subtitle: '포인트 숙박',
+                onTap: () => _trackQuickAction(
+                  action: 'point_stay',
+                  targetScreen: 'point_stay',
+                  open: () => _push(const PointStayScreen()),
+                ),
+              ),
+              _QuickAction(
                 icon: Icons.credit_card_outlined,
                 assetIcon: _cardQuickActionIconAsset,
                 title: '카드',
@@ -371,7 +383,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                 icon: Icons.flight_takeoff,
                 assetIcon: _dealsQuickActionIconAsset,
                 title: '특가',
-                subtitle: '항공권/호텔',
+                subtitle: '항공권',
                 onTap: () => _trackQuickAction(
                   action: 'deals',
                   targetScreen: 'deals',
@@ -772,9 +784,6 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     switch (item.itemType) {
       case RadarItemType.flightDeal:
         _push(const FlightDealsScreen());
-        break;
-      case RadarItemType.hotelDeal:
-        _push(const HotelDealsScreen());
         break;
       case RadarItemType.giftcard:
         widget.onOpenGiftcard();
@@ -3092,6 +3101,8 @@ IconData _radarIcon(String itemType) {
       return Icons.flight_takeoff;
     case RadarItemType.hotelDeal:
       return Icons.hotel_outlined;
+    case RadarItemType.hotelAward:
+      return Icons.hotel_class_outlined;
     case RadarItemType.giftcard:
       return Icons.card_giftcard;
     case RadarItemType.valueCalculator:
@@ -3109,6 +3120,8 @@ Color _radarAccentColor(String itemType) {
     case RadarItemType.flightDeal:
       return const Color(0xFF2563EB);
     case RadarItemType.hotelDeal:
+      return const Color(0xFF7C3AED);
+    case RadarItemType.hotelAward:
       return const Color(0xFF7C3AED);
     case RadarItemType.giftcard:
       return const Color(0xFFB45309);

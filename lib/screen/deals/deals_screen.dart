@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/analytics_service.dart';
 import 'flight_deals_screen.dart';
-import 'hotel_deals_screen.dart';
 import '../../widgets/shopping_mall_grid.dart';
 
 class _PressScale extends StatefulWidget {
@@ -156,14 +155,13 @@ class _DealsScreenState extends State<DealsScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // 항공권/호텔 버튼 섹션
+              // 항공권 버튼 섹션
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // 항공권 버튼
                     SizedBox(
                       width: 140,
                       height: 140,
@@ -212,69 +210,6 @@ class _DealsScreenState extends State<DealsScreen> {
                                   SizedBox(width: 6),
                                   Text(
                                     '항공권',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // 호텔 버튼
-                    SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: _PressScale(
-                        onTap: () {
-                          AnalyticsService.instance.logAction(
-                            'deals_category_open',
-                            params: {'category': 'hotel'},
-                          );
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              settings:
-                                  const RouteSettings(name: 'hotel_deals'),
-                              builder: (context) => const HotelDealsScreen(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.black12,
-                              width: 1,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'asset/img/app_hotel.png',
-                                width: 96,
-                                height: 96,
-                                fit: BoxFit.contain,
-                              ),
-                              const SizedBox(height: 6),
-                              const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.hotel,
-                                    size: 14,
-                                    color: Colors.black54,
-                                  ),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    '호텔',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,

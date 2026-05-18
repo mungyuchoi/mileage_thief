@@ -1182,6 +1182,8 @@ String _radarTypeLabel(String type) {
       return '취소표';
     case RadarItemType.flightDeal:
       return '항공 특가';
+    case RadarItemType.hotelAward:
+      return '포인트 숙박';
     case RadarItemType.giftcard:
       return '상품권';
     case RadarItemType.valueCalculator:
@@ -1200,6 +1202,8 @@ IconData _radarIcon(String type) {
       return Icons.notifications_active_outlined;
     case RadarItemType.flightDeal:
       return Icons.flight_takeoff_rounded;
+    case RadarItemType.hotelAward:
+      return Icons.hotel_class_outlined;
     case RadarItemType.giftcard:
       return Icons.card_giftcard_rounded;
     case RadarItemType.valueCalculator:
@@ -1214,6 +1218,8 @@ Color _radarAccent(String type) {
   switch (type) {
     case RadarItemType.flightDeal:
       return const Color(0xFF2563EB);
+    case RadarItemType.hotelAward:
+      return const Color(0xFF7C3AED);
     case RadarItemType.giftcard:
       return const Color(0xFFB45309);
     case RadarItemType.cancelAlert:

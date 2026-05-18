@@ -1,0 +1,23 @@
+# MileCatch hotel award crawl schedule for Ubuntu crontab.
+# Install with: crontab -e, then paste the active lines below.
+# Set FIREBASE_SERVICE_ACCOUNT in env/hotel_award_cron.env or export it here.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+CRON_TZ=Asia/Seoul
+MILECATCH_REPO=/home/milecatch/mileage_thief
+
+# Weekly hotel master refresh: Monday 03:10 KST.
+10 3 * * 1 $MILECATCH_REPO/task/hotel/run_award_crawl_cycle.sh master
+
+# Daily popular regions and hotels: every day 04:10 KST.
+10 4 * * * $MILECATCH_REPO/task/hotel/run_award_crawl_cycle.sh popular
+
+# User alert targets: every 12 hours.
+20 */12 * * * $MILECATCH_REPO/task/hotel/run_award_crawl_cycle.sh alert
+
+# Urgent alerts within 7 days of check-in: every 4 hours.
+35 */4 * * * $MILECATCH_REPO/task/hotel/run_award_crawl_cycle.sh urgent
+
+# Sparse backfill: every 3 days.
+50 5 */3 * * $MILECATCH_REPO/task/hotel/run_award_crawl_cycle.sh backfill

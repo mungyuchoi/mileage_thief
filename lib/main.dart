@@ -19,6 +19,7 @@ import 'screen/card_catalog_screen.dart';
 import 'screen/card_hub_screen.dart';
 import 'screen/giftcard_deals_screen.dart';
 import 'screen/my_card_dashboard_screen.dart';
+import 'screen/point_stay_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
@@ -356,6 +357,7 @@ class _MyAppState extends State<MyApp> {
             cardId: args?['cardId']?.toString() ?? '',
           );
         },
+        '/point-stay': (context) => const PointStayScreen(),
         '/giftcard/deal': (context) {
           final args = ModalRoute.of(context)?.settings.arguments
               as Map<String, dynamic>?;

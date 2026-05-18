@@ -20,6 +20,7 @@ void main() {
       CommunityLabel.giftcard(giftcardId: 'shinsegae', name: '신세계상품권'),
       CommunityLabel.card(cardId: 'hyundai_m', name: '현대카드 M'),
       CommunityLabel.giftcardCalculator(),
+      CommunityLabel.pointStay(),
     ]);
 
     expect(payload.labelKeys, [
@@ -27,6 +28,7 @@ void main() {
       'giftcard:shinsegae',
       'card:hyundai_m',
       'calculator:giftcard',
+      'feature:point_stay',
     ]);
     expect(payload.entityRefs['branchIds'], ['jungang']);
     expect(payload.entityRefs['branchId'], 'jungang');
@@ -35,6 +37,8 @@ void main() {
     expect(payload.entityRefs['cardIds'], ['hyundai_m']);
     expect(payload.entityRefs['cardId'], 'hyundai_m');
     expect(payload.entityRefs['calculatorKinds'], ['giftcard']);
+    expect(payload.entityRefs['featureKinds'], ['point_stay']);
+    expect(payload.entityRefs['featureKind'], 'point_stay');
   });
 
   test('listFromEntityRefs restores legacy refs as labels', () {
@@ -43,6 +47,7 @@ void main() {
       'giftcardIds': ['lotte', 'shinsegae'],
       'cardId': 'hyundai_m',
       'calculatorKinds': ['giftcard'],
+      'featureKind': 'point_stay',
     });
 
     expect(labels.map((label) => label.key), [
@@ -51,7 +56,22 @@ void main() {
       'giftcard:shinsegae',
       'card:hyundai_m',
       'calculator:giftcard',
+      'feature:point_stay',
     ]);
+  });
+
+  test('point stay label has feature refs and deep link payload', () {
+    final label = CommunityLabel.pointStay();
+    final payload = CommunityLabelPayload.fromLabels([label]);
+
+    expect(label.key, 'feature:point_stay');
+    expect(label.type, 'feature');
+    expect(label.targetId, 'point_stay');
+    expect(label.linkValue, 'feature:point_stay');
+    expect(payload.entityRefs, {
+      'featureKinds': ['point_stay'],
+      'featureKind': 'point_stay',
+    });
   });
 
   test('filterCandidates matches names, ids, and subtitles', () {
@@ -64,11 +84,21 @@ void main() {
         issuerName: '현대카드',
       ),
       CommunityLabel.giftcardCalculator(),
+      CommunityLabel.pointStay(),
     ], '현대');
 
     expect(filtered.map((label) => label.key), [
       'card:hyundai_m',
     ]);
+  });
+
+  test('filterCandidates matches point stay feature label', () {
+    final filtered = CommunityLabelService.filterCandidates([
+      CommunityLabel.branch(branchId: 'myeongdong_a', name: '명동 상품권'),
+      CommunityLabel.pointStay(),
+    ], '포숙');
+
+    expect(filtered.map((label) => label.key), ['feature:point_stay']);
   });
 
   test('branchItemFromData builds branch label with address description', () {

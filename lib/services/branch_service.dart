@@ -9,6 +9,7 @@ import '../screen/contest_detail_screen.dart';
 import '../screen/giftcard_deals_screen.dart';
 import '../screen/giftcard_rates_screen.dart';
 import '../screen/giftcard_settlement_screen.dart';
+import '../screen/point_stay_screen.dart';
 import 'analytics_service.dart';
 
 class BranchService {
@@ -158,6 +159,13 @@ class BranchService {
       return;
     }
 
+    if (_isPointStayDestination(destination) ||
+        _isPointStayDestination(linkValue)) {
+      debugPrint('실제 딥링크 클릭 감지 - 포인트 숙박으로 이동');
+      _navigateToPointStay();
+      return;
+    }
+
     // 게시글 딥링크 처리
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
@@ -248,6 +256,12 @@ class BranchService {
     if (_isGiftcardDealDestination(value)) {
       _logInternalDeepLinkOpen('giftcard_deal_list');
       _navigateToGiftcardDealList(context: context);
+      return true;
+    }
+
+    if (_isPointStayDestination(value)) {
+      _logInternalDeepLinkOpen('point_stay');
+      _navigateToPointStay(context: context);
       return true;
     }
 
@@ -343,6 +357,19 @@ class BranchService {
         normalized == '/giftcard/calculator' ||
         normalized == '/giftcard/settlement' ||
         normalized == 'giftcard-settlement';
+  }
+
+  bool _isPointStayDestination(String? value) {
+    if (value == null) return false;
+    final normalized =
+        value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+    return normalized == 'feature:point-stay' ||
+        normalized == 'point-stay' ||
+        normalized == 'pointstay' ||
+        normalized == 'hotel-point-stay' ||
+        normalized == 'hotel/point-stay' ||
+        normalized == '/point-stay' ||
+        normalized == '/hotel/point-stay';
   }
 
   bool _isCommunityDestination(String? value) {
@@ -717,6 +744,21 @@ class BranchService {
       ),
       body: const SafeArea(child: GiftcardDealsScreen()),
     );
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
+  void _navigateToPointStay({
+    BuildContext? context,
+  }) {
+    const screen = PointStayScreen();
     if (context != null) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => screen),
