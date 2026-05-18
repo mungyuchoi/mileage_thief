@@ -44,11 +44,11 @@ typedef OpenCommunityCallback = void Function({
   String? boardName,
 });
 
-const String _chatQuickActionIconAsset = 'asset/icon/community_chat.png';
-const String _koreanAirQuickActionIconAsset = 'asset/icon/korean_air.png';
-const String _dealsQuickActionIconAsset = 'asset/icon/deals.png';
-const String _cardQuickActionIconAsset = 'asset/icon/card.png';
-const String _giftcardQuickActionIconAsset = 'asset/icon/giftcard.png';
+const String _chatQuickActionIconAsset = 'asset/icon/quick_chat.png';
+const String _koreanAirQuickActionIconAsset = 'asset/icon/quick_korean_air.png';
+const String _dealsQuickActionIconAsset = 'asset/icon/quick_deals.png';
+const String _cardQuickActionIconAsset = 'asset/icon/quick_card.png';
+const String _giftcardQuickActionIconAsset = 'asset/icon/quick_giftcard.png';
 
 const Map<String, String> _boardNameById = {
   'question': '마일리지',
