@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String communityChatFloatingIconAsset = 'asset/icon/community_chat.png';
+const String communityChatFloatingIconAsset = 'asset/icon/quick_chat.png';
 
 class CommunityChatFloatingButton extends StatelessWidget {
   const CommunityChatFloatingButton({

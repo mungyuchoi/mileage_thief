@@ -79,6 +79,18 @@ class CommunityLabel {
     );
   }
 
+  factory CommunityLabel.pointStay() {
+    return const CommunityLabel(
+      key: 'feature:point_stay',
+      type: 'feature',
+      targetId: 'point_stay',
+      displayName: '포인트 숙박',
+      subtitle: '포숙',
+      linkValue: 'feature:point_stay',
+      sourcePath: 'communityFeatures/point_stay',
+    );
+  }
+
   factory CommunityLabel.fromMap(Map<String, dynamic> map) {
     final type = _string(map['type'] ?? map['labelType']);
     final targetId = _string(map['targetId']);
@@ -174,6 +186,16 @@ class CommunityLabel {
       labels.add(CommunityLabel.giftcardCalculator());
     }
 
+    for (final id in _stringList(refs['featureKinds'])) {
+      if (id == 'point_stay') {
+        labels.add(CommunityLabel.pointStay());
+      }
+    }
+    final featureKind = _string(refs['featureKind']);
+    if (featureKind == 'point_stay') {
+      labels.add(CommunityLabel.pointStay());
+    }
+
     return dedupe(labels);
   }
 }
@@ -195,6 +217,7 @@ class CommunityLabelPayload {
     final giftcardIds = <String>[];
     final cardIds = <String>[];
     final calculatorKinds = <String>[];
+    final featureKinds = <String>[];
 
     for (final label in labels) {
       switch (label.type) {
@@ -209,6 +232,9 @@ class CommunityLabelPayload {
           break;
         case 'calculator':
           calculatorKinds.add(label.targetId);
+          break;
+        case 'feature':
+          featureKinds.add(label.targetId);
           break;
       }
     }
@@ -228,6 +254,10 @@ class CommunityLabelPayload {
     }
     if (calculatorKinds.isNotEmpty) {
       entityRefs['calculatorKinds'] = calculatorKinds;
+    }
+    if (featureKinds.isNotEmpty) {
+      entityRefs['featureKinds'] = featureKinds;
+      entityRefs['featureKind'] = featureKinds.first;
     }
 
     return CommunityLabelPayload(

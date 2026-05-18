@@ -116,6 +116,12 @@ class CommunityLabeledPostIndexService {
             .doc(label.targetId)
             .collection('labeledPosts')
             .doc(postId);
+      case 'feature':
+        return db
+            .collection('communityFeatures')
+            .doc(label.targetId)
+            .collection('labeledPosts')
+            .doc(postId);
       default:
         return null;
     }

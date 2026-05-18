@@ -314,6 +314,8 @@ class CommunityLabelService {
         return 2;
       case 'calculator':
         return 3;
+      case 'feature':
+        return 4;
       default:
         return 9;
     }

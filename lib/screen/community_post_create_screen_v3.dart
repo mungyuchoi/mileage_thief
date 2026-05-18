@@ -536,6 +536,8 @@ class _CommunityPostCreateScreenV3State
         return Icons.credit_card_outlined;
       case 'calculator':
         return Icons.calculate_outlined;
+      case 'feature':
+        return Icons.hotel_outlined;
       default:
         return Icons.label_outline;
     }
