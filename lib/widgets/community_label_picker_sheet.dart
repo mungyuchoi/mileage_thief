@@ -44,7 +44,7 @@ class _CommunityLabelPickerSheetState extends State<CommunityLabelPickerSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _selectedLabels = CommunityLabel.dedupe(widget.selectedLabels)
         .take(widget.maxLabels)
         .toList(growable: false);
@@ -237,7 +237,7 @@ class _CommunityLabelPickerSheetState extends State<CommunityLabelPickerSheet>
                 textInputAction: TextInputAction.search,
                 style: const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
-                  hintText: '지점, 상품권, 카드명 검색',
+                  hintText: '지점, 상품권, 카드명, 포숙 검색',
                   hintStyle: const TextStyle(color: Colors.black38),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _query.isEmpty
@@ -378,6 +378,7 @@ class _CommunityLabelPickerSheetState extends State<CommunityLabelPickerSheet>
             Tab(text: '지점'),
             Tab(text: '상품권'),
             Tab(text: '카드'),
+            Tab(text: '포숙'),
           ],
         ),
         Expanded(
@@ -393,6 +394,10 @@ class _CommunityLabelPickerSheetState extends State<CommunityLabelPickerSheet>
                 emptyText: '등록된 상품권 브랜드가 없습니다.',
               ),
               _buildCardGroups(data.cardGroups),
+              _buildItemList(
+                items: data.featureItems,
+                emptyText: '등록된 포숙 라벨이 없습니다.',
+              ),
             ],
           ),
         ),

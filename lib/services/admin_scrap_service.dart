@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../models/community_label_model.dart';
+
 enum AdminScrapSource {
   naverBlog,
   aagag,
@@ -220,17 +222,20 @@ class AdminScrapService {
     required String boardId,
     required String authorUid,
     required String titleOverride,
+    List<CommunityLabel> labels = const <CommunityLabel>[],
   }) async {
     final callable = _functions.httpsCallable(
       'publishScrapPost',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 100)),
     );
+    final labelPayload = CommunityLabelPayload.fromLabels(labels);
     final result = await callable.call(<String, dynamic>{
       'url': url,
       'sourceType': source.functionValue,
       'boardId': boardId,
       'authorUid': authorUid,
       'titleOverride': titleOverride,
+      'labels': labelPayload.labels,
     });
     return AdminScrapPublishResult.fromJson(_mapValue(result.data));
   }
@@ -239,15 +244,18 @@ class AdminScrapService {
     required String url,
     required String boardId,
     required String titleOverride,
+    List<CommunityLabel> labels = const <CommunityLabel>[],
   }) async {
     final callable = _functions.httpsCallable(
       'publishUserScrapPost',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 100)),
     );
+    final labelPayload = CommunityLabelPayload.fromLabels(labels);
     final result = await callable.call(<String, dynamic>{
       'url': url,
       'boardId': boardId,
       'titleOverride': titleOverride,
+      'labels': labelPayload.labels,
     });
     return AdminScrapPublishResult.fromJson(_mapValue(result.data));
   }

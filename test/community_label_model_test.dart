@@ -21,6 +21,8 @@ void main() {
       CommunityLabel.card(cardId: 'hyundai_m', name: '현대카드 M'),
       CommunityLabel.giftcardCalculator(),
       CommunityLabel.pointStay(),
+      CommunityLabel.pointStayFeature(
+          featureId: CommunityLabel.marriottFeatureId),
     ]);
 
     expect(payload.labelKeys, [
@@ -29,6 +31,7 @@ void main() {
       'card:hyundai_m',
       'calculator:giftcard',
       'feature:point_stay',
+      'feature:point_stay_marriott',
     ]);
     expect(payload.entityRefs['branchIds'], ['jungang']);
     expect(payload.entityRefs['branchId'], 'jungang');
@@ -37,7 +40,10 @@ void main() {
     expect(payload.entityRefs['cardIds'], ['hyundai_m']);
     expect(payload.entityRefs['cardId'], 'hyundai_m');
     expect(payload.entityRefs['calculatorKinds'], ['giftcard']);
-    expect(payload.entityRefs['featureKinds'], ['point_stay']);
+    expect(payload.entityRefs['featureKinds'], [
+      'point_stay',
+      'point_stay_marriott',
+    ]);
     expect(payload.entityRefs['featureKind'], 'point_stay');
   });
 
@@ -47,7 +53,7 @@ void main() {
       'giftcardIds': ['lotte', 'shinsegae'],
       'cardId': 'hyundai_m',
       'calculatorKinds': ['giftcard'],
-      'featureKind': 'point_stay',
+      'featureKinds': ['point_stay', 'point_stay_hilton'],
     });
 
     expect(labels.map((label) => label.key), [
@@ -57,19 +63,26 @@ void main() {
       'card:hyundai_m',
       'calculator:giftcard',
       'feature:point_stay',
+      'feature:point_stay_hilton',
     ]);
   });
 
   test('point stay label has feature refs and deep link payload', () {
     final label = CommunityLabel.pointStay();
-    final payload = CommunityLabelPayload.fromLabels([label]);
+    final marriott = CommunityLabel.pointStayFeature(
+        featureId: CommunityLabel.marriottFeatureId);
+    final payload = CommunityLabelPayload.fromLabels([label, marriott]);
 
     expect(label.key, 'feature:point_stay');
     expect(label.type, 'feature');
     expect(label.targetId, 'point_stay');
     expect(label.linkValue, 'feature:point_stay');
+    expect(marriott.key, 'feature:point_stay_marriott');
+    expect(marriott.displayName, '메리어트');
+    expect(marriott.linkValue, 'feature:point_stay_marriott');
+    expect(marriott.sourcePath, 'communityFeatures/point_stay_marriott');
     expect(payload.entityRefs, {
-      'featureKinds': ['point_stay'],
+      'featureKinds': ['point_stay', 'point_stay_marriott'],
       'featureKind': 'point_stay',
     });
   });
@@ -85,6 +98,8 @@ void main() {
       ),
       CommunityLabel.giftcardCalculator(),
       CommunityLabel.pointStay(),
+      CommunityLabel.pointStayFeature(
+          featureId: CommunityLabel.marriottFeatureId),
     ], '현대');
 
     expect(filtered.map((label) => label.key), [
@@ -96,9 +111,11 @@ void main() {
     final filtered = CommunityLabelService.filterCandidates([
       CommunityLabel.branch(branchId: 'myeongdong_a', name: '명동 상품권'),
       CommunityLabel.pointStay(),
-    ], '포숙');
+      CommunityLabel.pointStayFeature(
+          featureId: CommunityLabel.marriottFeatureId),
+    ], '메리어트');
 
-    expect(filtered.map((label) => label.key), ['feature:point_stay']);
+    expect(filtered.map((label) => label.key), ['feature:point_stay_marriott']);
   });
 
   test('branchItemFromData builds branch label with address description', () {
@@ -216,13 +233,48 @@ void main() {
           ],
         ),
       ],
+      featureItems: [
+        for (final label in CommunityLabel.pointStayFeatures())
+          CommunityLabelBrowseItem(label: label),
+      ],
     );
 
     final keys = CommunityLabelService.flattenBrowseData(data)
         .map((item) => item.label.key)
         .toList();
 
-    expect(keys, ['branch:gogo', 'giftcard:lotte', 'card:hyundai_m']);
+    expect(keys, [
+      'branch:gogo',
+      'giftcard:lotte',
+      'card:hyundai_m',
+      'feature:point_stay',
+      'feature:point_stay_marriott',
+      'feature:point_stay_accor',
+      'feature:point_stay_hilton',
+      'feature:point_stay_ihg',
+      'feature:point_stay_hyatt',
+    ]);
     expect(keys, isNot(contains('calculator:giftcard')));
+  });
+
+  test('point stay browse labels include five hotel programs', () {
+    final labels = CommunityLabel.pointStayFeatures();
+
+    expect(labels.map((label) => label.key), [
+      'feature:point_stay',
+      'feature:point_stay_marriott',
+      'feature:point_stay_accor',
+      'feature:point_stay_hilton',
+      'feature:point_stay_ihg',
+      'feature:point_stay_hyatt',
+    ]);
+    expect(labels.map((label) => label.displayName), [
+      '포인트 숙박',
+      '메리어트',
+      '아코르',
+      '힐튼',
+      'IHG',
+      '하얏트',
+    ]);
   });
 }

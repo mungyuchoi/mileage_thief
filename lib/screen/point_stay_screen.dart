@@ -16,6 +16,26 @@ import 'community_post_create_simple_screen.dart';
 import 'marriott_stay_list_screen.dart';
 import 'marriott_stay_form_screen.dart';
 
+enum _PointStayTabKind {
+  feed,
+  records,
+  explore,
+}
+
+class _PointStayTabConfig {
+  final String label;
+  final String analyticsName;
+  final _PointStayTabKind kind;
+  final String? featureId;
+
+  const _PointStayTabConfig({
+    required this.label,
+    required this.analyticsName,
+    this.kind = _PointStayTabKind.feed,
+    this.featureId,
+  });
+}
+
 class PointStayScreen extends StatefulWidget {
   const PointStayScreen({super.key});
 
@@ -25,30 +45,68 @@ class PointStayScreen extends StatefulWidget {
 
 class _PointStayScreenState extends State<PointStayScreen>
     with SingleTickerProviderStateMixin {
-  static const List<String> _tabs = <String>['피드', '숙박기록', '탐색', '정보'];
-  static const List<String> _tabAnalyticsNames = <String>[
-    'feed',
-    'marriott_stays',
-    'explore',
-    'info',
+  static const List<_PointStayTabConfig> _tabConfigs = <_PointStayTabConfig>[
+    _PointStayTabConfig(
+      label: '피드',
+      analyticsName: 'feed',
+      featureId: CommunityLabel.pointStayFeatureId,
+    ),
+    _PointStayTabConfig(
+      label: '메리어트',
+      analyticsName: 'marriott',
+      featureId: CommunityLabel.marriottFeatureId,
+    ),
+    _PointStayTabConfig(
+      label: '아코르',
+      analyticsName: 'accor',
+      featureId: CommunityLabel.accorFeatureId,
+    ),
+    _PointStayTabConfig(
+      label: '힐튼',
+      analyticsName: 'hilton',
+      featureId: CommunityLabel.hiltonFeatureId,
+    ),
+    _PointStayTabConfig(
+      label: 'IHG',
+      analyticsName: 'ihg',
+      featureId: CommunityLabel.ihgFeatureId,
+    ),
+    _PointStayTabConfig(
+      label: '하얏트',
+      analyticsName: 'hyatt',
+      featureId: CommunityLabel.hyattFeatureId,
+    ),
+    _PointStayTabConfig(
+      label: '숙박기록',
+      analyticsName: 'marriott_stays',
+      kind: _PointStayTabKind.records,
+    ),
+    _PointStayTabConfig(
+      label: '탐색',
+      analyticsName: 'explore',
+      kind: _PointStayTabKind.explore,
+    ),
   ];
 
   late final TabController _tabController;
-  List<_PointStayFeedPost> _feedPosts = <_PointStayFeedPost>[];
-  bool _isLoadingFeed = true;
+  final Map<String, List<_PointStayFeedPost>> _feedPostsByFeature =
+      <String, List<_PointStayFeedPost>>{};
+  final Set<String> _loadingFeatureIds = <String>{};
   int _selectedTabIndex = 0;
+
+  _PointStayTabConfig get _selectedTabConfig => _tabConfigs[_selectedTabIndex];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabConfigs.length, vsync: this);
     _tabController.addListener(_handleTabChanged);
     AnalyticsService.instance.logScreenView(
       'point_stay',
       screenClass: 'PointStayScreen',
       source: 'screen_init',
     );
-    _loadFeedPosts();
+    _loadFeedPosts(CommunityLabel.pointStayFeatureId);
   }
 
   @override
@@ -62,28 +120,37 @@ class _PointStayScreenState extends State<PointStayScreen>
     final nextIndex = _tabController.index;
     if (_selectedTabIndex == nextIndex) return;
     setState(() => _selectedTabIndex = nextIndex);
+    final config = _selectedTabConfig;
     AnalyticsService.instance.logAction('sub_tab_selected', params: {
       'tab_group': 'point_stay',
-      'tab': _tabAnalyticsNames[nextIndex],
+      'tab': config.analyticsName,
     });
+    final featureId = config.featureId;
+    if (featureId != null && !_feedPostsByFeature.containsKey(featureId)) {
+      _loadFeedPosts(featureId);
+    }
   }
 
-  Future<void> _loadFeedPosts() async {
+  Future<void> _loadFeedPosts(String featureId, {bool force = false}) async {
+    if (!force && _feedPostsByFeature.containsKey(featureId)) return;
+    if (mounted) {
+      setState(() => _loadingFeatureIds.add(featureId));
+    }
     try {
-      final indexedPosts = await _loadIndexedFeedPosts();
+      final indexedPosts = await _loadIndexedFeedPosts(featureId);
       final baseQuery = FirebaseFirestore.instance
           .collectionGroup('posts')
           .where('isDeleted', isEqualTo: false)
           .where('isHidden', isEqualTo: false);
       final legacyDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[
         ...await _loadLegacyPostDocs(
-          baseQuery.where('entityRefs.featureKind', isEqualTo: 'point_stay'),
+          baseQuery.where('entityRefs.featureKind', isEqualTo: featureId),
           debugLabel: 'featureKind',
         ),
         ...await _loadLegacyPostDocs(
           baseQuery.where(
             'entityRefs.featureKinds',
-            arrayContains: 'point_stay',
+            arrayContains: featureId,
           ),
           debugLabel: 'featureKinds',
         ),
@@ -109,20 +176,22 @@ class _PointStayScreenState extends State<PointStayScreen>
 
       if (!mounted) return;
       setState(() {
-        _feedPosts = posts.take(60).toList(growable: false);
-        _isLoadingFeed = false;
+        _feedPostsByFeature[featureId] = posts.take(60).toList(growable: false);
+        _loadingFeatureIds.remove(featureId);
       });
     } catch (e) {
-      debugPrint('포숙 피드 로드 오류: $e');
+      debugPrint('포숙 피드 로드 오류($featureId): $e');
       if (!mounted) return;
-      setState(() => _isLoadingFeed = false);
+      setState(() => _loadingFeatureIds.remove(featureId));
     }
   }
 
-  Future<List<_PointStayFeedPost>> _loadIndexedFeedPosts() async {
+  Future<List<_PointStayFeedPost>> _loadIndexedFeedPosts(
+    String featureId,
+  ) async {
     final ref = FirebaseFirestore.instance
         .collection('communityFeatures')
-        .doc('point_stay')
+        .doc(featureId)
         .collection('labeledPosts');
 
     try {
@@ -186,35 +255,47 @@ class _PointStayScreenState extends State<PointStayScreen>
     );
   }
 
-  Future<void> _openPointStayPostCreate() async {
+  Future<void> _openPointStayPostCreate([
+    _PointStayTabConfig? sourceConfig,
+  ]) async {
     if (FirebaseAuth.instance.currentUser == null) {
       Fluttertoast.showToast(msg: '로그인이 필요합니다.');
       return;
     }
 
+    final config = sourceConfig ?? _selectedTabConfig;
+    final labels = <CommunityLabel>[
+      CommunityLabel.pointStay(),
+      if (config.featureId != null &&
+          config.featureId != CommunityLabel.pointStayFeatureId)
+        CommunityLabel.pointStayFeature(featureId: config.featureId!),
+    ];
+    final labelPayload = CommunityLabelPayload.fromLabels(labels);
+
     AnalyticsService.instance.logAction('community_create_start', params: {
       'screen': 'point_stay',
       'source': 'point_stay_feed',
+      'feature_id': config.featureId ?? CommunityLabel.pointStayFeatureId,
     });
 
-    final pointStayLabel = CommunityLabel.pointStay();
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         settings: const RouteSettings(name: 'community_post_create'),
         builder: (_) => CommunityPostCreateSimpleScreen(
           initialBoardId: 'deal',
           initialBoardName: '적립/카드 혜택',
-          initialLabels: [pointStayLabel.toMap()],
-          entityRefs: const {
-            'featureKinds': ['point_stay'],
-            'featureKind': 'point_stay',
-          },
+          initialLabels:
+              labels.map((label) => label.toMap()).toList(growable: false),
+          entityRefs: labelPayload.entityRefs,
           lockBoardSelection: true,
         ),
       ),
     );
     if (mounted) {
-      await _loadFeedPosts();
+      await _loadFeedPosts(
+        config.featureId ?? CommunityLabel.pointStayFeatureId,
+        force: true,
+      );
     }
   }
 
@@ -299,8 +380,9 @@ class _PointStayScreenState extends State<PointStayScreen>
   }
 
   Future<void> _refreshCurrentTab() async {
-    if (_selectedTabIndex == 0) {
-      await _loadFeedPosts();
+    final featureId = _selectedTabConfig.featureId;
+    if (featureId != null) {
+      await _loadFeedPosts(featureId, force: true);
     }
   }
 
@@ -323,15 +405,16 @@ class _PointStayScreenState extends State<PointStayScreen>
   }
 
   Widget? _buildFloatingActionButton() {
-    if (_selectedTabIndex == 0) {
+    final config = _selectedTabConfig;
+    if (config.featureId != null) {
       return FloatingActionButton.extended(
-        heroTag: 'point_stay_feed_post_create',
+        heroTag: 'point_stay_${config.featureId}_post_create',
         icon: const Icon(Icons.edit_outlined),
         label: const Text('글쓰기'),
-        onPressed: _openPointStayPostCreate,
+        onPressed: () => _openPointStayPostCreate(config),
       );
     }
-    if (_selectedTabIndex == 1) {
+    if (config.kind == _PointStayTabKind.records) {
       return FloatingActionButton.extended(
         heroTag: 'marriott_stay_record_create',
         icon: const Icon(Icons.add),
@@ -365,7 +448,9 @@ class _PointStayScreenState extends State<PointStayScreen>
               const SizedBox(height: 12),
               ScrollableUnderlineTabBar(
                 controller: _tabController,
-                labels: _tabs,
+                labels: _tabConfigs
+                    .map((config) => config.label)
+                    .toList(growable: false),
               ),
               const SizedBox(height: 12),
               _buildSelectedTab(),
@@ -377,26 +462,33 @@ class _PointStayScreenState extends State<PointStayScreen>
   }
 
   Widget _buildSelectedTab() {
-    switch (_selectedTabIndex) {
-      case 0:
-        return _buildFeedTab();
-      case 1:
+    final config = _selectedTabConfig;
+    if (config.featureId != null) {
+      return _buildFeedTab(config);
+    }
+    switch (config.kind) {
+      case _PointStayTabKind.records:
         return MarriottStayRecordsTab(
           onAdd: () => _openMarriottStayForm(),
           onShowAll: _openMarriottStayList,
           onEdit: _openMarriottStayForm,
           onDelete: _confirmDeleteMarriottStay,
         );
-      case 2:
+      case _PointStayTabKind.explore:
         return const HotelAwardExploreTab();
-      case 3:
-      default:
-        return _buildInfoTab();
+      case _PointStayTabKind.feed:
+        return _buildFeedTab(config);
     }
   }
 
-  Widget _buildFeedTab() {
-    if (_isLoadingFeed) {
+  Widget _buildFeedTab(_PointStayTabConfig config) {
+    final featureId = config.featureId ?? CommunityLabel.pointStayFeatureId;
+    final posts =
+        _feedPostsByFeature[featureId] ?? const <_PointStayFeedPost>[];
+    final isInitialLoading = _loadingFeatureIds.contains(featureId) &&
+        !_feedPostsByFeature.containsKey(featureId);
+
+    if (isInitialLoading) {
       return const _PointStayPanel(
         child: Row(
           children: [
@@ -417,7 +509,10 @@ class _PointStayScreenState extends State<PointStayScreen>
       );
     }
 
-    if (_feedPosts.isEmpty) {
+    if (posts.isEmpty) {
+      final emptyText = featureId == CommunityLabel.pointStayFeatureId
+          ? '아직 포인트 숙박 라벨 글이 없습니다.'
+          : '아직 ${config.label} 라벨 글이 없습니다.';
       return _PointStayPanel(
         child: SizedBox(
           width: double.infinity,
@@ -431,14 +526,14 @@ class _PointStayScreenState extends State<PointStayScreen>
                   size: 38,
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  '아직 포인트 숙박 라벨 글이 없습니다.',
+                Text(
+                  emptyText,
                   style: McTextStyles.body,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
                 TextButton.icon(
-                  onPressed: _openPointStayPostCreate,
+                  onPressed: () => _openPointStayPostCreate(config),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text('첫 글 남기기'),
                 ),
@@ -452,13 +547,13 @@ class _PointStayScreenState extends State<PointStayScreen>
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _feedPosts.length,
+      itemCount: posts.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 2,
         crossAxisSpacing: 2,
       ),
-      itemBuilder: (context, index) => _buildFeedTile(_feedPosts[index]),
+      itemBuilder: (context, index) => _buildFeedTile(posts[index]),
     );
   }
 
@@ -570,56 +665,6 @@ class _PointStayScreenState extends State<PointStayScreen>
       ),
     );
   }
-
-  Widget _buildInfoTab() {
-    return const Column(
-      children: [
-        _PointStayGuideCard(
-          icon: Icons.calculate_outlined,
-          title: '먼저 같은 단위로 맞추기',
-          bullets: [
-            '세금과 봉사료를 포함한 현금 총액',
-            '필요 포인트와 숙박일 수',
-            '조식, 주차, 리조트피, 추가 인원 비용',
-            '보유 티어 혜택과 무료숙박권 조건',
-          ],
-        ),
-        SizedBox(height: 10),
-        _PointStayGuideCard(
-          icon: Icons.hotel_class_outlined,
-          title: '체인별로 다르게 보기',
-          bullets: [
-            '메리어트/힐튼: 5박째 무료 여부 확인',
-            '아코르: 포인트 할인형 구조라 현금처럼 계산',
-            '하얏트: 카테고리와 피크/오프피크 확인',
-            'IHG: 포인트 구매와 포인트+캐시까지 비교',
-          ],
-        ),
-        SizedBox(height: 10),
-        _PointStayGuideCard(
-          icon: Icons.event_available_outlined,
-          title: '좋은 후보가 되는 상황',
-          bullets: [
-            '주말, 연휴, 성수기처럼 현금가가 튄 날짜',
-            '제주/리조트/가족 여행처럼 부대비용 영향이 큰 숙박',
-            '무료숙박권 만료가 가까운데 현금가가 높은 호텔',
-            '항공 마일 좌석을 잡아 숙박 날짜가 확정된 여행',
-          ],
-        ),
-        SizedBox(height: 10),
-        _PointStayGuideCard(
-          icon: Icons.forum_outlined,
-          title: '피드에 남기면 좋은 정보',
-          bullets: [
-            '체인, 호텔명, 날짜, 숙박일 수',
-            '현금 총액과 포인트 차감액',
-            '티어, 조식, 라운지, 업그레이드 체감',
-            '예약 가능 날짜나 취소표를 본 시점',
-          ],
-        ),
-      ],
-    );
-  }
 }
 
 class _PointStayIntro extends StatelessWidget {
@@ -672,67 +717,6 @@ class _PointStayIntro extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PointStayGuideCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final List<String> bullets;
-
-  const _PointStayGuideCard({
-    required this.icon,
-    required this.title,
-    required this.bullets,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _PointStayPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: McColors.accent, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(title, style: McTextStyles.cardTitle),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          for (final bullet in bullets) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 7),
-                  child: SizedBox(
-                    width: 4,
-                    height: 4,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: McColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    bullet,
-                    style: McTextStyles.body,
-                  ),
-                ),
-              ],
-            ),
-            if (bullet != bullets.last) const SizedBox(height: 6),
-          ],
         ],
       ),
     );

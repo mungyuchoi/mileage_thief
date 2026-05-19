@@ -382,6 +382,33 @@ const SCRAP_ALLOWED_TAGS = new Set([
 ]);
 const SCRAP_NAVER = "naver_blog";
 const SCRAP_AAGAG = "aagag_issue";
+const SCRAP_MAX_COMMUNITY_LABELS = 5;
+const POINT_STAY_FEATURE_LABELS = {
+  point_stay: {
+    displayName: "포인트 숙박",
+    subtitle: "포숙",
+  },
+  point_stay_marriott: {
+    displayName: "메리어트",
+    subtitle: "Marriott Bonvoy",
+  },
+  point_stay_accor: {
+    displayName: "아코르",
+    subtitle: "Accor Live Limitless",
+  },
+  point_stay_hilton: {
+    displayName: "힐튼",
+    subtitle: "Hilton Honors",
+  },
+  point_stay_ihg: {
+    displayName: "IHG",
+    subtitle: "IHG One Rewards",
+  },
+  point_stay_hyatt: {
+    displayName: "하얏트",
+    subtitle: "World of Hyatt",
+  },
+};
 
 /**
  * 스크랩 sourceType을 서버 표준 값으로 정규화한다.
@@ -1146,6 +1173,287 @@ function koreaDateKey() {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date()).replace(/-/g, "");
+}
+
+/**
+ * 커뮤니티 라벨 타입별 기본 필드를 만든다.
+ * @param {string} type
+ * @param {string} targetId
+ * @return {{displayName: string, subtitle: string, linkValue: string,
+ *   sourcePath: string}}
+ */
+function communityLabelDefaults(type, targetId) {
+  switch (type) {
+    case "branch":
+      return {
+        displayName: targetId,
+        subtitle: "상품권 지점",
+        linkValue: `branch:${targetId}`,
+        sourcePath: `branches/${targetId}`,
+      };
+    case "giftcard":
+      return {
+        displayName: targetId,
+        subtitle: "상품권 시세",
+        linkValue: `giftcard-rate:${targetId}`,
+        sourcePath: `giftcards/${targetId}`,
+      };
+    case "card":
+      return {
+        displayName: targetId,
+        subtitle: "카드",
+        linkValue: `card:${targetId}`,
+        sourcePath: `cards/catalog/cardProducts/${targetId}`,
+      };
+    case "calculator":
+      return {
+        displayName: targetId,
+        subtitle: "계산",
+        linkValue: `calculator:${targetId}`,
+        sourcePath: "",
+      };
+    case "feature": {
+      const pointStay = POINT_STAY_FEATURE_LABELS[targetId] || {};
+      return {
+        displayName: pointStay.displayName || targetId,
+        subtitle: pointStay.subtitle || "기능",
+        linkValue: `feature:${targetId}`,
+        sourcePath: `communityFeatures/${targetId}`,
+      };
+    }
+    default:
+      return {
+        displayName: targetId,
+        subtitle: "",
+        linkValue: "",
+        sourcePath: "",
+      };
+  }
+}
+
+/**
+ * 클라이언트에서 전달한 커뮤니티 라벨 한 개를 정규화한다.
+ * @param {unknown} raw
+ * @return {Object|null}
+ */
+function normalizeCommunityLabel(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return null;
+  }
+
+  const data = raw;
+  const type = asIdString(data.type || data.labelType);
+  const targetId = asIdString(data.targetId);
+  const fallbackKey = type && targetId ?
+    `${type}:${targetId}` :
+    asIdString(data.key || data.labelId);
+  const defaults = communityLabelDefaults(type, targetId);
+  const label = {
+    key: asIdString(data.key || data.labelId) || fallbackKey,
+    type,
+    targetId,
+    displayName: asOptionalString(data.displayName || data.labelName) ||
+      defaults.displayName,
+    subtitle: asOptionalString(data.subtitle) || defaults.subtitle,
+    linkValue: asOptionalString(data.linkValue || data.deepLink) ||
+      defaults.linkValue,
+    sourcePath: asOptionalString(data.sourcePath) || defaults.sourcePath,
+  };
+
+  if (
+    !label.key ||
+    !label.type ||
+    !label.targetId ||
+    !label.displayName ||
+    !label.linkValue
+  ) {
+    return null;
+  }
+
+  return label;
+}
+
+/**
+ * 커뮤니티 라벨 목록을 중복 제거하고 제한 개수까지 정규화한다.
+ * @param {unknown} rawLabels
+ * @return {Object[]}
+ */
+function normalizeCommunityLabels(rawLabels) {
+  if (!Array.isArray(rawLabels)) {
+    return [];
+  }
+
+  const seen = new Set();
+  const labels = [];
+  for (const raw of rawLabels) {
+    const label = normalizeCommunityLabel(raw);
+    if (!label || seen.has(label.key)) continue;
+    seen.add(label.key);
+    labels.push(label);
+    if (labels.length >= SCRAP_MAX_COMMUNITY_LABELS) break;
+  }
+  return labels;
+}
+
+/**
+ * 라벨 저장에 필요한 labels, labelKeys, entityRefs payload를 만든다.
+ * @param {unknown} rawLabels
+ * @return {{labels: Object[], labelKeys: string[], entityRefs: Object}}
+ */
+function communityLabelPayload(rawLabels) {
+  const labels = normalizeCommunityLabels(rawLabels);
+  const branchIds = [];
+  const giftcardIds = [];
+  const cardIds = [];
+  const calculatorKinds = [];
+  const featureKinds = [];
+
+  for (const label of labels) {
+    switch (label.type) {
+      case "branch":
+        branchIds.push(label.targetId);
+        break;
+      case "giftcard":
+        giftcardIds.push(label.targetId);
+        break;
+      case "card":
+        cardIds.push(label.targetId);
+        break;
+      case "calculator":
+        calculatorKinds.push(label.targetId);
+        break;
+      case "feature":
+        featureKinds.push(label.targetId);
+        break;
+    }
+  }
+
+  const entityRefs = {};
+  if (branchIds.length > 0) {
+    entityRefs.branchIds = branchIds;
+    entityRefs.branchId = branchIds[0];
+  }
+  if (giftcardIds.length > 0) {
+    entityRefs.giftcardIds = giftcardIds;
+    entityRefs.giftcardId = giftcardIds[0];
+  }
+  if (cardIds.length > 0) {
+    entityRefs.cardIds = cardIds;
+    entityRefs.cardId = cardIds[0];
+  }
+  if (calculatorKinds.length > 0) {
+    entityRefs.calculatorKinds = calculatorKinds;
+  }
+  if (featureKinds.length > 0) {
+    entityRefs.featureKinds = featureKinds;
+    entityRefs.featureKind = featureKinds[0];
+  }
+
+  return {
+    labels,
+    labelKeys: labels.map((label) => label.key),
+    entityRefs,
+  };
+}
+
+/**
+ * 라벨 타입에 해당하는 labeledPosts 인덱스 ref를 반환한다.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} label
+ * @param {string} postId
+ * @return {FirebaseFirestore.DocumentReference|null}
+ */
+function communityLabelIndexRef(db, label, postId) {
+  switch (label.type) {
+    case "branch":
+      return db.collection("branches")
+          .doc(label.targetId)
+          .collection("labeledPosts")
+          .doc(postId);
+    case "giftcard":
+      return db.collection("giftcards")
+          .doc(label.targetId)
+          .collection("labeledPosts")
+          .doc(postId);
+    case "card":
+      return db.collection("cards")
+          .doc("catalog")
+          .collection("cardProducts")
+          .doc(label.targetId)
+          .collection("labeledPosts")
+          .doc(postId);
+    case "feature":
+      return db.collection("communityFeatures")
+          .doc(label.targetId)
+          .collection("labeledPosts")
+          .doc(postId);
+    default:
+      return null;
+  }
+}
+
+/**
+ * HTML 본문에서 인덱스용 대표 이미지를 찾는다.
+ * @param {string} contentHtml
+ * @return {string}
+ */
+function firstImageUrlFromHtml(contentHtml) {
+  if (!contentHtml) return "";
+  const $ = cheerio.load(contentHtml);
+  return safeScrapUrl($("img").first().attr("src"));
+}
+
+/**
+ * HTML 본문에서 인덱스용 미리보기 텍스트를 만든다.
+ * @param {string} contentHtml
+ * @return {string}
+ */
+function previewTextFromHtml(contentHtml) {
+  if (!contentHtml) return "";
+  const $ = cheerio.load(contentHtml);
+  return cleanScrapText($.text()).slice(0, 400);
+}
+
+/**
+ * labeledPosts 인덱스 문서 데이터를 만든다.
+ * @param {Object} params
+ * @return {Object}
+ */
+function communityLabelIndexData(params) {
+  const postData = params.postData || {};
+  const author = postData.author || {};
+  const label = params.label;
+  const contentHtml = asOptionalString(postData.contentHtml) || "";
+  return {
+    postPath: params.postPath,
+    postId: asIdString(postData.postId) || params.postId,
+    dateString: params.dateString,
+    boardId: asIdString(postData.boardId),
+    boardName: params.boardName || asIdString(postData.boardName),
+    title: asOptionalString(postData.title) || "제목 없음",
+    previewText: previewTextFromHtml(contentHtml),
+    imageUrl: firstImageUrlFromHtml(contentHtml),
+    authorId: asIdString(author.uid || postData.authorId),
+    authorDisplayName: asOptionalString(
+        author.displayName || postData.authorDisplayName,
+    ) || "익명",
+    authorPhotoURL: asOptionalString(
+        author.photoURL || postData.authorPhotoURL,
+    ) || "",
+    commentCount: Number(postData.commentCount || postData.commentsCount || 0),
+    likesCount: Number(postData.likesCount || 0),
+    labelKey: label.key,
+    labelType: label.type,
+    targetId: label.targetId,
+    labelDisplayName: label.displayName,
+    labelSubtitle: label.subtitle,
+    labelLinkValue: label.linkValue,
+    labelSourcePath: label.sourcePath,
+    isDeleted: postData.isDeleted === true,
+    isHidden: postData.isHidden === true,
+    createdAt: postData.createdAt,
+    updatedAt: postData.updatedAt,
+  };
 }
 
 /**
@@ -3240,6 +3548,8 @@ setGlobalOptions({maxInstances: 10});
  * @param {unknown} params.rawSourceType
  * @param {string} params.titleOverride
  * @param {boolean} params.adminPublish
+ * @param {unknown} params.rawLabels
+ * @param {string} params.boardName
  * @return {Promise<Object>}
  */
 async function publishScrapPayload(params) {
@@ -3250,6 +3560,8 @@ async function publishScrapPayload(params) {
   const rawSourceType = params.rawSourceType;
   const titleOverride = params.titleOverride;
   const adminPublish = params.adminPublish === true;
+  const labelPayload = communityLabelPayload(params.rawLabels);
+  const boardName = params.boardName || boardId;
 
   const db = admin.firestore();
   const authorRef = db.collection("users").doc(authorUid);
@@ -3362,9 +3674,32 @@ async function publishScrapPayload(params) {
       createdAt: now,
       updatedAt: now,
     };
+    if (labelPayload.labels.length > 0) {
+      postData.labels = labelPayload.labels;
+      postData.labelKeys = labelPayload.labelKeys;
+      if (Object.keys(labelPayload.entityRefs).length > 0) {
+        postData.entityRefs = labelPayload.entityRefs;
+      }
+    }
 
     transaction.set(metaRef, {number: next}, {merge: true});
     transaction.set(postRef, postData);
+    for (const label of labelPayload.labels) {
+      const labelRef = communityLabelIndexRef(db, label, postId);
+      if (!labelRef) continue;
+      transaction.set(
+          labelRef,
+          communityLabelIndexData({
+            postPath,
+            postId,
+            dateString,
+            postData,
+            label,
+            boardName,
+          }),
+          {merge: true},
+      );
+    }
     transaction.set(db.collection("post_numbers").doc(postNumber), {
       postNumber,
       postPath,
@@ -3463,7 +3798,7 @@ exports.publishScrapPost = onCall({
     throw new HttpsError("invalid-argument", "작성자를 선택해주세요.");
   }
 
-  await requireScrapBoard(boardId);
+  const boardEntry = await requireScrapBoard(boardId);
   return publishScrapPayload({
     boardId,
     authorUid,
@@ -3472,6 +3807,10 @@ exports.publishScrapPost = onCall({
     rawSourceType: data.sourceType,
     titleOverride,
     adminPublish: true,
+    rawLabels: data.labels,
+    boardName: asOptionalString(boardEntry.name) ||
+      asOptionalString(boardEntry.title) ||
+      boardId,
   });
 });
 
@@ -3491,7 +3830,7 @@ exports.publishUserScrapPost = onCall({
     throw new HttpsError("invalid-argument", "카테고리를 선택해주세요.");
   }
 
-  await requireUserScrapBoard(boardId);
+  const boardEntry = await requireUserScrapBoard(boardId);
   return publishScrapPayload({
     boardId,
     authorUid: uid,
@@ -3500,6 +3839,10 @@ exports.publishUserScrapPost = onCall({
     rawSourceType: SCRAP_NAVER,
     titleOverride,
     adminPublish: false,
+    rawLabels: data.labels,
+    boardName: asOptionalString(boardEntry.name) ||
+      asOptionalString(boardEntry.title) ||
+      boardId,
   });
 });
 

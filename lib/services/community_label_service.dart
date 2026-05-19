@@ -29,6 +29,7 @@ class CommunityLabelService {
     final branchItemsFuture = _loadBranchItems();
     final giftcardItemsFuture = _loadGiftcardItems();
     final cardGroupsFuture = _loadCardGroups();
+    final featureItems = _loadPointStayFeatureItems();
     final results = await Future.wait<Object>([
       branchItemsFuture,
       giftcardItemsFuture,
@@ -39,6 +40,7 @@ class CommunityLabelService {
       branchItems: results[0] as List<CommunityLabelBrowseItem>,
       giftcardItems: results[1] as List<CommunityLabelBrowseItem>,
       cardGroups: results[2] as List<CommunityLabelGroup>,
+      featureItems: featureItems,
     );
   }
 
@@ -116,6 +118,7 @@ class CommunityLabelService {
       ...data.branchItems,
       ...data.giftcardItems,
       for (final group in data.cardGroups) ...group.items,
+      ...data.featureItems,
     ];
   }
 
@@ -291,6 +294,19 @@ class CommunityLabelService {
     return groupCardItems(cardItems: cardItems, issuers: issuers);
   }
 
+  List<CommunityLabelBrowseItem> _loadPointStayFeatureItems() {
+    return CommunityLabel.pointStayFeatures().asMap().entries.map((entry) {
+      final label = entry.value;
+      return CommunityLabelBrowseItem(
+        label: label,
+        description: label.targetId == CommunityLabel.pointStayFeatureId
+            ? '포인트 숙박 전체'
+            : '호텔 프로그램',
+        sortOrder: entry.key,
+      );
+    }).toList(growable: false);
+  }
+
   static List<CommunityLabelBrowseItem> _dedupeItems(
     Iterable<CommunityLabelBrowseItem> items,
   ) {
@@ -330,11 +346,13 @@ class CommunityLabelBrowseData {
   final List<CommunityLabelBrowseItem> branchItems;
   final List<CommunityLabelBrowseItem> giftcardItems;
   final List<CommunityLabelGroup> cardGroups;
+  final List<CommunityLabelBrowseItem> featureItems;
 
   const CommunityLabelBrowseData({
     required this.branchItems,
     required this.giftcardItems,
     required this.cardGroups,
+    this.featureItems = const <CommunityLabelBrowseItem>[],
   });
 }
 

@@ -4,10 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../models/community_label_model.dart';
 import '../services/admin_scrap_service.dart';
 import '../services/auth_service.dart';
 import '../services/category_service.dart';
+import '../services/community_label_service.dart';
 import '../services/user_service.dart';
+import '../widgets/community_label_picker_sheet.dart';
 
 class UserScrapUploadResult {
   const UserScrapUploadResult({
@@ -39,6 +42,7 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
   static const Color _accent = Color(0xFF74512D);
   static const Color _text = Color(0xFF1F2533);
   static const Color _muted = Color(0xFF737B8C);
+  static const int _maxCommunityLabels = 5;
   static const Set<String> _blockedBoardIds = {
     'notice',
     'milecatch_guide',
@@ -47,8 +51,10 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
 
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
+  final CommunityLabelService _labelService = CommunityLabelService();
 
   AdminScrapValidationResult? _validation;
+  List<CommunityLabel> _selectedLabels = <CommunityLabel>[];
   List<Map<String, dynamic>> _categories = const <Map<String, dynamic>>[];
   User? _firebaseUser;
   Map<String, dynamic>? _authorProfile;
@@ -243,6 +249,7 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
         url: validation.normalizedUrl,
         boardId: boardId,
         titleOverride: _titleController.text.trim(),
+        labels: _selectedLabels,
       );
       if (!mounted) return;
       uploaded = true;
@@ -272,6 +279,137 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
         backgroundColor: isError ? Colors.red[700] : null,
       ),
     );
+  }
+
+  Future<void> _openLabelPicker() async {
+    if (_publishing) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return CommunityLabelPickerSheet(
+          selectedLabels: _selectedLabels,
+          maxLabels: _maxCommunityLabels,
+          labelService: _labelService,
+          accentColor: _accent,
+          onChanged: (labels) {
+            if (!mounted) return;
+            setState(() {
+              _selectedLabels = labels;
+            });
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLabelSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.label_outline, color: _muted, size: 20),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                '라벨',
+                style: TextStyle(
+                  color: _text,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed:
+                  _selectedLabels.length >= _maxCommunityLabels || _publishing
+                      ? null
+                      : _openLabelPicker,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('추가'),
+              style: TextButton.styleFrom(
+                foregroundColor: _accent,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        if (_selectedLabels.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              '지점, 상품권, 카드 라벨을 연결할 수 있습니다.',
+              style: TextStyle(
+                color: _muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final label in _selectedLabels)
+                  InputChip(
+                    avatar: Icon(
+                      _labelIcon(label.type),
+                      size: 16,
+                      color: _accent,
+                    ),
+                    label: Text(
+                      label.displayName,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    labelStyle: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 13,
+                    ),
+                    backgroundColor: const Color(0xFFF8F4EF),
+                    side: const BorderSide(color: Color(0xFFE7D8C6)),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: _publishing
+                        ? null
+                        : () {
+                            setState(() {
+                              _selectedLabels = _selectedLabels
+                                  .where((item) => item.key != label.key)
+                                  .toList(growable: false);
+                            });
+                          },
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  IconData _labelIcon(String type) {
+    switch (type) {
+      case 'branch':
+        return Icons.storefront_outlined;
+      case 'giftcard':
+        return Icons.card_giftcard_outlined;
+      case 'card':
+        return Icons.credit_card_outlined;
+      case 'calculator':
+        return Icons.calculate_outlined;
+      case 'feature':
+        return Icons.hotel_outlined;
+      default:
+        return Icons.label_outline;
+    }
   }
 
   @override
@@ -391,6 +529,8 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
                       _selectedBoardId = value;
                     }),
                   ),
+                const SizedBox(height: 14),
+                _buildLabelSection(),
                 const SizedBox(height: 14),
                 if (_loadingAuthor)
                   const Center(child: CircularProgressIndicator())

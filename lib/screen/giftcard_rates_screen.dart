@@ -1612,7 +1612,6 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     final worstSellPrice = _num(data['worstSellPrice']);
     final bestBuyPrice = _num(data['bestBuyPrice']);
     final worstBuyPrice = _num(data['worstBuyPrice']);
-    final logoUrl = _string(data['logoUrl']);
 
     return Column(
       children: [
@@ -1672,12 +1671,6 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
                 label: '취급 지점',
                 value: '${_rateRows.length}곳',
               ),
-              if (logoUrl.isNotEmpty)
-                _GiftcardInfoRow(
-                  icon: Icons.image_outlined,
-                  label: '로고 URL',
-                  value: logoUrl,
-                ),
             ],
           ),
         ),

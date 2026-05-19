@@ -1,4 +1,39 @@
 class CommunityLabel {
+  static const String pointStayFeatureId = 'point_stay';
+  static const String marriottFeatureId = 'point_stay_marriott';
+  static const String accorFeatureId = 'point_stay_accor';
+  static const String hiltonFeatureId = 'point_stay_hilton';
+  static const String ihgFeatureId = 'point_stay_ihg';
+  static const String hyattFeatureId = 'point_stay_hyatt';
+
+  static const List<String> pointStayFeatureIds = <String>[
+    pointStayFeatureId,
+    marriottFeatureId,
+    accorFeatureId,
+    hiltonFeatureId,
+    ihgFeatureId,
+    hyattFeatureId,
+  ];
+
+  static const Map<String, String> _pointStayFeatureNames = <String, String>{
+    pointStayFeatureId: '포인트 숙박',
+    marriottFeatureId: '메리어트',
+    accorFeatureId: '아코르',
+    hiltonFeatureId: '힐튼',
+    ihgFeatureId: 'IHG',
+    hyattFeatureId: '하얏트',
+  };
+
+  static const Map<String, String> _pointStayFeatureSubtitles =
+      <String, String>{
+    pointStayFeatureId: '포숙',
+    marriottFeatureId: 'Marriott Bonvoy',
+    accorFeatureId: 'Accor Live Limitless',
+    hiltonFeatureId: 'Hilton Honors',
+    ihgFeatureId: 'IHG One Rewards',
+    hyattFeatureId: 'World of Hyatt',
+  };
+
   final String key;
   final String type;
   final String targetId;
@@ -79,16 +114,45 @@ class CommunityLabel {
     );
   }
 
-  factory CommunityLabel.pointStay() {
-    return const CommunityLabel(
-      key: 'feature:point_stay',
+  factory CommunityLabel.feature({
+    required String featureId,
+    required String name,
+    String subtitle = '기능',
+  }) {
+    final id = featureId.trim();
+    final displayName = name.trim();
+    return CommunityLabel(
+      key: 'feature:$id',
       type: 'feature',
-      targetId: 'point_stay',
-      displayName: '포인트 숙박',
-      subtitle: '포숙',
-      linkValue: 'feature:point_stay',
-      sourcePath: 'communityFeatures/point_stay',
+      targetId: id,
+      displayName: displayName.isEmpty ? id : displayName,
+      subtitle: subtitle.trim(),
+      linkValue: 'feature:$id',
+      sourcePath: 'communityFeatures/$id',
     );
+  }
+
+  factory CommunityLabel.pointStay() {
+    return CommunityLabel.pointStayFeature(
+      featureId: pointStayFeatureId,
+    );
+  }
+
+  factory CommunityLabel.pointStayFeature({
+    required String featureId,
+  }) {
+    final id = featureId.trim();
+    return CommunityLabel.feature(
+      featureId: id,
+      name: _pointStayFeatureNames[id] ?? id,
+      subtitle: _pointStayFeatureSubtitles[id] ?? '포숙',
+    );
+  }
+
+  static List<CommunityLabel> pointStayFeatures() {
+    return pointStayFeatureIds
+        .map((id) => CommunityLabel.pointStayFeature(featureId: id))
+        .toList(growable: false);
   }
 
   factory CommunityLabel.fromMap(Map<String, dynamic> map) {
@@ -187,13 +251,11 @@ class CommunityLabel {
     }
 
     for (final id in _stringList(refs['featureKinds'])) {
-      if (id == 'point_stay') {
-        labels.add(CommunityLabel.pointStay());
-      }
+      labels.add(CommunityLabel.pointStayFeature(featureId: id));
     }
     final featureKind = _string(refs['featureKind']);
-    if (featureKind == 'point_stay') {
-      labels.add(CommunityLabel.pointStay());
+    if (featureKind.isNotEmpty) {
+      labels.add(CommunityLabel.pointStayFeature(featureId: featureKind));
     }
 
     return dedupe(labels);

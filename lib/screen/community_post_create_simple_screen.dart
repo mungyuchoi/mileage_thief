@@ -67,6 +67,7 @@ class _CommunityPostCreateSimpleScreenState
 
   bool _isPickingImages = false;
   bool _isSubmitting = false;
+  bool _allowRoutePop = false;
   String lateBoardId = '';
   String lateBoardName = '';
   String _authorName = '익명';
@@ -728,7 +729,7 @@ class _CommunityPostCreateSimpleScreenState
           'label_count': _selectedLabels.length,
         },
       );
-      Navigator.of(context).pop(false);
+      _popScreen(false);
     } catch (e) {
       debugPrint('게시글 등록 오류: $e');
       if (!mounted) return;
@@ -898,243 +899,322 @@ class _CommunityPostCreateSimpleScreenState
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: McColors.background,
-      appBar: AppBar(
-        backgroundColor: McColors.background,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed:
-              _isSubmitting ? null : () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: McColors.ink,
-        ),
-        title: const Text(
-          '새 게시물',
-          style: McTextStyles.appBarTitle,
-        ),
-        actions: [
-          TextButton(
-            onPressed: _isSubmitting ? null : _submitPost,
-            child: Text(
-              _isSubmitting ? '게시 중' : '게시',
-              style: TextStyle(
-                color: _isSubmitting ? Colors.black38 : McColors.accent,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+  Future<bool> _confirmExit() async {
+    if (_isSubmitting) return false;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: Color(0xFF111111), width: 1.2),
+          ),
+          title: const Text(
+            '정말 나가시겠습니까?',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.normal,
             ),
           ),
-          const SizedBox(width: 6),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(14, 6, 14, 24),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: McColors.line),
+          content: const Text(
+            '작성 중인 내용은 저장되지 않습니다.',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: const Color(0xFFE2E2E2),
-                      backgroundImage: _authorPhotoUrl.isNotEmpty
-                          ? NetworkImage(_authorPhotoUrl)
-                          : null,
-                      child: _authorPhotoUrl.isEmpty
-                          ? const Icon(
-                              Icons.person_rounded,
-                              color: Colors.black54,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _authorName,
-                        style: McTextStyles.bodyStrong.copyWith(fontSize: 15),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                '취소',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                '나가기',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result ?? false;
+  }
+
+  Future<void> _handleBackPressed() async {
+    final shouldPop = await _confirmExit();
+    if (!shouldPop || !mounted) return;
+    _popScreen();
+  }
+
+  void _handlePopInvoked(bool didPop) {
+    if (didPop || _allowRoutePop || _isSubmitting) return;
+    _handleBackPressed();
+  }
+
+  void _popScreen([bool? result]) {
+    _allowRoutePop = true;
+    if (mounted) {
+      setState(() {});
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).pop(result);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope<bool>(
+      canPop: _allowRoutePop,
+      onPopInvokedWithResult: (didPop, result) => _handlePopInvoked(didPop),
+      child: Scaffold(
+        backgroundColor: McColors.background,
+        appBar: AppBar(
+          backgroundColor: McColors.background,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: _isSubmitting ? null : _handleBackPressed,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: McColors.ink,
+          ),
+          title: const Text(
+            '새 게시물',
+            style: McTextStyles.appBarTitle,
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isSubmitting ? null : _submitPost,
+              child: Text(
+                _isSubmitting ? '게시 중' : '게시',
+                style: TextStyle(
+                  color: _isSubmitting ? Colors.black38 : McColors.accent,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 24),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: McColors.line),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFFE2E2E2),
+                        backgroundImage: _authorPhotoUrl.isNotEmpty
+                            ? NetworkImage(_authorPhotoUrl)
+                            : null,
+                        child: _authorPhotoUrl.isEmpty
+                            ? const Icon(
+                                Icons.person_rounded,
+                                color: Colors.black54,
+                              )
+                            : null,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildBoardPill(),
-                if (_canSetReadRestriction) ...[
-                  const SizedBox(height: 10),
-                  _buildReadRestrictionButton(),
-                ],
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _titleController,
-                  textInputAction: TextInputAction.next,
-                  style: McTextStyles.sectionTitle,
-                  decoration: const InputDecoration(
-                    hintText: '제목',
-                    filled: false,
-                    border: InputBorder.none,
-                  ),
-                ),
-                const Divider(height: 12, color: McColors.line),
-                TextField(
-                  controller: _contentController,
-                  minLines: 8,
-                  maxLines: 16,
-                  style: McTextStyles.body.copyWith(height: 1.5),
-                  decoration: const InputDecoration(
-                    hintText: '내용을 입력해주세요',
-                    filled: false,
-                    border: InputBorder.none,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildLabelSection(),
-                if (_links.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _links.map((link) {
-                      return InputChip(
-                        label: Text(
-                          link,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal,
-                          ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _authorName,
+                          style: McTextStyles.bodyStrong.copyWith(fontSize: 15),
                         ),
-                        backgroundColor: Colors.white,
-                        deleteIconColor: Colors.black54,
-                        side: const BorderSide(color: Color(0xFFD3D3D3)),
-                        onDeleted: () => _removeLink(link),
-                      );
-                    }).toList(),
+                      ),
+                    ],
                   ),
-                ],
-                if (_initialImageUrls.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _initialImageUrls.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
+                  const SizedBox(height: 12),
+                  _buildBoardPill(),
+                  if (_canSetReadRestriction) ...[
+                    const SizedBox(height: 10),
+                    _buildReadRestrictionButton(),
+                  ],
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _titleController,
+                    textInputAction: TextInputAction.next,
+                    style: McTextStyles.sectionTitle,
+                    decoration: const InputDecoration(
+                      hintText: '제목',
+                      filled: false,
+                      border: InputBorder.none,
                     ),
-                    itemBuilder: (context, index) {
-                      final imageUrl = _initialImageUrls[index];
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(imageUrl, fit: BoxFit.cover),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: InkWell(
-                              onTap: () => _removeInitialImageAt(index),
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
+                  ),
+                  const Divider(height: 12, color: McColors.line),
+                  TextField(
+                    controller: _contentController,
+                    minLines: 8,
+                    maxLines: 16,
+                    style: McTextStyles.body.copyWith(height: 1.5),
+                    decoration: const InputDecoration(
+                      hintText: '내용을 입력해주세요',
+                      filled: false,
+                      border: InputBorder.none,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildLabelSection(),
+                  if (_links.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _links.map((link) {
+                        return InputChip(
+                          label: Text(
+                            link,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.normal,
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-                if (_selectedImages.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _selectedImages.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
-                    itemBuilder: (context, index) {
-                      final image = _selectedImages[index];
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child:
-                                Image.file(File(image.path), fit: BoxFit.cover),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: InkWell(
-                              onTap: () => _removeImageAt(index),
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _ToolButton(
-                      icon: Icons.image_outlined,
-                      label: _isPickingImages ? '불러오는 중' : '이미지',
-                      onTap: _isPickingImages ? null : _pickImages,
-                    ),
-                    const SizedBox(width: 8),
-                    _ToolButton(
-                      icon: Icons.link_rounded,
-                      label: '링크',
-                      onTap: _openLinkDialog,
+                          backgroundColor: Colors.white,
+                          deleteIconColor: Colors.black54,
+                          side: const BorderSide(color: Color(0xFFD3D3D3)),
+                          onDeleted: () => _removeLink(link),
+                        );
+                      }).toList(),
                     ),
                   ],
-                ),
-              ],
+                  if (_initialImageUrls.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _initialImageUrls.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemBuilder: (context, index) {
+                        final imageUrl = _initialImageUrls[index];
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(imageUrl, fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: InkWell(
+                                onTap: () => _removeInitialImageAt(index),
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                  if (_selectedImages.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _selectedImages.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemBuilder: (context, index) {
+                        final image = _selectedImages[index];
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(File(image.path),
+                                  fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: InkWell(
+                                onTap: () => _removeImageAt(index),
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _ToolButton(
+                        icon: Icons.image_outlined,
+                        label: _isPickingImages ? '불러오는 중' : '이미지',
+                        onTap: _isPickingImages ? null : _pickImages,
+                      ),
+                      const SizedBox(width: 8),
+                      _ToolButton(
+                        icon: Icons.link_rounded,
+                        label: '링크',
+                        onTap: _openLinkDialog,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
