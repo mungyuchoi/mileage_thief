@@ -5,8 +5,6 @@ class RadarItemType {
   static const String mileageSeat = 'mileageSeat';
   static const String cancelAlert = 'cancelAlert';
   static const String flightDeal = 'flightDeal';
-  static const String hotelDeal = 'hotelDeal';
-  static const String hotelAward = 'hotelAward';
   static const String giftcard = 'giftcard';
   static const String benefitNews = 'benefitNews';
   static const String valueCalculator = 'valueCalculator';
@@ -176,10 +174,6 @@ class RadarItem {
         return '취소표';
       case RadarItemType.flightDeal:
         return '항공 특가';
-      case RadarItemType.hotelDeal:
-        return '호텔 특가';
-      case RadarItemType.hotelAward:
-        return '포인트 숙박';
       case RadarItemType.giftcard:
         return '상품권';
       case RadarItemType.valueCalculator:

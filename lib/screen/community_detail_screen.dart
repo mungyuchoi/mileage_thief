@@ -1536,11 +1536,14 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // HTML에서 이미지 URL 목록 추출
   List<String> _extractImageUrlsFromHtml(String htmlContent) {
-    final RegExp imgTagRegex =
-        RegExp(r'<img([^>]*?)src="([^"]*)"([^>]*?)/?>', caseSensitive: false);
+    final RegExp imgTagRegex = RegExp(
+      r'''<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>''',
+      caseSensitive: false,
+      dotAll: true,
+    );
     final Iterable<RegExpMatch> matches = imgTagRegex.allMatches(htmlContent);
     final List<String> urls = matches
-        .map((m) => m.group(2))
+        .map((m) => _cleanImageUrl(m.group(1)))
         .whereType<String>()
         .where((url) => _isImageUrl(url))
         .toList();
@@ -1554,7 +1557,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       _openImageViewer(imageUrl);
       return;
     }
-    final int initialIndex = imageUrls.indexOf(imageUrl);
+    final String tappedUrl = _normalizeImageUrlForComparison(imageUrl);
+    final int initialIndex = imageUrls.indexWhere(
+      (url) => _normalizeImageUrlForComparison(url) == tappedUrl,
+    );
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1571,7 +1577,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   // 이미지 URL인지 확인하는 헬퍼 메서드
   bool _isImageUrl(String url) {
     final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-    final lowerUrl = url.toLowerCase();
+    final lowerUrl = _decodeHtmlEntities(url).toLowerCase();
 
     // Firebase Storage 이미지 URL 패턴 확인
     if (lowerUrl.contains('firebasestorage.googleapis.com') ||
@@ -1581,6 +1587,55 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
     // 일반적인 이미지 확장자 확인
     return imageExtensions.any((ext) => lowerUrl.contains(ext));
+  }
+
+  String? _cleanImageUrl(String? value) {
+    final url = _decodeHtmlEntities(value?.trim() ?? '');
+    return url.isEmpty ? null : url;
+  }
+
+  String _normalizeImageUrlForComparison(String url) {
+    final decodedEntities = _decodeHtmlEntities(url.trim());
+    try {
+      return Uri.decodeFull(decodedEntities);
+    } catch (_) {
+      return decodedEntities;
+    }
+  }
+
+  String _decodeHtmlEntities(String value) {
+    return value.replaceAllMapped(
+      RegExp(r'&(#x?[0-9a-fA-F]+|[a-zA-Z]+);'),
+      (match) {
+        final entity = match.group(1);
+        if (entity == null) return match.group(0) ?? '';
+
+        switch (entity.toLowerCase()) {
+          case 'amp':
+            return '&';
+          case 'lt':
+            return '<';
+          case 'gt':
+            return '>';
+          case 'quot':
+            return '"';
+          case 'apos':
+            return "'";
+          case 'nbsp':
+            return ' ';
+        }
+
+        final int? codePoint = entity.toLowerCase().startsWith('#x')
+            ? int.tryParse(entity.substring(2), radix: 16)
+            : entity.startsWith('#')
+                ? int.tryParse(entity.substring(1))
+                : null;
+        if (codePoint == null || codePoint < 0 || codePoint > 0x10ffff) {
+          return match.group(0) ?? '';
+        }
+        return String.fromCharCode(codePoint);
+      },
+    );
   }
 
   // Firebase Storage URL을 이미지 태그로 변환
@@ -2651,17 +2706,22 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                                       margin: Margins.zero,
                                                     ),
                                                     "p": Style(
-                                                      margin: Margins.zero,
+                                                      display: Display.block,
+                                                      margin: Margins.only(
+                                                          bottom: 8),
                                                       padding:
                                                           HtmlPaddings.zero,
                                                       whiteSpace:
                                                           WhiteSpace.pre,
                                                     ),
                                                     "div": Style(
-                                                      margin: Margins.zero,
+                                                      display: Display.block,
+                                                      margin: Margins.only(
+                                                          bottom: 8),
                                                       padding:
                                                           HtmlPaddings.zero,
-                                                      display: Display.inline,
+                                                      whiteSpace:
+                                                          WhiteSpace.pre,
                                                     ),
                                                     "br": Style(
                                                       margin: Margins.only(

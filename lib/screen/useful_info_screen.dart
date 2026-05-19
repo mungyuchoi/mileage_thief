@@ -3099,10 +3099,6 @@ IconData _radarIcon(String itemType) {
       return Icons.notifications_active_outlined;
     case RadarItemType.flightDeal:
       return Icons.flight_takeoff;
-    case RadarItemType.hotelDeal:
-      return Icons.hotel_outlined;
-    case RadarItemType.hotelAward:
-      return Icons.hotel_class_outlined;
     case RadarItemType.giftcard:
       return Icons.card_giftcard;
     case RadarItemType.valueCalculator:
@@ -3119,10 +3115,6 @@ Color _radarAccentColor(String itemType) {
   switch (itemType) {
     case RadarItemType.flightDeal:
       return const Color(0xFF2563EB);
-    case RadarItemType.hotelDeal:
-      return const Color(0xFF7C3AED);
-    case RadarItemType.hotelAward:
-      return const Color(0xFF7C3AED);
     case RadarItemType.giftcard:
       return const Color(0xFFB45309);
     case RadarItemType.cancelAlert:

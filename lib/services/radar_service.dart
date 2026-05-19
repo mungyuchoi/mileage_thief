@@ -256,10 +256,7 @@ class RadarService {
         .orderBy('score', descending: true)
         .limit(limit)
         .get();
-    return snap.docs
-        .map(RadarItem.fromFirestore)
-        .where((item) => item.itemType != RadarItemType.hotelDeal)
-        .toList();
+    return snap.docs.map(RadarItem.fromFirestore).toList();
   }
 
   static Future<List<RadarItem>> _loadFlightDealItems(

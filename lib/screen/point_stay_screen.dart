@@ -8,8 +8,8 @@ import '../models/community_label_model.dart';
 import '../models/marriott_stay_record.dart';
 import '../services/analytics_service.dart';
 import '../services/marriott_stay_service.dart';
-import '../widgets/hotel_award_explore_tab.dart';
 import '../widgets/marriott_stay_records_tab.dart';
+import '../widgets/room_points_web_tab.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
@@ -20,6 +20,7 @@ enum _PointStayTabKind {
   feed,
   records,
   explore,
+  search,
 }
 
 class _PointStayTabConfig {
@@ -83,8 +84,13 @@ class _PointStayScreenState extends State<PointStayScreen>
     ),
     _PointStayTabConfig(
       label: '탐색',
-      analyticsName: 'explore',
+      analyticsName: 'roompoints_explore',
       kind: _PointStayTabKind.explore,
+    ),
+    _PointStayTabConfig(
+      label: '검색',
+      analyticsName: 'roompoints_search',
+      kind: _PointStayTabKind.search,
     ),
   ];
 
@@ -475,10 +481,33 @@ class _PointStayScreenState extends State<PointStayScreen>
           onDelete: _confirmDeleteMarriottStay,
         );
       case _PointStayTabKind.explore:
-        return const HotelAwardExploreTab();
+        return _buildRoomPointsTab(
+          key: const ValueKey('roompoints_explore'),
+          initialUrl: 'https://roompoints.com/ko/explore',
+        );
+      case _PointStayTabKind.search:
+        return _buildRoomPointsTab(
+          key: const ValueKey('roompoints_search'),
+          initialUrl: 'https://roompoints.com/ko/hotels',
+        );
       case _PointStayTabKind.feed:
         return _buildFeedTab(config);
     }
+  }
+
+  Widget _buildRoomPointsTab({
+    required Key key,
+    required String initialUrl,
+  }) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final webHeight = screenHeight < 760 ? 560.0 : screenHeight - 220;
+    return SizedBox(
+      height: webHeight,
+      child: RoomPointsWebTab(
+        key: key,
+        initialUrl: initialUrl,
+      ),
+    );
   }
 
   Widget _buildFeedTab(_PointStayTabConfig config) {
