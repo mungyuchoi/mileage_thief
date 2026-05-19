@@ -8,12 +8,14 @@ import '../services/marriott_stay_service.dart';
 
 class MarriottStayRecordsTab extends StatelessWidget {
   final VoidCallback onAdd;
+  final VoidCallback onShowAll;
   final ValueChanged<MarriottStayRecord> onEdit;
   final Future<void> Function(MarriottStayRecord record) onDelete;
 
   const MarriottStayRecordsTab({
     super.key,
     required this.onAdd,
+    required this.onShowAll,
     required this.onEdit,
     required this.onDelete,
   });
@@ -126,6 +128,15 @@ class MarriottStayRecordsTab extends StatelessWidget {
           children: [
             _RecordsHeader(onAdd: onAdd),
             const SizedBox(height: 12),
+            _AllRecordsButton(
+              recordCount: records.length,
+              totalNights: records.fold<int>(
+                0,
+                (sum, record) => sum + record.nights,
+              ),
+              onTap: onShowAll,
+            ),
+            const SizedBox(height: 12),
             _StaySummary(records: records),
             const SizedBox(height: 12),
             for (final group in groups) ...[
@@ -140,6 +151,77 @@ class MarriottStayRecordsTab extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _AllRecordsButton extends StatelessWidget {
+  final int recordCount;
+  final int totalNights;
+  final VoidCallback onTap;
+
+  const _AllRecordsButton({
+    required this.recordCount,
+    required this.totalNights,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: McColors.line),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: McColors.accentSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.format_list_bulleted,
+                  color: McColors.accent,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '전체 숙박기록 보기',
+                      style: McTextStyles.bodyStrong,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$recordCount건 · $totalNights박 전체 리스트',
+                      style: McTextStyles.micro,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                color: McColors.muted,
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

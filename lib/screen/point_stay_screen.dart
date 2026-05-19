@@ -13,6 +13,7 @@ import '../widgets/marriott_stay_records_tab.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
+import 'marriott_stay_list_screen.dart';
 import 'marriott_stay_form_screen.dart';
 
 class PointStayScreen extends StatefulWidget {
@@ -24,12 +25,12 @@ class PointStayScreen extends StatefulWidget {
 
 class _PointStayScreenState extends State<PointStayScreen>
     with SingleTickerProviderStateMixin {
-  static const List<String> _tabs = <String>['탐색', '피드', '정보', '숙박기록'];
+  static const List<String> _tabs = <String>['피드', '숙박기록', '탐색', '정보'];
   static const List<String> _tabAnalyticsNames = <String>[
-    'explore',
     'feed',
-    'info',
     'marriott_stays',
+    'explore',
+    'info',
   ];
 
   late final TabController _tabController;
@@ -236,6 +237,18 @@ class _PointStayScreenState extends State<PointStayScreen>
     );
   }
 
+  void _openMarriottStayList() {
+    AnalyticsService.instance.logAction('marriott_stay_list_open', params: {
+      'screen': 'point_stay',
+    });
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'marriott_stay_list'),
+        builder: (_) => const MarriottStayListScreen(),
+      ),
+    );
+  }
+
   Future<void> _confirmDeleteMarriottStay(MarriottStayRecord record) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -286,7 +299,7 @@ class _PointStayScreenState extends State<PointStayScreen>
   }
 
   Future<void> _refreshCurrentTab() async {
-    if (_selectedTabIndex == 1) {
+    if (_selectedTabIndex == 0) {
       await _loadFeedPosts();
     }
   }
@@ -310,7 +323,7 @@ class _PointStayScreenState extends State<PointStayScreen>
   }
 
   Widget? _buildFloatingActionButton() {
-    if (_selectedTabIndex == 1) {
+    if (_selectedTabIndex == 0) {
       return FloatingActionButton.extended(
         heroTag: 'point_stay_feed_post_create',
         icon: const Icon(Icons.edit_outlined),
@@ -318,7 +331,7 @@ class _PointStayScreenState extends State<PointStayScreen>
         onPressed: _openPointStayPostCreate,
       );
     }
-    if (_selectedTabIndex == 3) {
+    if (_selectedTabIndex == 1) {
       return FloatingActionButton.extended(
         heroTag: 'marriott_stay_record_create',
         icon: const Icon(Icons.add),
@@ -366,16 +379,17 @@ class _PointStayScreenState extends State<PointStayScreen>
   Widget _buildSelectedTab() {
     switch (_selectedTabIndex) {
       case 0:
-        return const HotelAwardExploreTab();
-      case 1:
         return _buildFeedTab();
-      case 3:
+      case 1:
         return MarriottStayRecordsTab(
           onAdd: () => _openMarriottStayForm(),
+          onShowAll: _openMarriottStayList,
           onEdit: _openMarriottStayForm,
           onDelete: _confirmDeleteMarriottStay,
         );
       case 2:
+        return const HotelAwardExploreTab();
+      case 3:
       default:
         return _buildInfoTab();
     }
@@ -638,12 +652,12 @@ class _PointStayIntro extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '포숙 판단과 실전 후기를 모읍니다.',
+                  '놓치던 숙박의 기회를\n먼저 캐치하다',
                   style: McTextStyles.cardTitle,
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '현금가, 포인트가, 무료숙박권, 티어 혜택을 같이 보고 좋은 숙박 기회를 잡는 공간입니다.',
+                  '마일 좌석을 잡았다면, 이제 숙박에서 진짜 가치가 갈립니다. 현금가, 포인트가, 무료숙박권, 티어 혜택과 실전 후기를 함께 보고 오늘의 포숙 기회를 먼저 잡아보세요.',
                   style: McTextStyles.meta,
                 ),
                 const SizedBox(height: 10),
@@ -652,7 +666,7 @@ class _PointStayIntro extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: onWrite,
                     icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('포숙 글쓰기'),
+                    label: const Text('포숙 기회 공유'),
                   ),
                 ),
               ],
