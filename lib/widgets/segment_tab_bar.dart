@@ -79,15 +79,12 @@ class ScrollableUnderlineTabBar extends StatefulWidget {
 
 class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey _viewportKey = GlobalKey();
-  late List<GlobalKey> _tabKeys;
   late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.controller.index;
-    _tabKeys = _createKeys();
     widget.controller.addListener(_handleControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToIndex(_selectedIndex, animated: false);
@@ -102,9 +99,6 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
       _selectedIndex = widget.controller.index;
       widget.controller.addListener(_handleControllerChanged);
     }
-    if (oldWidget.labels.length != widget.labels.length) {
-      _tabKeys = _createKeys();
-    }
   }
 
   @override
@@ -113,9 +107,6 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
     _scrollController.dispose();
     super.dispose();
   }
-
-  List<GlobalKey> _createKeys() =>
-      List<GlobalKey>.generate(widget.labels.length, (_) => GlobalKey());
 
   void _handleControllerChanged() {
     final nextIndex = widget.controller.index;
@@ -136,24 +127,22 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
   }
 
   void _scrollToIndex(int index, {bool animated = true}) {
-    if (index < 0 || index >= _tabKeys.length) return;
+    if (index < 0 || index >= widget.labels.length) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_scrollController.hasClients) return;
 
-      final tabContext = _tabKeys[index].currentContext;
-      final viewportContext = _viewportKey.currentContext;
-      if (tabContext == null || viewportContext == null) return;
+      final direction = Directionality.of(context);
+      final padding = widget.padding.resolve(direction);
+      var tabCenter = padding.left;
+      for (var i = 0; i < index; i++) {
+        tabCenter += _tabWidth(widget.labels[i], direction);
+        tabCenter += widget.separatorWidth;
+      }
+      tabCenter += _tabWidth(widget.labels[index], direction) / 2;
 
-      final tabBox = tabContext.findRenderObject() as RenderBox?;
-      final viewportBox = viewportContext.findRenderObject() as RenderBox?;
-      if (tabBox == null || viewportBox == null) return;
-
-      final tabLeft = tabBox.localToGlobal(Offset.zero).dx -
-          viewportBox.localToGlobal(Offset.zero).dx;
-      final tabCenter = tabLeft + tabBox.size.width / 2;
-      final viewportCenter = viewportBox.size.width / 2;
-      final rawOffset = _scrollController.offset + tabCenter - viewportCenter;
+      final rawOffset =
+          tabCenter - _scrollController.position.viewportDimension / 2;
       final targetOffset = rawOffset.clamp(
         _scrollController.position.minScrollExtent,
         _scrollController.position.maxScrollExtent,
@@ -171,6 +160,20 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
     });
   }
 
+  double _tabWidth(String label, TextDirection direction) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: McTextStyles.tabSelected.copyWith(fontSize: 14),
+      ),
+      maxLines: 1,
+      textDirection: direction,
+    )..layout();
+    final width = painter.width + 16;
+    painter.dispose();
+    return width;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -182,7 +185,6 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
         ),
       ),
       child: ListView.separated(
-        key: _viewportKey,
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -192,7 +194,6 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
             SizedBox(width: widget.separatorWidth),
         itemBuilder: (context, index) {
           return _UnderlineTabButton(
-            key: _tabKeys[index],
             label: widget.labels[index],
             selected: index == _selectedIndex,
             onTap: () => _selectTab(index),
@@ -209,7 +210,6 @@ class _UnderlineTabButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const _UnderlineTabButton({
-    super.key,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -234,7 +234,10 @@ class _UnderlineTabButton extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.visible,
                 style: (selected ? McTextStyles.tabSelected : McTextStyles.tab)
-                    .copyWith(fontSize: 14),
+                    .copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
               const SizedBox(height: 9),
               AnimatedContainer(
