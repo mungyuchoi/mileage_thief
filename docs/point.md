@@ -1,488 +1,638 @@
-# 마일캐치 Point: 포인트 숙박 니즈 리서치 + 해결 플랜
+# 포인트 숙박 Firestore 설계
 
-작성일: 2026-05-18
+최종 업데이트: 2026-05-21
 
-## 1. 왜 포인트 숙박인가
+이 문서는 포인트 숙박 화면의 `호텔` 탭과 `탐색` 탭을 더미 데이터에서 Firestore 기반 데이터로 전환하기 위한 설계다.
 
-마일캐치의 현재 Why는 `놓치던 여행의 기회를 먼저 캐치하다`다. 항공 마일 좌석, 상품권 시세, 카드 혜택, 커뮤니티 제보가 모두 이 문장 아래에 묶일 수 있다. 포인트 숙박은 이 흐름에서 가장 자연스러운 다음 확장이다.
+현재 앱은 `PointHotel` 더미 모델을 기준으로 호텔 목록, 호텔 상세, 브랜드별 후보, 탐색 후보를 보여준다. Firestore 전환 후에도 화면의 역할은 단순하다.
 
-항공 마일은 여행을 시작하게 만들고, 호텔 포인트는 여행의 체감 비용과 만족도를 크게 바꾼다. 특히 한국 사용자는 항공권을 마일로 잡은 뒤 숙박에서 다시 같은 질문을 한다.
+- 앱은 Firestore에 있는 포인트 숙박 데이터를 읽기만 한다.
+- 호텔/브랜드/포인트/현금가/추천 후보 데이터는 서버 배치 또는 crontab 작업이 주기적으로 갱신한다.
+- 사용자가 호텔 탭이나 탐색 탭에서 입력하는 검색어, 날짜, 숙박 수는 조회 조건일 뿐이며, 이 설계에서는 Firestore에 저장하지 않는다.
 
-- 현금가가 비싼 날 포인트를 쓰면 진짜 이득인가
-- 제주, 서울, 부산, 일본, 동남아 리조트에서 어느 체인이 좋은가
-- 무료숙박권을 어디에 써야 손해가 아닌가
-- 티어가 없으면 조식, 라운지, 업그레이드 때문에 실효 가치가 떨어지는가
-- 성수기와 주말에 포인트 객실이 열리는 타이밍은 언제인가
+## 1. 설계 원칙
 
-현재 코드에도 연결 가능한 자산이 있다. `HOTEL_SCHEMA.md` 기준 호텔 특가 DB는 이미 지역, 체크인 윈도우, 가격 이력, 저장 호텔, 호텔 요청 구조를 갖고 있다. 레이더는 항공/호텔/상품권/혜택 알림을 묶을 수 있고, 커뮤니티는 라벨과 댓글, 북마크, 알림으로 실전 제보를 담을 수 있다. 포인트 숙박은 새 서비스를 처음부터 만드는 일이 아니라, 기존 호텔 특가와 레이더를 `현금가 vs 포인트가` 관점으로 확장하는 일에 가깝다.
+### 읽기 모델과 갱신 모델을 분리한다
 
-정리하면 다음 문장이다.
+호텔 탭과 탐색 탭은 빠르게 보여줘야 하므로 클라이언트에서 여러 컬렉션을 join하지 않는다. 서버 배치가 화면에 필요한 형태로 데이터를 미리 정리해 둔다.
 
-**마일캐치는 항공 마일 다음에 호텔 포인트까지 이어지는 여행 기회 레이더가 되어야 한다.**
+- `pointHotels`: 호텔 기본 정보와 현재 대표 포인트/현금가
+- `pointHotels/{hotelId}/awardCalendar`: 호텔 상세의 날짜별 포인트 캘린더
+- `pointAwardCandidates`: 탐색 탭에서 바로 보여줄 denormalized 후보
+- `pointHotelPrograms`: 등록된 호텔 프로그램/브랜드 목록
+- `pointHotelSyncRuns`: 크론 실행 로그
 
-## 2. 사용자 니즈 맵
+### 클라이언트 쓰기는 금지한다
 
-공개 접근 가능한 공식 문서, 블로그, 공개 커뮤니티 글을 기준으로 보면 포인트 숙박 니즈는 단순히 "포인트로 예약하고 싶다"가 아니다. 사용자는 예약 전, 예약 중, 투숙 전까지 계속 다른 판단을 해야 한다.
+포인트 숙박 데이터는 운영 데이터다. 일반 클라이언트는 읽기만 하고, 쓰기는 Admin SDK를 쓰는 서버 작업만 수행한다.
 
-### 1. 포성비 계산
-
-가장 큰 질문은 `이 숙박에 포인트를 쓰는 게 이득인가`다. 메리어트, 힐튼, IHG처럼 현금가와 포인트가가 모두 변하는 체인은 날짜별 계산이 필요하다. 아코르는 리워드 포인트가 비교적 현금 할인처럼 작동해 계산식은 쉽지만, 프로모션과 유료 멤버십이 섞이면 다시 복잡해진다.
-
-사용자가 실제로 비교하려는 값은 다음이다.
-
-- 세금/봉사료 포함 현금 총액
-- 필요한 포인트 총량
-- 1포인트당 원화 가치
-- 포인트 구매/전환 비용
-- 조식, 라운지, 리조트피, 주차, 추가 인원 비용
-- 5박째 무료, 포인트+현금, 무료숙박권 같은 예외 규정
-
-### 2. 예약 가능 객실 찾기
-
-포인트 숙박은 "가격"보다 "방이 열렸는지"가 먼저다. 공개 커뮤니티에서는 특정 호텔이 좋아 보여도 표준 객실 포인트 예약이 보이지 않거나, 며칠 뒤 다시 열리는 사례가 반복적으로 언급된다. JW 메리어트 제주처럼 현금가가 높은 호텔은 가치가 커질수록 포인트 객실 경쟁도 세진다.
-
-사용자 니즈는 날짜별 어워드 캘린더, 취소표 알림, 특정 호텔 추적이다.
-
-### 3. 성수기/주말 타이밍
-
-호텔 포인트는 항공 마일과 다르게 주말, 연휴, 방학, 벚꽃/단풍/해수욕 시즌의 현금가 급등과 강하게 연결된다. 같은 포인트라도 평일 비수기에는 가치가 낮고, 성수기 리조트에서는 가치가 높아진다. 사용자는 "언제 쓰면 아까운지"와 "언제 잡으면 대박인지"를 알고 싶어 한다.
-
-### 4. 무료숙박권/FNA 사용
-
-무료숙박권은 포인트보다 더 헷갈린다. 숙박권 한도, 추가 포인트 보태기, 표준 객실 제한, 업그레이드 객실 제외, 만료일, 1박 단위 예약 조건이 섞인다. 사용자가 원하는 것은 숙박권을 쓸 수 있는 모든 호텔 목록이 아니라, `내 숙박권으로 지금 가장 아깝지 않은 후보`다.
-
-### 5. 티어 혜택과 실효 가치
-
-포인트 숙박은 객실만 해결하지 않는다. 가족 여행이나 리조트 투숙에서는 조식, 라운지, 수영장, 사우나, 키즈 정책, 업그레이드 가능성이 체감 비용을 바꾼다. 티어가 있으면 좋은 숙박이, 티어가 없으면 비싼 부대비용 숙박이 될 수 있다.
-
-따라서 계산기는 단순히 현금가를 포인트로 나누면 안 된다. `티어 있음/없음`, `조식 필요`, `아이 동반`, `렌터카/주차`, `리조트 부대시설` 같은 조건을 반영해야 한다.
-
-### 6. 포인트 구매와 전환
-
-사용자는 포인트가 부족할 때 구매할지, 카드 포인트를 전환할지, 현금 예약으로 적립할지 고민한다. 포인트 구매 프로모션, 전환 보너스, 카드 적립률, 숙박 적립까지 함께 봐야 한다. 여기서 마일캐치의 카드 추천과 상품권 기반 마일 원가 계산 경험이 강점이 된다.
-
-### 7. 가족/3인 숙박
-
-한국 사용자는 2인 기준 검색만으로 판단하기 어렵다. 부모님 동반, 아이 동반, 3인 객실, 엑스트라베드, 조식 포함 여부가 중요하다. 메리어트 공식 예약 도움말도 포인트/숙박권 예약에서 객실 타입과 투숙 인원 조건을 별도로 다룬다. 이 영역은 실전 후기가 특히 중요하다.
-
-### 8. 제주/국내 리조트 니즈
-
-제주는 포인트 숙박의 좋은 테스트베드다. JW 메리어트 제주, 제주 신화월드 메리어트 계열, 그랜드 하얏트 제주, 힐튼/아코르/IHG 국내 호텔을 비교하려는 니즈가 많다. 항공 마일로 제주 왕복을 잡고, 숙박은 포인트 또는 현금 특가로 잡는 흐름이 마일캐치와 잘 맞는다.
-
-## 3. 체인별 관찰
-
-공식 규정은 수시로 바뀔 수 있으므로, 앱 안에서는 항상 `최종 예약 전 공식 사이트 확인`을 붙여야 한다. 아래 내용은 2026-05-18 기준 제품 기획용 관찰이다.
-
-### 메리어트 Bonvoy
-
-메리어트는 한국 사용자에게 가장 익숙한 호텔 포인트 체인 중 하나다. 국내 호텔 선택지가 있고, JW 메리어트 제주처럼 현금가가 높은 리조트가 있어 포인트 숙박 관심이 크다.
-
-관찰:
-- 공식 도움말 기준 포인트 예약은 검색 시 `Use Points/Awards`를 켜고 진행한다.
-- 5연박 포인트 숙박에는 `Stay for 5, Pay for 4` 혜택이 있으며, 규정상 가장 낮은 포인트 가치의 1박이 차감 제외되는 구조다.
-- 무료숙박권은 표준 객실, 추가 포인트, 업그레이드 객실 조건 때문에 사용자가 헷갈리기 쉽다.
-- 공개 블로그에는 메리어트 포인트 숙박 실전 글이 꾸준히 업데이트되고 댓글이 붙는다. 이는 단순 공식 규정이 아니라 실전 의사결정 가이드 수요가 있다는 신호다.
-
-사용자 질문:
-- 지금 이 호텔을 포인트로 잡으면 몇 원/포인트인가
-- 5박째 무료를 받으려면 날짜를 어떻게 붙여야 하는가
-- 무료숙박권에 포인트를 보태서 쓸 수 있는가
-- 제주 호텔은 언제 포인트 객실이 열리는가
-- 티어가 없으면 조식/업그레이드 기대를 빼고도 가치가 있는가
-
-마일캐치 기회:
-- `메리어트 포숙 계산기`
-- `5박째 무료 반영 포성비`
-- `FNA 사용 후보 추천`
-- `JW 메리어트 제주/제주 신화월드 메리어트 알림`
-
-### 아코르 ALL
-
-아코르는 포인트 사용 구조가 상대적으로 직관적이다. 공식 페이지는 리워드 포인트를 숙박, 레스토랑, 액티비티, 항공사 등 여러 사용처에 쓸 수 있다고 안내하고, 숙박 사용은 1,000포인트부터 가능하다고 설명한다. 한국 사용자에게는 아코르 플러스, 국내/동남아 호텔, 조식/다이닝 혜택이 함께 묶여 인식된다.
-
-관찰:
-- 포인트가 객실 무료 숙박권처럼만 작동하지 않고 결제 할인처럼 인식되기 쉽다.
-- 아코르 플러스와 유료 멤버십 혜택이 섞이면 손익 계산이 어려워진다.
-- 동남아, 호주, 일본 여행 수요와 잘 맞는다.
-
-사용자 질문:
-- 아코르 포인트는 현금처럼 쓰면 얼마 가치인가
-- 아코르 플러스 가입비를 숙박/다이닝으로 회수할 수 있는가
-- 한국 카드 적립과 아코르 혜택을 어떻게 연결하는가
-
-마일캐치 기회:
-- `아코르 포인트 할인 계산기`
-- `아코르 플러스 손익분기 계산`
-- `다이닝/조식 포함 실효가 비교`
-
-### 힐튼 Honors
-
-힐튼은 5박째 무료 혜택이 강한 체인이다. 공식 도움말은 연속 5박 이상의 스탠다드 객실 리워드 숙박 예약 시 매 5박째 숙박이 무료라고 안내한다. 다만 한국 사용자는 국내 선택지가 제한적일 수 있어 해외 여행, 특히 일본/동남아/미국과 함께 보는 경우가 많다.
-
-관찰:
-- 5박 이상 리조트 숙박에서 계산 가치가 커진다.
-- 포인트 가격이 유동적이라 날짜별 캘린더가 중요하다.
-- 조식 혜택, 리조트피, 가족 여행 조건이 실효 가치를 크게 바꾼다.
-
-사용자 질문:
-- 4박과 5박 중 어느 쪽이 더 유리한가
-- 포인트+현금보다 전액 포인트가 나은가
-- 티어가 없으면 조식 비용까지 감안해도 이득인가
-
-마일캐치 기회:
-- `힐튼 5박째 무료 계산`
-- `4박/5박 비교 추천`
-- `리조트 가족 여행 비용 계산`
-
-### 하얏트 World of Hyatt
-
-하얏트는 공식 어워드 차트가 있어 사용자가 카테고리와 오프피크/스탠다드/피크를 비교하기 좋다. 대신 호텔 수가 상대적으로 적고, 인기 호텔은 예약 가능 날짜 찾기가 어려울 수 있다.
-
-관찰:
-- 차트 기반이라 교육형 콘텐츠와 계산기가 잘 맞는다.
-- 포인트 가치가 좋다는 인식이 강하지만, 예약 가능성이 병목이 된다.
-- 제주/국내 관점에서는 그랜드 하얏트 제주 같은 대형 리조트 수요와 연결된다.
-
-사용자 질문:
-- 이 호텔 카테고리의 정상 포인트는 얼마인가
-- 피크 날짜라도 현금가가 높으면 쓸 만한가
-- 포인트+캐시가 유리한 날짜는 언제인가
-
-마일캐치 기회:
-- `하얏트 차트 기반 가치 판정`
-- `피크/오프피크 캘린더`
-- `카테고리 변경 알림`
-
-### IHG One Rewards
-
-IHG는 국내외 호텔 수가 많고 포인트 숙박, 포인트+현금, 포인트 구매가 함께 언급된다. 공식 한국 페이지는 리워드 숙박이 10,000포인트부터 가능하고, 이용 제한 기간이 없다고 안내하되, 제공 여부는 제한될 수 있다고 설명한다.
-
-관찰:
-- 포인트 가격과 현금가가 모두 움직여 계산형 니즈가 강하다.
-- 포인트 구매 프로모션과 결합하면 "사는 게 이득인가" 질문이 많다.
-- 인터컨티넨탈, 홀리데이인, 호텔 인디고 등 브랜드 폭이 넓어 목적별 추천이 가능하다.
-
-사용자 질문:
-- 포인트를 사서 숙박하면 현금 예약보다 싼가
-- 포인트+현금은 어느 구간에서 좋은가
-- 국내 호텔보다 해외 호텔에 쓰는 게 나은가
-
-마일캐치 기회:
-- `IHG 포인트 구매 손익 계산`
-- `포인트+현금 비교`
-- `브랜드별 가성비 랭킹`
-
-## 4. 대표 문제
-
-### 문제 1. 현금가 vs 포인트가 뭐가 이득인지 모른다
-
-사용자는 포인트 차감 수량만 보면 판단할 수 없다. 현금가에는 세금과 수수료가 붙고, 포인트 숙박에는 조식/리조트피/주차/추가 인원 비용이 남을 수 있다. 티어 혜택과 프로모션까지 섞이면 머릿속 계산이 무너진다.
-
-필요한 해결:
-- 체인별 계산식
-- 세금 포함 현금가 입력
-- 티어/조식/부대비용 옵션
-- 1포인트당 원화 가치 자동 계산
-- "현금 예약 추천", "포인트 사용 추천", "더 기다려볼 만함" 같은 판정
-
-### 문제 2. 예약 가능한 날짜를 못 찾는다
-
-포인트 숙박은 특정 호텔과 날짜 조합이 중요하다. 사용자는 여러 날짜를 계속 눌러보는 데 지친다. 특히 제주 리조트, 주말 서울 호텔, 일본 성수기 호텔은 알림 수요가 크다.
-
-필요한 해결:
-- 호텔별 어워드 캘린더
-- 관심 호텔 저장
-- 포인트 객실 열림/닫힘 알림
-- 취소표 또는 포인트가 하락 알림
-- "최근 열린 날짜" 커뮤니티 제보
-
-### 문제 3. 무료숙박권 조건이 헷갈린다
-
-무료숙박권은 숙박권 금액처럼 보이지만 실제로는 체인별 조건이 있다. 표준 객실, 추가 포인트, 만료일, 1박 제한, 업그레이드 제외 같은 조건 때문에 사용자는 예약 화면까지 가서야 알게 된다.
-
-필요한 해결:
-- 숙박권 유형 입력
-- 만료일 입력
-- 사용 가능 후보 필터
-- 부족 포인트 자동 계산
-- "낭비 가능성 높음" 경고
-
-### 문제 4. 티어 없을 때 실효 가치가 달라진다
-
-포인트 숙박 후기가 좋아도 작성자가 플래티넘/다이아몬드/글로벌리스트인지에 따라 체감 비용이 다르다. 같은 호텔도 티어가 없으면 조식과 라운지, 업그레이드가 빠져 현금가 대비 매력이 낮아질 수 있다.
-
-필요한 해결:
-- 후기 라벨에 체인/티어/인원/조식 포함 여부 표시
-- 계산기에 티어 혜택 체크
-- 무티어 사용자 기준 별도 평가
-- 가족 여행 기준 총비용 비교
-
-### 문제 5. 정보가 흩어져 있다
-
-공식 규정은 공식 사이트에 있고, 실전 후기는 블로그와 커뮤니티에 있고, 가격은 호텔 예약 사이트에 있고, 포인트 가치는 계산기마다 다르다. 사용자는 예약 전에 너무 많은 탭을 열어야 한다.
-
-필요한 해결:
-- 체인별 기본 규정 요약
-- 호텔별 실전 후기 라벨
-- 현금가/포인트가/후기/알림을 한 화면에 연결
-- 커뮤니티 제보를 구조화된 데이터로 전환
-
-## 5. 마일캐치 해결 플랜
-
-### 1위. 포인트 숙박 가치 계산기
-
-**정의**  
-현금가, 포인트가, 체인, 숙박일 수, 티어, 조식/부대비용, 포인트 구매 비용을 입력하면 실효 가치를 계산하는 기능.
-
-**왜 필요한가**  
-포인트 숙박의 첫 질문은 항상 "이득인가"다. 계산기가 없으면 사용자는 블로그 글을 읽어도 자기 날짜와 자기 조건에 적용하지 못한다.
-
-**MVP**
-- 체인: 메리어트, 아코르, 힐튼, 하얏트, IHG
-- 입력: 현금 총액, 필요 포인트, 숙박일 수, 인원, 티어 여부, 조식 필요 여부
-- 출력: 1포인트 원화 가치, 체인별 추천 기준, 현금/포인트 추천
-- 메리어트/힐튼 5박째 무료 옵션
-- IHG/메리어트 포인트 구매 단가 입력 옵션
-
-**락인 포인트**
-- 사용자가 예약 후보를 볼 때마다 앱을 다시 연다.
-- 계산 결과를 커뮤니티에 공유하면 후기 데이터가 구조화된다.
-
-### 2위. 포인트 어워드 캘린더
-
-**정의**  
-관심 호텔의 날짜별 현금가, 포인트가, 예약 가능 여부, 가치 점수를 보여주는 캘린더.
-
-**왜 필요한가**  
-포인트 숙박은 날짜 싸움이다. 특히 인기 리조트는 사용자가 매일 들어가 확인하는 행동 자체가 피로하다.
-
-**MVP**
-- 호텔별 월간 캘린더
-- 상태: 예약 가능, 포인트가 높음, 좋은 가치, 매진/확인 필요
-- 지역: 제주, 서울, 부산, 도쿄, 오사카부터 시작
-- 기존 `hotel_static`, `price_history`, `hotel_deal_cards`와 연결
-- v1은 크롤링 자동화 전까지 커뮤니티 제보 기반으로도 운영 가능
-
-**락인 포인트**
-- 관심 호텔을 저장하면 재방문 이유가 생긴다.
-- 알림과 결합하면 레이더의 호텔 버전이 된다.
-
-### 3위. 호텔 목표 알림
-
-**정의**  
-사용자가 `JW 메리어트 제주 2박, 6월 주말, 10만 포인트 이하` 같은 목표를 저장하면 조건이 맞을 때 알려주는 기능.
-
-**왜 필요한가**  
-항공 마일 좌석 알림과 동일한 습관을 호텔 포인트에도 만들 수 있다. 사용자는 특정 호텔과 날짜를 계속 추적하고 싶어 한다.
-
-**MVP**
-- 목표 입력: 체인, 호텔, 지역, 날짜 범위, 숙박일 수, 포인트 상한, 현금가 상한
-- 알림 유형: 포인트 객실 열림, 포인트가 하락, 현금 특가 발생, 커뮤니티 후기 등록
-- 기존 `RadarService`에 `hotelPointStay` 타입 추가 검토
-
-**락인 포인트**
-- 사용자의 여행 목표가 앱 안에 저장된다.
-- 목표가 생기면 카드, 포인트 구매, 상품권, 항공권까지 연결할 수 있다.
-
-### 4위. 무료숙박권 사용처 추천
-
-**정의**  
-사용자의 숙박권 한도와 만료일을 입력하면 지금 쓸 만한 호텔 후보를 추천하는 기능.
-
-**왜 필요한가**  
-무료숙박권은 소멸 압박이 강하다. "어디에 써야 잘 썼다고 할 수 있나"는 강한 검색/커뮤니티 니즈다.
-
-**MVP**
-- 숙박권 체인/한도/만료일 입력
-- 지역/날짜 범위 필터
-- 사용 가능성, 예상 현금가, 부족 포인트, 후기 수 표시
-- 제주/서울/부산/일본 주요 호텔 우선
-
-**락인 포인트**
-- 만료일 알림이 자연스러운 리텐션 트리거가 된다.
-- 숙박권 사용 후기가 커뮤니티 콘텐츠로 돌아온다.
-
-### 5위. 체인별 가이드/커뮤니티 라벨
-
-**정의**  
-커뮤니티 글에 `메리어트`, `아코르`, `힐튼`, `하얏트`, `IHG`, `무료숙박권`, `제주`, `포숙후기` 같은 라벨을 붙여 검색과 추천에 활용한다.
-
-**왜 필요한가**  
-포인트 숙박은 공식 규정만으로 해결되지 않는다. 사용자별 티어, 인원, 날짜, 객실 타입이 달라 실전 후기가 핵심이다.
-
-**MVP**
-- 라벨 타입: `hotelChain`, `hotelProgram`, `hotelProperty`, `stayType`
-- 글 작성 시 체인/호텔/티어/인원/숙박일 수 선택
-- 호텔 상세 또는 계산기 결과에서 관련 글 노출
-- 라벨 구독과 연결
-
-**락인 포인트**
-- 사용자 제보가 앱의 데이터 자산이 된다.
-- 특정 체인 사용자들이 마일캐치 안에 머무를 이유가 생긴다.
-
-### 6위. 제주 포인트 숙박 특화 보드
-
-**정의**  
-JW 메리어트 제주, 제주 신화월드 메리어트, 그랜드 하얏트 제주 등 국내 리조트 포인트/현금가/후기/알림을 묶는 제주 전용 보드.
-
-**왜 필요한가**  
-제주는 한국 사용자에게 접근성이 높고, 항공 마일과 호텔 포인트를 함께 쓰기 좋은 목적지다. 국내 테스트베드로도 좋다.
-
-**MVP**
-- 제주 호텔 목록
-- 현금 특가와 포인트 숙박 가치 비교
-- 가족/커플/호캉스/렌터카/조식 관점 후기 라벨
-- 항공 마일 좌석 또는 특가 항공권과 함께 보기
-
-**유입 포인트**
-- "제주 포인트 숙박", "JW 메리어트 제주 포인트", "제주 신화월드 메리어트 포숙" 검색 의도가 명확하다.
-- 블로그/커뮤니티 공유 카드로 외부 유입을 만들기 쉽다.
-
-## 6. MVP 우선순위
-
-### Phase 1. 계산기와 가이드를 먼저 만든다
-
-가장 먼저 `포인트 숙박 가치 계산기`와 `체인별 기본 가이드`를 만든다.
-
-이유:
-- 데이터 자동화 없이도 빠르게 출시할 수 있다.
-- 사용자가 당장 가진 예약 후보에 적용할 수 있다.
-- 커뮤니티 글과 공유 카드의 표준 포맷이 된다.
-
-구성:
-- 계산기 입력/결과 화면
-- 체인별 규정 요약
-- 가치 판단 기준 설명
-- 결과 공유 문구
-
-성공 기준:
-- 계산기 완료 수
-- 계산 결과 공유 수
-- 체인별 가이드 체류 시간
-- 계산 후 호텔/커뮤니티 상세 이동률
-
-### Phase 2. 호텔 포인트 레이더를 만든다
-
-두 번째는 `포인트 어워드 캘린더`와 `호텔 목표 알림`이다.
-
-이유:
-- 마일캐치의 Why인 `먼저 캐치하다`와 가장 직접적으로 연결된다.
-- 기존 호텔 특가 DB와 레이더 구조를 활용할 수 있다.
-- 관심 호텔 저장이 장기 리텐션으로 이어진다.
-
-구성:
-- 관심 호텔 저장
-- 날짜/포인트 조건 저장
-- 포인트 객실/가격 하락 알림
-- 제주 주요 호텔부터 시작
-
-성공 기준:
-- 관심 호텔 저장 수
-- 호텔 목표 생성 수
-- 알림 클릭률
-- 목표 저장 후 7일/30일 재방문율
-
-### Phase 3. 커뮤니티 제보와 무료숙박권을 붙인다
-
-세 번째는 `커뮤니티 라벨`, `포숙 후기 템플릿`, `무료숙박권 사용처 추천`이다.
-
-이유:
-- 자동 수집만으로는 조식, 티어, 가족 조건, 업그레이드 같은 실효 가치를 알 수 없다.
-- 사용자 제보를 구조화하면 계산기와 레이더 품질이 좋아진다.
-- 무료숙박권 만료 알림은 강한 재방문 트리거다.
-
-구성:
-- 포숙 후기 작성 템플릿
-- 체인/호텔/티어/인원 라벨
-- FNA 만료일 등록
-- 사용 후보 추천
-
-성공 기준:
-- 라벨이 붙은 포숙 글 수
-- 후기 작성 전환율
-- FNA 등록 수
-- FNA 만료 알림 클릭률
-
-## 7. 데이터/기능 연결
-
-### 기존 호텔 특가 DB
-
-현재 호텔 특가 구조는 포인트 숙박 확장에 바로 연결할 수 있다.
-
-- `hotel_static`: 호텔명, 지역, 이미지, 성급, 방문 수
-- `hotel_static/{hotelId}/price_history`: 날짜별 현금가, 할인율, 취소 가능 여부
-- `hotel_deal_cards`: 특가 카드와 예약 URL
-- `saved_hotels`: 사용자의 관심 호텔
-- `hotel_requests`: 사용자가 원하는 호텔 요청
-- `hotel_regions`: 제주/서울/부산 등 지역 구분
-
-확장 제안:
-- `hotel_static`에 `chainKey`, `programKey`, `propertyCode`, `officialUrl` 추가
-- `price_history`에 `cashTotalPrice`, `taxIncluded`, `sourceProvider` 추가 검토
-- 새 컬렉션 `hotel_award_snapshots`로 날짜별 포인트가/예약 가능 여부 저장
-- 새 컬렉션 `users/{uid}/hotelPointGoals/{goalId}`로 목표 알림 저장
-
-### 레이더
-
-현재 레이더는 항공 특가, 취소표, 호텔 특가, 상품권, 혜택 뉴스, 계산기 추천을 담을 수 있다. 포인트 숙박은 레이더에 잘 맞는 신규 타입이다.
-
-추가 타입 후보:
-- `hotelPointStay`: 포인트 객실 열림
-- `hotelPointDrop`: 포인트가 하락
-- `hotelCashVsPoint`: 현금가 대비 포인트 가치 좋음
-- `freeNightAward`: 무료숙박권 사용 기회
-- `hotelProgramNews`: 체인별 프로모션/규정 변경
-
-### 커뮤니티 라벨
-
-포인트 숙박 커뮤니티는 글 제목 검색만으로는 가치가 낮다. 라벨이 있어야 계산기, 호텔 상세, 알림과 연결된다.
-
-라벨 후보:
-- 체인: `Marriott`, `Accor`, `Hilton`, `Hyatt`, `IHG`
-- 지역: `제주`, `서울`, `부산`, `일본`, `동남아`
-- 유형: `포숙후기`, `FNA`, `포인트구매`, `티어혜택`, `가족여행`, `조식`, `라운지`
-- 호텔: `JW 메리어트 제주`, `제주 신화월드 메리어트`, `그랜드 하얏트 제주`
-
-### 카드 추천
-
-포인트 숙박은 카드와도 연결된다.
-
-- 체인 제휴 카드
-- 전환 가능한 카드 포인트
-- 숙박 결제 적립률
-- 포인트 구매 시 결제 카드 추천
-- 아코르/호텔 멤버십 구독 비용 결제 카드 추천
-
-마일캐치가 이미 카드 카탈로그와 추천/랭킹 구조를 갖고 있기 때문에, 호텔 포인트 계산 결과에서 `이 체인에 맞는 카드`를 노출할 수 있다.
-
-### 여행 목표 보드
-
-`내년 2월 제주 3박 가족여행` 같은 목표를 만들면 항공 마일, 호텔 포인트, 카드, 상품권, 커뮤니티가 한 흐름으로 묶인다.
-
-목표 보드에 들어갈 항목:
-- 항공권: 마일 좌석/특가 항공권
-- 숙박: 현금 특가/포인트 숙박/FNA 후보
-- 준비: 필요한 포인트, 부족 포인트, 카드 전략
-- 후기: 같은 호텔/지역/가족 조건의 커뮤니티 글
-- 알림: 좌석, 포인트 객실, 현금가 하락, 숙박권 만료
-
-## 8. 출처와 수집 기준
-
-비공개 카페, 로그인 필요한 게시글, 접근 제한 자료는 직접 수집하지 않는다. 공식 규정은 제품 내에서 항상 변동 가능성을 표시하고, 예약 전 공식 사이트 확인을 유도한다.
-
-참고한 공개 자료:
-- [Marriott Bonvoy 포인트 예약 도움말](https://help.marriott.com/s/article/book-with-marriott-bonvoy-points)
-- [Marriott Bonvoy Stay for 5, Pay for 4 도움말](https://help.marriott.com/s/article/stay-for-5-pay-for-4-benefit)
-- [Accor ALL 포인트 적립 및 사용](https://all.accor.com/loyalty-program/earn-and-use/index.ko.shtml)
-- [Hilton Honors 5박째 무료 숙박 도움말](https://www.hilton.com/ko/help-center/hilton-honors-benefits/redeem-a-fifth-night-free/)
-- [World of Hyatt Free Nights & Upgrades](https://world.hyatt.com/content/gp/en/rewards/free-nights-upgrades.html)
-- [IHG 호텔 & 리조트 한국 공식 페이지](https://www.ihg.com/hotels/kr/ko)
-- [메리어트 포인트 숙박 실전 정보 공개 블로그 글](https://blog.naver.com/PostView.naver?blogId=minbeom123&logNo=223173186501)
-- [JW Marriott Jeju Resort & Spa 공식 페이지](https://www.marriott.com/ko/hotels/cjuju-jw-marriott-jeju-resort-and-spa/overview/)
-- [JW Marriott Jeju 공개 FlyerTalk 스레드](https://www.flyertalk.com/forum/marriott-marriott-bonvoy/2112913-jw-marriott-jeju-resort-spa-south-korea-master-thread-4-printerfriendly.html)
-- [JW Marriott Jeju AwardClaw 공개 데이터 페이지](https://www.awardclaw.com/hotels/marriott/jw-marriott-jeju-resort-spa)
-- [호텔 어워드 가능 날짜 탐색 관련 The Points Guy 글](https://thepointsguy.com/loyalty-programs/how-to-find-hotel-award-availability/)
-
-## 9. 한 줄 결론
-
-포인트 숙박은 마일캐치가 항공 마일 앱에서 여행 실행 앱으로 넘어가는 좋은 다리다. 시작은 계산기와 가이드로 사용자의 판단 비용을 줄이고, 다음은 호텔 포인트 레이더로 놓치던 날짜를 먼저 잡아주며, 마지막은 커뮤니티 제보와 무료숙박권 알림으로 장기 락인을 만드는 흐름이 가장 현실적이다.
+저장 호텔, 알림, 목표 조건 같은 사용자 데이터는 별도 기능에서 `users/{uid}/...` 하위 컬렉션으로 확장한다. 이 문서의 범위는 `호텔`과 `탐색` 탭에 필요한 공개 조회 데이터다.
+
+### 탐색 탭은 후보 컬렉션을 따로 둔다
+
+탐색 탭은 `브랜드`, `숙박 수`, `가치순`, `낮은 포인트`, `최근 확인` 기준으로 정렬한다. 이를 `pointHotels`와 하위 캘린더를 매번 조합해 계산하면 Firestore 쿼리가 복잡해진다.
+
+따라서 crontab 작업이 `pointAwardCandidates`를 미리 만들어 둔다. 클라이언트는 이 컬렉션만 조회해서 탐색 탭을 구성한다.
+
+## 2. 화면별 읽기 흐름
+
+| 화면 | Firestore 기준 | 비고 |
+| --- | --- | --- |
+| 호텔 탭 기본 목록 | `pointHotels` | `status == active`, `sortScore desc` |
+| 호텔 탭 검색 | `pointHotels.searchTokens` | Firestore 검색 한계를 고려해 토큰 검색 후 클라이언트 보정 |
+| 호텔 탭 날짜/숙박 수 검색 | `pointAwardCandidates` | 날짜가 있으면 후보 컬렉션에서 정확한 날짜/숙박 수 기준 조회 |
+| 호텔 상세 | `pointHotels/{hotelId}` + `awardCalendar` | 호텔 정보와 60일 내외 캘린더 표시 |
+| 탐색 탭 전체 | `pointAwardCandidates` | `available == true`, `nights == selectedNights` |
+| 탐색 탭 브랜드 필터 | `pointAwardCandidates.programId` | 등록 브랜드는 `pointHotelPrograms` 기준 |
+| 브랜드별 포인트 숙박 섹션 | `pointHotels.programId` 또는 `pointAwardCandidates.programId` | 현재 브랜드 탭도 같은 `programId`를 재사용 가능 |
+
+## 3. 컬렉션 맵
+
+| 경로 | 역할 | 클라이언트 읽기 | 클라이언트 쓰기 | 서버 쓰기 |
+| --- | --- | --- | --- | --- |
+| `pointHotelPrograms/{programId}` | 호텔 프로그램/브랜드 메타 | 허용 | 금지 | 허용 |
+| `pointHotels/{hotelId}` | 호텔 기본 정보와 대표 가격 | 허용 | 금지 | 허용 |
+| `pointHotels/{hotelId}/awardCalendar/{dateKey}` | 날짜별 어워드/현금가 캘린더 | 허용 | 금지 | 허용 |
+| `pointAwardCandidates/{candidateId}` | 탐색 탭 후보 카드 | 허용 | 금지 | 허용 |
+| `pointHotelSyncRuns/{runId}` | 크론 실행 로그 | 관리자만 | 금지 | 허용 |
+
+## 4. 문서 스키마
+
+### `pointHotelPrograms/{programId}`
+
+등록된 호텔 프로그램과 화면 표시 정보를 담는다. 탐색 탭의 브랜드 목록은 하드코딩 대신 이 컬렉션을 읽는 구조로 확장할 수 있다.
+
+문서 ID 예시:
+
+- `marriott`
+- `accor`
+- `hilton`
+- `ihg`
+- `hyatt`
+
+예시:
+
+```json
+{
+  "programId": "marriott",
+  "label": "메리어트",
+  "programName": "Marriott Bonvoy",
+  "brandKeywords": ["marriott", "westin", "sheraton", "ritz", "st. regis"],
+  "displayOrder": 10,
+  "isActive": true,
+  "updatedAt": "serverTimestamp"
+}
+```
+
+필드:
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `programId` | string | 문서 ID와 동일 |
+| `label` | string | 앱 표시명 |
+| `programName` | string | 공식 프로그램명 |
+| `brandKeywords` | string[] | 호텔 브랜드 매칭용 키워드 |
+| `displayOrder` | number | 브랜드 노출 순서 |
+| `isActive` | boolean | 화면 노출 여부 |
+| `updatedAt` | timestamp | 마지막 수정 시각 |
+
+### `pointHotels/{hotelId}`
+
+호텔 탭 기본 목록과 호텔 상세의 기준 문서다. 현재 `PointHotel` 더미 모델의 필드를 대부분 이 문서에 매핑한다.
+
+문서 ID는 외부 공급자 코드가 안정적이면 `program_propertyCode`를 쓰고, 없으면 `program_slugCity_slugName` 형태를 쓴다.
+
+예시:
+
+```json
+{
+  "hotelId": "marriott_lhrwm",
+  "programId": "marriott",
+  "propertyCode": "LHRWM",
+  "name": "The Westin London City",
+  "city": "London",
+  "country": "United Kingdom",
+  "address": "60 Upper Thames Street, London EC4V 3AD, United Kingdom",
+  "geo": {
+    "lat": 51.5123,
+    "lng": -0.0954
+  },
+  "brand": "Marriott",
+  "imageUrl": "https://example.com/hotel.jpg",
+  "galleryUrls": ["https://example.com/hotel.jpg"],
+  "rating": 4.6,
+  "guestFavorite": true,
+  "description": "런던 성수기 현금가가 높을 때 포인트 가치가 돋보이는 호텔입니다.",
+  "amenities": ["스파", "수영장", "라운지", "강변 위치"],
+  "amenityKeys": ["spa", "pool", "lounge", "river"],
+  "searchTokens": [
+    "westin",
+    "london",
+    "city",
+    "marriott",
+    "united",
+    "kingdom"
+  ],
+  "currentAward": {
+    "dateKey": "2026-06-15",
+    "available": true,
+    "pointsPerNight": 40000,
+    "cashPerNightKrw": 612000,
+    "krwPerPoint": 15.3,
+    "checkedAt": "serverTimestamp",
+    "sourceRunId": "run_20260521_060000"
+  },
+  "calendarPreview": [
+    {
+      "dateKey": "2026-06-15",
+      "available": true,
+      "pointsPerNight": 40000
+    }
+  ],
+  "sortScore": 1530,
+  "status": "active",
+  "createdAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp"
+}
+```
+
+필드:
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `hotelId` | string | 문서 ID와 동일 |
+| `programId` | string | `pointHotelPrograms/{programId}` 참조 키 |
+| `propertyCode` | string? | 공식/외부 공급자 호텔 코드 |
+| `name` | string | 호텔명 |
+| `city` | string | 도시 |
+| `country` | string | 국가 |
+| `address` | string | 주소 |
+| `geo` | map | 지도 노출용 좌표. Firestore `GeoPoint`로 바꿔도 됨 |
+| `brand` | string | 화면에 표시할 브랜드명 |
+| `imageUrl` | string | 대표 이미지 |
+| `galleryUrls` | string[] | 상세 이미지 |
+| `rating` | number | 표시용 평점 |
+| `guestFavorite` | boolean | 추천/선호 배지 |
+| `description` | string | 호텔 소개 |
+| `amenities` | string[] | 표시용 편의시설 |
+| `amenityKeys` | string[] | 필터용 편의시설 키 |
+| `searchTokens` | string[] | 호텔명/도시/국가/주소/브랜드 검색 토큰 |
+| `currentAward` | map | 대표 포인트/현금가 스냅샷 |
+| `calendarPreview` | map[] | 목록/상세 상단에서 빠르게 쓸 7~14일 미리보기 |
+| `sortScore` | number | 기본 목록 정렬 점수 |
+| `status` | string | `active`, `inactive`, `hidden` |
+| `createdAt` | timestamp | 최초 생성 시각 |
+| `updatedAt` | timestamp | 마지막 갱신 시각 |
+
+### `pointHotels/{hotelId}/awardCalendar/{dateKey}`
+
+호텔 상세의 포인트 캘린더 원천 데이터다.
+
+문서 ID는 `yyyy-MM-dd`를 사용한다.
+
+예시:
+
+```json
+{
+  "hotelId": "marriott_lhrwm",
+  "dateKey": "2026-06-15",
+  "available": true,
+  "pointsPerNight": 40000,
+  "cashPerNightKrw": 612000,
+  "taxIncluded": true,
+  "roomType": "standard",
+  "sourceProvider": "provider_name",
+  "sourceUrl": "https://example.com/hotel",
+  "checkedAt": "serverTimestamp",
+  "runId": "run_20260521_060000",
+  "stale": false
+}
+```
+
+필드:
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `hotelId` | string | 상위 호텔 ID |
+| `dateKey` | string | `yyyy-MM-dd` |
+| `available` | boolean | 포인트 예약 가능 여부 |
+| `pointsPerNight` | number? | 1박 포인트 차감 |
+| `cashPerNightKrw` | number? | 1박 현금가 원화 환산 |
+| `taxIncluded` | boolean | 세금/봉사료 포함 여부 |
+| `roomType` | string | 기준 객실 타입 |
+| `sourceProvider` | string | 수집 출처 |
+| `sourceUrl` | string? | 확인 URL |
+| `checkedAt` | timestamp | 수집 확인 시각 |
+| `runId` | string | 크론 실행 ID |
+| `stale` | boolean | 최신 수집에서 확인되지 않은 데이터 여부 |
+
+### `pointAwardCandidates/{candidateId}`
+
+탐색 탭 전용 후보 문서다. 호텔 기본 정보를 denormalize해서 클라이언트가 `pointHotels`를 다시 읽지 않아도 카드 UI를 만들 수 있게 한다.
+
+문서 ID는 `${hotelId}_${dateKey}_${nights}`를 기본으로 한다.
+
+예시:
+
+```json
+{
+  "candidateId": "marriott_lhrwm_2026-06-15_5",
+  "hotelId": "marriott_lhrwm",
+  "programId": "marriott",
+  "brand": "Marriott",
+  "name": "The Westin London City",
+  "city": "London",
+  "country": "United Kingdom",
+  "address": "60 Upper Thames Street, London EC4V 3AD, United Kingdom",
+  "imageUrl": "https://example.com/hotel.jpg",
+  "rating": 4.6,
+  "guestFavorite": true,
+  "searchTokens": ["westin", "london", "marriott"],
+  "checkInDate": "2026-06-15",
+  "nights": 5,
+  "available": true,
+  "pointsTotal": 160000,
+  "cashTotalKrw": 3060000,
+  "krwPerPoint": 19.1,
+  "valueScore": 1910,
+  "confidence": 0.92,
+  "updatedAt": "serverTimestamp",
+  "sourceRunId": "run_20260521_060000",
+  "status": "active"
+}
+```
+
+필드:
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `candidateId` | string | 문서 ID와 동일 |
+| `hotelId` | string | 원본 호텔 ID |
+| `programId` | string | 브랜드/프로그램 필터 키 |
+| `brand` | string | 표시용 브랜드명 |
+| `name` | string | 호텔명 |
+| `city` | string | 도시 |
+| `country` | string | 국가 |
+| `address` | string | 주소 |
+| `imageUrl` | string | 카드 이미지 |
+| `rating` | number | 평점 |
+| `guestFavorite` | boolean | 추천/선호 배지 |
+| `searchTokens` | string[] | 후보 검색용 토큰 |
+| `checkInDate` | string | 체크인 날짜 `yyyy-MM-dd` |
+| `nights` | number | 숙박 수 |
+| `available` | boolean | 후보 노출 가능 여부 |
+| `pointsTotal` | number | 전체 숙박 포인트 |
+| `cashTotalKrw` | number | 전체 숙박 현금가 |
+| `krwPerPoint` | number | `cashTotalKrw / pointsTotal` |
+| `valueScore` | number | 가치순 정렬용 점수. 기본값은 `krwPerPoint * 100` |
+| `confidence` | number | 수집 신뢰도. 0~1 |
+| `updatedAt` | timestamp | 후보 갱신 시각 |
+| `sourceRunId` | string | 생성한 크론 실행 ID |
+| `status` | string | `active`, `inactive`, `hidden` |
+
+v1에서는 `nights` 1~7박 후보를 미리 만든다. 8박 이상은 후보 문서를 만들지 않고, 호텔 상세의 `awardCalendar`를 기준으로 계산하는 방식으로 확장한다.
+
+### `pointHotelSyncRuns/{runId}`
+
+크론 실행 로그다. 앱 화면에는 노출하지 않고 운영 확인과 장애 추적에 사용한다.
+
+예시:
+
+```json
+{
+  "runId": "run_20260521_060000",
+  "trigger": "cron",
+  "status": "success",
+  "startedAt": "serverTimestamp",
+  "finishedAt": "serverTimestamp",
+  "programIds": ["marriott", "hilton", "ihg", "hyatt", "accor"],
+  "hotelUpserted": 128,
+  "calendarUpserted": 6420,
+  "candidateUpserted": 2310,
+  "staleMarked": 52,
+  "errors": []
+}
+```
+
+실패 예시:
+
+```json
+{
+  "runId": "run_20260521_120000",
+  "trigger": "cron",
+  "status": "failed",
+  "startedAt": "serverTimestamp",
+  "finishedAt": "serverTimestamp",
+  "programIds": ["hilton"],
+  "hotelUpserted": 0,
+  "calendarUpserted": 0,
+  "candidateUpserted": 0,
+  "staleMarked": 0,
+  "errors": [
+    {
+      "programId": "hilton",
+      "message": "provider timeout"
+    }
+  ]
+}
+```
+
+## 5. 검색 토큰 정책
+
+Firestore는 일반적인 contains/full-text 검색에 적합하지 않다. v1은 서버 배치가 `searchTokens`를 미리 만들어 두고, 앱은 토큰 기반으로 1차 후보를 가져온 뒤 클라이언트에서 재정렬한다.
+
+토큰 생성 대상:
+
+- 호텔명
+- 도시
+- 국가
+- 주소 일부
+- 브랜드명
+- 프로그램명
+- 공급자 호텔 코드
+
+정규화 규칙:
+
+- 소문자 변환
+- 앞뒤 공백 제거
+- 특수문자 제거 또는 공백 치환
+- 한글/영문/숫자 토큰 보존
+- 너무 짧은 1글자 영문 토큰은 제외
+- 자주 쓰는 영문 prefix는 2~10글자까지 생성
+
+예시:
+
+```text
+The Westin London City, Marriott
+-> the, we, wes, west, westi, westin, london, city, marriott
+```
+
+데이터가 커져 검색 정확도와 속도가 중요해지면 Algolia, Typesense, Meilisearch 같은 별도 검색 인덱스를 붙인다. Firestore 단독으로 본문/부분 문자열 검색을 억지로 구현하지 않는다.
+
+## 6. 쿼리 설계
+
+### 호텔 탭 기본 목록
+
+```text
+pointHotels
+where status == active
+orderBy sortScore desc
+limit 50
+```
+
+### 호텔 탭 검색
+
+```text
+pointHotels
+where status == active
+where searchTokens arrayContainsAny [queryTokens 최대 10개]
+orderBy sortScore desc
+limit 50
+```
+
+클라이언트는 가져온 결과를 다시 한 번 `name`, `city`, `country`, `address`, `brand` 기준으로 점수화해서 보여준다. 검색어가 비어 있으면 토큰 조건 없이 기본 목록을 보여준다.
+
+### 날짜와 숙박 수가 있는 호텔 검색
+
+```text
+pointAwardCandidates
+where status == active
+where available == true
+where checkInDate == selectedDateKey
+where nights == selectedNights
+where searchTokens arrayContainsAny [queryTokens 최대 10개]
+orderBy valueScore desc
+limit 50
+```
+
+날짜가 없으면 `pointHotels`를 기준으로 검색한다. 날짜가 있으면 `pointAwardCandidates`를 기준으로 검색한다.
+
+### 호텔 상세
+
+```text
+pointHotels/{hotelId}
+```
+
+```text
+pointHotels/{hotelId}/awardCalendar
+where stale == false
+orderBy dateKey asc
+limit 60
+```
+
+상세 화면의 14일 캘린더는 `awardCalendar`에서 읽는다. 목록 화면에서 짧게 보여줄 데이터는 `pointHotels.calendarPreview`를 사용한다.
+
+### 탐색 탭 전체
+
+```text
+pointAwardCandidates
+where status == active
+where available == true
+where nights == selectedNights
+orderBy valueScore desc
+limit 30
+```
+
+### 탐색 탭 브랜드 필터
+
+```text
+pointAwardCandidates
+where status == active
+where available == true
+where programId == selectedProgramId
+where nights == selectedNights
+orderBy valueScore desc
+limit 30
+```
+
+정렬별 order:
+
+| 정렬 | orderBy |
+| --- | --- |
+| 가치순 | `valueScore desc` |
+| 낮은 포인트 | `pointsTotal asc` |
+| 최근 확인 | `updatedAt desc` |
+
+`전체` 브랜드는 `programId` 조건을 넣지 않는다.
+
+## 7. 필요한 인덱스
+
+Firestore 콘솔에서 생성 링크가 나오면 그대로 생성하되, v1 기준으로 아래 인덱스를 먼저 준비한다.
+
+| 컬렉션 | 조건 | 정렬 |
+| --- | --- | --- |
+| `pointHotels` | `status == active` | `sortScore desc` |
+| `pointHotels` | `status == active`, `programId == value` | `sortScore desc` |
+| `pointHotels` | `status == active`, `searchTokens arrayContainsAny` | `sortScore desc` |
+| `pointAwardCandidates` | `status == active`, `available == true`, `nights == value` | `valueScore desc` |
+| `pointAwardCandidates` | `status == active`, `available == true`, `programId == value`, `nights == value` | `valueScore desc` |
+| `pointAwardCandidates` | `status == active`, `available == true`, `programId == value`, `nights == value` | `pointsTotal asc` |
+| `pointAwardCandidates` | `status == active`, `available == true`, `programId == value`, `nights == value` | `updatedAt desc` |
+| `pointAwardCandidates` | `status == active`, `available == true`, `checkInDate == value`, `nights == value`, `searchTokens arrayContainsAny` | `valueScore desc` |
+| `awardCalendar` subcollection | `stale == false` | `dateKey asc` |
+
+`awardCalendar`는 보통 호텔 상세에서 상위 경로를 알고 조회하므로 collection group 인덱스가 많이 필요하지 않다. 운영 대시보드에서 모든 호텔의 특정 날짜를 찾는 기능이 생기면 `collectionGroup("awardCalendar")` 인덱스를 별도로 추가한다.
+
+## 8. 크론 갱신 파이프라인
+
+crontab 또는 Cloud Scheduler가 주기적으로 서버 작업을 실행한다. 현재 Functions 프로젝트는 Node 20과 Firebase Functions v2를 쓰고 있으므로, 구현 시에는 `firebase-functions/v2/scheduler`의 `onSchedule` 또는 외부 crontab이 호출하는 `onRequest` 함수를 사용할 수 있다.
+
+권장 주기:
+
+- 기본: 6시간마다
+- 성수기/인기 호텔: 1~3시간마다 별도 우선순위 작업
+- 실패 재시도: 15~30분 후 1회
+
+실행 순서:
+
+1. `pointHotelSyncRuns/{runId}`를 `status: running`으로 생성한다.
+2. `pointHotelPrograms`에서 활성 프로그램 목록을 읽는다.
+3. 프로그램별 외부 데이터 소스에서 호텔, 포인트 차감, 현금가, 예약 가능 여부를 가져온다.
+4. 원본 데이터를 내부 표준 필드로 정규화한다.
+5. `pointHotels/{hotelId}`를 upsert한다.
+6. 날짜별 데이터를 `pointHotels/{hotelId}/awardCalendar/{dateKey}`에 upsert한다.
+7. 1~7박 기준으로 `pointAwardCandidates`를 생성 또는 갱신한다.
+8. 이번 실행에서 확인되지 않은 기존 후보는 즉시 삭제하지 않고 `status: inactive` 또는 `stale: true`로 표시한다.
+9. 성공/실패 건수와 오류를 `pointHotelSyncRuns/{runId}`에 기록한다.
+
+장애 대응 원칙:
+
+- 외부 공급자가 실패해도 기존 화면을 즉시 비우지 않는다.
+- `pointAwardCandidates`는 `updatedAt` 기준 24시간이 지나면 탐색 탭에서 낮은 우선순위로 보거나 제외한다.
+- `pointHotels.currentAward`는 마지막 성공 데이터가 48시간을 넘으면 `available: false` 또는 `stale` 상태로 표시한다.
+- 크론 실패는 `pointHotelSyncRuns`에 남기고 운영 알림으로 연결한다.
+
+## 9. 후보 계산 규칙
+
+기본 계산:
+
+```text
+krwPerPoint = cashTotalKrw / pointsTotal
+valueScore = round(krwPerPoint * 100)
+```
+
+메리어트/힐튼처럼 5박째 무료 로직을 반영해야 하는 프로그램은 서버에서 `pointsTotal` 계산 시 적용한다.
+
+```text
+if programId in [marriott, hilton] and nights >= 5:
+  freeNightCount = floor(nights / 5)
+  pointsTotal = sum(all nightly points) - sum(lowest freeNightCount nightly points)
+else:
+  pointsTotal = sum(all nights)
+```
+
+v1에서는 간단히 같은 호텔의 날짜별 포인트를 합산하고, 5박째 무료가 있는 프로그램은 가장 낮은 포인트 1박을 제외한다. 더 정확한 정책이 필요하면 프로그램별 `pointHotelPrograms.rules` 또는 별도 서버 계산기로 분리한다.
+
+## 10. 보안 규칙 원칙
+
+실제 rules 파일은 프로젝트 정책에 맞춰 작성하되, 포인트 숙박 공개 데이터는 아래 원칙을 지킨다.
+
+- 활성 호텔/후보/캘린더는 누구나 읽을 수 있다.
+- 비활성/숨김 데이터는 일반 클라이언트가 읽지 못하게 한다.
+- 일반 클라이언트는 포인트 숙박 운영 컬렉션에 쓸 수 없다.
+- `pointHotelSyncRuns`는 관리자 또는 서버만 읽고 쓴다.
+- 서버 배치는 Admin SDK로 쓰므로 Firestore Rules의 클라이언트 쓰기 허용이 필요 없다.
+
+규칙 예시:
+
+```text
+match /pointHotelPrograms/{programId} {
+  allow read: if resource.data.isActive == true;
+  allow write: if false;
+}
+
+match /pointHotels/{hotelId} {
+  allow read: if resource.data.status == "active";
+  allow write: if false;
+
+  match /awardCalendar/{dateKey} {
+    allow read: if resource.data.stale == false;
+    allow write: if false;
+  }
+}
+
+match /pointAwardCandidates/{candidateId} {
+  allow read: if resource.data.status == "active"
+    && resource.data.available == true;
+  allow write: if false;
+}
+
+match /pointHotelSyncRuns/{runId} {
+  allow read, write: if false;
+}
+```
+
+Firestore Rules는 필터가 아니므로 클라이언트 쿼리는 항상 `status == active`, `available == true`, `stale == false` 같은 조건을 포함해야 한다.
+
+## 11. 더미 데이터 마이그레이션 기준
+
+현재 `PointHotel` 더미 필드는 다음처럼 Firestore로 이동한다.
+
+| `PointHotel` 필드 | Firestore 위치 |
+| --- | --- |
+| `id` | `pointHotels/{hotelId}.hotelId` |
+| `name` | `pointHotels.name`, `pointAwardCandidates.name` |
+| `city` | `pointHotels.city`, `pointAwardCandidates.city` |
+| `country` | `pointHotels.country`, `pointAwardCandidates.country` |
+| `address` | `pointHotels.address`, `pointAwardCandidates.address` |
+| `brand` | `pointHotels.brand`, `pointAwardCandidates.brand` |
+| `imageUrl` | `pointHotels.imageUrl`, `pointAwardCandidates.imageUrl` |
+| `galleryUrls` | `pointHotels.galleryUrls` |
+| `rating` | `pointHotels.rating`, `pointAwardCandidates.rating` |
+| `pointsPerNight` | `pointHotels.currentAward.pointsPerNight`, `awardCalendar.pointsPerNight` |
+| `cashPerNightKrw` | `pointHotels.currentAward.cashPerNightKrw`, `awardCalendar.cashPerNightKrw` |
+| `guestFavorite` | `pointHotels.guestFavorite`, `pointAwardCandidates.guestFavorite` |
+| `description` | `pointHotels.description` |
+| `amenities` | `pointHotels.amenities` |
+| `calendarPoints` | `pointHotels.calendarPreview`, `awardCalendar` |
+
+마이그레이션 순서:
+
+1. `pointHotelPrograms` seed 문서를 만든다.
+2. 기존 `pointHotelSamples`를 기준으로 `pointHotels` seed 문서를 만든다.
+3. `calendarPoints`를 오늘부터 14일치 `awardCalendar` 문서로 변환한다.
+4. 1~7박 기준 `pointAwardCandidates`를 생성한다.
+5. Flutter에서는 더미 배열 대신 Firestore repository를 통해 같은 화면 모델로 변환한다.
+
+## 12. 수용 기준
+
+Firestore 구축이 완료되었다고 보려면 아래 조건을 만족해야 한다.
+
+- 호텔 탭이 더미 배열 없이 `pointHotels`에서 호텔 목록을 불러온다.
+- 호텔명, 도시, 국가, 브랜드 검색이 동작한다.
+- 날짜와 숙박 수가 있는 검색은 `pointAwardCandidates` 기준으로 후보를 보여준다.
+- 탐색 탭에서 전체/브랜드별 후보가 Firestore 쿼리로 표시된다.
+- 탐색 탭의 `가치순`, `낮은 포인트`, `최근 확인` 정렬이 Firestore 인덱스로 처리된다.
+- 호텔 상세가 `awardCalendar`에서 날짜별 포인트 캘린더를 불러온다.
+- 일반 클라이언트는 포인트 숙박 운영 컬렉션에 쓸 수 없다.
+- 크론 실패 시 기존 화면이 빈 화면으로 무너지지 않고 마지막 성공 데이터를 유지한다.
+
+## 13. v1 범위와 제외 항목
+
+v1에 포함:
+
+- 호텔 기본 정보 조회
+- 호텔 검색
+- 브랜드별 탐색
+- 날짜별 포인트 캘린더
+- 크론 기반 데이터 갱신
+- 크론 실행 로그
+
+v1에서 제외:
+
+- 사용자 저장 호텔
+- 포인트 객실 알림
+- 예약 deep link 추적
+- 커뮤니티 후기 자동 연결
+- 전문 검색 인덱스
+- 외부 공급자별 수집 구현 상세
+
+이 제외 항목은 이후 `users/{uid}/savedPointHotels`, `users/{uid}/hotelPointGoals`, 커뮤니티 라벨, 레이더 알림으로 확장한다.
+
+## 14. 결론
+
+포인트 숙박의 `호텔` 탭과 `탐색` 탭은 클라이언트에서 직접 계산하는 기능이 아니라, Firestore에 준비된 읽기 모델을 빠르게 보여주는 기능으로 설계한다.
+
+핵심은 `pointHotels`와 `pointAwardCandidates`를 분리하는 것이다. `pointHotels`는 호텔 검색과 상세의 기준 데이터이고, `pointAwardCandidates`는 탐색 탭의 브랜드/숙박 수/정렬 쿼리를 빠르게 처리하기 위한 화면 전용 데이터다.
+
+크론 작업은 이 두 읽기 모델을 계속 최신 상태로 갱신한다. 앱은 단순히 읽고 보여준다.
