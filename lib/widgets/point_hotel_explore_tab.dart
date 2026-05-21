@@ -31,14 +31,13 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
     for (var index = 0; index < pointHotelSamples.length; index++) {
       final hotel = pointHotelSamples[index];
       if (!_matchesBrand(hotel)) continue;
-      final basePoints = hotel.pointsPerNight * _nights;
       final totalCash = hotel.cashPerNightKrw * _nights;
       candidates.add(
         _AwardCandidate(
           hotel: hotel,
           checkIn: now.add(Duration(days: 7 + index * 13)),
           updatedLabel: index == 0 ? '2일 전' : '${index + 1}시간 전',
-          pointsTotal: _awardAdjustedPoints(hotel, basePoints),
+          pointsTotal: _awardAdjustedPoints(hotel),
           cashTotalKrw: totalCash,
           confidence: 0.96 - index * 0.08,
         ),
@@ -67,17 +66,14 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
     if (selected == 'ihg') {
       return brand.contains('holiday') || brand.contains('ihg');
     }
+    if (selected == 'marriott') {
+      return hotel.isMarriottBonvoy || brand.contains('marriott');
+    }
     return brand.contains(selected);
   }
 
-  int _awardAdjustedPoints(PointHotel hotel, int basePoints) {
-    if (hotel.brand.toLowerCase().contains('marriott') && _nights >= 5) {
-      return hotel.pointsPerNight * (_nights - (_nights ~/ 5));
-    }
-    if (hotel.brand.toLowerCase().contains('hilton') && _nights >= 5) {
-      return hotel.pointsPerNight * (_nights - (_nights ~/ 5));
-    }
-    return basePoints;
+  int _awardAdjustedPoints(PointHotel hotel) {
+    return hotel.awardPointsForNights(_nights);
   }
 
   void _openHotel(_AwardCandidate candidate) {

@@ -1,0 +1,91 @@
+1. marriott
+https://www.marriott.com/ko/hotels/cjuju-jw-marriott-jeju-resort-and-spa/overview/
+
+https://www.marriott.com/ko/hotels/selmm-le-meridien-seoul-myeongdong/overview/
+
+https://www.marriott.com/en-us/hotels/dpswr-the-westin-resort-and-spa-ubud-bali/overview/
+
+
+Request URL
+https://www.marriott.com/mi/query/phoenixShopHQVPropertyInfoCall
+Request Method
+POST
+Status Code
+200 OK
+
+{
+"operationName": "phoenixShopHQVPropertyInfoCall",
+"variables": {
+"propertyId": "DPSWR",
+"filter": "PHONE",
+"descriptionsFilter": [
+"LOCATION"
+]
+},
+"query": "query phoenixShopHQVPropertyInfoCall($propertyId: ID!, $filter: [ContactNumberType], $descriptionsFilter: [PropertyDescriptionType]) {\n  property(id: $propertyId) {\n    id\n    basicInformation {\n      name\n      currency\n      latitude\n      longitude\n      isAdultsOnly\n      isMax\n      brand {\n        id\n        name\n      }\n      openingDate\n      bookable\n      resort\n      descriptions(filter: $descriptionsFilter) {\n        text\n        type {\n          code\n          label\n          description\n          enumCode\n        }\n      }\n      hasUniquePropertyLogo\n      nameInDefaultLanguage\n    }\n    contactInformation {\n      address {\n        line1\n        city\n        postalCode\n        stateProvince {\n          label\n          description\n          code\n        }\n        country {\n          code\n          description\n          label\n        }\n      }\n      contactNumbers(filter: $filter) {\n        phoneNumber {\n          display\n          original\n        }\n      }\n    }\n    airports {\n      name\n      distanceDetails {\n        description\n      }\n      contactNumber {\n        phoneNumber {\n          display\n          original\n        }\n      }\n      url\n      complimentaryShuttle\n      id\n      fees {\n        details {\n          amount {\n            amount\n            currency\n          }\n        }\n        type {\n          code\n          description\n        }\n      }\n    }\n    otherTransportation {\n      name\n      contactInformation {\n        phones\n      }\n      type {\n        description\n        code\n      }\n    }\n    reviews {\n      stars {\n        count\n      }\n      numberOfReviews {\n        count\n      }\n    }\n    parking {\n      fees {\n        fee\n        description\n      }\n      description\n    }\n    policies {\n      checkInTime\n      checkOutTime\n      smokefree\n      petsAllowed\n      petsPolicyDescription\n      localizedPetsPolicyDescription {\n        translatedText\n      }\n      petsPolicyDetails {\n        additionalPetFee\n        numberAllowed\n        refundableFee\n        refundableFeeType\n        nonRefundableFee\n        nonRefundableFeeType\n        additionalPetFeeType\n        weightRestricted\n        maxWeight\n      }\n    }\n    ... on Hotel {\n      seoNickname\n    }\n  }\n}\n"
+}
+
+Request URL
+https://www.marriott.com/mi/query/phoenixShopHQVPhotogalleryCall
+Request Method
+POST
+Status Code
+200 OK
+Remote Address
+
+{
+"operationName": "phoenixShopHQVPhotogalleryCall",
+"variables": {
+"propertyId": "DPSWR"
+},
+"query": "fragment ProductImageConnectionFragmentHQV on ProductImageConnection {\n  edges {\n    node {\n      alternateDescription\n      caption\n      title\n      imageUrls {\n        classicHorizontal\n      }\n    }\n  }\n}\n\nquery phoenixShopHQVPhotogalleryCall($propertyId: ID!) @edgeCachedQuery(desiredMaxAge: 10800) {\n  property(id: $propertyId) {\n    id\n    media {\n      photoGallery {\n        activities {\n          ...ProductImageConnectionFragmentHQV\n        }\n        dining {\n          ...ProductImageConnectionFragmentHQV\n        }\n        eventsAndMeetings {\n          ...ProductImageConnectionFragmentHQV\n        }\n        features {\n          ...ProductImageConnectionFragmentHQV\n        }\n        golf {\n          ...ProductImageConnectionFragmentHQV\n        }\n        guestRoomFloorPlan {\n          ...ProductImageConnectionFragmentHQV\n        }\n        guestRooms {\n          ...ProductImageConnectionFragmentHQV\n        }\n        hotelView {\n          ...ProductImageConnectionFragmentHQV\n        }\n        nearbyAttractions {\n          ...ProductImageConnectionFragmentHQV\n        }\n        recreationAndFitness {\n          ...ProductImageConnectionFragmentHQV\n        }\n        services {\n          ...ProductImageConnectionFragmentHQV\n        }\n        spa {\n          ...ProductImageConnectionFragmentHQV\n        }\n        suites {\n          ...ProductImageConnectionFragmentHQV\n        }\n        videoTour {\n          ...ProductImageConnectionFragmentHQV\n        }\n        villas {\n          ...ProductImageConnectionFragmentHQV\n        }\n        weddings {\n          ...ProductImageConnectionFragmentHQV\n        }\n      }\n      id\n    }\n  }\n}\n"
+}
+
+Request URL
+https://www.marriott.com/mi/query/phoenixShopHotelAmenities
+Request Method
+POST
+Status Code
+200 OK
+
+{
+"operationName": "phoenixShopHotelAmenities",
+"variables": {
+"propertyId": "DPSWR"
+},
+"query": "query phoenixShopHotelAmenities($propertyId: ID!) {\n  property(id: $propertyId) {\n    ... on Hotel {\n      id\n      facilitiesAndServices {\n        type {\n          code\n          description\n        }\n        description\n        groupId\n        groupName\n        details {\n          key\n          value\n        }\n        categoryType {\n          code\n          description\n        }\n      }\n      matchingSearchFacets {\n        dimension {\n          code\n          description\n        }\n      }\n    }\n  }\n}\n"
+}
+
+
+이건 한달치 가져오는것
+Request URL
+https://www.marriott.com/mi/query/phoenixShopADFSearchProductsByProperty
+Request Method
+POST
+Status Code
+200 OK
+
+{
+"operationName": "phoenixShopADFSearchProductsByProperty",
+"variables": {
+"id": [
+"SELMM"
+],
+"search": {
+"propertyId": "SELMM",
+"options": {
+"startDate": "2026-05-22",
+"numberOfRooms": 1,
+"rateRequestTypes": [
+{
+"type": "REDEMPTION"
+}
+],
+"endDate": "2026-07-02",
+"numberInParty": 2,
+"numberOfDays": 1
+}
+}
+},
+"query": "query phoenixShopADFSearchProductsByProperty($search: CalendarSearchByPropertyInput!, $id: [ID!]!) {\n  search {\n    calendarSearchByProperty(search: $search) {\n      total\n      edges {\n        node {\n          endDate\n          startDate\n          rateModes {\n            lowestAverageRate {\n              amount {\n                currency\n                amount\n                decimalPoint\n                __typename\n              }\n              __typename\n            }\n            pointsPerQuantity {\n              points\n              __typename\n            }\n            totalRate {\n              amount {\n                amount\n                currency\n                decimalPoint\n                __typename\n              }\n              __typename\n            }\n            sourceOfRate\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  propertiesByIds(ids: $id) {\n    basicInformation {\n      isAdultsOnly\n      descriptions(\n        filter: [RESORT_FEE_DESCRIPTION, DESTINATION_FEE_DESCRIPTION, SURCHARGE_ORDINANCE_COST_DESCRIPTION]\n      ) {\n        type {\n          enumCode\n          __typename\n        }\n        __typename\n      }\n      resort\n      __typename\n    }\n    __typename\n  }\n}\n"
+}

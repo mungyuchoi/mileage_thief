@@ -900,6 +900,10 @@ _PointStayBrandProfile? _brandProfileFor(String? featureId) {
 
 List<PointHotel> _brandHotels(_PointStayBrandProfile profile) {
   final hotels = pointHotelSamples.where((hotel) {
+    if (profile.featureId == CommunityLabel.marriottFeatureId &&
+        hotel.isMarriottBonvoy) {
+      return true;
+    }
     final brand = hotel.brand.toLowerCase();
     final name = hotel.name.toLowerCase();
     return profile.keywords.any(

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
@@ -958,6 +959,15 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           myLocationButtonEnabled: true,
           compassEnabled: true,
           trafficEnabled: false,
+          scrollGesturesEnabled: true,
+          zoomGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+            Factory<OneSequenceGestureRecognizer>(
+              () => EagerGestureRecognizer(),
+            ),
+          },
           // 하단 내비/플로팅 버튼과 겹치지 않도록 UI(로고/줌버튼) 패딩
           padding: EdgeInsets.only(
             bottom: _mapControlBottomPadding + bottomSafeArea,

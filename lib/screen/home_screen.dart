@@ -959,25 +959,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Positioned.fill(
                 child: NotificationListener<ScrollNotification>(
                   onNotification: _handleGiftcardScrollNotification,
-                  child: NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                      SliverToBoxAdapter(child: _buildGiftcardPrimaryTabBar()),
-                    ],
-                    body: TabBarView(
-                      controller: _giftcardTabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        GiftcardInfoScreen(
-                          key: _giftcardInfoKey,
-                          onScrollChanged: _setGiftcardScrolling,
+                  child: Column(
+                    children: [
+                      _buildGiftcardPrimaryTabBar(),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _giftcardTabController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            GiftcardInfoScreen(
+                              key: _giftcardInfoKey,
+                              onScrollChanged: _setGiftcardScrolling,
+                            ),
+                            const GiftcardDealsScreen(),
+                            const GiftcardMapScreen(),
+                            const GiftcardRatesTab(),
+                            const GiftcardSettlementScreen(),
+                            const BranchListTab(),
+                          ],
                         ),
-                        const GiftcardDealsScreen(),
-                        const GiftcardMapScreen(),
-                        const GiftcardRatesTab(),
-                        const GiftcardSettlementScreen(),
-                        const BranchListTab(),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

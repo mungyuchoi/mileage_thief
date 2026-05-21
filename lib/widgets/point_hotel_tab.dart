@@ -232,6 +232,7 @@ class _PointHotelTabState extends State<PointHotelTab> {
                 children: [
                   _FilterChip(label: '게스트 선호'),
                   _FilterChip(label: '15,000 pts 이하'),
+                  _FilterChip(label: '메리어트'),
                   _FilterChip(label: '하얏트'),
                   _FilterChip(label: '힐튼'),
                   _FilterChip(label: '수영장'),
@@ -802,7 +803,7 @@ class _HotelMapPreview extends StatelessWidget {
           for (var i = 0; i < hotels.length; i++)
             Positioned(
               left: 28.0 + (i % 2) * 145,
-              top: 42.0 + i * 72,
+              top: 42.0 + (i ~/ 2) * 72,
               child: _MapHotelPin(
                 hotel: hotels[i],
                 onTap: () => onTapHotel(hotels[i]),
