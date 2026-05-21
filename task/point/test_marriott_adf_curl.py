@@ -26,6 +26,7 @@ DEFAULT_USER_AGENT = (
 )
 DEFAULT_REQUEST_ID = "/search/availabilityCalendar.mi~X~2FBCFF1C-51DD-5603-BB82-0DEAF9897ECF"
 DEFAULT_OPERATION_SIGNATURE = "887375892e1ad2a43f46a9c95c55ea47cf6eca3af03331c2134f1b440cff3f9f"
+OPERATION_NAME = "phoenixShopADFSearchProductsByProperty"
 
 
 ADF_QUERY = """query phoenixShopADFSearchProductsByProperty($search: CalendarSearchByPropertyInput!, $id: [ID!]!) {
@@ -108,6 +109,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--referer", default=DEFAULT_REFERER, help="Marriott page referer.")
     parser.add_argument("--user-agent", default=DEFAULT_USER_AGENT, help="curl User-Agent.")
     parser.add_argument(
+        "--html-config",
+        help=(
+            "Optional copied Marriott availabilityCalendar HTML. "
+            "Reads __NEXT_DATA__ requestId and GraphQL operation signature from it."
+        ),
+    )
+    parser.add_argument(
         "--cookie",
         default=os.environ.get("MARRIOTT_COOKIE"),
         help=(
@@ -134,13 +142,17 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--request-id",
-        default=DEFAULT_REQUEST_ID,
-        help="x-request-id value copied from a successful browser request.",
+        help=(
+            "x-request-id value copied from a successful browser request. "
+            "Defaults to --html-config requestId, then a saved fallback value."
+        ),
     )
     parser.add_argument(
         "--operation-signature",
-        default=DEFAULT_OPERATION_SIGNATURE,
-        help="graphql-operation-signature copied from a successful browser request.",
+        help=(
+            "graphql-operation-signature copied from a successful browser request. "
+            "Defaults to --html-config operationSignatures, then a saved fallback value."
+        ),
     )
     parser.add_argument(
         "--fixture",
@@ -154,7 +166,7 @@ def parse_args() -> argparse.Namespace:
 
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     return {
-        "operationName": "phoenixShopADFSearchProductsByProperty",
+        "operationName": OPERATION_NAME,
         "variables": {
             "id": [args.property_id],
             "search": {
@@ -181,6 +193,55 @@ def run_curl(cmd: list[str], verbose: bool) -> subprocess.CompletedProcess[str]:
         ]
         print("$ " + " ".join(redacted))
     return subprocess.run(cmd, text=True, capture_output=True, check=False)
+
+
+def load_html_config(path: str | None) -> dict[str, str]:
+    if not path:
+        return {}
+
+    html_path = Path(path)
+    if not html_path.exists():
+        print(f"[html-config] not found: {html_path}")
+        return {}
+
+    html = html_path.read_text(encoding="utf-8", errors="ignore")
+    match = re.search(
+        r'<script[^>]+id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
+        html,
+        flags=re.DOTALL,
+    )
+    if not match:
+        print(f"[html-config] __NEXT_DATA__ not found: {html_path}")
+        return {}
+
+    try:
+        next_data = json.loads(match.group(1))
+    except json.JSONDecodeError as exc:
+        print(f"[html-config] invalid __NEXT_DATA__ JSON: {exc}")
+        return {}
+
+    page_props = (
+        (next_data.get("props") or {})
+        .get("pageProps") or {}
+    )
+    config: dict[str, str] = {}
+
+    request_id = page_props.get("requestId")
+    if isinstance(request_id, str) and request_id:
+        config["request_id"] = request_id
+
+    for item in page_props.get("operationSignatures") or []:
+        if not isinstance(item, dict):
+            continue
+        if item.get("operationName") == OPERATION_NAME:
+            signature = item.get("signature")
+            if isinstance(signature, str) and signature:
+                config["operation_signature"] = signature
+            break
+
+    loaded = ", ".join(sorted(config)) or "nothing usable"
+    print(f"[html-config] loaded {loaded}: {html_path}")
+    return config
 
 
 def split_body_and_status(stdout: str) -> tuple[str, int | None]:
@@ -246,12 +307,21 @@ def print_non_json_diagnostic(body: str, status: int | None) -> None:
 
 def main() -> int:
     args = parse_args()
+    html_config = load_html_config(args.html_config)
+    args.request_id = args.request_id or html_config.get("request_id") or DEFAULT_REQUEST_ID
+    args.operation_signature = (
+        args.operation_signature
+        or html_config.get("operation_signature")
+        or DEFAULT_OPERATION_SIGNATURE
+    )
     payload = build_payload(args)
     payload_json = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
 
     fixture_data = load_fixture(args.fixture)
     if fixture_data:
         summarize_calendar(fixture_data, "fixture")
+    if not args.cookie:
+        print("[remote] no browser Cookie header provided; Marriott/Akamai may return 403.")
 
     with tempfile.TemporaryDirectory(prefix="marriott_adf_curl_") as tmp_dir:
         cookie_jar = str(Path(tmp_dir) / "cookies.txt")
@@ -315,7 +385,7 @@ def main() -> int:
                 ("apollographql-client-name", "phoenix_shop"),
                 ("apollographql-client-version", "v1"),
                 ("application-name", "shop"),
-                ("graphql-operation-name", "phoenixShopADFSearchProductsByProperty"),
+                ("graphql-operation-name", OPERATION_NAME),
                 ("graphql-operation-signature", args.operation_signature),
                 ("graphql-require-safelisting", "true"),
                 ("priority", "u=1, i"),

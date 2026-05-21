@@ -1,0 +1,422 @@
+[
+  {
+    "date": "2026-04-26",
+    "date_label": "Sun Apr 26 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-04-27",
+    "date_label": "Mon Apr 27 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-04-28",
+    "date_label": "Tue Apr 28 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-04-29",
+    "date_label": "Wed Apr 29 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-04-30",
+    "date_label": "Thu Apr 30 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-01",
+    "date_label": "Fri May 01 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-02",
+    "date_label": "Sat May 02 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-03",
+    "date_label": "Sun May 03 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-04",
+    "date_label": "Mon May 04 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-05",
+    "date_label": "Tue May 05 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-06",
+    "date_label": "Wed May 06 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-07",
+    "date_label": "Thu May 07 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-08",
+    "date_label": "Fri May 08 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-09",
+    "date_label": "Sat May 09 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-10",
+    "date_label": "Sun May 10 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-11",
+    "date_label": "Mon May 11 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-12",
+    "date_label": "Tue May 12 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-13",
+    "date_label": "Wed May 13 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-14",
+    "date_label": "Thu May 14 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-15",
+    "date_label": "Fri May 15 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-16",
+    "date_label": "Sat May 16 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-17",
+    "date_label": "Sun May 17 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-18",
+    "date_label": "Mon May 18 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-19",
+    "date_label": "Tue May 19 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-20",
+    "date_label": "Wed May 20 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-21",
+    "date_label": "Thu May 21 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "Not available for check-in",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-22",
+    "date_label": "Fri May 22 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "61,000",
+    "points": 61000,
+    "button_label": "61,000for F, May 22 "
+  },
+  {
+    "date": "2026-05-23",
+    "date_label": "Sat May 23 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "72,000",
+    "points": 72000,
+    "button_label": "72,000for S, May 23 "
+  },
+  {
+    "date": "2026-05-24",
+    "date_label": "Sun May 24 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "72,000",
+    "points": 72000,
+    "button_label": "72,000for S, May 24 "
+  },
+  {
+    "date": "2026-05-25",
+    "date_label": "Mon May 25 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "63,000",
+    "points": 63000,
+    "button_label": "63,000for M, May 25 "
+  },
+  {
+    "date": "2026-05-26",
+    "date_label": "Tue May 26 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "60,000",
+    "points": 60000,
+    "button_label": "60,000for T, May 26 "
+  },
+  {
+    "date": "2026-05-27",
+    "date_label": "Wed May 27 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "58,000",
+    "points": 58000,
+    "button_label": "58,000for W, May 27 LOW"
+  },
+  {
+    "date": "2026-05-28",
+    "date_label": "Thu May 28 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "60,000",
+    "points": 60000,
+    "button_label": "60,000for T, May 28 "
+  },
+  {
+    "date": "2026-05-29",
+    "date_label": "Fri May 29 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "69,000",
+    "points": 69000,
+    "button_label": "69,000for F, May 29 "
+  },
+  {
+    "date": "2026-05-30",
+    "date_label": "Sat May 30 2026",
+    "disabled": true,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "Not available for check-in",
+    "points": null,
+    "button_label": "Not available for check-in"
+  },
+  {
+    "date": "2026-05-31",
+    "date_label": "Sun May 31 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": false,
+    "price_text": "57,000",
+    "points": 57000,
+    "button_label": "57,000for S, May 31 "
+  },
+  {
+    "date": "2026-06-01",
+    "date_label": "Mon Jun 01 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "52,000",
+    "points": 52000,
+    "button_label": "52,000for M, Jun 01 "
+  },
+  {
+    "date": "2026-06-02",
+    "date_label": "Tue Jun 02 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "62,000",
+    "points": 62000,
+    "button_label": "62,000for T, Jun 02 "
+  },
+  {
+    "date": "2026-06-03",
+    "date_label": "Wed Jun 03 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "61,000",
+    "points": 61000,
+    "button_label": "61,000for W, Jun 03 "
+  },
+  {
+    "date": "2026-06-04",
+    "date_label": "Thu Jun 04 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "63,000",
+    "points": 63000,
+    "button_label": "63,000for T, Jun 04 "
+  },
+  {
+    "date": "2026-06-05",
+    "date_label": "Fri Jun 05 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "65,000",
+    "points": 65000,
+    "button_label": "65,000for F, Jun 05 "
+  },
+  {
+    "date": "2026-06-06",
+    "date_label": "Sat Jun 06 2026",
+    "disabled": false,
+    "selected": false,
+    "outside_month": true,
+    "price_text": "66,000",
+    "points": 66000,
+    "button_label": "66,000for S, Jun 06 "
+  }
+]

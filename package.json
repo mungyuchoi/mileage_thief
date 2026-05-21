@@ -1,0 +1,26 @@
+{
+  "name": "mileage_thief",
+  "version": "1.0.0",
+  "description": "```bash flutter run --dart-define-from-file=env/prod.json ```",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mungyuchoi/mileage_thief.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mungyuchoi/mileage_thief/issues"
+  },
+  "homepage": "https://github.com/mungyuchoi/mileage_thief#readme"
+}

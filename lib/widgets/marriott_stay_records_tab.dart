@@ -170,16 +170,15 @@ class _AllRecordsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: McColors.line),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: McColors.line),
+            ),
           ),
           child: Row(
             children: [
@@ -343,35 +342,40 @@ class _StaySummary extends StatelessWidget {
             ) /
             paidRecords.length;
 
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-      childAspectRatio: 2.15,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        _SummaryTile(
-          label: '총 박수',
-          value: '$totalNights박',
-          icon: Icons.nights_stay_outlined,
-        ),
-        _SummaryTile(
-          label: '총 지출',
-          value: '${won.format(totalAmount)}원',
-          icon: Icons.payments_outlined,
-        ),
-        _SummaryTile(
-          label: '획득 포인트',
-          value: '${points.format(totalPoints)}P',
-          icon: Icons.stars_outlined,
-        ),
-        _SummaryTile(
-          label: '평균 회수율',
-          value: '${avgReturnRate.toStringAsFixed(1)}%',
-          icon: Icons.trending_up_outlined,
-        ),
-      ],
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: GridView.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 2.15,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _SummaryTile(
+            label: '총 박수',
+            value: '$totalNights박',
+            icon: Icons.nights_stay_outlined,
+          ),
+          _SummaryTile(
+            label: '총 지출',
+            value: '${won.format(totalAmount)}원',
+            icon: Icons.payments_outlined,
+          ),
+          _SummaryTile(
+            label: '획득 포인트',
+            value: '${points.format(totalPoints)}P',
+            icon: Icons.stars_outlined,
+          ),
+          _SummaryTile(
+            label: '평균 회수율',
+            value: '${avgReturnRate.toStringAsFixed(1)}%',
+            icon: Icons.trending_up_outlined,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -442,7 +446,7 @@ class _StayDayHeader extends StatelessWidget {
         group.records.fold<int>(0, (sum, record) => sum + record.nights);
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(10, 11, 10, 7),
+      padding: const EdgeInsets.fromLTRB(16, 11, 16, 7),
       child: Row(
         children: [
           Expanded(
@@ -508,7 +512,7 @@ class _StayRecordRow extends StatelessWidget {
         color: Colors.white,
         border: Border(bottom: BorderSide(color: McColors.line)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -664,10 +668,8 @@ class _RecordsPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: McColors.line),
       ),
       child: child,
     );

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
@@ -486,7 +487,7 @@ class _PointStayScreenState extends State<PointStayScreen>
                 onRefresh: _refreshCurrentTab,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomInset),
+                  padding: EdgeInsets.fromLTRB(0, 0, 0, 24 + bottomInset),
                   children: [
                     _buildSelectedTab(),
                   ],
@@ -618,67 +619,73 @@ class _PointStayScreenState extends State<PointStayScreen>
           postCount: posts.length,
           onWrite: () => _openPointStayPostCreate(config),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
         _BrandHotelSection(
           profile: profile,
           hotels: hotels,
           postCount: posts.length,
           onHotelTap: _openHotelFromBrand,
         ),
-        const SizedBox(height: 20),
-        _BrandFeedSectionHeader(
-          profile: profile,
-          postCount: posts.length,
-          onWrite: () => _openPointStayPostCreate(config),
-        ),
-        const SizedBox(height: 10),
-        if (isInitialLoading)
-          const _PointStayPanel(
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        const SizedBox(height: 8),
+        _PointStayPanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _BrandFeedSectionHeader(
+                profile: profile,
+                postCount: posts.length,
+                onWrite: () => _openPointStayPostCreate(config),
+              ),
+              const SizedBox(height: 10),
+              if (isInitialLoading)
+                const Row(
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '브랜드 피드를 불러오는 중입니다.',
+                        style: McTextStyles.meta,
+                      ),
+                    ),
+                  ],
+                )
+              else if (posts.isEmpty)
+                _BrandEmptyFeedContent(
+                  profile: profile,
+                  onWrite: () => _openPointStayPostCreate(config),
+                )
+              else ...[
+                _BrandFeaturedPostCard(
+                  post: posts.first,
+                  profile: profile,
+                  onTap: () => _openFeedPost(posts.first),
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '브랜드 피드를 불러오는 중입니다.',
-                    style: McTextStyles.meta,
+                if (posts.length > 1) ...[
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: posts.length - 1,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 2,
+                      crossAxisSpacing: 2,
+                    ),
+                    itemBuilder: (context, index) => _buildFeedTile(
+                      posts[index + 1],
+                    ),
                   ),
-                ),
+                ],
               ],
-            ),
-          )
-        else if (posts.isEmpty)
-          _BrandEmptyFeed(
-            profile: profile,
-            onWrite: () => _openPointStayPostCreate(config),
-          )
-        else ...[
-          _BrandFeaturedPostCard(
-            post: posts.first,
-            profile: profile,
-            onTap: () => _openFeedPost(posts.first),
+            ],
           ),
-          if (posts.length > 1) ...[
-            const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: posts.length - 1,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 2,
-                crossAxisSpacing: 2,
-              ),
-              itemBuilder: (context, index) => _buildFeedTile(
-                posts[index + 1],
-              ),
-            ),
-          ],
-        ],
+        ),
       ],
     );
   }
@@ -803,7 +810,7 @@ class _PointStayBrandProfile {
   final String metricValue;
   final List<String> keywords;
   final List<String> chips;
-  final IconData icon;
+  final String iconAsset;
   final Color softColor;
 
   const _PointStayBrandProfile({
@@ -816,7 +823,7 @@ class _PointStayBrandProfile {
     required this.metricValue,
     required this.keywords,
     required this.chips,
-    required this.icon,
+    required this.iconAsset,
     required this.softColor,
   });
 }
@@ -833,7 +840,7 @@ const List<_PointStayBrandProfile> _pointStayBrandProfiles =
     metricValue: '5박째 무료',
     keywords: ['marriott', 'westin', 'sheraton', 'ritz', 'st. regis'],
     chips: ['무료숙박권', '5박째 무료', '라운지', '성수기'],
-    icon: Icons.apartment_rounded,
+    iconAsset: 'asset/icon/icon_marriott.svg',
     softColor: Color(0xFFEFF6FF),
   ),
   _PointStayBrandProfile(
@@ -846,7 +853,7 @@ const List<_PointStayBrandProfile> _pointStayBrandProfiles =
     metricValue: '현금가 대비',
     keywords: ['accor', 'fairmont', 'sofitel', 'pullman', 'novotel'],
     chips: ['ALL 포인트', '도심 호텔', '현금가 비교', '가족 여행'],
-    icon: Icons.domain_rounded,
+    iconAsset: 'asset/icon/icon_accor.webp',
     softColor: Color(0xFFF0FDF4),
   ),
   _PointStayBrandProfile(
@@ -859,7 +866,7 @@ const List<_PointStayBrandProfile> _pointStayBrandProfiles =
     metricValue: '5박째 무료',
     keywords: ['hilton', 'doubletree', 'conrad', 'waldorf'],
     chips: ['5박째 무료', '조식', '리조트', '티어 혜택'],
-    icon: Icons.bed_rounded,
+    iconAsset: 'asset/icon/icon_hilton.svg',
     softColor: Color(0xFFFFF7ED),
   ),
   _PointStayBrandProfile(
@@ -872,7 +879,7 @@ const List<_PointStayBrandProfile> _pointStayBrandProfiles =
     metricValue: '변동 포인트',
     keywords: ['ihg', 'holiday', 'intercontinental', 'kimpton', 'crowne'],
     chips: ['공항 호텔', '변동 포인트', '실속 숙박', '환승'],
-    icon: Icons.local_hotel_rounded,
+    iconAsset: 'asset/icon/icon_ihg.svg',
     softColor: Color(0xFFF5F3FF),
   ),
   _PointStayBrandProfile(
@@ -885,7 +892,7 @@ const List<_PointStayBrandProfile> _pointStayBrandProfiles =
     metricValue: '저카테고리',
     keywords: ['hyatt', 'jdv', 'andaz', 'park hyatt', 'hyatt place'],
     chips: ['카테고리', '게스트 선호', '스윗스팟', '후기'],
-    icon: Icons.king_bed_rounded,
+    iconAsset: 'asset/icon/icon_hyatt.svg',
     softColor: Color(0xFFFDF2F8),
   ),
 ];
@@ -915,6 +922,39 @@ List<PointHotel> _brandHotels(_PointStayBrandProfile profile) {
     ..sort((a, b) => b.krwPerPoint.compareTo(a.krwPerPoint));
 }
 
+class _PointStayBrandIcon extends StatelessWidget {
+  final _PointStayBrandProfile profile;
+  final double size;
+
+  const _PointStayBrandIcon({
+    required this.profile,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = profile.iconAsset.toLowerCase().endsWith('.svg')
+        ? SvgPicture.asset(
+            profile.iconAsset,
+            width: size,
+            height: size,
+            fit: BoxFit.contain,
+          )
+        : Image.asset(
+            profile.iconAsset,
+            width: size,
+            height: size,
+            fit: BoxFit.contain,
+          );
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: icon,
+    );
+  }
+}
+
 class _BrandStayHero extends StatelessWidget {
   final _PointStayBrandProfile profile;
   final int hotelCount;
@@ -933,10 +973,8 @@ class _BrandStayHero extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: McColors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,14 +982,12 @@ class _BrandStayHero extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
+              SizedBox(
+                width: 36,
                 height: 44,
-                decoration: BoxDecoration(
-                  color: profile.softColor,
-                  shape: BoxShape.circle,
+                child: Center(
+                  child: _PointStayBrandIcon(profile: profile, size: 36),
                 ),
-                child: Icon(profile.icon, color: McColors.accent, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1131,51 +1167,56 @@ class _BrandHotelSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                '지금 볼 만한 호텔',
-                style: McTextStyles.sectionTitle.copyWith(
-                  fontWeight: FontWeight.w400,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '지금 볼 만한 호텔',
+                  style: McTextStyles.sectionTitle.copyWith(
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
-            ),
-            Text(
-              profile.programName,
-              style: McTextStyles.micro,
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (hotels.isEmpty)
-          _BrandNoHotelPanel(profile: profile)
-        else
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            child: Row(
-              children: [
-                for (var i = 0; i < hotels.length; i++) ...[
-                  SizedBox(
-                    width: 254,
-                    child: _BrandHotelCard(
-                      hotel: hotels[i],
-                      relatedPostCount: postCount == 0
-                          ? 0
-                          : (postCount - i).clamp(1, postCount),
-                      onTap: () => onHotelTap(hotels[i]),
-                    ),
-                  ),
-                  if (i != hotels.length - 1) const SizedBox(width: 10),
-                ],
-              ],
-            ),
+              Text(
+                profile.programName,
+                style: McTextStyles.micro,
+              ),
+            ],
           ),
-      ],
+          const SizedBox(height: 10),
+          if (hotels.isEmpty)
+            _BrandNoHotelPanel(profile: profile)
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              child: Row(
+                children: [
+                  for (var i = 0; i < hotels.length; i++) ...[
+                    SizedBox(
+                      width: 254,
+                      child: _BrandHotelCard(
+                        hotel: hotels[i],
+                        relatedPostCount: postCount == 0
+                            ? 0
+                            : (postCount - i).clamp(1, postCount),
+                        onTap: () => onHotelTap(hotels[i]),
+                      ),
+                    ),
+                    if (i != hotels.length - 1) const SizedBox(width: 10),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -1420,10 +1461,11 @@ class _BrandFeaturedPostCard extends StatelessWidget {
                   child: imageUrl == null
                       ? ColoredBox(
                           color: profile.softColor,
-                          child: Icon(
-                            profile.icon,
-                            color: McColors.accent,
-                            size: 32,
+                          child: Center(
+                            child: _PointStayBrandIcon(
+                              profile: profile,
+                              size: 32,
+                            ),
                           ),
                         )
                       : Image.network(
@@ -1431,10 +1473,11 @@ class _BrandFeaturedPostCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => ColoredBox(
                             color: profile.softColor,
-                            child: Icon(
-                              profile.icon,
-                              color: McColors.accent,
-                              size: 32,
+                            child: Center(
+                              child: _PointStayBrandIcon(
+                                profile: profile,
+                                size: 32,
+                              ),
                             ),
                           ),
                         ),
@@ -1502,46 +1545,44 @@ class _BrandFeaturedPostCard extends StatelessWidget {
   }
 }
 
-class _BrandEmptyFeed extends StatelessWidget {
+class _BrandEmptyFeedContent extends StatelessWidget {
   final _PointStayBrandProfile profile;
   final VoidCallback onWrite;
 
-  const _BrandEmptyFeed({
+  const _BrandEmptyFeedContent({
     required this.profile,
     required this.onWrite,
   });
 
   @override
   Widget build(BuildContext context) {
-    return _PointStayPanel(
-      child: Column(
-        children: [
-          Icon(profile.icon, color: McColors.mutedLight, size: 36),
-          const SizedBox(height: 10),
-          Text(
-            '아직 ${profile.label} 라벨 글이 없습니다.',
-            textAlign: TextAlign.center,
-            style: McTextStyles.bodyStrong.copyWith(
-              fontWeight: FontWeight.w400,
-            ),
+    return Column(
+      children: [
+        _PointStayBrandIcon(profile: profile, size: 36),
+        const SizedBox(height: 10),
+        Text(
+          '아직 ${profile.label} 라벨 글이 없습니다.',
+          textAlign: TextAlign.center,
+          style: McTextStyles.bodyStrong.copyWith(
+            fontWeight: FontWeight.w400,
           ),
-          const SizedBox(height: 5),
-          const Text(
-            '호텔 후보는 먼저 보여주고, 사용자가 공유하면 이곳에 실제 후기가 쌓입니다.',
-            textAlign: TextAlign.center,
-            style: McTextStyles.meta,
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          '호텔 후보는 먼저 보여주고, 사용자가 공유하면 이곳에 실제 후기가 쌓입니다.',
+          textAlign: TextAlign.center,
+          style: McTextStyles.meta,
+        ),
+        const SizedBox(height: 12),
+        TextButton.icon(
+          onPressed: onWrite,
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const Text('첫 글 남기기'),
+          style: TextButton.styleFrom(
+            textStyle: const TextStyle(fontWeight: FontWeight.w400),
           ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: onWrite,
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            label: const Text('첫 글 남기기'),
-            style: TextButton.styleFrom(
-              textStyle: const TextStyle(fontWeight: FontWeight.w400),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1563,10 +1604,8 @@ class _PointStayPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: McColors.line),
       ),
       child: child,
     );

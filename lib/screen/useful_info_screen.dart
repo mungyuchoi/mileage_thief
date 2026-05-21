@@ -319,9 +319,9 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       onRefresh: _refresh,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
-          16,
-          12,
-          16,
+          0,
+          0,
+          0,
           _bottomFloatingNavClearance,
         ),
         children: [
@@ -994,7 +994,7 @@ class _GuideAdBannerSection extends StatelessWidget {
         if (ads.isEmpty) return const SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: 8),
           child: _GuideAdBannerCarousel(
             ads: ads,
             onTapAd: onTapAd,
@@ -1070,7 +1070,7 @@ class _GuideAdBannerCarouselState extends State<_GuideAdBannerCarousel> {
     return AspectRatio(
       aspectRatio: 16 / 8,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.zero,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -1184,7 +1184,7 @@ class _RadarSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFE1E7EF)),
             ),
@@ -5164,40 +5164,47 @@ class _SectionShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onTapHeader,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.normal,
-                        color: Color(0xFF1D1D1F),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: onTapHeader,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.normal,
+                          color: Color(0xFF1D1D1F),
+                        ),
                       ),
                     ),
-                  ),
-                  if (onTapHeader != null)
-                    const Icon(
-                      Icons.chevron_right,
-                      size: 22,
-                      color: Colors.black45,
-                    ),
-                ],
+                    if (onTapHeader != null)
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 22,
+                        color: Colors.black45,
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 9),
-          child,
-        ],
+            const SizedBox(height: 9),
+            child,
+          ],
+        ),
       ),
     );
   }

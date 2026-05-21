@@ -249,70 +249,99 @@ class _PointHotelTabState extends State<PointHotelTab> {
   Widget build(BuildContext context) {
     final hotels = _hotels;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _HotelSearchSummary(
-          query: _query,
-          nights: _nights,
-          checkIn: _checkIn,
-          onTap: _openSearchSheet,
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _FilterButton(onTap: _showFilters),
-            const Spacer(),
-            _ViewModeSwitch(
-              mode: _viewMode,
-              onChanged: (mode) => setState(() => _viewMode = mode),
-            ),
-          ],
-        ),
-        const SizedBox(height: 28),
-        const Center(
-          child: Text(
-            '포인트로 최고의 호텔 찾기',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: McColors.ink,
-              fontSize: 28,
-              height: 1.18,
-              fontWeight: FontWeight.w900,
-            ),
+        _PointHotelSection(
+          child: Column(
+            children: [
+              _HotelSearchSummary(
+                query: _query,
+                nights: _nights,
+                checkIn: _checkIn,
+                onTap: _openSearchSheet,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _FilterButton(onTap: _showFilters),
+                  const Spacer(),
+                  _ViewModeSwitch(
+                    mode: _viewMode,
+                    onChanged: (mode) => setState(() => _viewMode = mode),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        const Text(
-          '호텔 포인트 가격을 비교하고 CPP를 계산하며 다음 여행에 가장 좋은 리워드 숙박을 찾아보세요.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 16,
-            height: 1.55,
-            fontWeight: FontWeight.w500,
+        const SizedBox(height: 8),
+        _PointHotelSection(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text(
+                  '포인트로 최고의 호텔 찾기',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: McColors.ink,
+                    fontSize: 28,
+                    height: 1.18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '호텔 포인트 가격을 비교하고 CPP를 계산하며 다음 여행에 가장 좋은 리워드 숙박을 찾아보세요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 16,
+                  height: 1.55,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 34),
+              Text(
+                '${NumberFormat('#,###').format(hotels.length * 250)}개 호텔',
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_viewMode == _HotelViewMode.map)
+                _HotelMapPreview(hotels: hotels, onTapHotel: _openHotel)
+              else
+                for (final hotel in hotels) ...[
+                  _HotelCard(
+                    hotel: hotel,
+                    onTap: () => _openHotel(hotel),
+                  ),
+                  const SizedBox(height: 28),
+                ],
+            ],
           ),
         ),
-        const SizedBox(height: 34),
-        Text(
-          '${NumberFormat('#,###').format(hotels.length * 250)}개 호텔',
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (_viewMode == _HotelViewMode.map)
-          _HotelMapPreview(hotels: hotels, onTapHotel: _openHotel)
-        else
-          for (final hotel in hotels) ...[
-            _HotelCard(
-              hotel: hotel,
-              onTap: () => _openHotel(hotel),
-            ),
-            const SizedBox(height: 28),
-          ],
       ],
+    );
+  }
+}
+
+class _PointHotelSection extends StatelessWidget {
+  final Widget child;
+
+  const _PointHotelSection({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: child,
     );
   }
 }

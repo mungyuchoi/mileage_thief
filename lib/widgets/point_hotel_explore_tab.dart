@@ -210,77 +210,95 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
   @override
   Widget build(BuildContext context) {
     final candidates = _candidates;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        const Center(
-          child: Text(
-            '호텔 어워드 요금 탐색',
+    return _ExploreSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          const Center(
+            child: Text(
+              '호텔 어워드 요금 탐색',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: McColors.ink,
+                fontSize: 28,
+                height: 1.18,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '브랜드별 호텔 포인트 가격을 살펴보고 CPP 값을 비교하며 최근 확인된 어워드 날짜를 검토하세요.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: McColors.ink,
-              fontSize: 28,
-              height: 1.18,
+              color: Color(0xFF6B7280),
+              fontSize: 15,
+              height: 1.55,
               fontWeight: FontWeight.w400,
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          '브랜드별 호텔 포인트 가격을 살펴보고 CPP 값을 비교하며 최근 확인된 어워드 날짜를 검토하세요.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 15,
-            height: 1.55,
-            fontWeight: FontWeight.w400,
+          const SizedBox(height: 20),
+          _ExplorePill(
+            brand: _selectedBrand,
+            nights: _nights,
+            onBrandTap: _selectBrand,
+            onNightsTap: _selectNights,
           ),
-        ),
-        const SizedBox(height: 20),
-        _ExplorePill(
-          brand: _selectedBrand,
-          nights: _nights,
-          onBrandTap: _selectBrand,
-          onNightsTap: _selectNights,
-        ),
-        const SizedBox(height: 14),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _SortChip(
-                label: '가치순',
-                selected: _sort == _ExploreSort.value,
-                onTap: () => setState(() => _sort = _ExploreSort.value),
-              ),
-              const SizedBox(width: 8),
-              _SortChip(
-                label: '낮은 포인트',
-                selected: _sort == _ExploreSort.points,
-                onTap: () => setState(() => _sort = _ExploreSort.points),
-              ),
-              const SizedBox(width: 8),
-              _SortChip(
-                label: '최근 확인',
-                selected: _sort == _ExploreSort.recent,
-                onTap: () => setState(() => _sort = _ExploreSort.recent),
-              ),
-            ],
+          const SizedBox(height: 14),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _SortChip(
+                  label: '가치순',
+                  selected: _sort == _ExploreSort.value,
+                  onTap: () => setState(() => _sort = _ExploreSort.value),
+                ),
+                const SizedBox(width: 8),
+                _SortChip(
+                  label: '낮은 포인트',
+                  selected: _sort == _ExploreSort.points,
+                  onTap: () => setState(() => _sort = _ExploreSort.points),
+                ),
+                const SizedBox(width: 8),
+                _SortChip(
+                  label: '최근 확인',
+                  selected: _sort == _ExploreSort.recent,
+                  onTap: () => setState(() => _sort = _ExploreSort.recent),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 18),
-        _ExploreSummary(candidates: candidates, nights: _nights),
-        const SizedBox(height: 12),
-        for (final candidate in candidates) ...[
-          _AwardCandidateCard(
-            candidate: candidate,
-            onTap: () => _openHotel(candidate),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
+          _ExploreSummary(candidates: candidates, nights: _nights),
+          const SizedBox(height: 12),
+          for (final candidate in candidates) ...[
+            _AwardCandidateCard(
+              candidate: candidate,
+              onTap: () => _openHotel(candidate),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (candidates.isEmpty) const _ExploreEmptyState(),
         ],
-        if (candidates.isEmpty) const _ExploreEmptyState(),
-      ],
+      ),
+    );
+  }
+}
+
+class _ExploreSection extends StatelessWidget {
+  final Widget child;
+
+  const _ExploreSection({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: child,
     );
   }
 }
