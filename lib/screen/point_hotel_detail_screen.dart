@@ -203,7 +203,7 @@ class PointHotelDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _PointCalendar(hotel: hotel),
+          _PointCalendar(hotel: hotel, checkIn: checkIn),
           if (hotel.pointCalendarNote.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
@@ -672,64 +672,101 @@ class _ValueMetric extends StatelessWidget {
 
 class _PointCalendar extends StatelessWidget {
   final PointHotel hotel;
+  final DateTime? checkIn;
 
-  const _PointCalendar({required this.hotel});
+  const _PointCalendar({
+    required this.hotel,
+    required this.checkIn,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final entries = _calendarItems(hotel);
-    final bestPoints =
-        entries.map((entry) => entry.points).reduce((a, b) => a < b ? a : b);
-    return SizedBox(
-      height: 82,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, index) {
-          final entry = entries[index];
-          final isBest = entry.points == bestPoints;
-          return Container(
-            width: 74,
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: isBest ? const Color(0xFFFFF1F2) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isBest ? const Color(0xFFF3A5AA) : McColors.line,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    final entries = [..._calendarItems(hotel)]
+      ..sort((a, b) => a.date.compareTo(b.date));
+    if (entries.isEmpty) return const SizedBox.shrink();
+
+    final focusedMonth = _focusedCalendarMonth(entries, checkIn);
+    final selectedDate = checkIn ?? DateTime.now();
+    final firstDayOfMonth = DateTime(focusedMonth.year, focusedMonth.month);
+    final gridStart = firstDayOfMonth.subtract(
+      Duration(days: firstDayOfMonth.weekday % DateTime.daysPerWeek),
+    );
+    final days = List.generate(
+      DateTime.daysPerWeek * 6,
+      (index) => gridStart.add(Duration(days: index)),
+    );
+    final entriesByDay = <DateTime, _CalendarItemData>{
+      for (final entry in entries) _calendarKey(entry.date): entry,
+    };
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+            child: Row(
               children: [
-                Text(
-                  entry.topLabel,
-                  style: McTextStyles.micro,
+                const Icon(
+                  Icons.calendar_month_outlined,
+                  color: McColors.inkSoft,
+                  size: 18,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(width: 8),
                 Text(
-                  entry.dayLabel,
+                  DateFormat('yyyy년 M월').format(focusedMonth),
                   style: const TextStyle(
                     color: McColors.ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  child: Text(
-                    NumberFormat('#,###').format(entry.points),
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
               ],
             ),
-          );
-        },
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemCount: entries.length,
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                for (final label in const ['일', '월', '화', '수', '목', '금', '토'])
+                  Expanded(
+                    child: Center(
+                      child: Text(label, style: McTextStyles.micro),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          for (var week = 0; week < 6; week++)
+            Row(
+              children: [
+                for (var dayIndex = 0;
+                    dayIndex < DateTime.daysPerWeek;
+                    dayIndex++)
+                  Expanded(
+                    child: _CalendarDayCell(
+                      date: days[week * DateTime.daysPerWeek + dayIndex],
+                      focusedMonth: focusedMonth,
+                      entry: entriesByDay[_calendarKey(
+                        days[week * DateTime.daysPerWeek + dayIndex],
+                      )],
+                      isSelected: DateUtils.isSameDay(
+                        days[week * DateTime.daysPerWeek + dayIndex],
+                        selectedDate,
+                      ),
+                      showRightDivider: dayIndex != DateTime.daysPerWeek - 1,
+                      showBottomDivider: week != 5,
+                    ),
+                  ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -737,42 +774,207 @@ class _PointCalendar extends StatelessWidget {
 
 List<_CalendarItemData> _calendarItems(PointHotel hotel) {
   if (hotel.calendarEntries.isNotEmpty) {
-    return hotel.calendarEntries.map((entry) {
-      final date = DateTime.tryParse(entry.date);
-      return _CalendarItemData(
-        topLabel: date == null ? entry.date : DateFormat('M/d').format(date),
-        dayLabel: date == null ? '' : _weekdayLabel(date.weekday),
-        points: entry.points,
-      );
-    }).toList(growable: false);
+    final parsedEntries = hotel.calendarEntries
+        .map((entry) {
+          final date = DateTime.tryParse(entry.date);
+          if (date == null) return null;
+          return _CalendarItemData(
+            date: DateUtils.dateOnly(date),
+            points: entry.points,
+            cashKrw:
+                entry.cashKrw ?? _estimatedCashForPoints(hotel, entry.points),
+          );
+        })
+        .whereType<_CalendarItemData>()
+        .toList(growable: false);
+    if (parsedEntries.isNotEmpty) return parsedEntries;
   }
 
-  final now = DateTime.now();
+  final now = DateUtils.dateOnly(DateTime.now());
+  final pointValues = hotel.calendarPoints.isEmpty
+      ? [hotel.pointsPerNight]
+      : hotel.calendarPoints;
   return List.generate(14, (index) {
     final day = now.add(Duration(days: index));
+    final points = pointValues[index % pointValues.length];
     return _CalendarItemData(
-      topLabel: _weekdayLabel(day.weekday),
-      dayLabel: '${day.day}',
-      points: hotel.calendarPoints[index % hotel.calendarPoints.length],
+      date: day,
+      points: points,
+      cashKrw: _estimatedCashForPoints(hotel, points),
     );
   });
 }
 
 class _CalendarItemData {
-  final String topLabel;
-  final String dayLabel;
+  final DateTime date;
   final int points;
+  final int cashKrw;
 
   const _CalendarItemData({
-    required this.topLabel,
-    required this.dayLabel,
+    required this.date,
     required this.points,
+    required this.cashKrw,
   });
 }
 
-String _weekdayLabel(int weekday) {
-  const labels = ['월', '화', '수', '목', '금', '토', '일'];
-  return labels[(weekday - 1).clamp(0, labels.length - 1)];
+class _CalendarDayCell extends StatelessWidget {
+  static const _rateBlue = Color(0xFF2E7DBD);
+
+  final DateTime date;
+  final DateTime focusedMonth;
+  final _CalendarItemData? entry;
+  final bool isSelected;
+  final bool showRightDivider;
+  final bool showBottomDivider;
+
+  const _CalendarDayCell({
+    required this.date,
+    required this.focusedMonth,
+    required this.entry,
+    required this.isSelected,
+    required this.showRightDivider,
+    required this.showBottomDivider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isOutsideMonth = !_sameMonth(date, focusedMonth);
+    final dateColor = isOutsideMonth ? McColors.mutedLight : McColors.inkSoft;
+    return Container(
+      height: 78,
+      decoration: BoxDecoration(
+        color: isOutsideMonth ? const Color(0xFFFBFBFC) : Colors.white,
+        border: Border(
+          right: showRightDivider
+              ? const BorderSide(color: McColors.line, width: 0.7)
+              : BorderSide.none,
+          bottom: showBottomDivider
+              ? const BorderSide(color: McColors.line, width: 0.7)
+              : BorderSide.none,
+        ),
+      ),
+      child: Stack(
+        children: [
+          if (isSelected)
+            const Positioned(
+              left: 6,
+              right: 6,
+              top: 0,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: _rateBlue,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(2),
+                  ),
+                ),
+                child: SizedBox(height: 2),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    color: isSelected ? McColors.ink : dateColor,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    height: 1.1,
+                  ),
+                ),
+                const Spacer(),
+                if (entry != null) ...[
+                  _CalendarValueBadge(
+                    label: 'P${_compactCalendarValue(entry!.points)}',
+                  ),
+                  const SizedBox(height: 2),
+                  _CalendarValueBadge(
+                    label: '₩${_compactCalendarValue(entry!.cashKrw)}',
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarValueBadge extends StatelessWidget {
+  final String label;
+
+  const _CalendarValueBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 16,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: _CalendarDayCell._rateBlue,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+DateTime _focusedCalendarMonth(
+  List<_CalendarItemData> entries,
+  DateTime? checkIn,
+) {
+  if (checkIn != null &&
+      entries.any((entry) => _sameMonth(entry.date, checkIn))) {
+    return DateTime(checkIn.year, checkIn.month);
+  }
+  final firstDate = entries.first.date;
+  return DateTime(firstDate.year, firstDate.month);
+}
+
+DateTime _calendarKey(DateTime date) {
+  return DateUtils.dateOnly(date);
+}
+
+bool _sameMonth(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month;
+}
+
+int _estimatedCashForPoints(PointHotel hotel, int points) {
+  if (hotel.pointsPerNight <= 0) return hotel.cashPerNightKrw;
+  final estimated = hotel.cashPerNightKrw * points / hotel.pointsPerNight;
+  return (estimated / 1000).round() * 1000;
+}
+
+String _compactCalendarValue(int value) {
+  if (value.abs() >= 1000000) {
+    return '${_trimCompact(value / 1000000)}M';
+  }
+  if (value.abs() >= 1000) {
+    return '${_trimCompact(value / 1000)}K';
+  }
+  return NumberFormat('#,###').format(value);
+}
+
+String _trimCompact(double value) {
+  final fixed = value.toStringAsFixed(value >= 10 ? 0 : 1);
+  return fixed.endsWith('.0') ? fixed.substring(0, fixed.length - 2) : fixed;
 }
 
 class _ReviewBox extends StatelessWidget {

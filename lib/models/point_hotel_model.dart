@@ -33,10 +33,12 @@ class PointHotelInfoSection {
 class PointHotelCalendarEntry {
   final String date;
   final int points;
+  final int? cashKrw;
 
   const PointHotelCalendarEntry({
     required this.date,
     required this.points,
+    this.cashKrw,
   });
 }
 
