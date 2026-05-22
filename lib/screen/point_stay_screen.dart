@@ -11,6 +11,7 @@ import '../models/marriott_stay_record.dart';
 import '../models/point_hotel_model.dart';
 import '../services/analytics_service.dart';
 import '../services/marriott_stay_service.dart';
+import '../services/point_hotel_service.dart';
 import '../widgets/marriott_stay_records_tab.dart';
 import '../widgets/point_hotel_explore_tab.dart';
 import '../widgets/point_hotel_tab.dart';
@@ -608,85 +609,94 @@ class _PointStayScreenState extends State<PointStayScreen>
         _feedPostsByFeature[featureId] ?? const <_PointStayFeedPost>[];
     final isInitialLoading = _loadingFeatureIds.contains(featureId) &&
         !_feedPostsByFeature.containsKey(featureId);
-    final hotels = _brandHotels(profile);
+    return StreamBuilder<List<PointHotel>>(
+      stream: PointHotelService.instance.watchHotels(),
+      builder: (context, snapshot) {
+        final hotels = snapshot.hasData
+            ? _brandHotels(profile, snapshot.data ?? const <PointHotel>[])
+            : const <PointHotel>[];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _BrandStayHero(
-          profile: profile,
-          hotelCount: hotels.length,
-          postCount: posts.length,
-          onWrite: () => _openPointStayPostCreate(config),
-        ),
-        const SizedBox(height: 8),
-        _BrandHotelSection(
-          profile: profile,
-          hotels: hotels,
-          postCount: posts.length,
-          onHotelTap: _openHotelFromBrand,
-        ),
-        const SizedBox(height: 8),
-        _PointStayPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _BrandFeedSectionHeader(
-                profile: profile,
-                postCount: posts.length,
-                onWrite: () => _openPointStayPostCreate(config),
-              ),
-              const SizedBox(height: 10),
-              if (isInitialLoading)
-                const Row(
-                  children: [
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        '브랜드 피드를 불러오는 중입니다.',
-                        style: McTextStyles.meta,
-                      ),
-                    ),
-                  ],
-                )
-              else if (posts.isEmpty)
-                _BrandEmptyFeedContent(
-                  profile: profile,
-                  onWrite: () => _openPointStayPostCreate(config),
-                )
-              else ...[
-                _BrandFeaturedPostCard(
-                  post: posts.first,
-                  profile: profile,
-                  onTap: () => _openFeedPost(posts.first),
-                ),
-                if (posts.length > 1) ...[
-                  const SizedBox(height: 12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: posts.length - 1,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 2,
-                      crossAxisSpacing: 2,
-                    ),
-                    itemBuilder: (context, index) => _buildFeedTile(
-                      posts[index + 1],
-                    ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _BrandStayHero(
+              profile: profile,
+              hotelCount: hotels.length,
+              postCount: posts.length,
+              onWrite: () => _openPointStayPostCreate(config),
+            ),
+            const SizedBox(height: 8),
+            _BrandHotelSection(
+              profile: profile,
+              hotels: hotels,
+              postCount: posts.length,
+              isLoading: !snapshot.hasData && !snapshot.hasError,
+              hasError: snapshot.hasError,
+              onHotelTap: _openHotelFromBrand,
+            ),
+            const SizedBox(height: 8),
+            _PointStayPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _BrandFeedSectionHeader(
+                    profile: profile,
+                    postCount: posts.length,
+                    onWrite: () => _openPointStayPostCreate(config),
                   ),
+                  const SizedBox(height: 10),
+                  if (isInitialLoading)
+                    const Row(
+                      children: [
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '브랜드 피드를 불러오는 중입니다.',
+                            style: McTextStyles.meta,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (posts.isEmpty)
+                    _BrandEmptyFeedContent(
+                      profile: profile,
+                      onWrite: () => _openPointStayPostCreate(config),
+                    )
+                  else ...[
+                    _BrandFeaturedPostCard(
+                      post: posts.first,
+                      profile: profile,
+                      onTap: () => _openFeedPost(posts.first),
+                    ),
+                    if (posts.length > 1) ...[
+                      const SizedBox(height: 12),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: posts.length - 1,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 2,
+                          crossAxisSpacing: 2,
+                        ),
+                        itemBuilder: (context, index) => _buildFeedTile(
+                          posts[index + 1],
+                        ),
+                      ),
+                    ],
+                  ],
                 ],
-              ],
-            ],
-          ),
-        ),
-      ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -905,8 +915,11 @@ _PointStayBrandProfile? _brandProfileFor(String? featureId) {
   return null;
 }
 
-List<PointHotel> _brandHotels(_PointStayBrandProfile profile) {
-  final hotels = pointHotelSamples.where((hotel) {
+List<PointHotel> _brandHotels(
+  _PointStayBrandProfile profile,
+  List<PointHotel> source,
+) {
+  final hotels = source.where((hotel) {
     if (profile.featureId == CommunityLabel.marriottFeatureId &&
         hotel.isMarriottBonvoy) {
       return true;
@@ -919,7 +932,14 @@ List<PointHotel> _brandHotels(_PointStayBrandProfile profile) {
   }).toList(growable: false);
 
   return hotels.toList()
-    ..sort((a, b) => b.krwPerPoint.compareTo(a.krwPerPoint));
+    ..sort((a, b) {
+      final hasRate =
+          (b.hasAwardRate ? 1 : 0).compareTo(a.hasAwardRate ? 1 : 0);
+      if (hasRate != 0) return hasRate;
+      final value = b.krwPerPoint.compareTo(a.krwPerPoint);
+      if (value != 0) return value;
+      return b.rating.compareTo(a.rating);
+    });
 }
 
 class _PointStayBrandIcon extends StatelessWidget {
@@ -1156,12 +1176,16 @@ class _BrandHotelSection extends StatelessWidget {
   final _PointStayBrandProfile profile;
   final List<PointHotel> hotels;
   final int postCount;
+  final bool isLoading;
+  final bool hasError;
   final ValueChanged<PointHotel> onHotelTap;
 
   const _BrandHotelSection({
     required this.profile,
     required this.hotels,
     required this.postCount,
+    this.isLoading = false,
+    this.hasError = false,
     required this.onHotelTap,
   });
 
@@ -1191,7 +1215,28 @@ class _BrandHotelSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          if (hotels.isEmpty)
+          if (isLoading)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Firestore 호텔 정보를 불러오는 중입니다.',
+                    style: McTextStyles.meta,
+                  ),
+                ),
+              ],
+            )
+          else if (hasError)
+            const _BrandHotelStatusPanel(
+              text: '호텔 정보를 불러오지 못했습니다. Firestore 연결 또는 권한을 확인해 주세요.',
+            )
+          else if (hotels.isEmpty)
             _BrandNoHotelPanel(profile: profile)
           else
             SingleChildScrollView(
@@ -1307,13 +1352,16 @@ class _BrandHotelCard extends StatelessWidget {
                       runSpacing: 6,
                       children: [
                         _HotelValueChip(
-                          label:
-                              '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts',
+                          label: hotel.hasAwardRate
+                              ? '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts'
+                              : '포인트 확인 전',
                           accent: true,
                         ),
-                        _HotelValueChip(
-                          label: '${hotel.krwPerPoint.toStringAsFixed(1)}원/pt',
-                        ),
+                        if (hotel.hasAwardRate && hotel.hasCashRate)
+                          _HotelValueChip(
+                            label:
+                                '${hotel.krwPerPoint.toStringAsFixed(1)}원/pt',
+                          ),
                         _HotelValueChip(
                           label: relatedPostCount == 0
                               ? '관련 글 대기'
@@ -1358,6 +1406,22 @@ class _HotelValueChip extends StatelessWidget {
             fontWeight: FontWeight.w400,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BrandHotelStatusPanel extends StatelessWidget {
+  final String text;
+
+  const _BrandHotelStatusPanel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return _PointStayPanel(
+      child: Text(
+        text,
+        style: McTextStyles.meta,
       ),
     );
   }

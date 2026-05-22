@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
 
-class PointHotelDetailScreen extends StatelessWidget {
+class PointHotelDetailScreen extends StatefulWidget {
   final PointHotel hotel;
   final int nights;
   final DateTime? checkIn;
@@ -19,8 +19,48 @@ class PointHotelDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<PointHotelDetailScreen> createState() => _PointHotelDetailScreenState();
+}
+
+class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
+  DateTime? _selectedCheckIn;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCheckIn = _initialSelectedCheckIn();
+  }
+
+  @override
+  void didUpdateWidget(covariant PointHotelDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hotel.id != widget.hotel.id ||
+        !DateUtils.isSameDay(oldWidget.checkIn, widget.checkIn)) {
+      _selectedCheckIn = _initialSelectedCheckIn();
+    }
+  }
+
+  DateTime? _initialSelectedCheckIn() {
+    if (widget.checkIn != null) return DateUtils.dateOnly(widget.checkIn!);
+
+    final today = DateUtils.dateOnly(DateTime.now());
+    if (_calendarItemForDate(widget.hotel, today) != null) return today;
+    return null;
+  }
+
+  void _handleCalendarDateSelected(DateTime date) {
+    setState(() => _selectedCheckIn = DateUtils.dateOnly(date));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final hotel = widget.hotel;
+    final nights = widget.nights;
+    final checkIn = _selectedCheckIn;
+    final selectedRate = _calendarItemForDate(hotel, checkIn);
+    final bottomPoints = selectedRate?.points ?? hotel.pointsPerNight;
+    final bottomCash = selectedRate?.cashKrw ?? hotel.cashPerNightKrw;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -40,47 +80,29 @@ class PointHotelDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + bottomInset),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: McColors.line)),
-          ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: McColors.line)),
+        ),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(
             children: [
               Expanded(
-                child: RichText(
-                  text: TextSpan(
-                    style: const TextStyle(color: McColors.ink),
-                    children: [
-                      TextSpan(
-                        text:
-                            '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: '/박',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _BottomRateLabel(
+                  points: bottomPoints,
+                  cashKrw: bottomCash,
                 ),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: McColors.ink,
+                  backgroundColor: McColors.accent,
                   foregroundColor: Colors.white,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                      const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                  minimumSize: const Size(0, 42),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -203,7 +225,11 @@ class PointHotelDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _PointCalendar(hotel: hotel, checkIn: checkIn),
+          _PointCalendar(
+            hotel: hotel,
+            checkIn: checkIn,
+            onDateSelected: _handleCalendarDateSelected,
+          ),
           if (hotel.pointCalendarNote.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
@@ -292,6 +318,85 @@ class _GalleryStrip extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _BottomRateLabel extends StatelessWidget {
+  final int points;
+  final int cashKrw;
+
+  const _BottomRateLabel({
+    required this.points,
+    required this.cashKrw,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPoints = points > 0;
+    final hasCash = cashKrw > 0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text.rich(
+            TextSpan(
+              style: const TextStyle(color: McColors.ink),
+              children: [
+                TextSpan(
+                  text: hasPoints
+                      ? '${_compactCalendarValue(points)} pts'
+                      : '포인트 확인 전',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (hasPoints)
+                  const TextSpan(
+                    text: '/박',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text.rich(
+            TextSpan(
+              style: const TextStyle(color: McColors.inkSoft),
+              children: [
+                TextSpan(
+                  text: hasCash
+                      ? '₩${_compactCalendarValue(cashKrw)}'
+                      : '현금가 확인 전',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (hasCash)
+                  const TextSpan(
+                    text: '/박',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -521,7 +626,7 @@ class _HotelMapCard extends StatelessWidget {
                   tooltip: 'Google 지도 열기',
                   onPressed: () => _launchHotelMap(hotel),
                   style: IconButton.styleFrom(
-                    backgroundColor: McColors.ink,
+                    backgroundColor: McColors.accent,
                     foregroundColor: Colors.white,
                     fixedSize: const Size(42, 42),
                   ),
@@ -551,10 +656,16 @@ class _StaySummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final checkInLabel =
         checkIn == null ? '모든 날짜' : DateFormat('M월 d일').format(checkIn!);
-    final totalPoints = hotel.awardPointsForNights(nights);
-    final totalCash = hotel.cashPerNightKrw * nights;
-    final hasFreeNight =
-        totalPoints < hotel.pointsPerNight * nights && nights >= 5;
+    final selectedRate = _calendarItemForDate(hotel, checkIn);
+    final pointsPerNight = selectedRate?.points ?? hotel.pointsPerNight;
+    final cashPerNight = selectedRate?.cashKrw ?? hotel.cashPerNightKrw;
+    final hasPoints = pointsPerNight > 0;
+    final hasCash = cashPerNight > 0;
+    final totalPoints = _awardPointsForRate(hotel, pointsPerNight, nights);
+    final totalCash = cashPerNight * nights;
+    final krwPerPoint =
+        !hasPoints || !hasCash ? 0 : cashPerNight / pointsPerNight;
+    final hasFreeNight = totalPoints < pointsPerNight * nights && nights >= 5;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -594,22 +705,23 @@ class _StaySummaryCard extends StatelessWidget {
             children: [
               _ValueMetric(
                 label: '포인트',
-                value: NumberFormat('#,###').format(
-                  totalPoints,
-                ),
-                suffix: 'pts',
+                value: hasPoints
+                    ? NumberFormat('#,###').format(totalPoints)
+                    : '확인 전',
+                suffix: hasPoints ? 'pts' : '',
               ),
               _ValueMetric(
                 label: '현금가',
-                value: NumberFormat('#,###').format(
-                  totalCash,
-                ),
-                suffix: '원',
+                value:
+                    hasCash ? NumberFormat('#,###').format(totalCash) : '확인 전',
+                suffix: hasCash ? '원' : '',
               ),
               _ValueMetric(
                 label: '가치',
-                value: hotel.krwPerPoint.toStringAsFixed(1),
-                suffix: '원/pt',
+                value: hasPoints && hasCash
+                    ? krwPerPoint.toStringAsFixed(1)
+                    : '확인 전',
+                suffix: hasPoints && hasCash ? '원/pt' : '',
               ),
             ],
           ),
@@ -652,14 +764,15 @@ class _ValueMetric extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  TextSpan(
-                    text: ' $suffix',
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
+                  if (suffix.isNotEmpty)
+                    TextSpan(
+                      text: ' $suffix',
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -673,17 +786,19 @@ class _ValueMetric extends StatelessWidget {
 class _PointCalendar extends StatelessWidget {
   final PointHotel hotel;
   final DateTime? checkIn;
+  final ValueChanged<DateTime> onDateSelected;
 
   const _PointCalendar({
     required this.hotel,
     required this.checkIn,
+    required this.onDateSelected,
   });
 
   @override
   Widget build(BuildContext context) {
     final entries = [..._calendarItems(hotel)]
       ..sort((a, b) => a.date.compareTo(b.date));
-    if (entries.isEmpty) return const SizedBox.shrink();
+    if (entries.isEmpty) return const _CalendarEmptyState();
 
     final focusedMonth = _focusedCalendarMonth(entries, checkIn);
     final selectedDate = checkIn ?? DateTime.now();
@@ -760,6 +875,7 @@ class _PointCalendar extends StatelessWidget {
                         days[week * DateTime.daysPerWeek + dayIndex],
                         selectedDate,
                       ),
+                      onTap: onDateSelected,
                       showRightDivider: dayIndex != DateTime.daysPerWeek - 1,
                       showBottomDivider: week != 5,
                     ),
@@ -790,6 +906,10 @@ List<_CalendarItemData> _calendarItems(PointHotel hotel) {
     if (parsedEntries.isNotEmpty) return parsedEntries;
   }
 
+  if (hotel.calendarPoints.isEmpty && hotel.pointsPerNight <= 0) {
+    return const <_CalendarItemData>[];
+  }
+
   final now = DateUtils.dateOnly(DateTime.now());
   final pointValues = hotel.calendarPoints.isEmpty
       ? [hotel.pointsPerNight]
@@ -803,6 +923,25 @@ List<_CalendarItemData> _calendarItems(PointHotel hotel) {
       cashKrw: _estimatedCashForPoints(hotel, points),
     );
   });
+}
+
+_CalendarItemData? _calendarItemForDate(PointHotel hotel, DateTime? date) {
+  if (date == null) return null;
+  final selectedDate = DateUtils.dateOnly(date);
+  for (final entry in _calendarItems(hotel)) {
+    if (DateUtils.isSameDay(entry.date, selectedDate)) return entry;
+  }
+  return null;
+}
+
+int _awardPointsForRate(PointHotel hotel, int pointsPerNight, int nights) {
+  if (nights <= 0) return 0;
+  if ((hotel.isMarriottBonvoy ||
+          hotel.brand.toLowerCase().contains('hilton')) &&
+      nights >= 5) {
+    return pointsPerNight * (nights - (nights ~/ 5));
+  }
+  return pointsPerNight * nights;
 }
 
 class _CalendarItemData {
@@ -824,6 +963,7 @@ class _CalendarDayCell extends StatelessWidget {
   final DateTime focusedMonth;
   final _CalendarItemData? entry;
   final bool isSelected;
+  final ValueChanged<DateTime> onTap;
   final bool showRightDivider;
   final bool showBottomDivider;
 
@@ -832,6 +972,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.focusedMonth,
     required this.entry,
     required this.isSelected,
+    required this.onTap,
     required this.showRightDivider,
     required this.showBottomDivider,
   });
@@ -840,64 +981,69 @@ class _CalendarDayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOutsideMonth = !_sameMonth(date, focusedMonth);
     final dateColor = isOutsideMonth ? McColors.mutedLight : McColors.inkSoft;
-    return Container(
-      height: 78,
-      decoration: BoxDecoration(
-        color: isOutsideMonth ? const Color(0xFFFBFBFC) : Colors.white,
-        border: Border(
-          right: showRightDivider
-              ? const BorderSide(color: McColors.line, width: 0.7)
-              : BorderSide.none,
-          bottom: showBottomDivider
-              ? const BorderSide(color: McColors.line, width: 0.7)
-              : BorderSide.none,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onTap(date),
+      child: Container(
+        height: 78,
+        decoration: BoxDecoration(
+          color: isOutsideMonth ? const Color(0xFFFBFBFC) : Colors.white,
+          border: Border(
+            right: showRightDivider
+                ? const BorderSide(color: McColors.line, width: 0.7)
+                : BorderSide.none,
+            bottom: showBottomDivider
+                ? const BorderSide(color: McColors.line, width: 0.7)
+                : BorderSide.none,
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          if (isSelected)
-            const Positioned(
-              left: 6,
-              right: 6,
-              top: 0,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: _rateBlue,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(2),
+        child: Stack(
+          children: [
+            if (isSelected)
+              const Positioned(
+                left: 6,
+                right: 6,
+                top: 0,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _rateBlue,
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(2),
+                    ),
                   ),
+                  child: SizedBox(height: 2),
                 ),
-                child: SizedBox(height: 2),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 4, 5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${date.day}',
+                    style: TextStyle(
+                      color: isSelected ? McColors.ink : dateColor,
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                      height: 1.1,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (entry != null) ...[
+                    _CalendarValueBadge(
+                      label: 'P${_compactCalendarValue(entry!.points)}',
+                    ),
+                    const SizedBox(height: 2),
+                    _CalendarValueBadge(
+                      label: '₩${_compactCalendarValue(entry!.cashKrw)}',
+                    ),
+                  ],
+                ],
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 6, 4, 5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${date.day}',
-                  style: TextStyle(
-                    color: isSelected ? McColors.ink : dateColor,
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    height: 1.1,
-                  ),
-                ),
-                const Spacer(),
-                if (entry != null) ...[
-                  _CalendarValueBadge(
-                    label: 'P${_compactCalendarValue(entry!.points)}',
-                  ),
-                  const SizedBox(height: 2),
-                  _CalendarValueBadge(
-                    label: '₩${_compactCalendarValue(entry!.cashKrw)}',
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -931,6 +1077,40 @@ class _CalendarValueBadge extends StatelessWidget {
             height: 1,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CalendarEmptyState extends StatelessWidget {
+  const _CalendarEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: McColors.line),
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.event_busy_rounded, color: McColors.mutedLight, size: 34),
+          SizedBox(height: 10),
+          Text(
+            '포인트 캘린더 수집 전입니다.',
+            textAlign: TextAlign.center,
+            style: McTextStyles.body,
+          ),
+          SizedBox(height: 4),
+          Text(
+            '호텔 기본 정보는 Firestore에서 표시 중입니다.',
+            textAlign: TextAlign.center,
+            style: McTextStyles.meta,
+          ),
+        ],
       ),
     );
   }

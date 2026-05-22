@@ -249,6 +249,8 @@ v1 기준 권장 구조는 아래 두 계층이다.
   "firstDate": "2026-01-01",
   "lastDate": "2026-12-31",
   "latestRunId": "run_20260522_060000",
+  "lastCheckedAt": "serverTimestamp",
+  "lastChangedAt": "serverTimestamp",
   "updatedAt": "serverTimestamp",
   "stale": false
 }
@@ -274,7 +276,9 @@ v1 기준 권장 구조는 아래 두 계층이다.
 | `firstDate` | string | 연 문서의 첫 날짜 |
 | `lastDate` | string | 연 문서의 마지막 날짜 |
 | `latestRunId` | string | 마지막으로 반영된 수집 실행 ID |
-| `updatedAt` | timestamp | 마지막 갱신 시각 |
+| `lastCheckedAt` | timestamp | 마지막으로 성공적으로 확인한 시각. 값 변화가 없어도 갱신 |
+| `lastChangedAt` | timestamp? | 날짜별 포인트/현금가 값이 실제로 바뀐 마지막 시각 |
+| `updatedAt` | timestamp | 문서 write 시각. 보통 `lastCheckedAt`과 동일 |
 | `stale` | boolean | 최신 수집에서 확인되지 않은 연도인지 여부 |
 
 `days.{dMMdd}` entry 필드:
@@ -364,6 +368,14 @@ Firestore는 문서 전체를 write 단위로 계산하므로, 이 구조는 365
 - 실행 이력은 `calendarYearRuns`에 `changedDays` 중심으로 남긴다.
 - 변동 분석에서 모든 관측값이 필요하면 원본 전체 응답을 Cloud Storage 또는 BigQuery에 저장하고 Firestore에는 참조만 남긴다.
 - Firestore에 full snapshot을 매번 넣는 방식은 write 수는 적지만 storage가 빠르게 늘어나므로 기본값으로 쓰지 않는다.
+
+최신값과 이력의 의미:
+
+- `calendarYears/{yearKey}`는 최신 상태만 가진다. 다음 실행에서 같은 날짜를 다시 확인하면 해당 날짜 entry는 새 값으로 merge되거나 덮어써진다.
+- `calendarYearRuns/{yearKey}_{runSlot}`는 그 실행에서 확인한 흔적을 남긴다. 기본은 바뀐 날짜만 `changedDays`에 기록한다.
+- 값이 하나도 바뀌지 않은 실행은 `calendarYears.lastCheckedAt`, `latestRunId`, `updatedAt`만 갱신하고 `lastChangedAt`은 유지한다.
+- 날짜별 포인트나 현금가가 바뀐 실행은 해당 날짜 entry를 갱신하고 `lastCheckedAt`, `lastChangedAt`, `latestRunId`, `updatedAt`을 모두 갱신한다.
+- 특정 실행 시점의 1년치 전체 원본을 나중에 그대로 재현해야 하면, Firestore 변경 로그만으로는 부족할 수 있으므로 원본 전체 payload를 Cloud Storage 또는 BigQuery에 같이 저장한다.
 
 ### 날짜별 포인트 업로드 payload 규격
 
@@ -687,6 +699,11 @@ Firestore 콘솔에서 생성 링크가 나오면 그대로 생성하되, v1 기
 ## 8. 크론 갱신 파이프라인
 
 crontab 또는 Cloud Scheduler가 주기적으로 서버 작업을 실행한다. 현재 Functions 프로젝트는 Node 20과 Firebase Functions v2를 쓰고 있으므로, 구현 시에는 `firebase-functions/v2/scheduler`의 `onSchedule` 또는 외부 crontab이 호출하는 `onRequest` 함수를 사용할 수 있다.
+
+호텔 메타데이터와 날짜별 가격/포인트 캘린더는 실행 주기가 다르므로 별도 작업으로 분리한다.
+
+- 호텔 메타데이터: 월 1회 수준. Marriott은 `python3 task/point/hotel/marriott/update_marriott_hotels_from_firestore.py`를 실행한다. 이 작업은 Firestore `pointHotels`에서 `programId == marriott`, `status`가 `active` 또는 `pending`인 문서를 읽고, 각 문서의 `officialUrl`을 CDP Chrome 파서로 열어 호텔명, 주소, 좌표, 평점, 이미지, 편의시설 등을 다시 파싱한 뒤 `pointHotels/{hotelId}`에 upsert한다. 새 Marriott 호텔을 운영자가 추가할 때는 `pointHotels/{hotelId}`에 `programId`, `officialUrl`, `status: pending`만 먼저 넣어도 다음 호텔 메타데이터 배치에서 `active` 문서로 완성된다.
+- 날짜별 포인트/현금가: 하루 2~3회 이상. 등록된 호텔의 `propertyCode`를 기준으로 1년치 캘린더를 가져와 `calendarYears`와 `calendarYearRuns`에 저장한다.
 
 권장 주기:
 

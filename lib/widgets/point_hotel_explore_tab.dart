@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
 import '../screen/point_hotel_detail_screen.dart';
+import '../services/point_hotel_service.dart';
 
 class PointHotelExploreTab extends StatefulWidget {
   const PointHotelExploreTab({super.key});
@@ -25,12 +26,13 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
   int _nights = 1;
   _ExploreSort _sort = _ExploreSort.value;
 
-  List<_AwardCandidate> get _candidates {
+  List<_AwardCandidate> _candidates(List<PointHotel> hotels) {
     final now = DateTime.now();
     final candidates = <_AwardCandidate>[];
-    for (var index = 0; index < pointHotelSamples.length; index++) {
-      final hotel = pointHotelSamples[index];
+    for (var index = 0; index < hotels.length; index++) {
+      final hotel = hotels[index];
       if (!_matchesBrand(hotel)) continue;
+      if (!hotel.hasAwardRate || !hotel.hasCashRate) continue;
       final totalCash = hotel.cashPerNightKrw * _nights;
       candidates.add(
         _AwardCandidate(
@@ -209,7 +211,64 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
 
   @override
   Widget build(BuildContext context) {
-    final candidates = _candidates;
+    return StreamBuilder<List<PointHotel>>(
+      stream: PointHotelService.instance.watchHotels(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const _ExploreMessageState(
+            icon: Icons.cloud_off_rounded,
+            title: '탐색 데이터를 불러오지 못했습니다.',
+            body: 'Firestore 연결 또는 권한을 확인해 주세요.',
+          );
+        }
+        if (!snapshot.hasData) {
+          return const _ExploreSection(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 42),
+              child: Center(child: CircularProgressIndicator.adaptive()),
+            ),
+          );
+        }
+
+        final candidates = _candidates(snapshot.data ?? const <PointHotel>[]);
+        return _ExploreContent(
+          candidates: candidates,
+          selectedBrand: _selectedBrand,
+          nights: _nights,
+          sort: _sort,
+          onBrandTap: _selectBrand,
+          onNightsTap: _selectNights,
+          onSortChanged: (sort) => setState(() => _sort = sort),
+          onOpenHotel: _openHotel,
+        );
+      },
+    );
+  }
+}
+
+class _ExploreContent extends StatelessWidget {
+  final List<_AwardCandidate> candidates;
+  final String selectedBrand;
+  final int nights;
+  final _ExploreSort sort;
+  final VoidCallback onBrandTap;
+  final VoidCallback onNightsTap;
+  final ValueChanged<_ExploreSort> onSortChanged;
+  final ValueChanged<_AwardCandidate> onOpenHotel;
+
+  const _ExploreContent({
+    required this.candidates,
+    required this.selectedBrand,
+    required this.nights,
+    required this.sort,
+    required this.onBrandTap,
+    required this.onNightsTap,
+    required this.onSortChanged,
+    required this.onOpenHotel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return _ExploreSection(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,10 +299,10 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
           ),
           const SizedBox(height: 20),
           _ExplorePill(
-            brand: _selectedBrand,
-            nights: _nights,
-            onBrandTap: _selectBrand,
-            onNightsTap: _selectNights,
+            brand: selectedBrand,
+            nights: nights,
+            onBrandTap: onBrandTap,
+            onNightsTap: onNightsTap,
           ),
           const SizedBox(height: 14),
           SingleChildScrollView(
@@ -252,31 +311,31 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
               children: [
                 _SortChip(
                   label: '가치순',
-                  selected: _sort == _ExploreSort.value,
-                  onTap: () => setState(() => _sort = _ExploreSort.value),
+                  selected: sort == _ExploreSort.value,
+                  onTap: () => onSortChanged(_ExploreSort.value),
                 ),
                 const SizedBox(width: 8),
                 _SortChip(
                   label: '낮은 포인트',
-                  selected: _sort == _ExploreSort.points,
-                  onTap: () => setState(() => _sort = _ExploreSort.points),
+                  selected: sort == _ExploreSort.points,
+                  onTap: () => onSortChanged(_ExploreSort.points),
                 ),
                 const SizedBox(width: 8),
                 _SortChip(
                   label: '최근 확인',
-                  selected: _sort == _ExploreSort.recent,
-                  onTap: () => setState(() => _sort = _ExploreSort.recent),
+                  selected: sort == _ExploreSort.recent,
+                  onTap: () => onSortChanged(_ExploreSort.recent),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 18),
-          _ExploreSummary(candidates: candidates, nights: _nights),
+          _ExploreSummary(candidates: candidates, nights: nights),
           const SizedBox(height: 12),
           for (final candidate in candidates) ...[
             _AwardCandidateCard(
               candidate: candidate,
-              onTap: () => _openHotel(candidate),
+              onTap: () => onOpenHotel(candidate),
             ),
             const SizedBox(height: 10),
           ],
@@ -303,6 +362,48 @@ class _ExploreSection extends StatelessWidget {
   }
 }
 
+class _ExploreMessageState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+
+  const _ExploreMessageState({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _ExploreSection(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 42, horizontal: 12),
+        child: Column(
+          children: [
+            Icon(icon, color: McColors.mutedLight, size: 40),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: McColors.ink,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: McTextStyles.meta,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 enum _ExploreSort { value, points, recent }
 
 class _AwardCandidate {
@@ -322,7 +423,7 @@ class _AwardCandidate {
     required this.confidence,
   });
 
-  double get krwPerPoint => cashTotalKrw / pointsTotal;
+  double get krwPerPoint => pointsTotal <= 0 ? 0 : cashTotalKrw / pointsTotal;
 
   double get usdTotal => cashTotalKrw / 1350;
 }

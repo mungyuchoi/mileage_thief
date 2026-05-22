@@ -8,6 +8,7 @@ const OUT_DIR = path.join(ROOT_DIR, "task", "point");
 const DEFAULT_URL =
   "https://www.marriott.com/search/availabilityCalendar.mi?isRateCalendar=true&propertyCode=SELMM&isSearch=true&currency=KRW&showFullPrice=false&costTab=total&isAdultsOnly=false&useRewardsPoints=true";
 const DEFAULT_LOGIN_URL = "https://www.marriott.com/sign-in.mi";
+const DEFAULT_CREDENTIALS = path.join(ROOT_DIR, "env", "marriott.json");
 const ENDPOINT_PATH = "/mi/query/phoenixShopADFSearchProductsByProperty";
 const OPERATION_NAME = "phoenixShopADFSearchProductsByProperty";
 const DEFAULT_SIGNATURE =
@@ -90,6 +91,7 @@ function parseArgs(argv) {
     days: 1,
     modes: ["points", "cash"],
     outputDir: OUT_DIR,
+    credentials: DEFAULT_CREDENTIALS,
     waitMs: 20000,
     login: false,
     loginUrl: DEFAULT_LOGIN_URL,
@@ -116,6 +118,7 @@ function parseArgs(argv) {
     else if (item === "--days") args.days = Number(next());
     else if (item === "--modes") args.modes = next().split(",").map((x) => x.trim()).filter(Boolean);
     else if (item === "--output-dir") args.outputDir = path.resolve(next());
+    else if (item === "--credentials") args.credentials = path.resolve(next());
     else if (item === "--wait-ms") args.waitMs = Number(next());
     else if (item === "--login") args.login = true;
     else if (item === "--login-url") args.loginUrl = next();
@@ -146,13 +149,21 @@ Options:
   --next-start-date YYYY-MM-DD    Second manual GraphQL range start
   --next-end-date YYYY-MM-DD      Second manual GraphQL range end
   --modes points,cash             Fetch points, cash, or both
-  --login                         Sign in first using MARRIOTT_EMAIL and MARRIOTT_PASSWORD env vars
+  --login                         Sign in first using env vars or credential JSON
+  --credentials PATH              Marriott login JSON. Defaults to env/marriott.json
   --login-url URL                 Marriott login URL
   --login-timeout-ms MS           Login wait timeout
   --headful                       Launch visible Chrome
   --profile-dir PATH              Persistent browser profile dir
   --cdp-url URL                   Attach to an existing Chrome remote debugging session
   --output-dir PATH               JSON output directory
+
+Credential JSON:
+  {
+    "email": "your@email.com",
+    "memberNumber": "your-member-number",
+    "password": "your-password"
+  }
 `);
 }
 
@@ -161,10 +172,14 @@ async function firstVisibleLocator(page, selectors, timeoutMs = 15000) {
   let lastError = null;
   while (Date.now() < deadline) {
     for (const selector of selectors) {
-      const locator = page.locator(selector).first();
       try {
-        if ((await locator.count()) > 0 && (await locator.isVisible())) {
-          return locator;
+        const locator = page.locator(selector);
+        const count = await locator.count();
+        for (let index = 0; index < count; index += 1) {
+          const item = locator.nth(index);
+          if (await item.isVisible()) {
+            return item;
+          }
         }
       } catch (error) {
         lastError = error;
@@ -212,7 +227,12 @@ async function submitLoginForm(page, passwordInput, timeoutMs) {
       [
         "button.login-link",
         "button[type='submit']:has-text('Sign In')",
+        "button[type='submit']:has-text('로그인')",
         "button:has-text('Sign In')",
+        "button:has-text('로그인')",
+        "button[aria-label='Sign In']",
+        "button[aria-label='로그인']",
+        "button[type='submit']",
         "input[type='submit']",
       ],
       Math.min(timeoutMs, 10000),
@@ -247,12 +267,14 @@ async function captureLoginDiagnostic(page, args, runStamp, status, extra = {}) 
 }
 
 async function signIn(page, args, runStamp) {
-  const email = process.env.MARRIOTT_EMAIL || "";
-  const password = process.env.MARRIOTT_PASSWORD || "";
+  const { email, password, source } = loadCredentials(args);
   if (!email || !password) {
-    throw new Error("--login requires MARRIOTT_EMAIL and MARRIOTT_PASSWORD environment variables.");
+    throw new Error(
+      `--login requires MARRIOTT_EMAIL/MARRIOTT_PASSWORD or a credential JSON at ${args.credentials}.`,
+    );
   }
 
+  console.log(`[login] credentials=${source}`);
   console.log(`[login] goto=${args.loginUrl}`);
   const loginResponse = await page.goto(args.loginUrl, {
     waitUntil: "domcontentloaded",
@@ -261,29 +283,42 @@ async function signIn(page, args, runStamp) {
   console.log(`[login] pageStatus=${loginResponse?.status() ?? "n/a"} title=${await page.title()}`);
   await clickIfVisible(page, ["#onetrust-accept-btn-handler", "#onetrust-reject-all-handler"], 2500);
 
-  const emailInput = await firstVisibleLocator(
-    page,
-    [
-      "#signin-userid",
-      "input[name='userID']",
-      "input[name='input-text-Email or Member Number']",
-      "input[name='username']",
-      "input[name='email']",
-      "input[type='email']",
-      "input[aria-label='email or member number']",
-      "input[id$='-email']",
-      "input[autocomplete='username']",
-    ],
-    args.loginTimeoutMs,
-  );
+  let emailInput;
+  try {
+    emailInput = await firstVisibleLocator(
+      page,
+      [
+        "#signin-userid",
+        "input[name='userID']",
+        "input[name='input-text-Email or Member Number']",
+        "input[name='input-text-이메일 또는 멤버 번호']",
+        "input[name='username']",
+        "input[name='email']",
+        "input[type='email']",
+        "input[aria-label='email or member number']",
+        "input[aria-label='이메일 또는 멤버 번호']",
+        "input[id$='-email']",
+        "input[autocomplete='username']",
+      ],
+      args.loginTimeoutMs,
+    );
+  } catch (error) {
+    await captureLoginDiagnostic(page, args, runStamp, "login_form_missing", {
+      detail: error.message,
+    });
+    console.warn(`[login] form not visible; continuing with current browser session (${error.message})`);
+    return;
+  }
   const passwordInput = await firstVisibleLocator(
     page,
     [
       "#signin-user-password",
       "input[name='input-text-Password']",
+      "input[name='input-text-비밀번호']",
       "input[name='password']",
       "input[type='password']",
       "input[aria-label='sign in password']",
+      "input[aria-label='로그인 비밀번호']",
       "input[id$='-password']",
       "input[autocomplete='current-password']",
     ],
@@ -344,6 +379,34 @@ function filenameSafe(value) {
 function writeJson(filePath, value) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function loadCredentials(args) {
+  const emailFromEnv = process.env.MARRIOTT_EMAIL || "";
+  const passwordFromEnv = process.env.MARRIOTT_PASSWORD || "";
+  if (emailFromEnv && passwordFromEnv) {
+    return { email: emailFromEnv, password: passwordFromEnv, source: "env" };
+  }
+
+  if (!args.credentials || !fs.existsSync(args.credentials)) {
+    return { email: "", password: "", source: args.credentials || "" };
+  }
+
+  const raw = fs.readFileSync(args.credentials, "utf8");
+  const parsed = JSON.parse(raw);
+  return {
+    email:
+      parsed.email ||
+      parsed.memberNumber ||
+      parsed.membershipNumber ||
+      parsed.member_number ||
+      parsed.member ||
+      parsed.username ||
+      parsed.user ||
+      "",
+    password: parsed.password || parsed.pass || "",
+    source: args.credentials,
+  };
 }
 
 function summarizeCalendar(data) {

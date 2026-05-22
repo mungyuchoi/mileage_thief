@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
 import '../screen/point_hotel_detail_screen.dart';
+import '../services/point_hotel_service.dart';
 
 enum _HotelViewMode { list, map }
 
@@ -20,10 +21,10 @@ class _PointHotelTabState extends State<PointHotelTab> {
   DateTime? _checkIn;
   _HotelViewMode _viewMode = _HotelViewMode.list;
 
-  List<PointHotel> get _hotels {
+  List<PointHotel> _filterHotels(List<PointHotel> hotels) {
     final needle = _query.trim().toLowerCase();
-    if (needle.isEmpty) return pointHotelSamples;
-    return pointHotelSamples
+    if (needle.isEmpty) return hotels;
+    return hotels
         .where((hotel) => hotel.searchableText.contains(needle))
         .toList(growable: false);
   }
@@ -247,7 +248,66 @@ class _PointHotelTabState extends State<PointHotelTab> {
 
   @override
   Widget build(BuildContext context) {
-    final hotels = _hotels;
+    return StreamBuilder<List<PointHotel>>(
+      stream: PointHotelService.instance.watchHotels(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const _HotelMessageState(
+            icon: Icons.cloud_off_rounded,
+            title: '호텔 정보를 불러오지 못했습니다.',
+            body: 'Firestore 연결 또는 권한을 확인해 주세요.',
+          );
+        }
+        if (!snapshot.hasData) {
+          return const _HotelLoadingState();
+        }
+
+        final allHotels = snapshot.data ?? const <PointHotel>[];
+        final hotels = _filterHotels(allHotels);
+        return _HotelContent(
+          hotels: hotels,
+          totalHotelCount: allHotels.length,
+          query: _query,
+          nights: _nights,
+          checkIn: _checkIn,
+          viewMode: _viewMode,
+          onOpenSearch: _openSearchSheet,
+          onShowFilters: _showFilters,
+          onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+          onTapHotel: _openHotel,
+        );
+      },
+    );
+  }
+}
+
+class _HotelContent extends StatelessWidget {
+  final List<PointHotel> hotels;
+  final int totalHotelCount;
+  final String query;
+  final int nights;
+  final DateTime? checkIn;
+  final _HotelViewMode viewMode;
+  final VoidCallback onOpenSearch;
+  final VoidCallback onShowFilters;
+  final ValueChanged<_HotelViewMode> onViewModeChanged;
+  final ValueChanged<PointHotel> onTapHotel;
+
+  const _HotelContent({
+    required this.hotels,
+    required this.totalHotelCount,
+    required this.query,
+    required this.nights,
+    required this.checkIn,
+    required this.viewMode,
+    required this.onOpenSearch,
+    required this.onShowFilters,
+    required this.onViewModeChanged,
+    required this.onTapHotel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -255,19 +315,19 @@ class _PointHotelTabState extends State<PointHotelTab> {
           child: Column(
             children: [
               _HotelSearchSummary(
-                query: _query,
-                nights: _nights,
-                checkIn: _checkIn,
-                onTap: _openSearchSheet,
+                query: query,
+                nights: nights,
+                checkIn: checkIn,
+                onTap: onOpenSearch,
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  _FilterButton(onTap: _showFilters),
+                  _FilterButton(onTap: onShowFilters),
                   const Spacer(),
                   _ViewModeSwitch(
-                    mode: _viewMode,
-                    onChanged: (mode) => setState(() => _viewMode = mode),
+                    mode: viewMode,
+                    onChanged: onViewModeChanged,
                   ),
                 ],
               ),
@@ -304,7 +364,7 @@ class _PointHotelTabState extends State<PointHotelTab> {
               ),
               const SizedBox(height: 34),
               Text(
-                '${NumberFormat('#,###').format(hotels.length * 250)}개 호텔',
+                '${NumberFormat('#,###').format(totalHotelCount)}개 호텔',
                 style: const TextStyle(
                   color: Color(0xFF6B7280),
                   fontSize: 18,
@@ -312,13 +372,23 @@ class _PointHotelTabState extends State<PointHotelTab> {
                 ),
               ),
               const SizedBox(height: 16),
-              if (_viewMode == _HotelViewMode.map)
-                _HotelMapPreview(hotels: hotels, onTapHotel: _openHotel)
+              if (hotels.isEmpty)
+                _HotelMessageState(
+                  icon: Icons.search_off_rounded,
+                  title:
+                      query.trim().isEmpty ? '등록된 호텔이 없습니다.' : '검색 결과가 없습니다.',
+                  body: query.trim().isEmpty
+                      ? 'Firestore pointHotels에 active 호텔을 추가하면 여기에 표시됩니다.'
+                      : '다른 호텔명, 도시, 브랜드로 다시 검색해 보세요.',
+                  compact: true,
+                )
+              else if (viewMode == _HotelViewMode.map)
+                _HotelMapPreview(hotels: hotels, onTapHotel: onTapHotel)
               else
                 for (final hotel in hotels) ...[
                   _HotelCard(
                     hotel: hotel,
-                    onTap: () => _openHotel(hotel),
+                    onTap: () => onTapHotel(hotel),
                   ),
                   const SizedBox(height: 28),
                 ],
@@ -343,6 +413,69 @@ class _PointHotelSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: child,
     );
+  }
+}
+
+class _HotelLoadingState extends StatelessWidget {
+  const _HotelLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _PointHotelSection(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 42),
+        child: Center(
+          child: CircularProgressIndicator.adaptive(),
+        ),
+      ),
+    );
+  }
+}
+
+class _HotelMessageState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  final bool compact;
+
+  const _HotelMessageState({
+    required this.icon,
+    required this.title,
+    required this.body,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: compact ? 28 : 42,
+        horizontal: 12,
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: McColors.mutedLight, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: McColors.ink,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: McTextStyles.meta,
+          ),
+        ],
+      ),
+    );
+    if (compact) return content;
+    return _PointHotelSection(child: content);
   }
 }
 
@@ -694,29 +827,39 @@ class _HotelCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 9),
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(color: McColors.ink),
-                children: [
-                  TextSpan(
-                    text:
-                        '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      decoration: TextDecoration.underline,
+            if (hotel.hasAwardRate)
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: McColors.ink),
+                  children: [
+                    TextSpan(
+                      text:
+                          '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
-                  ),
-                  const TextSpan(
-                    text: '/박',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                    const TextSpan(
+                      text: '/박',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              )
+            else
+              const Text(
+                '포인트 확인 전',
+                style: TextStyle(
+                  color: McColors.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -865,7 +1008,9 @@ class _MapHotelPin extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Text(
-            '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts',
+            hotel.hasAwardRate
+                ? '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts'
+                : '확인 전',
             style: const TextStyle(
               color: McColors.ink,
               fontWeight: FontWeight.w900,
