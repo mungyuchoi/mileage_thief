@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
+import '../widgets/image_viewer.dart';
+import '../widgets/point_hotel_favorite_button.dart';
 
 class PointHotelDetailScreen extends StatefulWidget {
   final PointHotel hotel;
@@ -73,10 +75,14 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          IconButton(
-            tooltip: '저장',
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border_rounded),
+          PointHotelFavoriteButton(
+            hotel: hotel,
+            color: McColors.ink,
+            selectedColor: McColors.accent,
+            size: 30,
+            padding: const EdgeInsets.all(8),
+            minTouchSize: 48,
+            splashRadius: 24,
           ),
         ],
       ),
@@ -87,55 +93,58 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
         ),
         child: SafeArea(
           top: false,
-          minimum: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: _BottomRateLabel(
-                  points: bottomPoints,
-                  cashKrw: bottomCash,
-                ),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: McColors.accent,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                  minimumSize: const Size(0, 42),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+          minimum: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 66),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _BottomRateLabel(
+                    points: bottomPoints,
+                    cashKrw: bottomCash,
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w400),
                 ),
-                onPressed: () {},
-                child: const Text('예약 보기'),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: _BottomValueLabel(
+                    points: bottomPoints,
+                    cashKrw: bottomCash,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: McColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 10,
+                    ),
+                    minimumSize: const Size(104, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                    ),
+                  ),
+                  onPressed: () =>
+                      _launchHotelReservation(hotel, checkIn, nights),
+                  child: const Text('예약 보기'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: AspectRatio(
-              aspectRatio: 4 / 3,
-              child: Image.network(
-                hotel.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const ColoredBox(
-                  color: Color(0xFFE5E7EB),
-                  child: Icon(Icons.hotel_outlined, size: 46),
-                ),
-              ),
-            ),
-          ),
-          if (hotel.galleryUrls.length > 1) ...[
-            const SizedBox(height: 10),
-            _GalleryStrip(urls: hotel.galleryUrls),
-          ],
+          _HotelImageGallery(hotel: hotel),
           const SizedBox(height: 16),
           Text(
             hotel.name,
@@ -288,10 +297,288 @@ Future<void> _launchHotelMap(PointHotel hotel) async {
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
+Future<void> _launchHotelReservation(
+  PointHotel hotel,
+  DateTime? checkIn,
+  int nights,
+) async {
+  final propertyCode = hotel.propertyCode.trim().toUpperCase();
+  final fallbackUri = Uri.tryParse(hotel.officialUrl);
+  if (propertyCode.isEmpty) {
+    if (fallbackUri == null) return;
+    await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+    return;
+  }
+
+  final checkInDate = _reservationCheckInFor(hotel, checkIn);
+  final stayNights = nights <= 0 ? 1 : nights;
+  final checkOutDate = checkInDate.add(Duration(days: stayNights));
+  final fromDate = DateFormat('MM/dd/yyyy').format(checkInDate);
+  final toDate = DateFormat('MM/dd/yyyy').format(checkOutDate);
+  final fromIso = DateFormat('yyyy-MM-dd').format(checkInDate);
+  final toIso = DateFormat('yyyy-MM-dd').format(checkOutDate);
+
+  final uri = Uri.https(
+    'www.marriott.com',
+    '/search/availabilityCalendar.mi',
+    {
+      'propertyCode': propertyCode,
+      'isSearch': 'true',
+      'currency': 'KRW',
+      'showFullPrice': 'true',
+      'costTab': 'total',
+      'isAdultsOnly': 'false',
+      'isInternalSearch': 'true',
+      'vsInitialRequest': 'false',
+      'searchType': 'InCity',
+      'for-hotels-nearme': 'Near',
+      'collapseAccordian': 'is-hidden',
+      'singleSearch': 'true',
+      'singleSearchAutoSuggest': 'Unmatched',
+      'flexibleDateSearchRateDisplay': 'false',
+      'recordsPerPage': '40',
+      'isTransient': 'true',
+      'initialRequest': 'true',
+      'fromToDate': fromDate,
+      'fromToDate_submit': toDate,
+      'fromDate': fromDate,
+      'toDate': toDate,
+      'toDateDefaultFormat': toDate,
+      'fromDateDefaultFormat': fromDate,
+      'flexibleDateSearch': 'true',
+      'isHideFlexibleDateCalendar': 'false',
+      't-start': fromIso,
+      't-end': toIso,
+      'isFlexibleDatesOptionSelected': 'true',
+      'lengthOfStay': stayNights.toString(),
+      'roomCount': '1',
+      'numAdultsPerRoom': '2',
+      'childrenCount': '0',
+      'clusterCode': 'none',
+      'numberOfRooms': '1',
+      'useRewardsPoints': 'true',
+      if (hotel.latitude != null)
+        'destinationAddress.latitude': hotel.latitude!.toString(),
+      if (hotel.longitude != null)
+        'destinationAddress.longitude': hotel.longitude!.toString(),
+      if (hotel.name.isNotEmpty) 'destinationAddress.location': hotel.name,
+      'destinationAddress.type': 'Hotel Name',
+    },
+  ).replace(fragment: '/1/');
+
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+DateTime _reservationCheckInFor(PointHotel hotel, DateTime? checkIn) {
+  if (checkIn != null) return DateUtils.dateOnly(checkIn);
+  final entries = [..._calendarItems(hotel)]
+    ..sort((a, b) => a.date.compareTo(b.date));
+  if (entries.isNotEmpty) return DateUtils.dateOnly(entries.first.date);
+  return DateUtils.dateOnly(DateTime.now());
+}
+
+List<String> _hotelImageUrls(PointHotel hotel) {
+  final urls = <String>[];
+
+  void addUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty || urls.contains(trimmed)) return;
+    urls.add(trimmed);
+  }
+
+  addUrl(hotel.imageUrl);
+  for (final url in hotel.galleryUrls) {
+    addUrl(url);
+  }
+  return urls;
+}
+
+class _HotelImageGallery extends StatefulWidget {
+  final PointHotel hotel;
+
+  const _HotelImageGallery({required this.hotel});
+
+  @override
+  State<_HotelImageGallery> createState() => _HotelImageGalleryState();
+}
+
+class _HotelImageGalleryState extends State<_HotelImageGallery> {
+  bool _isLoading = true;
+  int _loadVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _precacheGallery());
+  }
+
+  @override
+  void didUpdateWidget(covariant _HotelImageGallery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hotel.id != widget.hotel.id ||
+        oldWidget.hotel.imageUrl != widget.hotel.imageUrl ||
+        oldWidget.hotel.galleryUrls.join('|') !=
+            widget.hotel.galleryUrls.join('|')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _precacheGallery());
+    }
+  }
+
+  Future<void> _precacheGallery() async {
+    if (!mounted) return;
+    final version = ++_loadVersion;
+    setState(() => _isLoading = true);
+
+    final urls = _hotelImageUrls(widget.hotel).take(6).toList();
+    if (urls.isEmpty) {
+      if (mounted && version == _loadVersion) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
+    await Future.wait(
+      urls.map((url) {
+        return precacheImage(NetworkImage(url), context)
+            .timeout(const Duration(seconds: 7), onTimeout: () {})
+            .catchError((_) {});
+      }),
+    );
+
+    if (!mounted || version != _loadVersion) return;
+    setState(() => _isLoading = false);
+  }
+
+  void _openImageViewer(int initialIndex) {
+    final urls = _hotelImageUrls(widget.hotel);
+    if (urls.isEmpty) return;
+    final safeIndex = initialIndex.clamp(0, urls.length - 1);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ImageViewer(
+          imageUrls: urls,
+          initialIndex: safeIndex,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final urls = _hotelImageUrls(widget.hotel);
+    final mainImageUrl = urls.isNotEmpty ? urls.first : widget.hotel.imageUrl;
+    final showStrip = urls.length > 1;
+    if (_isLoading) {
+      return _GalleryLoadingPanel(showStrip: showStrip);
+    }
+
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => _openImageViewer(0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Image.network(
+                mainImageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const ColoredBox(
+                  color: Color(0xFFE5E7EB),
+                  child: Icon(Icons.hotel_outlined, size: 46),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (showStrip) ...[
+          const SizedBox(height: 10),
+          _GalleryStrip(
+            urls: urls,
+            onImageTap: _openImageViewer,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _GalleryLoadingPanel extends StatelessWidget {
+  final bool showStrip;
+
+  const _GalleryLoadingPanel({required this.showStrip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: const AspectRatio(
+                aspectRatio: 4 / 3,
+                child: ColoredBox(color: Color(0xFFF4F4F5)),
+              ),
+            ),
+            if (showStrip) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 76,
+                child: Row(
+                  children: [
+                    for (var index = 0; index < 4; index++) ...[
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: const ColoredBox(color: Color(0xFFF4F4F5)),
+                        ),
+                      ),
+                      if (index != 3) const SizedBox(width: 8),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.9),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: const SizedBox(
+            width: 66,
+            height: 66,
+            child: Padding(
+              padding: EdgeInsets.all(18),
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: McColors.accent,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _GalleryStrip extends StatelessWidget {
   final List<String> urls;
+  final ValueChanged<int> onImageTap;
 
-  const _GalleryStrip({required this.urls});
+  const _GalleryStrip({
+    required this.urls,
+    required this.onImageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -302,16 +589,19 @@ class _GalleryStrip extends StatelessWidget {
         itemCount: urls.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 1.25,
-              child: Image.network(
-                urls[index],
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const ColoredBox(
-                  color: Color(0xFFE5E7EB),
-                  child: Icon(Icons.image_not_supported_outlined, size: 20),
+          return GestureDetector(
+            onTap: () => onImageTap(index),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 1.25,
+                child: Image.network(
+                  urls[index],
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const ColoredBox(
+                    color: Color(0xFFE5E7EB),
+                    child: Icon(Icons.image_not_supported_outlined, size: 20),
+                  ),
                 ),
               ),
             ),
@@ -339,56 +629,116 @@ class _BottomRateLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text.rich(
-            TextSpan(
-              style: const TextStyle(color: McColors.ink),
-              children: [
-                TextSpan(
-                  text: hasPoints
-                      ? '${_compactCalendarValue(points)} pts'
-                      : '포인트 확인 전',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (hasPoints)
-                  const TextSpan(
-                    text: '/박',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-              ],
-            ),
-          ),
+        _BottomRateLine(
+          label: '포인트',
+          value: hasPoints ? NumberFormat('#,###').format(points) : '확인 전',
+          suffix: hasPoints ? 'pts/박' : '',
+          valueColor: McColors.ink,
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 8),
+        _BottomRateLine(
+          label: '현금가',
+          value: hasCash ? '₩${NumberFormat('#,###').format(cashKrw)}' : '확인 전',
+          suffix: hasCash ? '/박' : '',
+          valueColor: McColors.inkSoft,
+        ),
+      ],
+    );
+  }
+}
+
+class _BottomRateLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final String suffix;
+  final Color valueColor;
+
+  const _BottomRateLine({
+    required this.label,
+    required this.value,
+    required this.suffix,
+    required this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '$label  ',
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (suffix.isNotEmpty)
+              TextSpan(
+                text: ' $suffix',
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomValueLabel extends StatelessWidget {
+  final int points;
+  final int cashKrw;
+
+  const _BottomValueLabel({
+    required this.points,
+    required this.cashKrw,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = points > 0 && cashKrw > 0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('가치', style: McTextStyles.micro),
+        const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text.rich(
             TextSpan(
-              style: const TextStyle(color: McColors.inkSoft),
               children: [
                 TextSpan(
-                  text: hasCash
-                      ? '₩${_compactCalendarValue(cashKrw)}'
-                      : '현금가 확인 전',
+                  text: hasValue ? (cashKrw / points).toStringAsFixed(1) : '-',
                   style: const TextStyle(
-                    fontSize: 13,
+                    color: McColors.ink,
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (hasCash)
+                if (hasValue)
                   const TextSpan(
-                    text: '/박',
+                    text: ' 원/pt',
                     style: TextStyle(
-                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                      fontSize: 11,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -783,7 +1133,7 @@ class _ValueMetric extends StatelessWidget {
   }
 }
 
-class _PointCalendar extends StatelessWidget {
+class _PointCalendar extends StatefulWidget {
   final PointHotel hotel;
   final DateTime? checkIn;
   final ValueChanged<DateTime> onDateSelected;
@@ -795,13 +1145,57 @@ class _PointCalendar extends StatelessWidget {
   });
 
   @override
+  State<_PointCalendar> createState() => _PointCalendarState();
+}
+
+class _PointCalendarState extends State<_PointCalendar> {
+  late DateTime _visibleMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleMonth = _initialVisibleMonth();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PointCalendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hotel.id != widget.hotel.id) {
+      _visibleMonth = _initialVisibleMonth();
+      return;
+    }
+    final checkIn = widget.checkIn;
+    if (!DateUtils.isSameDay(oldWidget.checkIn, checkIn) &&
+        checkIn != null &&
+        !_sameMonth(_visibleMonth, checkIn)) {
+      _visibleMonth = DateTime(checkIn.year, checkIn.month);
+    }
+  }
+
+  DateTime _initialVisibleMonth() {
+    final entries = [..._calendarItems(widget.hotel)]
+      ..sort((a, b) => a.date.compareTo(b.date));
+    if (entries.isEmpty) {
+      final now = DateTime.now();
+      return DateTime(now.year, now.month);
+    }
+    return _focusedCalendarMonth(entries, widget.checkIn);
+  }
+
+  void _moveMonth(int delta) {
+    setState(() {
+      _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final entries = [..._calendarItems(hotel)]
+    final entries = [..._calendarItems(widget.hotel)]
       ..sort((a, b) => a.date.compareTo(b.date));
     if (entries.isEmpty) return const _CalendarEmptyState();
 
-    final focusedMonth = _focusedCalendarMonth(entries, checkIn);
-    final selectedDate = checkIn ?? DateTime.now();
+    final focusedMonth = _visibleMonth;
+    final selectedDate = widget.checkIn ?? DateTime.now();
     final firstDayOfMonth = DateTime(focusedMonth.year, focusedMonth.month);
     final gridStart = firstDayOfMonth.subtract(
       Duration(days: firstDayOfMonth.weekday % DateTime.daysPerWeek),
@@ -827,19 +1221,42 @@ class _PointCalendar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
             child: Row(
               children: [
-                const Icon(
-                  Icons.calendar_month_outlined,
-                  color: McColors.inkSoft,
-                  size: 18,
+                _CalendarMonthButton(
+                  tooltip: '전달',
+                  icon: Icons.chevron_left_rounded,
+                  onTap: () => _moveMonth(-1),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  DateFormat('yyyy년 M월').format(focusedMonth),
-                  style: const TextStyle(
-                    color: McColors.ink,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.calendar_month_outlined,
+                        color: McColors.inkSoft,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          DateFormat('yyyy년 M월').format(focusedMonth),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: McColors.ink,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(width: 8),
+                _CalendarMonthButton(
+                  tooltip: '다음달',
+                  icon: Icons.chevron_right_rounded,
+                  onTap: () => _moveMonth(1),
                 ),
               ],
             ),
@@ -875,7 +1292,7 @@ class _PointCalendar extends StatelessWidget {
                         days[week * DateTime.daysPerWeek + dayIndex],
                         selectedDate,
                       ),
-                      onTap: onDateSelected,
+                      onTap: widget.onDateSelected,
                       showRightDivider: dayIndex != DateTime.daysPerWeek - 1,
                       showBottomDivider: week != 5,
                     ),
@@ -884,6 +1301,30 @@ class _PointCalendar extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _CalendarMonthButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CalendarMonthButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onTap,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+      icon: Icon(icon, color: McColors.ink, size: 26),
     );
   }
 }
@@ -957,7 +1398,7 @@ class _CalendarItemData {
 }
 
 class _CalendarDayCell extends StatelessWidget {
-  static const _rateBlue = Color(0xFF2E7DBD);
+  static const _rateColor = McColors.accent;
 
   final DateTime date;
   final DateTime focusedMonth;
@@ -1006,7 +1447,7 @@ class _CalendarDayCell extends StatelessWidget {
                 top: 0,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: _rateBlue,
+                    color: _rateColor,
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(2),
                     ),
@@ -1062,7 +1503,7 @@ class _CalendarValueBadge extends StatelessWidget {
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
-        color: _CalendarDayCell._rateBlue,
+        color: _CalendarDayCell._rateColor,
         borderRadius: BorderRadius.circular(4),
       ),
       child: FittedBox(

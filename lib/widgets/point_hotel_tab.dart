@@ -1,10 +1,15 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
 import '../screen/point_hotel_detail_screen.dart';
 import '../services/point_hotel_service.dart';
+import 'point_hotel_favorite_button.dart';
 
 enum _HotelViewMode { list, map }
 
@@ -42,208 +47,25 @@ class _PointHotelTabState extends State<PointHotelTab> {
     );
   }
 
-  Future<void> _openSearchSheet() async {
-    final controller = TextEditingController(text: _query);
-    var selectedDate = _checkIn;
-    var selectedNights = _nights;
-
+  Future<void> _openSearchSheet(List<PointHotel> availableHotels) async {
     final result = await showModalBottomSheet<_HotelSearchResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            Future<void> pickDate() async {
-              final now = DateTime.now();
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: selectedDate ?? now,
-                firstDate: now,
-                lastDate: now.add(const Duration(days: 365)),
-              );
-              if (picked != null) {
-                setSheetState(() => selectedDate = picked);
-              }
-            }
-
-            return DraggableScrollableSheet(
-              initialChildSize: 0.82,
-              minChildSize: 0.55,
-              maxChildSize: 0.94,
-              builder: (context, scrollController) {
-                return DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(26),
-                    ),
-                  ),
-                  child: ListView(
-                    controller: scrollController,
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      14,
-                      16,
-                      18 + MediaQuery.of(context).padding.bottom,
-                    ),
-                    children: [
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          tooltip: '닫기',
-                          icon: const Icon(Icons.close_rounded, size: 28),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ),
-                      _SearchPanel(
-                        title: '어디',
-                        subtitle: '목적지 검색',
-                        child: TextField(
-                          controller: controller,
-                          autofocus: true,
-                          textInputAction: TextInputAction.search,
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.search_rounded, size: 28),
-                            hintText: '호텔 또는 위치 검색...',
-                          ),
-                          onSubmitted: (_) => Navigator.pop(
-                            context,
-                            _HotelSearchResult(
-                              query: controller.text,
-                              nights: selectedNights,
-                              checkIn: selectedDate,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _SearchPanel(
-                        title: '언제',
-                        subtitle: selectedDate == null
-                            ? '날짜 추가'
-                            : DateFormat('M월 d일').format(selectedDate!),
-                        onTap: pickDate,
-                      ),
-                      const SizedBox(height: 14),
-                      _SearchPanel(
-                        title: '박',
-                        subtitle: '$selectedNights박',
-                        child: Row(
-                          children: [
-                            IconButton(
-                              tooltip: '숙박수 줄이기',
-                              onPressed: selectedNights <= 1
-                                  ? null
-                                  : () => setSheetState(
-                                        () => selectedNights -= 1,
-                                      ),
-                              icon: const Icon(Icons.remove_circle_outline),
-                            ),
-                            Text(
-                              '$selectedNights박',
-                              style: const TextStyle(
-                                color: McColors.ink,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: '숙박수 늘리기',
-                              onPressed: () => setSheetState(
-                                () => selectedNights += 1,
-                              ),
-                              icon: const Icon(Icons.add_circle_outline),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        height: 58,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFF3A5AA),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(
-                            context,
-                            _HotelSearchResult(
-                              query: controller.text,
-                              nights: selectedNights,
-                              checkIn: selectedDate,
-                            ),
-                          ),
-                          icon: const Icon(Icons.search_rounded, size: 28),
-                          label: const Text(
-                            '검색',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
+      builder: (context) => _HotelSearchSheet(
+        initialQuery: _query,
+        initialNights: _nights,
+        initialCheckIn: _checkIn,
+        hotels: availableHotels,
+      ),
     );
 
-    controller.dispose();
-    if (result == null) return;
+    if (!mounted || result == null) return;
     setState(() {
       _query = result.query.trim();
       _nights = result.nights;
       _checkIn = result.checkIn;
     });
-  }
-
-  void _showFilters() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            18,
-            18,
-            18,
-            18 + MediaQuery.of(context).padding.bottom,
-          ),
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('필터', style: McTextStyles.sectionTitle),
-              SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _FilterChip(label: '게스트 선호'),
-                  _FilterChip(label: '15,000 pts 이하'),
-                  _FilterChip(label: '메리어트'),
-                  _FilterChip(label: '하얏트'),
-                  _FilterChip(label: '힐튼'),
-                  _FilterChip(label: '수영장'),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -271,8 +93,7 @@ class _PointHotelTabState extends State<PointHotelTab> {
           nights: _nights,
           checkIn: _checkIn,
           viewMode: _viewMode,
-          onOpenSearch: _openSearchSheet,
-          onShowFilters: _showFilters,
+          onOpenSearch: () => _openSearchSheet(allHotels),
           onViewModeChanged: (mode) => setState(() => _viewMode = mode),
           onTapHotel: _openHotel,
         );
@@ -289,7 +110,6 @@ class _HotelContent extends StatelessWidget {
   final DateTime? checkIn;
   final _HotelViewMode viewMode;
   final VoidCallback onOpenSearch;
-  final VoidCallback onShowFilters;
   final ValueChanged<_HotelViewMode> onViewModeChanged;
   final ValueChanged<PointHotel> onTapHotel;
 
@@ -301,7 +121,6 @@ class _HotelContent extends StatelessWidget {
     required this.checkIn,
     required this.viewMode,
     required this.onOpenSearch,
-    required this.onShowFilters,
     required this.onViewModeChanged,
     required this.onTapHotel,
   });
@@ -321,15 +140,12 @@ class _HotelContent extends StatelessWidget {
                 onTap: onOpenSearch,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  _FilterButton(onTap: onShowFilters),
-                  const Spacer(),
-                  _ViewModeSwitch(
-                    mode: viewMode,
-                    onChanged: onViewModeChanged,
-                  ),
-                ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: _ViewModeSwitch(
+                  mode: viewMode,
+                  onChanged: onViewModeChanged,
+                ),
               ),
             ],
           ),
@@ -347,7 +163,7 @@ class _HotelContent extends StatelessWidget {
                     color: McColors.ink,
                     fontSize: 28,
                     height: 1.18,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
@@ -491,6 +307,404 @@ class _HotelSearchResult {
   });
 }
 
+class _HotelSearchSheet extends StatefulWidget {
+  final String initialQuery;
+  final int initialNights;
+  final DateTime? initialCheckIn;
+  final List<PointHotel> hotels;
+
+  const _HotelSearchSheet({
+    required this.initialQuery,
+    required this.initialNights,
+    required this.initialCheckIn,
+    required this.hotels,
+  });
+
+  @override
+  State<_HotelSearchSheet> createState() => _HotelSearchSheetState();
+}
+
+class _HotelSearchSheetState extends State<_HotelSearchSheet> {
+  late final TextEditingController _controller;
+  late DateTime? _selectedDate;
+  late int _selectedNights;
+  PointHotel? _selectedHotel;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialQuery);
+    _controller.addListener(_handleQueryChanged);
+    _selectedDate = widget.initialCheckIn;
+    _selectedNights = widget.initialNights;
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_handleQueryChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleQueryChanged() {
+    if (_selectedHotel != null &&
+        _controller.text.trim() != _selectedHotel!.name.trim()) {
+      _selectedHotel = null;
+    }
+    setState(() {});
+  }
+
+  List<PointHotel> _matchingHotels() {
+    final needle = _controller.text.trim().toLowerCase();
+    if (needle.isEmpty || _selectedHotel != null) {
+      return const <PointHotel>[];
+    }
+
+    return widget.hotels
+        .where((hotel) => hotel.name.toLowerCase().contains(needle))
+        .take(8)
+        .toList(growable: false);
+  }
+
+  void _selectHotel(PointHotel hotel) {
+    setState(() => _selectedHotel = hotel);
+    _controller.value = TextEditingValue(
+      text: hotel.name,
+      selection: TextSelection.collapsed(offset: hotel.name.length),
+    );
+    FocusScope.of(context).unfocus();
+  }
+
+  void _clearQuery() {
+    setState(() => _selectedHotel = null);
+    _controller.clear();
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _selectedDate = picked);
+  }
+
+  void _close() {
+    FocusScope.of(context).unfocus();
+    Navigator.pop(context);
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+    Navigator.pop(
+      context,
+      _HotelSearchResult(
+        query: _controller.text,
+        nights: _selectedNights,
+        checkIn: _selectedDate,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _controller.text.trim();
+    final matchingHotels = _matchingHotels();
+    return DraggableScrollableSheet(
+      initialChildSize: 0.82,
+      minChildSize: 0.55,
+      maxChildSize: 0.94,
+      builder: (context, scrollController) {
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(26),
+            ),
+          ),
+          child: ListView(
+            controller: scrollController,
+            padding: EdgeInsets.fromLTRB(
+              16,
+              14,
+              16,
+              18 + MediaQuery.of(context).padding.bottom,
+            ),
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  tooltip: '닫기',
+                  icon: const Icon(Icons.close_rounded, size: 28),
+                  onPressed: _close,
+                ),
+              ),
+              _SearchPanel(
+                title: '어디',
+                subtitle: '목적지 검색',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search_rounded, size: 28),
+                        suffixIcon: query.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: '검색어 지우기',
+                                onPressed: _clearQuery,
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                        hintText: '호텔 또는 위치 검색...',
+                      ),
+                      onSubmitted: (_) => _submit(),
+                    ),
+                    if (matchingHotels.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _HotelSuggestionList(
+                        hotels: matchingHotels,
+                        query: query,
+                        onSelected: _selectHotel,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (query.isNotEmpty &&
+                  matchingHotels.isEmpty &&
+                  _selectedHotel == null) ...[
+                const SizedBox(height: 8),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    '일치하는 호텔명이 없습니다.',
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              _SearchPanel(
+                title: '언제',
+                subtitle: _selectedDate == null
+                    ? '날짜 추가'
+                    : DateFormat('M월 d일').format(_selectedDate!),
+                onTap: _pickDate,
+              ),
+              const SizedBox(height: 14),
+              _SearchPanel(
+                title: '박',
+                subtitle: '$_selectedNights박',
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: '숙박수 줄이기',
+                      onPressed: _selectedNights <= 1
+                          ? null
+                          : () => setState(() => _selectedNights -= 1),
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                    Text(
+                      '$_selectedNights박',
+                      style: const TextStyle(
+                        color: McColors.ink,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '숙박수 늘리기',
+                      onPressed: () => setState(() => _selectedNights += 1),
+                      icon: const Icon(Icons.add_circle_outline),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 58,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: McColors.accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: _submit,
+                  icon: const Icon(Icons.search_rounded, size: 28),
+                  label: const Text(
+                    '검색',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HotelSuggestionList extends StatelessWidget {
+  final List<PointHotel> hotels;
+  final String query;
+  final ValueChanged<PointHotel> onSelected;
+
+  const _HotelSuggestionList({
+    required this.hotels,
+    required this.query,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          for (var index = 0; index < hotels.length; index++) ...[
+            _HotelSuggestionTile(
+              hotel: hotels[index],
+              query: query,
+              onTap: () => onSelected(hotels[index]),
+            ),
+            if (index != hotels.length - 1)
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HotelSuggestionTile extends StatelessWidget {
+  final PointHotel hotel;
+  final String query;
+  final VoidCallback onTap;
+
+  const _HotelSuggestionTile({
+    required this.hotel,
+    required this.query,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.hotel_outlined,
+                size: 22,
+                color: Color(0xFF6B7280),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      _highlightHotelName(hotel.name, query),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (hotel.locationText.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        hotel.locationText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+TextSpan _highlightHotelName(String name, String query) {
+  final needle = query.trim().toLowerCase();
+  const normalStyle = TextStyle(
+    color: McColors.ink,
+    fontSize: 15,
+    fontWeight: FontWeight.w700,
+  );
+  const highlightStyle = TextStyle(
+    color: McColors.accent,
+    fontSize: 15,
+    fontWeight: FontWeight.w900,
+  );
+
+  if (needle.isEmpty) {
+    return TextSpan(text: name, style: normalStyle);
+  }
+
+  final lowerName = name.toLowerCase();
+  final spans = <TextSpan>[];
+  var start = 0;
+
+  while (start < name.length) {
+    final matchIndex = lowerName.indexOf(needle, start);
+    if (matchIndex < 0) {
+      spans.add(TextSpan(text: name.substring(start), style: normalStyle));
+      break;
+    }
+
+    if (matchIndex > start) {
+      spans.add(
+        TextSpan(
+          text: name.substring(start, matchIndex),
+          style: normalStyle,
+        ),
+      );
+    }
+
+    final matchEnd = matchIndex + needle.length;
+    spans.add(
+      TextSpan(
+        text: name.substring(matchIndex, matchEnd),
+        style: highlightStyle,
+      ),
+    );
+    start = matchEnd;
+  }
+
+  return TextSpan(children: spans, style: normalStyle);
+}
+
 class _HotelSearchSummary extends StatelessWidget {
   final String query;
   final int nights;
@@ -566,30 +780,6 @@ class _HotelSearchSummary extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FilterButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _FilterButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: McColors.ink,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        side: const BorderSide(color: Color(0xFFE5E7EB)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      ),
-      onPressed: onTap,
-      icon: const Icon(Icons.tune_rounded),
-      label: const Text(
-        '필터',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
       ),
     );
   }
@@ -726,41 +916,16 @@ class _HotelCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (hotel.guestFavorite)
-                  Positioned(
-                    left: 12,
-                    top: 12,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(999),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                        child: Text(
-                          '게스트 선호',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Icon(
-                    Icons.favorite_border_rounded,
+                  right: 5,
+                  top: 5,
+                  child: PointHotelFavoriteButton(
+                    hotel: hotel,
                     color: Colors.white,
+                    selectedColor: Colors.white,
                     size: 34,
+                    minTouchSize: 48,
+                    splashRadius: 24,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.5),
@@ -934,22 +1099,7 @@ class _SearchPanel extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-
-  const _FilterChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: const Color(0xFFF7F7F8),
-      side: const BorderSide(color: Color(0xFFE5E7EB)),
-    );
-  }
-}
-
-class _HotelMapPreview extends StatelessWidget {
+class _HotelMapPreview extends StatefulWidget {
   final List<PointHotel> hotels;
   final ValueChanged<PointHotel> onTapHotel;
 
@@ -959,98 +1109,235 @@ class _HotelMapPreview extends StatelessWidget {
   });
 
   @override
+  State<_HotelMapPreview> createState() => _HotelMapPreviewState();
+}
+
+class _HotelMapPreviewState extends State<_HotelMapPreview> {
+  GoogleMapController? _mapController;
+  Map<String, BitmapDescriptor> _markerIcons = const {};
+  int _markerIconVersion = 0;
+
+  List<PointHotel> get _mappableHotels => widget.hotels
+      .where((hotel) => hotel.latitude != null && hotel.longitude != null)
+      .toList(growable: false);
+
+  @override
+  void initState() {
+    super.initState();
+    _buildMarkerIcons();
+  }
+
+  @override
+  void didUpdateWidget(covariant _HotelMapPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hotels != widget.hotels) {
+      _buildMarkerIcons();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitMapToHotels());
+    }
+  }
+
+  Future<void> _buildMarkerIcons() async {
+    final version = ++_markerIconVersion;
+    final hotels = _mappableHotels;
+    final entries = await Future.wait(
+      hotels.map((hotel) async {
+        return MapEntry(
+          hotel.id,
+          await _buildHotelNameMarkerIcon(hotel.name),
+        );
+      }),
+    );
+    if (!mounted || version != _markerIconVersion) return;
+    setState(() => _markerIcons = Map<String, BitmapDescriptor>.fromEntries(
+          entries,
+        ));
+  }
+
+  CameraPosition _initialCamera(List<PointHotel> hotels) {
+    if (hotels.isEmpty) {
+      return const CameraPosition(
+        target: LatLng(37.5665, 126.9780),
+        zoom: 10,
+      );
+    }
+
+    final center = _centerForHotels(hotels);
+    return CameraPosition(target: center, zoom: hotels.length == 1 ? 14.5 : 11);
+  }
+
+  LatLng _centerForHotels(List<PointHotel> hotels) {
+    final lat = hotels
+            .map((hotel) => hotel.latitude!)
+            .reduce((value, element) => value + element) /
+        hotels.length;
+    final lng = hotels
+            .map((hotel) => hotel.longitude!)
+            .reduce((value, element) => value + element) /
+        hotels.length;
+    return LatLng(lat, lng);
+  }
+
+  LatLngBounds _boundsForHotels(List<PointHotel> hotels) {
+    var minLat = hotels.first.latitude!;
+    var maxLat = hotels.first.latitude!;
+    var minLng = hotels.first.longitude!;
+    var maxLng = hotels.first.longitude!;
+
+    for (final hotel in hotels.skip(1)) {
+      final lat = hotel.latitude!;
+      final lng = hotel.longitude!;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+    }
+
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+  }
+
+  Future<void> _fitMapToHotels() async {
+    final controller = _mapController;
+    final hotels = _mappableHotels;
+    if (controller == null || hotels.isEmpty) return;
+
+    try {
+      if (hotels.length == 1) {
+        await controller.animateCamera(
+          CameraUpdate.newLatLngZoom(
+            LatLng(hotels.first.latitude!, hotels.first.longitude!),
+            14.5,
+          ),
+        );
+        return;
+      }
+
+      await controller.animateCamera(
+        CameraUpdate.newLatLngBounds(_boundsForHotels(hotels), 56),
+      );
+    } catch (_) {
+      // GoogleMap이 아직 레이아웃되기 전이면 초기 카메라 위치만 사용합니다.
+    }
+  }
+
+  Set<Marker> _markersForHotels(List<PointHotel> hotels) {
+    return hotels.map((hotel) {
+      return Marker(
+        markerId: MarkerId('hotel_${hotel.id}'),
+        position: LatLng(hotel.latitude!, hotel.longitude!),
+        anchor: const Offset(0.5, 1),
+        icon: _markerIcons[hotel.id] ?? BitmapDescriptor.defaultMarker,
+        infoWindow: InfoWindow(
+          title: hotel.name,
+          snippet: hotel.address,
+          onTap: () => widget.onTapHotel(hotel),
+        ),
+      );
+    }).toSet();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hotels = _mappableHotels;
+    if (hotels.isEmpty) {
+      return const _HotelMessageState(
+        icon: Icons.map_outlined,
+        title: '지도에 표시할 위치가 없습니다.',
+        body: '호텔 좌표가 등록되면 지도에서 위치를 볼 수 있습니다.',
+        compact: true,
+      );
+    }
+
     return Container(
       height: 420,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: const Color(0xFFE8ECEF),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFD6DDE3)),
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _MapLinePainter()),
-          ),
-          for (var i = 0; i < hotels.length; i++)
-            Positioned(
-              left: 28.0 + (i % 2) * 145,
-              top: 42.0 + (i ~/ 2) * 72,
-              child: _MapHotelPin(
-                hotel: hotels[i],
-                onTap: () => onTapHotel(hotels[i]),
-              ),
-            ),
-        ],
+      child: GoogleMap(
+        initialCameraPosition: _initialCamera(hotels),
+        markers: _markersForHotels(hotels),
+        onMapCreated: (controller) {
+          _mapController = controller;
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _fitMapToHotels());
+        },
+        compassEnabled: false,
+        mapToolbarEnabled: false,
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
       ),
     );
   }
 }
 
-class _MapHotelPin extends StatelessWidget {
-  final PointHotel hotel;
-  final VoidCallback onTap;
+Future<BitmapDescriptor> _buildHotelNameMarkerIcon(String name) async {
+  const width = 250.0;
+  const height = 108.0;
+  const labelHeight = 48.0;
+  const pinTop = 58.0;
+  const pinRadius = 13.0;
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
 
-  const _MapHotelPin({
-    required this.hotel,
-    required this.onTap,
-  });
+  final shadowPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.18)
+    ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 8);
+  final labelRect = RRect.fromRectAndRadius(
+    const Rect.fromLTWH(8, 4, width - 16, labelHeight),
+    const Radius.circular(22),
+  );
+  canvas.drawRRect(labelRect.shift(const Offset(0, 4)), shadowPaint);
+  canvas.drawRRect(labelRect, Paint()..color = Colors.white);
 
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(999),
-      elevation: 4,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            hotel.hasAwardRate
-                ? '${NumberFormat('#,###').format(hotel.pointsPerNight)} pts'
-                : '확인 전',
-            style: const TextStyle(
-              color: McColors.ink,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
+  final textPainter = TextPainter(
+    text: TextSpan(
+      text: name,
+      style: const TextStyle(
+        color: McColors.ink,
+        fontSize: 20,
+        fontWeight: FontWeight.w800,
       ),
-    );
-  }
-}
+    ),
+    textDirection: ui.TextDirection.ltr,
+    maxLines: 1,
+    ellipsis: '...',
+  )..layout(maxWidth: width - 44);
+  textPainter.paint(
+    canvas,
+    Offset(
+      (width - textPainter.width) / 2,
+      4 + (labelHeight - textPainter.height) / 2,
+    ),
+  );
 
-class _MapLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final roadPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.78)
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round;
-    final thinPaint = Paint()
-      ..color = const Color(0xFFD1D8DE)
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
+  const pinCenter = Offset(width / 2, pinTop + pinRadius);
+  final pinPaint = Paint()..color = McColors.accent;
+  final pinShadowPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.2)
+    ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 5);
+  final pinPath = Path()
+    ..addOval(Rect.fromCircle(center: pinCenter, radius: pinRadius))
+    ..moveTo(width / 2 - 8, pinTop + pinRadius + 8)
+    ..lineTo(width / 2, height - 4)
+    ..lineTo(width / 2 + 8, pinTop + pinRadius + 8)
+    ..close();
+  canvas.drawPath(pinPath.shift(const Offset(0, 2)), pinShadowPaint);
+  canvas.drawPath(pinPath, pinPaint);
+  canvas.drawCircle(pinCenter, 4.5, Paint()..color = Colors.white);
 
-    canvas.drawLine(
-      Offset(-20, size.height * 0.22),
-      Offset(size.width + 30, size.height * 0.52),
-      roadPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.18, -20),
-      Offset(size.width * 0.74, size.height + 20),
-      roadPaint,
-    );
-    canvas.drawLine(
-      Offset(20, size.height * 0.76),
-      Offset(size.width - 20, size.height * 0.18),
-      thinPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  final image = await recorder.endRecording().toImage(
+        width.toInt(),
+        height.toInt(),
+      );
+  final ByteData? bytes =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+  return BitmapDescriptor.bytes(
+    bytes!.buffer.asUint8List(),
+    imagePixelRatio: 2,
+  );
 }

@@ -472,7 +472,7 @@ class _ExplorePill extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: const BoxDecoration(
-              color: Color(0xFFF3A5AA),
+              color: McColors.accent,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.search_rounded, color: Colors.white),

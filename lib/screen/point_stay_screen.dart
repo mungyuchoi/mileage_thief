@@ -14,6 +14,7 @@ import '../services/marriott_stay_service.dart';
 import '../services/point_hotel_service.dart';
 import '../widgets/marriott_stay_records_tab.dart';
 import '../widgets/point_hotel_explore_tab.dart';
+import '../widgets/point_hotel_favorite_button.dart';
 import '../widgets/point_hotel_tab.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
@@ -60,6 +61,16 @@ class _PointStayScreenState extends State<PointStayScreen>
       featureId: CommunityLabel.pointStayFeatureId,
     ),
     _PointStayTabConfig(
+      label: '호텔',
+      analyticsName: 'hotel',
+      kind: _PointStayTabKind.hotel,
+    ),
+    _PointStayTabConfig(
+      label: '탐색',
+      analyticsName: 'hotel_explore',
+      kind: _PointStayTabKind.explore,
+    ),
+    _PointStayTabConfig(
       label: '메리어트',
       analyticsName: 'marriott',
       kind: _PointStayTabKind.brand,
@@ -93,16 +104,6 @@ class _PointStayScreenState extends State<PointStayScreen>
       label: '숙박기록',
       analyticsName: 'marriott_stays',
       kind: _PointStayTabKind.records,
-    ),
-    _PointStayTabConfig(
-      label: '호텔',
-      analyticsName: 'hotel',
-      kind: _PointStayTabKind.hotel,
-    ),
-    _PointStayTabConfig(
-      label: '탐색',
-      analyticsName: 'hotel_explore',
-      kind: _PointStayTabKind.explore,
     ),
   ];
 
@@ -1299,13 +1300,36 @@ class _BrandHotelCard extends StatelessWidget {
                 ),
                 child: AspectRatio(
                   aspectRatio: 1.75,
-                  child: Image.network(
-                    hotel.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const ColoredBox(
-                      color: Color(0xFFE5E7EB),
-                      child: Icon(Icons.hotel_outlined, size: 34),
-                    ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        hotel.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const ColoredBox(
+                          color: Color(0xFFE5E7EB),
+                          child: Icon(Icons.hotel_outlined, size: 34),
+                        ),
+                      ),
+                      Positioned(
+                        right: 5,
+                        top: 5,
+                        child: PointHotelFavoriteButton(
+                          hotel: hotel,
+                          color: Colors.white,
+                          selectedColor: Colors.white,
+                          size: 24,
+                          minTouchSize: 36,
+                          splashRadius: 20,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1463,7 +1487,7 @@ class _BrandFeedSectionHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '커뮤니티 증거',
+                '피드',
                 style: McTextStyles.sectionTitle.copyWith(
                   fontWeight: FontWeight.w400,
                 ),

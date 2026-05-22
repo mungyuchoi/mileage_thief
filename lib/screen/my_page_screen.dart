@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import '../models/point_hotel_model.dart';
 import '../services/auth_service.dart';
 import 'branch/branch_detail_screen.dart';
 import '../services/user_service.dart';
@@ -21,8 +22,10 @@ import '../utils/image_compressor.dart';
 import '../screen/peanut_history_screen.dart';
 import '../utils/ad_removal_utils.dart';
 import '../services/card_transaction_service.dart';
+import '../services/point_hotel_like_service.dart';
 import '../widgets/shopping_mall_grid.dart';
 import 'my_card_dashboard_screen.dart';
+import 'point_hotel_detail_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,6 +82,13 @@ class _MyPageScreenState extends State<MyPageScreen>
   bool _hasMoreBookmarks = true;
   bool _isBookmarksLoading = false;
   final ScrollController _bookmarksScrollController = ScrollController();
+
+  // 좋아요 호텔 페이징
+  List<DocumentSnapshot> _likedHotels = [];
+  DocumentSnapshot? _lastLikedHotelDoc;
+  bool _hasMoreLikedHotels = true;
+  bool _isLikedHotelsLoading = false;
+  final ScrollController _likedHotelsScrollController = ScrollController();
 
   // 지점 리뷰(브랜치 댓글) 페이징
   List<DocumentSnapshot> _branchComments = [];
@@ -194,6 +204,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _commentsScrollController.addListener(_onCommentsScroll);
     _likedPostsScrollController.addListener(_onLikedPostsScroll);
     _bookmarksScrollController.addListener(_onBookmarksScroll);
+    _likedHotelsScrollController.addListener(_onLikedHotelsScroll);
     _branchCommentsScrollController.addListener(_onBranchCommentsScroll);
     _initAdState();
     _loadInterstitialAd();
@@ -209,6 +220,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _commentsScrollController.dispose();
     _likedPostsScrollController.dispose();
     _bookmarksScrollController.dispose();
+    _likedHotelsScrollController.dispose();
     _branchCommentsScrollController.dispose();
     _myPageBannerAd?.dispose();
     _interstitialAd?.dispose();
@@ -233,8 +245,8 @@ class _MyPageScreenState extends State<MyPageScreen>
   }
 
   void _initializeTabController() {
-    // 게시글, 댓글, 리뷰, 좋아요, 북마크 → 총 5개 탭
-    _tabController = TabController(length: 5, vsync: this);
+    // 게시글, 댓글, 리뷰, 좋아요, 북마크, 호텔 → 총 6개 탭
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   void _onPostsScroll() {
@@ -273,6 +285,15 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
   }
 
+  void _onLikedHotelsScroll() {
+    if (_likedHotelsScrollController.position.pixels >=
+        _likedHotelsScrollController.position.maxScrollExtent - 200) {
+      if (!_isLikedHotelsLoading && _hasMoreLikedHotels) {
+        _loadLikedHotels(loadMore: true);
+      }
+    }
+  }
+
   void _onBranchCommentsScroll() {
     if (_branchCommentsScrollController.position.pixels >=
         _branchCommentsScrollController.position.maxScrollExtent - 200) {
@@ -304,6 +325,7 @@ class _MyPageScreenState extends State<MyPageScreen>
       _loadUserComments(),
       _loadLikedPosts(),
       _loadBookmarks(),
+      _loadLikedHotels(),
       _loadBranchComments(),
     ]);
   }
@@ -460,6 +482,45 @@ class _MyPageScreenState extends State<MyPageScreen>
       print('북마크한 게시글 로드 오류: $e');
       setState(() {
         _isBookmarksLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLikedHotels({bool loadMore = false}) async {
+    final user = AuthService.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isLikedHotelsLoading = true;
+    });
+
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection(PointHotelLikeService.collectionName)
+          .orderBy('likedAt', descending: true)
+          .limit(_pageSize);
+      if (loadMore && _lastLikedHotelDoc != null) {
+        query = query.startAfterDocument(_lastLikedHotelDoc!);
+      }
+      final querySnapshot = await query.get();
+      if (loadMore) {
+        _likedHotels.addAll(querySnapshot.docs);
+      } else {
+        _likedHotels = querySnapshot.docs;
+      }
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastLikedHotelDoc = querySnapshot.docs.last;
+      }
+      _hasMoreLikedHotels = querySnapshot.docs.length == _pageSize;
+      setState(() {
+        _isLikedHotelsLoading = false;
+      });
+    } catch (e) {
+      print('좋아요한 호텔 로드 오류: $e');
+      setState(() {
+        _isLikedHotelsLoading = false;
       });
     }
   }
@@ -2150,6 +2211,28 @@ class _MyPageScreenState extends State<MyPageScreen>
                                 ],
                               ),
                             ),
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text('호텔'),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${_likedHotels.length}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -2166,6 +2249,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                   _buildBranchCommentsList(),
                   _buildLikedPostsList(),
                   _buildBookmarksList(),
+                  _buildLikedHotelsList(),
                 ],
               ),
             ),
@@ -3437,6 +3521,167 @@ class _MyPageScreenState extends State<MyPageScreen>
         );
       },
     );
+  }
+
+  Widget _buildLikedHotelsList() {
+    if (_isLikedHotelsLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF74512D)),
+      );
+    }
+
+    if (_likedHotels.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hotel_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('좋아요한 호텔이 없습니다', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _likedHotelsScrollController,
+      padding: _tabListPadding(),
+      itemCount: _likedHotels.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _likedHotels.length) {
+          return const SizedBox(height: 20);
+        }
+        final likedHotel =
+            _likedHotels[index].data() as Map<String, dynamic>? ?? {};
+        final likedAt =
+            (likedHotel['likedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final hotelId =
+            (likedHotel['hotelId'] ?? _likedHotels[index].id).toString();
+        final name = (likedHotel['name'] as String?)?.trim().isNotEmpty == true
+            ? likedHotel['name'] as String
+            : '호텔명 없음';
+        final locationText =
+            (likedHotel['locationText'] as String?)?.trim().isNotEmpty == true
+                ? likedHotel['locationText'] as String
+                : (likedHotel['address'] as String? ?? '');
+        final imageUrl = likedHotel['imageUrl'] as String? ?? '';
+
+        return GestureDetector(
+          onTap: () => _openLikedHotel(hotelId),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 62,
+                      height: 62,
+                      child: imageUrl.isEmpty
+                          ? const ColoredBox(
+                              color: Color(0xFFE5E7EB),
+                              child: Icon(Icons.hotel_outlined),
+                            )
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const ColoredBox(
+                                color: Color(0xFFE5E7EB),
+                                child: Icon(Icons.hotel_outlined),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        if (locationText.isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Text(
+                            locationText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            DateFormat('yyyy.MM.dd').format(likedAt),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openLikedHotel(String hotelId) async {
+    try {
+      final hotelDoc = await FirebaseFirestore.instance
+          .collection('pointHotels')
+          .doc(hotelId)
+          .get();
+      if (!hotelDoc.exists) {
+        Fluttertoast.showToast(msg: '호텔 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      final hotel = PointHotel.fromFirestore(hotelDoc);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          settings: const RouteSettings(name: 'point_hotel_detail'),
+          builder: (_) => PointHotelDetailScreen(
+            hotel: hotel,
+            nights: 1,
+            checkIn: null,
+          ),
+        ),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(msg: '호텔 정보를 불러오지 못했습니다.');
+    }
   }
 
   Widget _buildMyPageBannerAd() {

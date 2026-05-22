@@ -703,7 +703,7 @@ crontab 또는 Cloud Scheduler가 주기적으로 서버 작업을 실행한다.
 호텔 메타데이터와 날짜별 가격/포인트 캘린더는 실행 주기가 다르므로 별도 작업으로 분리한다.
 
 - 호텔 메타데이터: 월 1회 수준. Marriott은 `python3 task/point/hotel/marriott/update_marriott_hotels_from_firestore.py`를 실행한다. 이 작업은 Firestore `pointHotels`에서 `programId == marriott`, `status`가 `active` 또는 `pending`인 문서를 읽고, 각 문서의 `officialUrl`을 CDP Chrome 파서로 열어 호텔명, 주소, 좌표, 평점, 이미지, 편의시설 등을 다시 파싱한 뒤 `pointHotels/{hotelId}`에 upsert한다. 새 Marriott 호텔을 운영자가 추가할 때는 `pointHotels/{hotelId}`에 `programId`, `officialUrl`, `status: pending`만 먼저 넣어도 다음 호텔 메타데이터 배치에서 `active` 문서로 완성된다.
-- 날짜별 포인트/현금가: 하루 2~3회 이상. 등록된 호텔의 `propertyCode`를 기준으로 1년치 캘린더를 가져와 `calendarYears`와 `calendarYearRuns`에 저장한다.
+- 날짜별 포인트/현금가: 하루 2~3회 이상. Marriott은 `python3 task/point/marriott/update_marriott_calendar_from_firestore.py`를 실행한다. 등록된 호텔의 `propertyCode`를 기준으로 1년치 캘린더를 월 단위 window로 나누어 가져오고, 포인트와 현금가를 날짜별로 병합해 `calendarYears`와 `calendarYearRuns`에 저장한다.
 
 권장 주기:
 

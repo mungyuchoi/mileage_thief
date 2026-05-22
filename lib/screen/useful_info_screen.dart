@@ -23,6 +23,7 @@ import '../services/card_catalog_service.dart';
 import '../services/category_service.dart';
 import '../services/giftcard_deal_service.dart';
 import '../services/radar_service.dart';
+import '../utils/community_access_level.dart';
 import 'cancellation_notification_screen.dart';
 import 'card_catalog_screen.dart';
 import 'card_hub_screen.dart';
@@ -50,6 +51,10 @@ const String _dealsQuickActionIconAsset = 'asset/icon/quick_deals.png';
 const String _cardQuickActionIconAsset = 'asset/icon/quick_card.png';
 const String _giftcardQuickActionIconAsset = 'asset/icon/quick_giftcard.png';
 const String _hotelQuickActionIconAsset = 'asset/icon/quick_hotel.png';
+const int _pointStayMinimumRank = 3;
+const String _gradeGuidePostId = 'e466cdbe-2ab6-48c5-8060-c0950f6b84f6';
+const String _gradeGuidePostDateString = '20250825';
+const String _gradeGuideBoardId = 'notice';
 
 const Map<String, String> _boardNameById = {
   'question': '마일리지',
@@ -341,7 +346,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                 onTap: () => _trackQuickAction(
                   action: 'point_stay',
                   targetScreen: 'point_stay',
-                  open: () => _push(const PointStayScreen()),
+                  open: () => unawaited(_openPointStayWithAccessGate()),
                 ),
               ),
               _QuickAction(
@@ -698,6 +703,160 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
         settings:
             RouteSettings(name: AnalyticsService.screenNameForWidget(screen)),
         builder: (_) => screen,
+      ),
+    );
+  }
+
+  Future<void> _openPointStayWithAccessGate() async {
+    final profile = await _loadCurrentUserProfile();
+    if (!mounted) return;
+
+    final rank = CommunityAccessLevel.userRank(profile);
+    if (rank >= _pointStayMinimumRank) {
+      _push(const PointStayScreen());
+      return;
+    }
+
+    unawaited(AnalyticsService.instance.logAction(
+      'point_stay_access_blocked',
+      params: {
+        'source': 'guide_quick_action',
+        'required_rank': _pointStayMinimumRank,
+        'user_rank': rank,
+      },
+    ));
+
+    final openGuide = await _showPointStayAccessDialog();
+    if (!mounted || openGuide != true) return;
+    await _openGradeGuidePost();
+  }
+
+  Future<Map<String, dynamic>?> _loadCurrentUserProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return doc.data();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> _showPointStayAccessDialog() async {
+    if (!mounted) return false;
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: Colors.white,
+                    size: 19,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    '포숙 입장 조건',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              '포인트 숙박은 이코노미 Lv.3 이상부터 이용할 수 있습니다.\n\n'
+              '등급 안내 게시글에서 레벨업 조건을 확인해 주세요.',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text(
+                  '닫기',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  '등급 안내 보기',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _openGradeGuidePost() async {
+    unawaited(AnalyticsService.instance.logAction(
+      'grade_guide_open',
+      params: {'source': 'point_stay_access_dialog'},
+    ));
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(_gradeGuidePostDateString)
+          .collection('posts')
+          .doc(_gradeGuidePostId)
+          .update({
+        'viewsCount': FieldValue.increment(1),
+      });
+    } catch (_) {
+      // 조회수 업데이트 실패는 안내 글 진입을 막지 않습니다.
+    }
+
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'community_detail'),
+        builder: (_) => CommunityDetailScreen(
+          postId: _gradeGuidePostId,
+          boardId: _gradeGuideBoardId,
+          boardName: _boardNameById[_gradeGuideBoardId] ?? '운영 공지사항',
+          dateString: _gradeGuidePostDateString,
+        ),
       ),
     );
   }
