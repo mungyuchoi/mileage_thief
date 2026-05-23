@@ -100,6 +100,18 @@ def parse_args() -> argparse.Namespace:
         help="Marriott GraphQL request chunk size.",
     )
     parser.add_argument(
+        "--window-mode",
+        default="month-grid",
+        choices=["month-grid", "rolling"],
+        help="Marriott GraphQL request date mode.",
+    )
+    parser.add_argument(
+        "--start-month-offset",
+        type=int,
+        default=1,
+        help="Month offset used by month-grid mode.",
+    )
+    parser.add_argument(
         "--modes",
         default="points,cash",
         help="Comma-separated modes passed to the capture script.",
@@ -118,7 +130,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--adults",
         type=int,
-        default=2,
+        default=1,
         help="Number of adults.",
     )
     parser.add_argument(
@@ -313,6 +325,10 @@ def update_one(target: MarriottCalendarTarget, args: argparse.Namespace, output_
         str(args.days_ahead),
         "--window-days",
         str(args.window_days),
+        "--window-mode",
+        args.window_mode,
+        "--start-month-offset",
+        str(args.start_month_offset),
         "--modes",
         args.modes,
         "--currency",

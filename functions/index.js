@@ -441,10 +441,114 @@ function normalizeScrapSourceValue(value) {
 }
 
 /**
+ * URL path segment를 가능한 만큼 디코딩한다.
+ * @param {string} value
+ * @return {string}
+ */
+function decodeScrapPathPart(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch (error) {
+    return value;
+  }
+}
+
+/**
+ * 네이버 카페 구형 query key들을 순서대로 찾는다.
+ * @param {URLSearchParams} params
+ * @param {string[]} keys
+ * @return {string}
+ */
+function naverCafeQueryParam(params, keys) {
+  for (const key of keys) {
+    const value = asOptionalString(params.get(key));
+    if (value) return value;
+  }
+  return "";
+}
+
+/**
+ * 네이버 카페 URL에서 카페 id/url과 글 번호를 뽑는다.
+ * @param {string} url
+ * @return {{cafeId: string, articleId: string, useCafeId: boolean}|null}
+ */
+function parseNaverCafeUrlParts(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (error) {
+    return null;
+  }
+
+  const cafeIdFromQuery = naverCafeQueryParam(parsed.searchParams, [
+    "clubid",
+    "clubId",
+    "cafeId",
+    "search.clubid",
+    "search.clubId",
+  ]);
+  const articleIdFromQuery = naverCafeQueryParam(parsed.searchParams, [
+    "articleid",
+    "articleId",
+    "search.articleid",
+    "search.articleId",
+  ]);
+  if (cafeIdFromQuery && articleIdFromQuery) {
+    return {
+      cafeId: cafeIdFromQuery,
+      articleId: articleIdFromQuery,
+      useCafeId: true,
+    };
+  }
+
+  const parts = parsed.pathname.split("/").filter((part) => part);
+  const useCafeIdQuery =
+    (asOptionalString(parsed.searchParams.get("useCafeId")) || "")
+        .toLowerCase();
+  const queryForcesCafeUrl = useCafeIdQuery === "false" ||
+    useCafeIdQuery === "0";
+
+  const routePatterns = [
+    {prefix: ["web", "cafes"], cafeIndex: 2, articleIndex: 4},
+    {prefix: ["app", "cafes"], cafeIndex: 2, articleIndex: 4},
+    {prefix: ["cafes"], cafeIndex: 1, articleIndex: 3},
+  ];
+  for (const pattern of routePatterns) {
+    const matches = pattern.prefix.every((part, index) => {
+      return parts[index] === part;
+    });
+    if (
+      matches &&
+      parts[pattern.cafeIndex] &&
+      parts[pattern.articleIndex] &&
+      parts[pattern.articleIndex - 1] === "articles"
+    ) {
+      const cafeId = decodeScrapPathPart(parts[pattern.cafeIndex]);
+      return {
+        cafeId,
+        articleId: parts[pattern.articleIndex],
+        useCafeId: !queryForcesCafeUrl && /^\d+$/.test(cafeId),
+      };
+    }
+  }
+
+  if (parts.length >= 2 && /^\d+$/.test(parts[1])) {
+    const cafeId = decodeScrapPathPart(parts[0]);
+    return {
+      cafeId,
+      articleId: parts[1],
+      useCafeId: /^\d+$/.test(cafeId),
+    };
+  }
+
+  return null;
+}
+
+/**
  * URL을 지원 소스에 맞게 검증하고 정규화한다.
  * @param {unknown} rawUrl
  * @param {unknown} rawSourceType
- * @return {{normalizedUrl: string, sourceType: string}}
+ * @return {{normalizedUrl: string, sourceType: string, accessUrl: string}}
  */
 function normalizeScrapUrl(rawUrl, rawSourceType) {
   let value = asOptionalString(rawUrl);
@@ -466,6 +570,7 @@ function normalizeScrapUrl(rawUrl, rawSourceType) {
   parsed.hash = "";
   const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
   let sourceType = normalizeScrapSourceValue(rawSourceType);
+  let accessUrl = "";
 
   if (host === "m.blog.naver.com" || host === "blog.naver.com") {
     if (sourceType && sourceType !== SCRAP_NAVER) {
@@ -495,6 +600,33 @@ function normalizeScrapUrl(rawUrl, rawSourceType) {
       );
     }
     sourceType = SCRAP_NAVER_CAFE;
+    const cafeAccessToken = asOptionalString(parsed.searchParams.get("art"));
+    const cafeParts = parseNaverCafeUrlParts(parsed.toString());
+    if (cafeParts) {
+      parsed.hostname = "m.cafe.naver.com";
+      if (cafeParts.useCafeId) {
+        parsed.pathname = "/ArticleRead.nhn";
+        parsed.search = "";
+        parsed.searchParams.set("clubid", cafeParts.cafeId);
+        parsed.searchParams.set("articleid", cafeParts.articleId);
+      } else {
+        parsed.pathname = `/${encodeURIComponent(cafeParts.cafeId)}` +
+          `/${cafeParts.articleId}`;
+        parsed.search = "";
+      }
+      if (cafeAccessToken) {
+        const parsedAccessUrl = new URL(parsed.toString());
+        parsedAccessUrl.searchParams.set("art", cafeAccessToken);
+        accessUrl = parsedAccessUrl.toString();
+      }
+    }
+  } else if (host === "naver.me") {
+    if (sourceType !== SCRAP_NAVER && sourceType !== SCRAP_NAVER_CAFE) {
+      throw new HttpsError(
+          "invalid-argument",
+          "naver.me 단축 URL은 블로그 또는 카페 소스를 선택해주세요.",
+      );
+    }
   } else if (host === "aagag.com") {
     if (sourceType && sourceType !== SCRAP_AAGAG) {
       throw new HttpsError(
@@ -523,6 +655,7 @@ function normalizeScrapUrl(rawUrl, rawSourceType) {
   return {
     normalizedUrl: parsed.toString(),
     sourceType,
+    accessUrl: accessUrl || parsed.toString(),
   };
 }
 
@@ -553,12 +686,12 @@ function scrapRequestHeaders(sourceType) {
 }
 
 /**
- * 원격 HTML을 가져온다.
+ * 원격 HTML과 최종 redirect URL을 가져온다.
  * @param {string} url
  * @param {string} sourceType
- * @return {Promise<string>}
+ * @return {Promise<{html: string, finalUrl: string}>}
  */
-async function fetchScrapHtml(url, sourceType) {
+async function fetchScrapPage(url, sourceType) {
   const response = await globalThis.fetch(url, {
     headers: scrapRequestHeaders(sourceType),
   });
@@ -568,7 +701,21 @@ async function fetchScrapHtml(url, sourceType) {
         `원문을 가져오지 못했습니다. (${response.status})`,
     );
   }
-  return response.text();
+  return {
+    html: await response.text(),
+    finalUrl: response.url || url,
+  };
+}
+
+/**
+ * 원격 HTML을 가져온다.
+ * @param {string} url
+ * @param {string} sourceType
+ * @return {Promise<string>}
+ */
+async function fetchScrapHtml(url, sourceType) {
+  const page = await fetchScrapPage(url, sourceType);
+  return page.html;
 }
 
 /**
@@ -819,6 +966,63 @@ function parseNaverBlogScrap(html, sourceUrl) {
 }
 
 /**
+ * 네이버 카페 본문 안의 lazy media URL을 렌더링 가능한 URL로 정리한다.
+ * @param {string} contentHtml
+ * @param {string} sourceUrl
+ * @return {string}
+ */
+function normalizeNaverCafeContentMedia(contentHtml, sourceUrl) {
+  const content$ = cheerio.load(contentHtml || "", {
+    decodeEntities: false,
+  }, false);
+  content$("img").each((index, img) => {
+    const $img = content$(img);
+    let src = $img.attr("data-lazy-src") ||
+      $img.attr("data-src") ||
+      $img.attr("src") ||
+      "";
+    src = safeScrapUrl(src, sourceUrl);
+    if (src) $img.attr("src", src);
+    if (($img.attr("alt") || "") === "") $img.removeAttr("alt");
+  });
+  content$("video").each((index, video) => {
+    const $video = content$(video);
+    const src = safeScrapUrl(
+        $video.attr("src") ||
+          $video.find("source").first().attr("src") ||
+          $video.attr("data-src"),
+        sourceUrl,
+    );
+    const poster = safeScrapUrl($video.attr("poster"), sourceUrl);
+    if (src) $video.attr("src", src);
+    if (poster) $video.attr("poster", poster);
+  });
+  return content$.root().html() || "";
+}
+
+/**
+ * 네이버 카페 timestamp를 미리보기용 한국 시간 문자열로 만든다.
+ * @param {unknown} value
+ * @return {string}
+ */
+function formatNaverCafeDateText(value) {
+  const timestamp = asOptionalNumber(value);
+  if (!timestamp) return "";
+  try {
+    return new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(timestamp));
+  } catch (error) {
+    return "";
+  }
+}
+
+/**
  * 네이버 카페 HTML을 게시글 데이터로 파싱한다.
  * @param {string} html
  * @param {string} sourceUrl
@@ -861,31 +1065,11 @@ function parseNaverCafeScrap(html, sourceUrl) {
         .html() || "";
   }
 
-  const content$ = cheerio.load(contentHtml, {decodeEntities: false}, false);
-  content$("img").each((index, img) => {
-    const $img = content$(img);
-    let src = $img.attr("data-lazy-src") ||
-      $img.attr("data-src") ||
-      $img.attr("src") ||
-      "";
-    src = safeScrapUrl(src, sourceUrl);
-    if (src) $img.attr("src", src);
-    if (($img.attr("alt") || "") === "") $img.removeAttr("alt");
-  });
-  content$("video").each((index, video) => {
-    const $video = content$(video);
-    const src = safeScrapUrl(
-        $video.attr("src") ||
-          $video.find("source").first().attr("src") ||
-          $video.attr("data-src"),
-        sourceUrl,
-    );
-    const poster = safeScrapUrl($video.attr("poster"), sourceUrl);
-    if (src) $video.attr("src", src);
-    if (poster) $video.attr("poster", poster);
-  });
-
-  const sanitized = sanitizeScrapHtml(content$.root().html() || "", sourceUrl);
+  const normalizedContent = normalizeNaverCafeContentMedia(
+      contentHtml,
+      sourceUrl,
+  );
+  const sanitized = sanitizeScrapHtml(normalizedContent, sourceUrl);
   return {
     sourceType: SCRAP_NAVER_CAFE,
     title,
@@ -893,6 +1077,96 @@ function parseNaverCafeScrap(html, sourceUrl) {
     scrapedDateText,
     contentHtml: sanitized,
   };
+}
+
+/**
+ * 네이버 카페 API 응답을 게시글 데이터로 파싱한다.
+ * @param {Object} result
+ * @param {string} sourceUrl
+ * @return {Object}
+ */
+function parseNaverCafeApiScrap(result, sourceUrl) {
+  const article = result.article || {};
+  const writer = article.writer || {};
+  const title = cleanScrapText(article.subject || result.subject);
+  const scrapedAuthor = cleanScrapText(
+      writer.nick ||
+      writer.nickname ||
+      writer.id,
+  );
+  const scrapedDateText = formatNaverCafeDateText(article.writeDate);
+  const contentHtml = article.contentHtml ||
+    article.contentHTML ||
+    result.contentHtml ||
+    "";
+  const normalizedContent = normalizeNaverCafeContentMedia(
+      contentHtml,
+      sourceUrl,
+  );
+  const sanitized = sanitizeScrapHtml(normalizedContent, sourceUrl);
+  return {
+    sourceType: SCRAP_NAVER_CAFE,
+    title,
+    scrapedAuthor,
+    scrapedDateText,
+    contentHtml: sanitized,
+  };
+}
+
+/**
+ * 모바일 네이버 카페 SPA가 내부에서 사용하는 글 API를 호출한다.
+ * @param {string} sourceUrl
+ * @return {Promise<Object|null>}
+ */
+async function fetchNaverCafeApiScrap(sourceUrl) {
+  const cafeParts = parseNaverCafeUrlParts(sourceUrl);
+  if (!cafeParts) return null;
+
+  const apiUrl = new URL(
+      "https://article.cafe.naver.com/gw/v4/cafes/" +
+      `${encodeURIComponent(cafeParts.cafeId)}/articles/` +
+      `${encodeURIComponent(cafeParts.articleId)}`,
+  );
+  if (!cafeParts.useCafeId) {
+    apiUrl.searchParams.set("useCafeId", "false");
+  }
+  try {
+    const accessUrl = new URL(sourceUrl);
+    const cafeAccessToken = asOptionalString(
+        accessUrl.searchParams.get("art"),
+    );
+    if (cafeAccessToken) {
+      apiUrl.searchParams.set("art", cafeAccessToken);
+    }
+  } catch (error) {
+    // sourceUrl은 이미 앞단에서 검증되지만, API fallback은 실패해도 HTML 파싱을 유지한다.
+  }
+
+  const response = await globalThis.fetch(apiUrl.toString(), {
+    headers: {
+      ...scrapRequestHeaders(SCRAP_NAVER_CAFE),
+      Accept: "application/json, text/plain, */*",
+      Referer: sourceUrl,
+    },
+  });
+  if (!response.ok) {
+    logger.warn("네이버 카페 API 스크랩 요청 실패", {
+      status: response.status,
+      sourceUrl,
+    });
+    return null;
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    logger.warn("네이버 카페 API 응답 JSON 파싱 실패", {sourceUrl});
+    return null;
+  }
+  const result = data.result || data;
+  if (!result.article) return null;
+  return parseNaverCafeApiScrap(result, sourceUrl);
 }
 
 /**
@@ -1199,21 +1473,37 @@ async function findDuplicateScrapPost(normalizedUrl) {
  * @return {Promise<Object>}
  */
 async function validateScrapPayload(rawUrl, rawSourceType) {
-  const normalized = normalizeScrapUrl(rawUrl, rawSourceType);
-  const fetchedHtml = await fetchScrapHtml(
-      normalized.normalizedUrl,
+  let normalized = normalizeScrapUrl(rawUrl, rawSourceType);
+  const fetched = await fetchScrapPage(
+      normalized.accessUrl,
       normalized.sourceType,
   );
+  if (fetched.finalUrl && fetched.finalUrl !== normalized.normalizedUrl) {
+    normalized = normalizeScrapUrl(fetched.finalUrl, normalized.sourceType);
+  }
+  const accessUrl = normalized.accessUrl || normalized.normalizedUrl;
   const html = await resolveScrapHtmlForParsing(
-      fetchedHtml,
-      normalized.normalizedUrl,
+      fetched.html,
+      accessUrl,
       normalized.sourceType,
   );
   let parsed;
   if (normalized.sourceType === SCRAP_AAGAG) {
     parsed = parseAagagScrap(html, normalized.normalizedUrl);
   } else if (normalized.sourceType === SCRAP_NAVER_CAFE) {
-    parsed = parseNaverCafeScrap(html, normalized.normalizedUrl);
+    parsed = parseNaverCafeScrap(html, accessUrl);
+    if (!parsed.contentHtml) {
+      const apiParsed = await fetchNaverCafeApiScrap(accessUrl);
+      if (apiParsed && apiParsed.contentHtml) {
+        parsed = {
+          ...apiParsed,
+          title: apiParsed.title || parsed.title,
+          scrapedAuthor: apiParsed.scrapedAuthor || parsed.scrapedAuthor,
+          scrapedDateText: apiParsed.scrapedDateText ||
+            parsed.scrapedDateText,
+        };
+      }
+    }
   } else {
     parsed = parseNaverBlogScrap(html, normalized.normalizedUrl);
   }

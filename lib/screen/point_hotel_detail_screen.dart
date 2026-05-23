@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
@@ -26,18 +27,23 @@ class PointHotelDetailScreen extends StatefulWidget {
 
 class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
   DateTime? _selectedCheckIn;
+  List<PointHotelCalendarEntry>? _fullCalendarEntries;
 
   @override
   void initState() {
     super.initState();
     _selectedCheckIn = _initialSelectedCheckIn();
+    _loadFullCalendarEntries();
   }
 
   @override
   void didUpdateWidget(covariant PointHotelDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.hotel.id != widget.hotel.id ||
-        !DateUtils.isSameDay(oldWidget.checkIn, widget.checkIn)) {
+    if (oldWidget.hotel.id != widget.hotel.id) {
+      _selectedCheckIn = _initialSelectedCheckIn();
+      _fullCalendarEntries = null;
+      _loadFullCalendarEntries();
+    } else if (!DateUtils.isSameDay(oldWidget.checkIn, widget.checkIn)) {
       _selectedCheckIn = _initialSelectedCheckIn();
     }
   }
@@ -46,8 +52,41 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
     if (widget.checkIn != null) return DateUtils.dateOnly(widget.checkIn!);
 
     final today = DateUtils.dateOnly(DateTime.now());
-    if (_calendarItemForDate(widget.hotel, today) != null) return today;
+    if (_calendarItemForDate(
+          widget.hotel,
+          today,
+          calendarEntries: _calendarEntries,
+        ) !=
+        null) {
+      return today;
+    }
     return null;
+  }
+
+  List<PointHotelCalendarEntry> get _calendarEntries =>
+      _fullCalendarEntries?.isNotEmpty == true
+          ? _fullCalendarEntries!
+          : widget.hotel.calendarEntries;
+
+  Future<void> _loadFullCalendarEntries() async {
+    final hotelId = widget.hotel.id;
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('pointHotels')
+          .doc(hotelId)
+          .collection('calendarYears')
+          .get();
+      if (!mounted || widget.hotel.id != hotelId) return;
+
+      final entries = _calendarEntriesFromYearDocs(snapshot.docs);
+      if (entries.isEmpty) return;
+      setState(() {
+        _fullCalendarEntries = entries;
+        _selectedCheckIn ??= _initialSelectedCheckIn();
+      });
+    } catch (_) {
+      // Keep the parent document preview as a graceful fallback.
+    }
   }
 
   void _handleCalendarDateSelected(DateTime date) {
@@ -59,7 +98,12 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
     final hotel = widget.hotel;
     final nights = widget.nights;
     final checkIn = _selectedCheckIn;
-    final selectedRate = _calendarItemForDate(hotel, checkIn);
+    final calendarEntries = _calendarEntries;
+    final selectedRate = _calendarItemForDate(
+      hotel,
+      checkIn,
+      calendarEntries: calendarEntries,
+    );
     final bottomPoints = selectedRate?.points ?? hotel.pointsPerNight;
     final bottomCash = selectedRate?.cashKrw ?? hotel.cashPerNightKrw;
 
@@ -194,6 +238,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
             hotel: hotel,
             nights: nights,
             checkIn: checkIn,
+            calendarEntries: calendarEntries,
           ),
           if (_hasQuickFacts(hotel)) ...[
             const SizedBox(height: 22),
@@ -236,6 +281,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
           const SizedBox(height: 12),
           _PointCalendar(
             hotel: hotel,
+            calendarEntries: calendarEntries,
             checkIn: checkIn,
             onDateSelected: _handleCalendarDateSelected,
           ),
@@ -375,6 +421,48 @@ DateTime _reservationCheckInFor(PointHotel hotel, DateTime? checkIn) {
     ..sort((a, b) => a.date.compareTo(b.date));
   if (entries.isNotEmpty) return DateUtils.dateOnly(entries.first.date);
   return DateUtils.dateOnly(DateTime.now());
+}
+
+List<PointHotelCalendarEntry> _calendarEntriesFromYearDocs(
+  Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+) {
+  final entries = <PointHotelCalendarEntry>[];
+  for (final doc in docs) {
+    final year = int.tryParse(doc.id);
+    final days = doc.data()['days'];
+    if (year == null || days is! Map) continue;
+    for (final rawEntry in days.entries) {
+      final dayKey = rawEntry.key.toString();
+      final day = rawEntry.value;
+      if (!RegExp(r'^d\d{4}$').hasMatch(dayKey) || day is! Map) continue;
+      final points = _asCalendarInt(day['p'] ?? day['points']);
+      if (points <= 0) continue;
+      final month = int.tryParse(dayKey.substring(1, 3));
+      final date = int.tryParse(dayKey.substring(3, 5));
+      if (month == null || date == null) continue;
+      entries.add(
+        PointHotelCalendarEntry(
+          date:
+              '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${date.toString().padLeft(2, '0')}',
+          points: points,
+          cashKrw: _asNullableCalendarInt(day['c'] ?? day['cash']),
+        ),
+      );
+    }
+  }
+  entries.sort((a, b) => a.date.compareTo(b.date));
+  return entries;
+}
+
+int _asCalendarInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _asNullableCalendarInt(dynamic value) {
+  final parsed = _asCalendarInt(value);
+  return parsed > 0 ? parsed : null;
 }
 
 List<String> _hotelImageUrls(PointHotel hotel) {
@@ -995,18 +1083,24 @@ class _StaySummaryCard extends StatelessWidget {
   final PointHotel hotel;
   final int nights;
   final DateTime? checkIn;
+  final List<PointHotelCalendarEntry> calendarEntries;
 
   const _StaySummaryCard({
     required this.hotel,
     required this.nights,
     required this.checkIn,
+    required this.calendarEntries,
   });
 
   @override
   Widget build(BuildContext context) {
     final checkInLabel =
         checkIn == null ? '모든 날짜' : DateFormat('M월 d일').format(checkIn!);
-    final selectedRate = _calendarItemForDate(hotel, checkIn);
+    final selectedRate = _calendarItemForDate(
+      hotel,
+      checkIn,
+      calendarEntries: calendarEntries,
+    );
     final pointsPerNight = selectedRate?.points ?? hotel.pointsPerNight;
     final cashPerNight = selectedRate?.cashKrw ?? hotel.cashPerNightKrw;
     final hasPoints = pointsPerNight > 0;
@@ -1135,11 +1229,13 @@ class _ValueMetric extends StatelessWidget {
 
 class _PointCalendar extends StatefulWidget {
   final PointHotel hotel;
+  final List<PointHotelCalendarEntry> calendarEntries;
   final DateTime? checkIn;
   final ValueChanged<DateTime> onDateSelected;
 
   const _PointCalendar({
     required this.hotel,
+    required this.calendarEntries,
     required this.checkIn,
     required this.onDateSelected,
   });
@@ -1160,7 +1256,8 @@ class _PointCalendarState extends State<_PointCalendar> {
   @override
   void didUpdateWidget(covariant _PointCalendar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.hotel.id != widget.hotel.id) {
+    if (oldWidget.hotel.id != widget.hotel.id ||
+        oldWidget.calendarEntries != widget.calendarEntries) {
       _visibleMonth = _initialVisibleMonth();
       return;
     }
@@ -1173,7 +1270,12 @@ class _PointCalendarState extends State<_PointCalendar> {
   }
 
   DateTime _initialVisibleMonth() {
-    final entries = [..._calendarItems(widget.hotel)]
+    final entries = [
+      ..._calendarItems(
+        widget.hotel,
+        calendarEntries: widget.calendarEntries,
+      ),
+    ]
       ..sort((a, b) => a.date.compareTo(b.date));
     if (entries.isEmpty) {
       final now = DateTime.now();
@@ -1190,7 +1292,12 @@ class _PointCalendarState extends State<_PointCalendar> {
 
   @override
   Widget build(BuildContext context) {
-    final entries = [..._calendarItems(widget.hotel)]
+    final entries = [
+      ..._calendarItems(
+        widget.hotel,
+        calendarEntries: widget.calendarEntries,
+      ),
+    ]
       ..sort((a, b) => a.date.compareTo(b.date));
     if (entries.isEmpty) return const _CalendarEmptyState();
 
@@ -1329,9 +1436,13 @@ class _CalendarMonthButton extends StatelessWidget {
   }
 }
 
-List<_CalendarItemData> _calendarItems(PointHotel hotel) {
-  if (hotel.calendarEntries.isNotEmpty) {
-    final parsedEntries = hotel.calendarEntries
+List<_CalendarItemData> _calendarItems(
+  PointHotel hotel, {
+  List<PointHotelCalendarEntry>? calendarEntries,
+}) {
+  final entries = calendarEntries ?? hotel.calendarEntries;
+  if (entries.isNotEmpty) {
+    final parsedEntries = entries
         .map((entry) {
           final date = DateTime.tryParse(entry.date);
           if (date == null) return null;
@@ -1366,10 +1477,17 @@ List<_CalendarItemData> _calendarItems(PointHotel hotel) {
   });
 }
 
-_CalendarItemData? _calendarItemForDate(PointHotel hotel, DateTime? date) {
+_CalendarItemData? _calendarItemForDate(
+  PointHotel hotel,
+  DateTime? date, {
+  List<PointHotelCalendarEntry>? calendarEntries,
+}) {
   if (date == null) return null;
   final selectedDate = DateUtils.dateOnly(date);
-  for (final entry in _calendarItems(hotel)) {
+  for (final entry in _calendarItems(
+    hotel,
+    calendarEntries: calendarEntries,
+  )) {
     if (DateUtils.isSameDay(entry.date, selectedDate)) return entry;
   }
   return null;

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../const/colors.dart';
-import '../models/point_hotel_model.dart';
+import '../models/point_award_index_model.dart';
 import '../screen/point_hotel_detail_screen.dart';
+import '../services/point_award_index_service.dart';
 import '../services/point_hotel_service.dart';
 
 class PointHotelExploreTab extends StatefulWidget {
@@ -26,65 +27,40 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
   int _nights = 1;
   _ExploreSort _sort = _ExploreSort.value;
 
-  List<_AwardCandidate> _candidates(List<PointHotel> hotels) {
-    final now = DateTime.now();
-    final candidates = <_AwardCandidate>[];
-    for (var index = 0; index < hotels.length; index++) {
-      final hotel = hotels[index];
-      if (!_matchesBrand(hotel)) continue;
-      if (!hotel.hasAwardRate || !hotel.hasCashRate) continue;
-      final totalCash = hotel.cashPerNightKrw * _nights;
-      candidates.add(
-        _AwardCandidate(
-          hotel: hotel,
-          checkIn: now.add(Duration(days: 7 + index * 13)),
-          updatedLabel: index == 0 ? '2일 전' : '${index + 1}시간 전',
-          pointsTotal: _awardAdjustedPoints(hotel),
-          cashTotalKrw: totalCash,
-          confidence: 0.96 - index * 0.08,
-        ),
-      );
-    }
-    candidates.sort((a, b) {
-      switch (_sort) {
-        case _ExploreSort.value:
-          return b.krwPerPoint.compareTo(a.krwPerPoint);
-        case _ExploreSort.points:
-          return a.pointsTotal.compareTo(b.pointsTotal);
-        case _ExploreSort.recent:
-          return a.updatedLabel.compareTo(b.updatedLabel);
-      }
-    });
-    return candidates;
-  }
-
-  bool _matchesBrand(PointHotel hotel) {
-    if (_selectedBrand == '전체') return true;
-    final brand = hotel.brand.toLowerCase();
+  String? get _selectedProgramId {
+    if (_selectedBrand == '전체') return null;
     final selected = _selectedBrand.toLowerCase();
-    if (selected == 'hyatt') {
-      return brand.contains('hyatt') || brand.contains('jdv');
+    switch (selected) {
+      case 'hyatt':
+      case 'hilton':
+      case 'ihg':
+      case 'marriott':
+        return selected;
     }
-    if (selected == 'ihg') {
-      return brand.contains('holiday') || brand.contains('ihg');
-    }
-    if (selected == 'marriott') {
-      return hotel.isMarriottBonvoy || brand.contains('marriott');
-    }
-    return brand.contains(selected);
+    return null;
   }
 
-  int _awardAdjustedPoints(PointHotel hotel) {
-    return hotel.awardPointsForNights(_nights);
+  PointAwardIndexSort get _indexSort {
+    switch (_sort) {
+      case _ExploreSort.value:
+        return PointAwardIndexSort.value;
+      case _ExploreSort.points:
+        return PointAwardIndexSort.points;
+      case _ExploreSort.recent:
+        return PointAwardIndexSort.recent;
+    }
   }
 
-  void _openHotel(_AwardCandidate candidate) {
+  Future<void> _openHotel(PointAwardIndexItem candidate) async {
+    final hotel =
+        await PointHotelService.instance.fetchHotel(candidate.hotelId);
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         settings: const RouteSettings(name: 'point_hotel_detail'),
         builder: (_) => PointHotelDetailScreen(
-          hotel: candidate.hotel,
-          nights: _nights,
+          hotel: hotel ?? candidate.toPointHotel(),
+          nights: candidate.nights,
           checkIn: candidate.checkIn,
         ),
       ),
@@ -184,7 +160,9 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
                         ),
                         IconButton(
                           tooltip: '숙박수 늘리기',
-                          onPressed: () => setSheetState(() => nights += 1),
+                          onPressed: nights >= 7
+                              ? null
+                              : () => setSheetState(() => nights += 1),
                           icon: const Icon(Icons.add_circle_outline),
                         ),
                       ],
@@ -211,8 +189,12 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<PointHotel>>(
-      stream: PointHotelService.instance.watchHotels(),
+    return StreamBuilder<List<PointAwardIndexItem>>(
+      stream: PointAwardIndexService.instance.watchItems(
+        programId: _selectedProgramId,
+        nights: _nights,
+        sort: _indexSort,
+      ),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const _ExploreMessageState(
@@ -230,7 +212,7 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
           );
         }
 
-        final candidates = _candidates(snapshot.data ?? const <PointHotel>[]);
+        final candidates = snapshot.data ?? const <PointAwardIndexItem>[];
         return _ExploreContent(
           candidates: candidates,
           selectedBrand: _selectedBrand,
@@ -239,7 +221,9 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
           onBrandTap: _selectBrand,
           onNightsTap: _selectNights,
           onSortChanged: (sort) => setState(() => _sort = sort),
-          onOpenHotel: _openHotel,
+          onOpenHotel: (candidate) {
+            _openHotel(candidate);
+          },
         );
       },
     );
@@ -247,14 +231,14 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
 }
 
 class _ExploreContent extends StatelessWidget {
-  final List<_AwardCandidate> candidates;
+  final List<PointAwardIndexItem> candidates;
   final String selectedBrand;
   final int nights;
   final _ExploreSort sort;
   final VoidCallback onBrandTap;
   final VoidCallback onNightsTap;
   final ValueChanged<_ExploreSort> onSortChanged;
-  final ValueChanged<_AwardCandidate> onOpenHotel;
+  final ValueChanged<PointAwardIndexItem> onOpenHotel;
 
   const _ExploreContent({
     required this.candidates,
@@ -406,28 +390,6 @@ class _ExploreMessageState extends StatelessWidget {
 
 enum _ExploreSort { value, points, recent }
 
-class _AwardCandidate {
-  final PointHotel hotel;
-  final DateTime checkIn;
-  final String updatedLabel;
-  final int pointsTotal;
-  final int cashTotalKrw;
-  final double confidence;
-
-  const _AwardCandidate({
-    required this.hotel,
-    required this.checkIn,
-    required this.updatedLabel,
-    required this.pointsTotal,
-    required this.cashTotalKrw,
-    required this.confidence,
-  });
-
-  double get krwPerPoint => pointsTotal <= 0 ? 0 : cashTotalKrw / pointsTotal;
-
-  double get usdTotal => cashTotalKrw / 1350;
-}
-
 class _ExplorePill extends StatelessWidget {
   final String brand;
   final int nights;
@@ -564,7 +526,7 @@ class _SortChip extends StatelessWidget {
 }
 
 class _ExploreSummary extends StatelessWidget {
-  final List<_AwardCandidate> candidates;
+  final List<PointAwardIndexItem> candidates;
   final int nights;
 
   const _ExploreSummary({
@@ -602,7 +564,7 @@ class _ExploreSummary extends StatelessWidget {
             child: Text(
               best == null
                   ? '$nights박 조건에 맞는 후보가 없습니다.'
-                  : '최고 가치 ${best.hotel.name} · ${best.krwPerPoint.toStringAsFixed(1)}원/pt',
+                  : '최고 가치 ${best.name} · ${best.krwPerPoint.toStringAsFixed(1)}원/pt',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -620,7 +582,7 @@ class _ExploreSummary extends StatelessWidget {
 }
 
 class _AwardCandidateCard extends StatelessWidget {
-  final _AwardCandidate candidate;
+  final PointAwardIndexItem candidate;
   final VoidCallback onTap;
 
   const _AwardCandidateCard({
@@ -630,7 +592,6 @@ class _AwardCandidateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hotel = candidate.hotel;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
@@ -650,7 +611,7 @@ class _AwardCandidateCard extends StatelessWidget {
                 children: [
                   ClipOval(
                     child: Image.network(
-                      hotel.imageUrl,
+                      candidate.imageUrl,
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
@@ -674,7 +635,7 @@ class _AwardCandidateCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                hotel.name,
+                                candidate.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -686,7 +647,7 @@ class _AwardCandidateCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              candidate.updatedLabel,
+                              candidate.updatedLabel(),
                               style: const TextStyle(
                                 color: Color(0xFF404040),
                                 fontSize: 12,
@@ -697,7 +658,7 @@ class _AwardCandidateCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          hotel.locationText,
+                          candidate.locationText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

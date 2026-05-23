@@ -36,4 +36,12 @@ class PointHotelService {
       Error.throwWithStackTrace(error, stackTrace);
     });
   }
+
+  Future<PointHotel?> fetchHotel(String hotelId) async {
+    if (hotelId.trim().isEmpty) return null;
+    final doc = await _firestore.collection('pointHotels').doc(hotelId).get();
+    if (!doc.exists) return null;
+    final hotel = PointHotel.fromFirestore(doc);
+    return hotel.name.isEmpty ? null : hotel;
+  }
 }

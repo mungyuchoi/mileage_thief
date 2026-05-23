@@ -20,8 +20,14 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 cd "$ROOT_DIR"
 
 python3 "$ROOT_DIR/task/point/marriott/update_marriott_calendar_from_firestore.py" \
+  --window-mode month-grid \
+  --start-month-offset 1 \
+  --adults 1 \
   --request-delay-ms 4000 \
   --retry-count 3 \
   --retry-delay-ms 30000
+
+python3 "$ROOT_DIR/task/point/build_point_award_indexes.py" \
+  --program-id marriott
 
 echo "[$(date -Is)] done marriott daily calendar update"

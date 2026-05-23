@@ -10,10 +10,11 @@
 | `run_marriott_calendar_capture.sh` | Playwright 실행 환경과 CDP Chrome을 준비한 뒤 `capture_marriott_calendar.js`를 실행한다. |
 | `upload_marriott_calendar.py` | 정규화 JSON을 Firestore `calendarYears`, `calendarYearRuns`, `pointHotels.currentAward`, `calendarPreview`에 업로드한다. |
 | `update_marriott_calendar_from_firestore.py` | Firestore `pointHotels`의 active Marriott 호텔을 읽고, 호텔별 1년치 캘린더 수집과 업로드를 순차 실행한다. |
+| `../build_point_award_indexes.py` | 업로드된 `calendarYears`를 읽어 탐색 탭용 `pointAwardIndexes` 집계 문서를 1~7박 기준으로 생성한다. |
 
 ## Batch update
 
-등록된 Marriott 호텔 전체를 오늘부터 365일치로 업데이트한다.
+등록된 Marriott 호텔 전체를 브라우저 달력 월 단위로 365일치까지 업데이트한다.
 
 ```bash
 python3 task/point/marriott/update_marriott_calendar_from_firestore.py
@@ -47,6 +48,8 @@ Mac mini에서는 LaunchAgent가 매일 한국시간 오전 7시에 Marriott 포
 ```bash
 task/point/marriott/run_daily_marriott_calendar_update.sh
 ```
+
+이 스크립트는 Marriott 캘린더 수집을 먼저 실행한 뒤 `pointAwardIndexes` 생성기를 이어서 실행한다. 그래서 탐색 탭은 최신 `calendarYears`에서 파생된 집계 문서 1개만 읽는다.
 
 로그:
 
@@ -87,11 +90,11 @@ pointHotels/{hotelId}/calendarYearRuns/{yearKey}_{runSlot}
 
 ## Collection strategy
 
-- 기본 조건은 객실 1개, 성인 2명, 1박, KRW다.
+- 기본 조건은 객실 1개, 성인 1명, 1박, KRW다.
 - 기본 수집 범위는 실행일 기준 365일이다.
-- Marriott 요청은 `--window-days 31` 기준으로 나누어 보낸다.
+- Marriott 요청은 기본적으로 브라우저 달력과 같은 `month-grid` 방식으로 보낸다. 예를 들어 2026년 6월 화면은 `2026-05-31`부터 `2026-07-04`까지, 2026년 7월 화면은 `2026-06-28`부터 `2026-08-01`까지 요청한다.
 - 각 window마다 `points` 요청과 `cash` 요청을 각각 보내고, 같은 날짜 entry에 병합한다.
-- Marriott/Akamai가 먼 미래 window에서 `403 Access Denied`를 반환하면 기본적으로 그 window 직전까지만 저장한다. 막힌 이후 날짜는 `예약불가`로 오해되지 않도록 Firestore에 쓰지 않는다.
+- Marriott/Akamai가 먼 미래 window에서 `403 Access Denied`를 반환하면 모드별로 처리한다. `cash`가 막혀도 `points`가 200이면 포인트 수집은 다음 월로 계속 진행하고, 현금가는 `null`로 남긴다. 반대로 `points`가 막히면 이후 날짜의 포인트 가능 여부를 확정할 수 없으므로 그 지점에서 전체 수집을 멈춘다.
 - 값이 바뀐 날짜만 `calendarYearRuns.changedDays`에 남기고, 최신 조회용 문서는 `calendarYears`에 merge한다.
 - `pointHotels.currentAward`는 수집 범위 안에서 포인트가 가장 낮은 날짜를 대표값으로 잡는다.
 - `calendarPreview`는 수집 시작일부터 14일을 복사해 앱 목록과 상세 상단에서 빠르게 쓴다.

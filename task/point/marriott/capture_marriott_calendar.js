@@ -85,8 +85,10 @@ function parseArgs(argv) {
     endDate: "",
     daysAhead: 365,
     windowDays: 31,
+    windowMode: "month-grid",
+    startMonthOffset: 1,
     rooms: 1,
-    adults: 2,
+    adults: 1,
     nights: 1,
     modes: ["points", "cash"],
     currency: "KRW",
@@ -122,6 +124,8 @@ function parseArgs(argv) {
     else if (item === "--end-date") args.endDate = next();
     else if (item === "--days-ahead") args.daysAhead = Number(next());
     else if (item === "--window-days") args.windowDays = Number(next());
+    else if (item === "--window-mode") args.windowMode = next();
+    else if (item === "--start-month-offset") args.startMonthOffset = Number(next());
     else if (item === "--rooms") args.rooms = Number(next());
     else if (item === "--adults" || item === "--party") args.adults = Number(next());
     else if (item === "--nights" || item === "--days") args.nights = Number(next());
@@ -170,6 +174,8 @@ Options:
   --end-date YYYY-MM-DD            End date, exclusive. Overrides --days-ahead
   --days-ahead 365                 Number of check-in dates to collect
   --window-days 31                 Marriott GraphQL request chunk size
+  --window-mode month-grid         Use month-grid or rolling request dates
+  --start-month-offset 1           Month offset for month-grid mode
   --modes points,cash              Fetch points, cash, or both
   --login                          Sign in before opening the calendar page
   --credentials PATH               Defaults to env/marriott.json
@@ -198,6 +204,12 @@ function validateArgs(args) {
   }
   if (!Number.isInteger(args.windowDays) || args.windowDays <= 0 || args.windowDays > 62) {
     throw new Error("--window-days must be between 1 and 62");
+  }
+  if (!["month-grid", "rolling"].includes(args.windowMode)) {
+    throw new Error("--window-mode must be month-grid or rolling");
+  }
+  if (!Number.isInteger(args.startMonthOffset) || args.startMonthOffset < 0 || args.startMonthOffset > 12) {
+    throw new Error("--start-month-offset must be between 0 and 12");
   }
   if (!Number.isInteger(args.requestDelayMs) || args.requestDelayMs < 0) {
     throw new Error("--request-delay-ms must be a non-negative integer");
@@ -268,6 +280,10 @@ function minIsoDate(a, b) {
   return compareIsoDate(a, b) <= 0 ? a : b;
 }
 
+function maxIsoDate(a, b) {
+  return compareIsoDate(a, b) >= 0 ? a : b;
+}
+
 function eachDate(startDate, endExclusive) {
   const dates = [];
   for (let cursor = startDate; compareIsoDate(cursor, endExclusive) < 0; cursor = addDays(cursor, 1)) {
@@ -276,7 +292,34 @@ function eachDate(startDate, endExclusive) {
   return dates;
 }
 
-function buildWindows(startDate, endExclusive, windowDays) {
+function startOfMonth(value) {
+  const date = parseIsoDate(value);
+  date.setUTCDate(1);
+  return formatIsoDate(date);
+}
+
+function addMonths(value, months) {
+  const date = parseIsoDate(value);
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return formatIsoDate(date);
+}
+
+function lastDayOfMonth(monthStart) {
+  return addDays(addMonths(monthStart, 1), -1);
+}
+
+function sundayOnOrBefore(value) {
+  const date = parseIsoDate(value);
+  return addDays(value, -date.getUTCDay());
+}
+
+function saturdayOnOrAfter(value) {
+  const date = parseIsoDate(value);
+  return addDays(value, 6 - date.getUTCDay());
+}
+
+function buildRollingWindows(startDate, endExclusive, windowDays) {
   const windows = [];
   for (let cursor = startDate; compareIsoDate(cursor, endExclusive) < 0;) {
     const next = minIsoDate(addDays(cursor, windowDays), endExclusive);
@@ -289,6 +332,36 @@ function buildWindows(startDate, endExclusive, windowDays) {
     cursor = next;
   }
   return windows;
+}
+
+function buildMonthGridWindows(startDate, endExclusive, startMonthOffset) {
+  const windows = [];
+  for (
+    let monthStart = addMonths(startOfMonth(startDate), startMonthOffset);
+    compareIsoDate(monthStart, endExclusive) < 0;
+    monthStart = addMonths(monthStart, 1)
+  ) {
+    const apiStartDate = sundayOnOrBefore(monthStart);
+    const apiEndDate = saturdayOnOrAfter(lastDayOfMonth(monthStart));
+    const endDate = minIsoDate(addDays(apiEndDate, 1), endExclusive);
+    const visibleStartDate = maxIsoDate(apiStartDate, startDate);
+    if (compareIsoDate(visibleStartDate, endDate) >= 0) continue;
+    windows.push({
+      startDate: visibleStartDate,
+      endDate,
+      apiStartDate,
+      apiEndDate,
+      calendarMonth: monthStart.slice(0, 7),
+    });
+  }
+  return windows;
+}
+
+function buildWindows(startDate, endExclusive, args) {
+  if (args.windowMode === "rolling") {
+    return buildRollingWindows(startDate, endExclusive, args.windowDays);
+  }
+  return buildMonthGridWindows(startDate, endExclusive, args.startMonthOffset);
 }
 
 function dateKey(date) {
@@ -892,8 +965,11 @@ async function main() {
   const entriesByDate = new Map();
   let successfulFetches = 0;
   let failedFetches = 0;
+  let nonBlockedFailureCount = 0;
   let blockedAt = "";
   let blockedSummary = null;
+  const blockedModes = new Map();
+  const blockedSummariesByMode = {};
 
   try {
     if (args.login) {
@@ -913,10 +989,15 @@ async function main() {
       `[page-config] found=${pageConfig.found} requestId=${pageConfig.requestId} signature=${pageConfig.operationSignature}`,
     );
 
-    const windows = buildWindows(args.startDate, endExclusive, args.windowDays);
+    const windows = buildWindows(args.startDate, endExclusive, args);
+    const observedStartDate = windows[0]?.startDate || args.startDate;
+    let effectiveEndExclusive = observedStartDate;
     windowLoop:
     for (const range of windows) {
+      let activeModeCount = 0;
       for (const mode of args.modes) {
+        if (blockedModes.has(mode)) continue;
+        activeModeCount += 1;
         const payload = buildPayload(args, range, mode);
         const { result, parsed, parseError, attemptCount } = await fetchCalendarWithRetry(
           page,
@@ -929,10 +1010,17 @@ async function main() {
         );
 
         const ok = Boolean(result.ok && parsed && !parsed.errors);
+        const blocked = !ok && args.stopAtBlocked && isBlockedFetch(result, parsed);
         if (ok) successfulFetches += 1;
-        else failedFetches += 1;
+        else {
+          failedFetches += 1;
+          if (!blocked) nonBlockedFailureCount += 1;
+        }
 
         const parsedEntryCount = ok ? mergeEntries(entriesByDate, parsed, mode) : 0;
+        if (ok) {
+          effectiveEndExclusive = maxIsoDate(effectiveEndExclusive, range.endDate);
+        }
         const summary = parsed ? summarizeCalendar(parsed) : null;
         const requestSummary = {
           mode,
@@ -940,6 +1028,7 @@ async function main() {
           endDate: range.endDate,
           apiStartDate: range.apiStartDate,
           apiEndDate: range.apiEndDate,
+          calendarMonth: range.calendarMonth || null,
           status: result.status,
           ok,
           contentType: result.contentType,
@@ -968,19 +1057,30 @@ async function main() {
         if (args.requestDelayMs > 0) {
           await sleep(args.requestDelayMs);
         }
-        if (!ok && args.stopAtBlocked && isBlockedFetch(result, parsed)) {
-          blockedAt = range.startDate;
-          blockedSummary = requestSummary;
-          console.log(`[blocked] stopping before range=${range.startDate}_${range.endDate}`);
-          break windowLoop;
+        if (blocked) {
+          blockedModes.set(mode, range.startDate);
+          blockedSummariesByMode[mode] = requestSummary;
+          if (!blockedAt) {
+            blockedAt = range.startDate;
+            blockedSummary = requestSummary;
+          }
+          console.log(`[blocked] mode=${mode} stopping that mode before range=${range.startDate}_${range.endDate}`);
+          if (mode === "points" && args.modes.includes("points")) {
+            console.log(`[blocked] primary points mode blocked before range=${range.startDate}_${range.endDate}`);
+            break windowLoop;
+          }
+          if (blockedModes.size >= args.modes.length) {
+            console.log(`[blocked] all modes blocked before range=${range.startDate}_${range.endDate}`);
+            break windowLoop;
+          }
         }
       }
+      if (activeModeCount === 0) break;
     }
 
-    const effectiveEndExclusive = blockedAt || endExclusive;
-    const hasObservedRange = compareIsoDate(args.startDate, effectiveEndExclusive) < 0;
+    const hasObservedRange = compareIsoDate(observedStartDate, effectiveEndExclusive) < 0;
     const normalized = hasObservedRange
-      ? buildYears(args, entriesByDate, args.startDate, effectiveEndExclusive)
+      ? buildYears(args, entriesByDate, observedStartDate, effectiveEndExclusive)
       : { years: {}, awardCount: 0, cashCount: 0 };
     const payload = {
       runId,
@@ -994,22 +1094,28 @@ async function main() {
       adults: args.adults,
       nights: args.nights,
       currency: args.currency,
-      rangeStart: args.startDate,
+      rangeStart: observedStartDate,
       rangeEnd: hasObservedRange ? addDays(effectiveEndExclusive, -1) : "",
       rangeEndExclusive: effectiveEndExclusive,
       requestedRangeEnd: addDays(endExclusive, -1),
       requestedRangeEndExclusive: endExclusive,
-      truncated: Boolean(blockedAt),
+      truncated: blockedModes.size > 0,
       blockedAt: blockedAt || null,
+      blockedByMode: Object.fromEntries(blockedModes),
       years: normalized.years,
       fetchSummary: {
         url: args.url,
         windowDays: args.windowDays,
+        windowMode: args.windowMode,
+        startMonthOffset: args.startMonthOffset,
         stopAtBlocked: args.stopAtBlocked,
         requestCount: requests.length,
         successfulFetches,
         failedFetches,
+        nonBlockedFailureCount,
         blockedSummary,
+        blockedByMode: Object.fromEntries(blockedModes),
+        blockedSummariesByMode,
         awardDateCount: normalized.awardCount,
         cashDateCount: normalized.cashCount,
         requests,
@@ -1019,10 +1125,10 @@ async function main() {
     writeJson(outputPath, payload);
     console.log(`[output] ${outputPath}`);
     console.log(
-      `[summary] requests=${requests.length} success=${successfulFetches} failed=${failedFetches} range=${args.startDate}_${effectiveEndExclusive} truncated=${Boolean(blockedAt)} awardDates=${normalized.awardCount} cashDates=${normalized.cashCount}`,
+      `[summary] requests=${requests.length} success=${successfulFetches} failed=${failedFetches} range=${observedStartDate}_${effectiveEndExclusive} truncated=${blockedModes.size > 0} awardDates=${normalized.awardCount} cashDates=${normalized.cashCount}`,
     );
 
-    if (successfulFetches === 0 || !hasObservedRange || (failedFetches > 0 && !blockedAt)) {
+    if (successfulFetches === 0 || !hasObservedRange || nonBlockedFailureCount > 0) {
       process.exitCode = 2;
     }
   } finally {
