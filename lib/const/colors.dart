@@ -15,6 +15,28 @@ class McColors {
   static const Color accentSoft = Color(0xFFF4EEE7);
 }
 
+class PointStayColors {
+  const PointStayColors._();
+
+  static const Color accent = Color(0xFF287A74);
+  static const Color accentSoft = Color(0xFFEAF6F4);
+}
+
+class CardColors {
+  const CardColors._();
+
+  static const Color accent = Color(0xFF1666EF);
+  static const Color accentSoft = Color(0xFFEAF2FF);
+}
+
+class GiftcardColors {
+  const GiftcardColors._();
+
+  static const Color accent = Color(0xFFDC7606);
+  static const Color accentSoft = Color(0xFFFFF3E6);
+  static const Color accentBorder = Color(0xFFE7A55C);
+}
+
 class McTextStyles {
   const McTextStyles._();
 

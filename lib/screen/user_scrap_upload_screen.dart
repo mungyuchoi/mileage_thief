@@ -30,8 +30,89 @@ class UserScrapUploadResult {
   final String postPath;
 }
 
+enum UserScrapUploadSource {
+  naverBlog,
+  naverCafe,
+}
+
+extension UserScrapUploadSourceMeta on UserScrapUploadSource {
+  String get label {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return '블로그';
+      case UserScrapUploadSource.naverCafe:
+        return '카페';
+    }
+  }
+
+  String get appBarTitle {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return '블로그 스크랩';
+      case UserScrapUploadSource.naverCafe:
+        return '카페 스크랩';
+    }
+  }
+
+  String get sectionTitle {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return '네이버 블로그 URL';
+      case UserScrapUploadSource.naverCafe:
+        return '네이버 카페 URL';
+    }
+  }
+
+  String get sourceChipText {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return '네이버 블로그';
+      case UserScrapUploadSource.naverCafe:
+        return '네이버 카페';
+    }
+  }
+
+  String get urlHint {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return 'https://m.blog.naver.com/...';
+      case UserScrapUploadSource.naverCafe:
+        return 'https://cafe.naver.com/...';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return Icons.article_outlined;
+      case UserScrapUploadSource.naverCafe:
+        return Icons.forum_outlined;
+    }
+  }
+
+  AdminScrapSource get scrapSource {
+    switch (this) {
+      case UserScrapUploadSource.naverBlog:
+        return AdminScrapSource.naverBlog;
+      case UserScrapUploadSource.naverCafe:
+        return AdminScrapSource.naverCafe;
+    }
+  }
+}
+
 class UserScrapUploadScreen extends StatefulWidget {
-  const UserScrapUploadScreen({super.key});
+  const UserScrapUploadScreen({
+    super.key,
+    this.initialSource = UserScrapUploadSource.naverBlog,
+    this.initialLabels = const <CommunityLabel>[],
+    this.preferredBoardId,
+    this.preferredBoardNameKeywords = const <String>[],
+  });
+
+  final UserScrapUploadSource initialSource;
+  final List<CommunityLabel> initialLabels;
+  final String? preferredBoardId;
+  final List<String> preferredBoardNameKeywords;
 
   @override
   State<UserScrapUploadScreen> createState() => _UserScrapUploadScreenState();
@@ -52,6 +133,8 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
   final CommunityLabelService _labelService = CommunityLabelService();
+  late final PageController _sourcePageController;
+  late UserScrapUploadSource _source;
 
   AdminScrapValidationResult? _validation;
   List<CommunityLabel> _selectedLabels = <CommunityLabel>[];
@@ -77,6 +160,11 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
   @override
   void initState() {
     super.initState();
+    _source = widget.initialSource;
+    _selectedLabels = CommunityLabel.dedupe(widget.initialLabels)
+        .take(_maxCommunityLabels)
+        .toList(growable: false);
+    _sourcePageController = PageController(initialPage: _source.index);
     _titleController.addListener(_onTitleChanged);
     _loadAuthor();
     _loadCategories();
@@ -85,6 +173,7 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
   @override
   void dispose() {
     _titleController.removeListener(_onTitleChanged);
+    _sourcePageController.dispose();
     _urlController.dispose();
     _titleController.dispose();
     super.dispose();
@@ -153,12 +242,39 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
 
   String? _preferredBoardId(List<Map<String, dynamic>> boards) {
     if (boards.isEmpty) return null;
+    final preferredKeywords = widget.preferredBoardNameKeywords
+        .map(_normalizeBoardSearchText)
+        .where((keyword) => keyword.isNotEmpty)
+        .toList(growable: false);
+    if (preferredKeywords.isNotEmpty) {
+      for (final board in boards) {
+        final id = (board['id'] ?? '').toString();
+        final name = (board['name'] ?? id).toString();
+        final group = (board['group'] ?? '').toString();
+        final searchable = _normalizeBoardSearchText('$id $name $group');
+        if (preferredKeywords.any((keyword) => searchable.contains(keyword))) {
+          return id;
+        }
+      }
+    }
+    final preferredBoardId = widget.preferredBoardId?.trim();
+    if (preferredBoardId != null && preferredBoardId.isNotEmpty) {
+      for (final board in boards) {
+        if ((board['id'] ?? '').toString() == preferredBoardId) {
+          return preferredBoardId;
+        }
+      }
+    }
     for (final board in boards) {
       if ((board['id'] ?? '').toString() == 'free') {
         return 'free';
       }
     }
     return (boards.first['id'] ?? '').toString();
+  }
+
+  String _normalizeBoardSearchText(String value) {
+    return value.replaceAll(RegExp(r'[\s/_·-]+'), '').toLowerCase().trim();
   }
 
   Map<String, dynamic>? _selectedBoard() {
@@ -222,7 +338,10 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
       _validation = null;
     });
     try {
-      final result = await AdminScrapService.validateUserScrapPost(url: url);
+      final result = await AdminScrapService.validateUserScrapPost(
+        url: url,
+        source: _source.scrapSource,
+      );
       if (!mounted) return;
       setState(() {
         _validation = result;
@@ -249,6 +368,7 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
         url: validation.normalizedUrl,
         boardId: boardId,
         titleOverride: _titleController.text.trim(),
+        source: _source.scrapSource,
         labels: _selectedLabels,
       );
       if (!mounted) return;
@@ -270,6 +390,32 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
     } finally {
       if (mounted && !uploaded) setState(() => _publishing = false);
     }
+  }
+
+  void _changeSource(UserScrapUploadSource source) {
+    if (_source == source) return;
+    setState(() {
+      _source = source;
+      _validation = null;
+    });
+    final page = source.index;
+    if (_sourcePageController.hasClients &&
+        (_sourcePageController.page?.round() ?? page) != page) {
+      _sourcePageController.animateToPage(
+        page,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _onSourcePageChanged(int page) {
+    final next = UserScrapUploadSource.values[page];
+    if (_source == next) return;
+    setState(() {
+      _source = next;
+      _validation = null;
+    });
   }
 
   void _showSnack(String message, {bool isError = false}) {
@@ -412,12 +558,112 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
     }
   }
 
+  Widget _buildSourceTabs() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F2F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          for (final source in UserScrapUploadSource.values)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _changeSource(source),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _source == source ? Colors.white : null,
+                    borderRadius: BorderRadius.circular(9),
+                    boxShadow: _source == source
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        source.icon,
+                        size: 17,
+                        color: _source == source ? _accent : _muted,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        source.label,
+                        style: TextStyle(
+                          color: _source == source ? _accent : _muted,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUrlPage(UserScrapUploadSource source) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _UserScrapInfoChip(
+          icon: source.icon,
+          text: source.sourceChipText,
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: _urlController,
+          keyboardType: TextInputType.url,
+          decoration: InputDecoration(
+            labelText: 'URL',
+            hintText: source.urlHint,
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              tooltip: '붙여넣기',
+              icon: const Icon(Icons.content_paste_rounded),
+              onPressed: _pasteUrl,
+            ),
+          ),
+          onChanged: (_) => setState(() => _validation = null),
+          onSubmitted: (_) => _validate(),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _validating ? null : _validate,
+            icon: _validating
+                ? const SizedBox(
+                    width: 17,
+                    height: 17,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.verified_outlined),
+            label: Text(_validating ? '검증 중...' : '검증'),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
-        title: const Text('블로그 스크랩'),
+        title: Text(_source.appBarTitle),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
@@ -447,44 +693,21 @@ class _UserScrapUploadScreenState extends State<UserScrapUploadScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           _UserScrapSectionCard(
-            title: '네이버 블로그 URL',
+            title: _source.sectionTitle,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _UserScrapInfoChip(
-                  icon: Icons.article_outlined,
-                  text: '네이버 블로그',
-                ),
+                _buildSourceTabs(),
                 const SizedBox(height: 14),
-                TextField(
-                  controller: _urlController,
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    labelText: 'URL',
-                    hintText: 'https://m.blog.naver.com/...',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      tooltip: '붙여넣기',
-                      icon: const Icon(Icons.content_paste_rounded),
-                      onPressed: _pasteUrl,
-                    ),
-                  ),
-                  onChanged: (_) => setState(() => _validation = null),
-                  onSubmitted: (_) => _validate(),
-                ),
-                const SizedBox(height: 12),
                 SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _validating ? null : _validate,
-                    icon: _validating
-                        ? const SizedBox(
-                            width: 17,
-                            height: 17,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.verified_outlined),
-                    label: Text(_validating ? '검증 중...' : '검증'),
+                  height: 160,
+                  child: PageView(
+                    controller: _sourcePageController,
+                    onPageChanged: _onSourcePageChanged,
+                    children: [
+                      for (final source in UserScrapUploadSource.values)
+                        _buildUrlPage(source),
+                    ],
                   ),
                 ),
               ],

@@ -5,6 +5,7 @@ import '../models/community_label_model.dart';
 
 enum AdminScrapSource {
   naverBlog,
+  naverCafe,
   aagag,
 }
 
@@ -13,6 +14,8 @@ extension AdminScrapSourceLabel on AdminScrapSource {
     switch (this) {
       case AdminScrapSource.naverBlog:
         return '네이버 블로그';
+      case AdminScrapSource.naverCafe:
+        return '네이버 카페';
       case AdminScrapSource.aagag:
         return 'AAGAG';
     }
@@ -22,6 +25,8 @@ extension AdminScrapSourceLabel on AdminScrapSource {
     switch (this) {
       case AdminScrapSource.naverBlog:
         return 'naver_blog';
+      case AdminScrapSource.naverCafe:
+        return 'naver_cafe';
       case AdminScrapSource.aagag:
         return 'aagag_issue';
     }
@@ -205,6 +210,7 @@ class AdminScrapService {
 
   static Future<AdminScrapValidationResult> validateUserScrapPost({
     required String url,
+    AdminScrapSource source = AdminScrapSource.naverBlog,
   }) async {
     final callable = _functions.httpsCallable(
       'validateUserScrapPost',
@@ -212,6 +218,7 @@ class AdminScrapService {
     );
     final result = await callable.call(<String, dynamic>{
       'url': url,
+      'sourceType': source.functionValue,
     });
     return AdminScrapValidationResult.fromJson(_mapValue(result.data));
   }
@@ -244,6 +251,7 @@ class AdminScrapService {
     required String url,
     required String boardId,
     required String titleOverride,
+    AdminScrapSource source = AdminScrapSource.naverBlog,
     List<CommunityLabel> labels = const <CommunityLabel>[],
   }) async {
     final callable = _functions.httpsCallable(
@@ -255,6 +263,7 @@ class AdminScrapService {
       'url': url,
       'boardId': boardId,
       'titleOverride': titleOverride,
+      'sourceType': source.functionValue,
       'labels': labelPayload.labels,
     });
     return AdminScrapPublishResult.fromJson(_mapValue(result.data));

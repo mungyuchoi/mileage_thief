@@ -368,9 +368,14 @@ class _AdminScrapUploadScreenState extends State<AdminScrapUploadScreen> {
                   keyboardType: TextInputType.url,
                   decoration: InputDecoration(
                     labelText: 'URL',
-                    hintText: _source == AdminScrapSource.naverBlog
-                        ? 'https://m.blog.naver.com/...'
-                        : 'https://aagag.com/issue/?idx=...',
+                    hintText: switch (_source) {
+                      AdminScrapSource.naverBlog =>
+                        'https://m.blog.naver.com/...',
+                      AdminScrapSource.naverCafe =>
+                        'https://cafe.naver.com/...',
+                      AdminScrapSource.aagag =>
+                        'https://aagag.com/issue/?idx=...',
+                    },
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       tooltip: '붙여넣기',

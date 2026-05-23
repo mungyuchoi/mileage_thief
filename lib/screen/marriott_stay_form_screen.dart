@@ -12,10 +12,12 @@ import '../services/marriott_stay_service.dart';
 
 class MarriottStayFormScreen extends StatefulWidget {
   final MarriottStayRecord? initialRecord;
+  final Color accentColor;
 
   const MarriottStayFormScreen({
     super.key,
     this.initialRecord,
+    this.accentColor = PointStayColors.accent,
   });
 
   @override
@@ -203,7 +205,7 @@ class _MarriottStayFormScreenState extends State<MarriottStayFormScreen> {
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: McColors.accent),
+          colorScheme: ColorScheme.light(primary: widget.accentColor),
         ),
         child: child!,
       ),
@@ -299,246 +301,295 @@ class _MarriottStayFormScreenState extends State<MarriottStayFormScreen> {
     final calculation = _calculation();
     final paid = _stayType == MarriottStayType.paid;
 
-    return Scaffold(
-      backgroundColor: McColors.background,
-      appBar: AppBar(
-        title: Text(
-          widget.initialRecord == null ? '메리어트 숙박 기록 추가' : '메리어트 숙박 기록 수정',
+    return Theme(
+      data: _accentTheme(context),
+      child: Scaffold(
+        backgroundColor: McColors.background,
+        appBar: AppBar(
+          title: Text(
+            widget.initialRecord == null ? '메리어트 숙박 기록 추가' : '메리어트 숙박 기록 수정',
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: McColors.ink,
+          elevation: 0.4,
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: McColors.ink,
-        elevation: 0.4,
-      ),
-      body: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          behavior: HitTestBehavior.opaque,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            children: [
-              _FormSection(
-                title: '숙박 유형',
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+        body: SafeArea(
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.opaque,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _FormSection(
+                  title: '숙박 유형',
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final type in MarriottStayType.values)
+                          ChoiceChip(
+                            label: Text(type.label),
+                            selected: _stayType == type,
+                            onSelected: (_) {
+                              setState(() {
+                                _stayType = type;
+                                _earnedPointsEdited = false;
+                                _syncEarnedPointsFromFormula();
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _FormSection(
+                  title: '기본 정보',
+                  children: [
+                    const _FieldLabel('호텔명'),
+                    TextFormField(
+                      controller: _hotelController,
+                      textInputAction: TextInputAction.next,
+                      decoration:
+                          const InputDecoration(hintText: '예: 코트야드 보타닉 파크'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DateButton(
+                            label: '체크인',
+                            value: _dateFormat.format(_checkIn),
+                            onTap: () => _pickDate(checkIn: true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _DateButton(
+                            label: '체크아웃',
+                            value: _dateFormat.format(_checkOut),
+                            onTap: () => _pickDate(checkIn: false),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (paid) ...[
+                  const SizedBox(height: 10),
+                  _FormSection(
+                    title: '금액',
                     children: [
-                      for (final type in MarriottStayType.values)
-                        ChoiceChip(
-                          label: Text(type.label),
-                          selected: _stayType == type,
-                          onSelected: (_) {
+                      _MoneyField(
+                        label: '룸레이트',
+                        controller: _roomRateController,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MoneyField(
+                              label: '세금',
+                              controller: _taxController,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _MoneyField(
+                              label: '봉사료',
+                              controller: _serviceChargeController,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _FormSection(
+                    title: '포인트 계산',
+                    children: [
+                      const _FieldLabel('티어'),
+                      DropdownButtonFormField<MarriottEliteTierOption>(
+                        initialValue: _tier,
+                        dropdownColor: Colors.white,
+                        decoration: const InputDecoration(),
+                        items: [
+                          for (final option in MarriottEliteTierOption.options)
+                            DropdownMenuItem(
+                              value: option,
+                              child:
+                                  Text('${option.name} x${option.multiplier}'),
+                            ),
+                        ],
+                        onChanged: (option) {
+                          if (option == null) return;
+                          setState(() {
+                            _tier = option;
+                            if (!_earnedPointsEdited) {
+                              _syncEarnedPointsFromFormula();
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DecimalField(
+                              label: '1달러 환율',
+                              controller: _exchangeRateController,
+                              suffixText: '원',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _DecimalField(
+                              label: '1포인트 가치',
+                              controller: _pointValueController,
+                              suffixText: '원',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _NumberField(
+                              label: '웰컴 포인트',
+                              controller: _welcomePointsController,
+                              suffixText: 'P',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _NumberField(
+                              label: '프로모션 포인트',
+                              controller: _promoPointsController,
+                              suffixText: 'P',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 10),
+                _FormSection(
+                  title: '획득 포인트',
+                  trailing: paid && _earnedPointsEdited
+                      ? TextButton(
+                          onPressed: () {
                             setState(() {
-                              _stayType = type;
                               _earnedPointsEdited = false;
                               _syncEarnedPointsFromFormula();
                             });
                           },
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _FormSection(
-                title: '기본 정보',
-                children: [
-                  const _FieldLabel('호텔명'),
-                  TextFormField(
-                    controller: _hotelController,
-                    textInputAction: TextInputAction.next,
-                    decoration:
-                        const InputDecoration(hintText: '예: 코트야드 보타닉 파크'),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _DateButton(
-                          label: '체크인',
-                          value: _dateFormat.format(_checkIn),
-                          onTap: () => _pickDate(checkIn: true),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _DateButton(
-                          label: '체크아웃',
-                          value: _dateFormat.format(_checkOut),
-                          onTap: () => _pickDate(checkIn: false),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              if (paid) ...[
-                const SizedBox(height: 10),
-                _FormSection(
-                  title: '금액',
+                          child: const Text('자동계산'),
+                        )
+                      : null,
                   children: [
-                    _MoneyField(
-                      label: '룸레이트',
-                      controller: _roomRateController,
+                    _NumberField(
+                      label: '획득 포인트',
+                      controller: _earnedPointsController,
+                      suffixText: 'P',
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MoneyField(
-                            label: '세금',
-                            controller: _taxController,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _MoneyField(
-                            label: '봉사료',
-                            controller: _serviceChargeController,
-                          ),
-                        ),
-                      ],
+                    _CalculationPreview(
+                      calculation: calculation,
+                      numberFormat: _numberFormat,
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 _FormSection(
-                  title: '포인트 계산',
+                  title: '메모',
                   children: [
-                    const _FieldLabel('티어'),
-                    DropdownButtonFormField<MarriottEliteTierOption>(
-                      initialValue: _tier,
-                      dropdownColor: Colors.white,
-                      decoration: const InputDecoration(),
-                      items: [
-                        for (final option in MarriottEliteTierOption.options)
-                          DropdownMenuItem(
-                            value: option,
-                            child: Text('${option.name} x${option.multiplier}'),
-                          ),
-                      ],
-                      onChanged: (option) {
-                        if (option == null) return;
-                        setState(() {
-                          _tier = option;
-                          if (!_earnedPointsEdited) {
-                            _syncEarnedPointsFromFormula();
-                          }
-                        });
-                      },
+                    const _FieldLabel('예약번호'),
+                    TextFormField(
+                      controller: _bookingNumberController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(hintText: '선택 입력'),
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _DecimalField(
-                            label: '1달러 환율',
-                            controller: _exchangeRateController,
-                            suffixText: '원',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _DecimalField(
-                            label: '1포인트 가치',
-                            controller: _pointValueController,
-                            suffixText: '원',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _NumberField(
-                            label: '웰컴 포인트',
-                            controller: _welcomePointsController,
-                            suffixText: 'P',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _NumberField(
-                            label: '프로모션 포인트',
-                            controller: _promoPointsController,
-                            suffixText: 'P',
-                          ),
-                        ),
-                      ],
+                    const _FieldLabel('비고'),
+                    TextFormField(
+                      controller: _memoController,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        hintText: '예: BRG 5,000P / 35,000P 사용',
+                      ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  label: Text(_saving ? '저장 중' : '저장'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
               ],
-              const SizedBox(height: 10),
-              _FormSection(
-                title: '획득 포인트',
-                trailing: paid && _earnedPointsEdited
-                    ? TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _earnedPointsEdited = false;
-                            _syncEarnedPointsFromFormula();
-                          });
-                        },
-                        child: const Text('자동계산'),
-                      )
-                    : null,
-                children: [
-                  _NumberField(
-                    label: '획득 포인트',
-                    controller: _earnedPointsController,
-                    suffixText: 'P',
-                  ),
-                  const SizedBox(height: 10),
-                  _CalculationPreview(
-                    calculation: calculation,
-                    numberFormat: _numberFormat,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _FormSection(
-                title: '메모',
-                children: [
-                  const _FieldLabel('예약번호'),
-                  TextFormField(
-                    controller: _bookingNumberController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: '선택 입력'),
-                  ),
-                  const SizedBox(height: 10),
-                  const _FieldLabel('비고'),
-                  TextFormField(
-                    controller: _memoController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText: '예: BRG 5,000P / 35,000P 사용',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check),
-                label: Text(_saving ? '저장 중' : '저장'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  ThemeData _accentTheme(BuildContext context) {
+    final base = Theme.of(context);
+    final colorScheme = base.colorScheme.copyWith(
+      primary: widget.accentColor,
+      secondary: widget.accentColor,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+    );
+
+    return base.copyWith(
+      colorScheme: colorScheme,
+      primaryColor: widget.accentColor,
+      chipTheme: base.chipTheme.copyWith(
+        selectedColor: PointStayColors.accentSoft,
+        checkmarkColor: widget.accentColor,
+        secondaryLabelStyle: McTextStyles.meta.copyWith(
+          color: widget.accentColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: widget.accentColor,
+          textStyle: McTextStyles.bodyStrong,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: widget.accentColor,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
+        color: widget.accentColor,
+      ),
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: widget.accentColor, width: 1.2),
         ),
       ),
     );

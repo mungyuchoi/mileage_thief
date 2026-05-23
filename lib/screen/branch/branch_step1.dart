@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../../const/colors.dart';
 import 'branch_step2.dart';
 
 class BranchStep1Page extends StatefulWidget {
@@ -15,11 +17,14 @@ class BranchStep1Page extends StatefulWidget {
 }
 
 class _BranchStep1PageState extends State<BranchStep1Page> {
-  final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
-  CameraPosition _camera = const CameraPosition(target: LatLng(37.5665, 126.9780), zoom: 15);
+  final Completer<GoogleMapController> _mapController =
+      Completer<GoogleMapController>();
+  CameraPosition _camera =
+      const CameraPosition(target: LatLng(37.5665, 126.9780), zoom: 15);
   bool _locationEnabled = false;
   String _address = '';
-  final TextEditingController _detailAddressController = TextEditingController();
+  final TextEditingController _detailAddressController =
+      TextEditingController();
   Timer? _debounce;
 
   @override
@@ -36,16 +41,22 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
         granted = await Geolocator.requestPermission();
       }
       if (granted == LocationPermission.deniedForever) {
-        setState(() { _locationEnabled = false; });
+        setState(() {
+          _locationEnabled = false;
+        });
         return;
       }
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() { _locationEnabled = false; });
+        setState(() {
+          _locationEnabled = false;
+        });
         return;
       }
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      final cp = CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 16);
+      final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      final cp =
+          CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 16);
       setState(() {
         _locationEnabled = true;
         _camera = cp;
@@ -58,15 +69,18 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
 
   Future<void> _reverseGeocode(double lat, double lng) async {
     try {
-      final uri = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=ko');
+      final uri = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=ko');
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 6);
       final req = await client.getUrl(uri);
-      req.headers.set(HttpHeaders.userAgentHeader, 'MileageThief/1.0 (reverse-geocode)');
+      req.headers.set(
+          HttpHeaders.userAgentHeader, 'MileageThief/1.0 (reverse-geocode)');
       final resp = await req.close();
       if (resp.statusCode != 200) return;
       final body = await resp.transform(const Utf8Decoder()).join();
-      final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
+      final Map<String, dynamic> json =
+          jsonDecode(body) as Map<String, dynamic>;
       setState(() {
         _address = (json['display_name'] as String?) ?? '';
       });
@@ -112,7 +126,7 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF74512D),
+                        color: GiftcardColors.accent,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -135,7 +149,10 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '플레이스의\n정보를 알려주세요',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.black),
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black),
               ),
             ),
             const SizedBox(height: 12),
@@ -164,7 +181,8 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Icon(Icons.location_on, color: Color(0xFF74512D), size: 40),
+                              Icon(Icons.location_on,
+                                  color: GiftcardColors.accent, size: 40),
                             ],
                           ),
                         ),
@@ -198,9 +216,11 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                    borderSide: const BorderSide(
+                        color: GiftcardColors.accent, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ),
@@ -228,11 +248,16 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF74512D),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: GiftcardColors.accent,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  child: const Text('다음', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: const Text('다음',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600)),
                 ),
               ),
             ),
@@ -242,5 +267,3 @@ class _BranchStep1PageState extends State<BranchStep1Page> {
     );
   }
 }
-
-

@@ -186,12 +186,12 @@ class _AllRecordsButton extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: McColors.accentSoft,
+                  color: PointStayColors.accentSoft,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.format_list_bulleted,
-                  color: McColors.accent,
+                  color: PointStayColors.accent,
                   size: 19,
                 ),
               ),
@@ -240,12 +240,12 @@ class _RecordsHeader extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: const BoxDecoration(
-              color: McColors.accentSoft,
+              color: PointStayColors.accentSoft,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.hotel_class_outlined,
-              color: McColors.accent,
+              color: PointStayColors.accent,
               size: 22,
             ),
           ),
@@ -406,10 +406,10 @@ class _SummaryTile extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: McColors.accentSoft,
+              color: PointStayColors.accentSoft,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: McColors.accent, size: 18),
+            child: Icon(icon, color: PointStayColors.accent, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -532,7 +532,9 @@ class _StayRecordRow extends StatelessWidget {
               Text(
                 amountText,
                 style: TextStyle(
-                  color: record.totalAmount <= 0 ? McColors.accent : Colors.red,
+                  color: record.totalAmount <= 0
+                      ? PointStayColors.accent
+                      : Colors.red,
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                 ),
@@ -608,7 +610,7 @@ class _StayTypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (type) {
       MarriottStayType.paid => Colors.blue,
-      MarriottStayType.points => McColors.accent,
+      MarriottStayType.points => PointStayColors.accent,
       MarriottStayType.freeNightAward => Colors.deepPurple,
     };
     return Text(

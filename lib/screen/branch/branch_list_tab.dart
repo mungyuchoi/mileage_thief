@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../const/colors.dart';
 import 'branch_detail_screen.dart';
 
 class BranchListTab extends StatefulWidget {
@@ -85,7 +86,8 @@ class _BranchListTabState extends State<BranchListTab> {
               }
               return const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
                 ),
               );
             }
@@ -148,13 +150,13 @@ class _BranchListTabState extends State<BranchListTab> {
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: const Color(0x1174512D),
+                                color: const Color(0x11DC7606),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
                                 Icons.storefront_outlined,
                                 size: 18,
-                                color: Color(0xFF74512D),
+                                color: GiftcardColors.accent,
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -262,16 +264,16 @@ class _TagChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0x1174512D),
+        color: const Color(0x11DC7606),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0x3374512D)),
+        border: Border.all(color: const Color(0x33DC7606)),
       ),
       child: Text(
         text,
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF74512D),
+          color: GiftcardColors.accent,
         ),
       ),
     );

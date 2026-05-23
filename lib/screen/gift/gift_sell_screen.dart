@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../const/colors.dart';
 import '../../services/analytics_service.dart';
 
 class GiftSellScreen extends StatefulWidget {
@@ -250,7 +251,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFF74512D))),
+            colorScheme:
+                const ColorScheme.light(primary: GiftcardColors.accent)),
         child: child!,
       ),
     );
@@ -737,7 +739,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
-                                  ? const Color(0xFF74512D)
+                                  ? GiftcardColors.accent
                                   : const Color(0xFFE8ECF4),
                               width: isSelected ? 1.5 : 1,
                             ),
@@ -752,7 +754,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: isSelected
-                                      ? const Color(0xFF74512D)
+                                      ? GiftcardColors.accent
                                       : const Color(0xFF1F1F28),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
@@ -845,7 +847,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                               borderSide: BorderSide(color: Colors.black26)),
                           focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color(0xFF74512D), width: 1.5)),
+                                  color: GiftcardColors.accent, width: 1.5)),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -872,7 +874,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                             child: TextField(
                               controller: _sellUnitController,
                               keyboardType: TextInputType.number,
-                              cursorColor: const Color(0xFF74512D),
+                              cursorColor: GiftcardColors.accent,
                               decoration: const InputDecoration(
                                 labelText: '판매가(권당, 원)',
                                 border: OutlineInputBorder(),
@@ -881,10 +883,11 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                                         BorderSide(color: Colors.black26)),
                                 focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
-                                        color: Color(0xFF74512D), width: 2)),
+                                        color: GiftcardColors.accent,
+                                        width: 2)),
                                 labelStyle: TextStyle(color: Colors.black54),
                                 floatingLabelStyle:
-                                    TextStyle(color: Color(0xFF74512D)),
+                                    TextStyle(color: GiftcardColors.accent),
                               ),
                             ),
                           ),
@@ -895,7 +898,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                       decimal: true),
-                              cursorColor: const Color(0xFF74512D),
+                              cursorColor: GiftcardColors.accent,
                               decoration: const InputDecoration(
                                 labelText: '할인율(%)',
                                 border: OutlineInputBorder(),
@@ -904,10 +907,11 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                                         BorderSide(color: Colors.black26)),
                                 focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
-                                        color: Color(0xFF74512D), width: 2)),
+                                        color: GiftcardColors.accent,
+                                        width: 2)),
                                 labelStyle: TextStyle(color: Colors.black54),
                                 floatingLabelStyle:
-                                    TextStyle(color: Color(0xFF74512D)),
+                                    TextStyle(color: GiftcardColors.accent),
                               ),
                             ),
                           ),
@@ -922,7 +926,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                         TextField(
                           controller: _qtyController,
                           keyboardType: TextInputType.number,
-                          cursorColor: const Color(0xFF74512D),
+                          cursorColor: GiftcardColors.accent,
                           decoration: InputDecoration(
                             labelText: '판매 수량 (최대 ${_selectedLot!['qty']}개)',
                             hintText: '0',
@@ -931,10 +935,10 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                                 borderSide: BorderSide(color: Colors.black26)),
                             focusedBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFF74512D), width: 2)),
+                                    color: GiftcardColors.accent, width: 2)),
                             labelStyle: const TextStyle(color: Colors.black54),
                             floatingLabelStyle:
-                                const TextStyle(color: Color(0xFF74512D)),
+                                const TextStyle(color: GiftcardColors.accent),
                           ),
                           onChanged: (value) => setState(() {}),
                         ),
@@ -1012,7 +1016,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
             child: ElevatedButton(
               onPressed: _saving ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF74512D),
+                backgroundColor: GiftcardColors.accent,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 elevation: 0,

@@ -19,6 +19,7 @@ import 'branch/branch_edit_screen.dart';
 import 'user_profile_screen.dart';
 import 'branch/branch_detail_screen.dart';
 import 'my_page_screen.dart';
+import '../const/colors.dart';
 import '../services/analytics_service.dart';
 
 String _maskGiftcardRankingName(String name) {
@@ -50,7 +51,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
   final Set<Marker> _markers = <Marker>{};
   bool _isLoading = false;
   late DateTime _selectedMonth;
-  late final double _markerHueBrown; // #73532E
+  late final double _markerHueGiftcard;
   final Map<String, BitmapDescriptor> _logoIconCache =
       <String, BitmapDescriptor>{};
   final Map<String, Future<BitmapDescriptor>> _logoIconLoading =
@@ -100,7 +101,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       source: 'screen_init',
     );
     _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
-    _markerHueBrown = HSVColor.fromColor(const Color(0xFF73532E)).hue;
+    _markerHueGiftcard = HSVColor.fromColor(GiftcardColors.accent).hue;
     _initLocation();
     _loadMonthlyMarkers();
     // 기본 마커 사용으로 커스텀 로드는 제거
@@ -284,7 +285,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         }
 
         final Marker marker = _buildMarker(
-          BitmapDescriptor.defaultMarkerWithHue(_markerHueBrown),
+          BitmapDescriptor.defaultMarkerWithHue(_markerHueGiftcard),
         );
         setState(() {
           _markers.add(marker);
@@ -423,7 +424,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
       // 테두리
       final Paint border = Paint()
         ..style = PaintingStyle.stroke
-        ..color = const Color(0xFF73532E)
+        ..color = GiftcardColors.accent
         ..strokeWidth = 6;
       canvas.drawCircle(Offset(size / 2, size / 2), size / 2 - 3, border);
 
@@ -722,13 +723,13 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         TextButton.icon(
                           onPressed: openBranchDetail,
                           icon: const Icon(Icons.open_in_new,
-                              size: 18, color: Color(0xFF74512D)),
+                              size: 18, color: GiftcardColors.accent),
                           label: const Text(
                             '상세 보기',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF74512D),
+                              color: GiftcardColors.accent,
                             ),
                           ),
                           style: TextButton.styleFrom(
@@ -741,7 +742,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         if (canEdit)
                           IconButton(
                             icon: const Icon(Icons.edit,
-                                size: 20, color: Color(0xFF74512D)),
+                                size: 20, color: GiftcardColors.accent),
                             onPressed: () async {
                               Navigator.pop(ctx);
                               final result = await Navigator.push(
@@ -1314,8 +1315,10 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                         return ListTile(
                           title: Text(label),
                           trailing: selected
-                              ? const Icon(Icons.check,
-                                  color: Color(0xFF73532E))
+                              ? const Icon(
+                                  Icons.check,
+                                  color: GiftcardColors.accent,
+                                )
                               : null,
                           onTap: () async {
                             Navigator.pop(context);
@@ -1556,7 +1559,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
                           style: TextStyle(color: Colors.black),
                         ),
                         value: localDontShow,
-                        activeColor: const Color(0xFF74512D),
+                        activeColor: GiftcardColors.accent,
                         onChanged: (v) {
                           setState(() {
                             localDontShow = v ?? false;

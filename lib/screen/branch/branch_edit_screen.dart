@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../const/colors.dart';
+
 class BranchEditScreen extends StatefulWidget {
   final String branchId;
   final Map<String, dynamic> branchData;
@@ -192,7 +194,7 @@ class _BranchEditScreenState extends State<BranchEditScreen> {
       initialTime: currentTime,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF74512D)),
+          colorScheme: const ColorScheme.light(primary: GiftcardColors.accent),
         ),
         child: child!,
       ),
@@ -500,7 +502,7 @@ class _BranchEditScreenState extends State<BranchEditScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF74512D), width: 2),
+                              color: GiftcardColors.accent, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -532,7 +534,7 @@ class _BranchEditScreenState extends State<BranchEditScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF74512D), width: 2),
+                              color: GiftcardColors.accent, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -559,7 +561,7 @@ class _BranchEditScreenState extends State<BranchEditScreen> {
                               ChoiceChip(
                                 selected: selected,
                                 label: Text(day),
-                                selectedColor: const Color(0xFF74512D),
+                                selectedColor: GiftcardColors.accent,
                                 labelStyle: TextStyle(
                                     color: selected
                                         ? Colors.white
@@ -635,7 +637,7 @@ class _BranchEditScreenState extends State<BranchEditScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF74512D), width: 2),
+                              color: GiftcardColors.accent, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
@@ -671,7 +673,7 @@ class _BranchEditScreenState extends State<BranchEditScreen> {
                     child: ElevatedButton(
                       onPressed: _saving ? null : _onSubmit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF74512D),
+                        backgroundColor: GiftcardColors.accent,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 0,

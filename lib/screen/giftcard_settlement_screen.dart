@@ -246,7 +246,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: McColors.accent),
+          colorScheme: const ColorScheme.light(primary: GiftcardColors.accent),
         ),
         child: child!,
       ),
@@ -329,7 +329,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? const Color(0xFF74512D)
+                                    ? GiftcardColors.accent
                                     : const Color(0xFFE8ECF4),
                                 width: isSelected ? 1.5 : 1,
                               ),
@@ -344,7 +344,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: isSelected
-                                        ? const Color(0xFF74512D)
+                                        ? GiftcardColors.accent
                                         : const Color(0xFF1F1F28),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -589,13 +589,13 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                                       width: 34,
                                       height: 34,
                                       decoration: BoxDecoration(
-                                        color: McColors.accentSoft,
+                                        color: GiftcardColors.accentSoft,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Icon(
                                         Icons.card_giftcard_outlined,
                                         size: 18,
-                                        color: McColors.accent,
+                                        color: GiftcardColors.accent,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -969,7 +969,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     if (_loadingRefs) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
+          valueColor: AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
         ),
       );
     }
@@ -983,7 +983,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
 
     return RefreshIndicator(
       onRefresh: _refreshData,
-      color: McColors.accent,
+      color: GiftcardColors.accent,
       backgroundColor: Colors.white,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -1025,13 +1025,13 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: McColors.accentSoft,
+              color: GiftcardColors.accentSoft,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.lock_outline,
               size: 19,
-              color: McColors.accent,
+              color: GiftcardColors.accent,
             ),
           ),
           const SizedBox(width: 12),
@@ -1123,7 +1123,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
               icon: const Icon(Icons.playlist_add_check_outlined, size: 18),
               label: const Text('상품권 구매목록 불러오기'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: McColors.accent,
+                foregroundColor: GiftcardColors.accent,
                 side: const BorderSide(color: McColors.line),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -1150,7 +1150,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
           const SizedBox(height: 12),
           SwitchListTile.adaptive(
             value: _completed,
-            activeThumbColor: McColors.accent,
+            activeThumbColor: GiftcardColors.accent,
             contentPadding: EdgeInsets.zero,
             title: const Text('정산 완료', style: McTextStyles.bodyStrong),
             subtitle:
@@ -1201,7 +1201,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                   : const Icon(Icons.save_outlined, size: 18),
               label: Text(_saving ? '저장 중' : '정산 기록 저장'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: McColors.accent,
+                backgroundColor: GiftcardColors.accent,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(
@@ -1222,7 +1222,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         children: [
           Checkbox(
             value: _recountChecked,
-            activeColor: McColors.accent,
+            activeColor: GiftcardColors.accent,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             onChanged: (value) {
               setState(() {
@@ -1789,13 +1789,13 @@ class _MiniPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: McColors.accentSoft,
+        color: GiftcardColors.accentSoft,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
         style: McTextStyles.micro.copyWith(
-          color: McColors.accent,
+          color: GiftcardColors.accent,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -1863,13 +1863,13 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: completed ? const Color(0xFFEAF2FF) : McColors.accentSoft,
+        color: completed ? const Color(0xFFEAF2FF) : GiftcardColors.accentSoft,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         completed ? '완료' : '예정',
         style: McTextStyles.micro.copyWith(
-          color: completed ? Colors.blue : McColors.accent,
+          color: completed ? Colors.blue : GiftcardColors.accent,
           fontWeight: FontWeight.w800,
         ),
       ),

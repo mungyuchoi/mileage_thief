@@ -51,10 +51,10 @@ class _KpiValue extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: McColors.accentSoft,
+                color: GiftcardColors.accentSoft,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: McColors.accent, size: 18),
+              child: Icon(icon, color: GiftcardColors.accent, size: 18),
             ),
             const SizedBox(width: 10),
           ],
@@ -242,7 +242,7 @@ class _DashboardBrandDistributionSectionState
             const Text('수량', style: TextStyle(fontSize: 12)),
             Switch(
               value: _byAmount,
-              activeColor: const Color(0xFF74512D),
+              activeColor: GiftcardColors.accent,
               onChanged: (value) => setState(() => _byAmount = value),
             ),
             const Text('금액', style: TextStyle(fontSize: 12)),
@@ -1118,11 +1118,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: selected ? const Color(0xFF74512D) : Colors.white,
+                      color: selected ? GiftcardColors.accent : Colors.white,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color:
-                            selected ? const Color(0xFF74512D) : Colors.black26,
+                            selected ? GiftcardColors.accent : Colors.black26,
                       ),
                     ),
                     alignment: Alignment.center,
@@ -1812,7 +1812,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       },
       child: RefreshIndicator(
         onRefresh: () => _load(forceRefresh: true),
-        color: McColors.accent,
+        color: GiftcardColors.accent,
         backgroundColor: Colors.white,
         child: ListView.builder(
           key: PageStorageKey<String>(
@@ -1869,8 +1869,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
           padding: EdgeInsets.only(top: 10, bottom: 2),
           child: LinearProgressIndicator(
             minHeight: 2,
-            color: McColors.accent,
-            backgroundColor: McColors.accentSoft,
+            color: GiftcardColors.accent,
+            backgroundColor: GiftcardColors.accentSoft,
           ),
         );
       case _DashboardSection.banner:
@@ -2214,7 +2214,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                     width: width * ratio,
                     height: 10,
                     decoration: BoxDecoration(
-                        color: const Color(0xFF74512D),
+                        color: GiftcardColors.accent,
                         borderRadius: BorderRadius.circular(6)),
                   ),
                 ],
@@ -2371,7 +2371,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
               const Positioned.fill(
                 child: Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFF74512D),
+                    color: GiftcardColors.accent,
                   ),
                 ),
               )
@@ -2394,7 +2394,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF74512D),
+                      backgroundColor: GiftcardColors.accent,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 10,
@@ -2638,7 +2638,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                     width: width * ratio,
                     height: 9,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF74512D),
+                      color: GiftcardColors.accent,
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
@@ -2698,7 +2698,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                     height: 9,
                     decoration: BoxDecoration(
                       color: positive
-                          ? const Color(0xFF74512D)
+                          ? GiftcardColors.accent
                           : const Color(0xFFE53935),
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -2755,7 +2755,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                                 margin:
                                     const EdgeInsets.symmetric(horizontal: 1),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF74512D),
+                                  color: GiftcardColors.accent,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -2922,8 +2922,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
           day.month == _selectedDay!.month &&
           day.day == _selectedDay!.day,
       calendarStyle: const CalendarStyle(
-          todayDecoration:
-              BoxDecoration(color: Color(0x2074512D), shape: BoxShape.circle)),
+          todayDecoration: BoxDecoration(
+              color: const Color(0x20DC7606), shape: BoxShape.circle)),
       headerStyle:
           const HeaderStyle(formatButtonVisible: false, titleCentered: true),
       // 달(페이지)이 변경될 때마다 해당 월 기준으로 캘린더 전용 데이터를 다시 로드
@@ -3067,7 +3067,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       child: RefreshIndicator(
         // 캘린더 탭에서는 현재 보고 있는 월(_calendarMonth) 기준으로만 새로고침
         onRefresh: () => _loadCalendarMonth(_calendarMonth),
-        color: const Color(0xFF74512D),
+        color: GiftcardColors.accent,
         backgroundColor: Colors.white,
         child: ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -3172,7 +3172,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
                                   }
                                 });
                               },
-                              activeColor: const Color(0xFF74512D),
+                              activeColor: GiftcardColors.accent,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -3545,7 +3545,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       },
       child: RefreshIndicator(
         onRefresh: () => _load(forceRefresh: true),
-        color: const Color(0xFF74512D),
+        color: GiftcardColors.accent,
         backgroundColor: Colors.white,
         child: GiftcardDailyLedger(
           groups: _cachedDailyLedgerGroups,
@@ -3857,7 +3857,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
               height: 220,
               child: Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
                 ),
               ),
             );

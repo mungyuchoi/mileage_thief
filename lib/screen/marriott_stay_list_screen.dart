@@ -10,7 +10,12 @@ import '../services/marriott_stay_service.dart';
 import 'marriott_stay_form_screen.dart';
 
 class MarriottStayListScreen extends StatefulWidget {
-  const MarriottStayListScreen({super.key});
+  final Color accentColor;
+
+  const MarriottStayListScreen({
+    super.key,
+    this.accentColor = PointStayColors.accent,
+  });
 
   @override
   State<MarriottStayListScreen> createState() => _MarriottStayListScreenState();
@@ -41,7 +46,10 @@ class _MarriottStayListScreenState extends State<MarriottStayListScreen> {
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         settings: const RouteSettings(name: 'marriott_stay_form'),
-        builder: (_) => MarriottStayFormScreen(initialRecord: record),
+        builder: (_) => MarriottStayFormScreen(
+          initialRecord: record,
+          accentColor: widget.accentColor,
+        ),
       ),
     );
   }
@@ -99,62 +107,89 @@ class _MarriottStayListScreenState extends State<MarriottStayListScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    return Scaffold(
-      backgroundColor: McColors.background,
-      appBar: AppBar(
-        title: const Text('전체 숙박기록'),
-        backgroundColor: Colors.white,
-        foregroundColor: McColors.ink,
-        elevation: 0.4,
-        actions: [
-          IconButton(
-            tooltip: '기록 추가',
-            icon: const Icon(Icons.add),
-            onPressed: () => _openMarriottStayForm(),
-          ),
-        ],
+    return Theme(
+      data: _accentTheme(context, widget.accentColor),
+      child: Scaffold(
+        backgroundColor: McColors.background,
+        appBar: AppBar(
+          title: const Text('전체 숙박기록'),
+          backgroundColor: Colors.white,
+          foregroundColor: McColors.ink,
+          elevation: 0.4,
+          actions: [
+            IconButton(
+              tooltip: '기록 추가',
+              icon: const Icon(Icons.add),
+              onPressed: () => _openMarriottStayForm(),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: user == null
+              ? const _StayListSignedOut()
+              : StreamBuilder<List<MarriottStayRecord>>(
+                  stream: MarriottStayService.watchUserStays(user.uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return const _StayListLoading();
+                    }
+
+                    if (snapshot.hasError) {
+                      return _StayListStatePanel(
+                        icon: Icons.error_outline,
+                        title: '숙박기록을 불러오지 못했습니다.',
+                        subtitle: snapshot.error.toString(),
+                      );
+                    }
+
+                    final records =
+                        snapshot.data ?? const <MarriottStayRecord>[];
+                    if (records.isEmpty) {
+                      return _StayListStatePanel(
+                        icon: Icons.hotel_class_outlined,
+                        title: '아직 저장된 숙박기록이 없습니다.',
+                        subtitle: '체크인, 지출, 포인트, 예약번호를 한 번에 모아볼 수 있어요.',
+                        action: TextButton.icon(
+                          onPressed: () => _openMarriottStayForm(),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('첫 숙박 기록 추가'),
+                        ),
+                      );
+                    }
+
+                    return _StayListBody(
+                      records: records,
+                      accentColor: widget.accentColor,
+                      onAdd: () => _openMarriottStayForm(),
+                      onEdit: _openMarriottStayForm,
+                      onDelete: _confirmDeleteMarriottStay,
+                    );
+                  },
+                ),
+        ),
       ),
-      body: SafeArea(
-        child: user == null
-            ? const _StayListSignedOut()
-            : StreamBuilder<List<MarriottStayRecord>>(
-                stream: MarriottStayService.watchUserStays(user.uid),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const _StayListLoading();
-                  }
+    );
+  }
 
-                  if (snapshot.hasError) {
-                    return _StayListStatePanel(
-                      icon: Icons.error_outline,
-                      title: '숙박기록을 불러오지 못했습니다.',
-                      subtitle: snapshot.error.toString(),
-                    );
-                  }
-
-                  final records = snapshot.data ?? const <MarriottStayRecord>[];
-                  if (records.isEmpty) {
-                    return _StayListStatePanel(
-                      icon: Icons.hotel_class_outlined,
-                      title: '아직 저장된 숙박기록이 없습니다.',
-                      subtitle: '체크인, 지출, 포인트, 예약번호를 한 번에 모아볼 수 있어요.',
-                      action: TextButton.icon(
-                        onPressed: () => _openMarriottStayForm(),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('첫 숙박 기록 추가'),
-                      ),
-                    );
-                  }
-
-                  return _StayListBody(
-                    records: records,
-                    onAdd: () => _openMarriottStayForm(),
-                    onEdit: _openMarriottStayForm,
-                    onDelete: _confirmDeleteMarriottStay,
-                  );
-                },
-              ),
+  ThemeData _accentTheme(BuildContext context, Color accentColor) {
+    final base = Theme.of(context);
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: accentColor,
+        secondary: accentColor,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: accentColor,
+          textStyle: McTextStyles.bodyStrong,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+      progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
+        color: accentColor,
       ),
     );
   }
@@ -162,12 +197,14 @@ class _MarriottStayListScreenState extends State<MarriottStayListScreen> {
 
 class _StayListBody extends StatelessWidget {
   final List<MarriottStayRecord> records;
+  final Color accentColor;
   final VoidCallback onAdd;
   final ValueChanged<MarriottStayRecord> onEdit;
   final Future<void> Function(MarriottStayRecord record) onDelete;
 
   const _StayListBody({
     required this.records,
+    required this.accentColor,
     required this.onAdd,
     required this.onEdit,
     required this.onDelete,
@@ -186,6 +223,7 @@ class _StayListBody extends StatelessWidget {
         }
         return _StayListCard(
           record: records[index - 1],
+          accentColor: accentColor,
           onEdit: onEdit,
           onDelete: onDelete,
         );
@@ -256,11 +294,13 @@ class _StayListSummary extends StatelessWidget {
 
 class _StayListCard extends StatelessWidget {
   final MarriottStayRecord record;
+  final Color accentColor;
   final ValueChanged<MarriottStayRecord> onEdit;
   final Future<void> Function(MarriottStayRecord record) onDelete;
 
   const _StayListCard({
     required this.record,
+    required this.accentColor,
     required this.onEdit,
     required this.onDelete,
   });
@@ -328,7 +368,10 @@ class _StayListCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            _StayTypeLabel(type: record.stayType),
+                            _StayTypeLabel(
+                              type: record.stayType,
+                              accentColor: accentColor,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -354,9 +397,7 @@ class _StayListCard extends StatelessWidget {
                   Text(
                     amountText,
                     style: TextStyle(
-                      color: record.totalAmount <= 0
-                          ? McColors.accent
-                          : Colors.red,
+                      color: record.totalAmount <= 0 ? accentColor : Colors.red,
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
@@ -428,14 +469,18 @@ class _StayListCard extends StatelessWidget {
 
 class _StayTypeLabel extends StatelessWidget {
   final MarriottStayType type;
+  final Color accentColor;
 
-  const _StayTypeLabel({required this.type});
+  const _StayTypeLabel({
+    required this.type,
+    required this.accentColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final color = switch (type) {
       MarriottStayType.paid => Colors.blue,
-      MarriottStayType.points => McColors.accent,
+      MarriottStayType.points => accentColor,
       MarriottStayType.freeNightAward => Colors.deepPurple,
     };
     return Text(

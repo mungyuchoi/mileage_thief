@@ -5,6 +5,7 @@ import '../services/user_service.dart';
 import 'ad_manage_screen.dart';
 import 'admin_category_manage_screen.dart';
 import 'admin_giftcard_deal_source_screen.dart';
+import 'admin_hotel_request_manage_screen.dart';
 import 'admin_insight_manage_screen.dart';
 import 'admin_report_manage_screen.dart';
 import 'admin_scrap_upload_screen.dart';
@@ -157,6 +158,12 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '게시글, 댓글, 채팅 신고를 확인하고 처리합니다.',
                       icon: Icons.report_gmailerrorred_outlined,
                       onTap: () => _open(const AdminReportManageScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '호텔 관리',
+                      description: '포인트 숙박에서 요청한 호텔 추가 요청을 확인합니다.',
+                      icon: Icons.hotel_outlined,
+                      onTap: () => _open(const AdminHotelRequestManageScreen()),
                     ),
                     _AdminMenuTile(
                       title: '카드 DB 관리',

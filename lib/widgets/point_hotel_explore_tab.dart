@@ -119,7 +119,7 @@ class _PointHotelExploreTabState extends State<PointHotelExploreTab> {
                   trailing: brand == _selectedBrand
                       ? const Icon(
                           Icons.check_circle_rounded,
-                          color: McColors.accent,
+                          color: PointStayColors.accent,
                         )
                       : null,
                   onTap: () => Navigator.pop(context, brand),
@@ -472,7 +472,7 @@ class _ExplorePill extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: const BoxDecoration(
-              color: McColors.accent,
+              color: PointStayColors.accent,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.search_rounded, color: Colors.white),
@@ -553,9 +553,9 @@ class _SortChip extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) => onTap(),
-      selectedColor: McColors.accentSoft,
+      selectedColor: PointStayColors.accentSoft,
       labelStyle: TextStyle(
-        color: selected ? McColors.accent : McColors.muted,
+        color: selected ? PointStayColors.accent : McColors.muted,
         fontWeight: FontWeight.w400,
       ),
       side: const BorderSide(color: McColors.line),
@@ -589,10 +589,13 @@ class _ExploreSummary extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: const BoxDecoration(
-              color: McColors.accentSoft,
+              color: PointStayColors.accentSoft,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_graph_rounded, color: McColors.accent),
+            child: const Icon(
+              Icons.auto_graph_rounded,
+              color: PointStayColors.accent,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -768,11 +771,12 @@ class _ValuePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: accent ? McColors.accentSoft : const Color(0xFFF4F4F5),
+        color: accent ? PointStayColors.accentSoft : const Color(0xFFF4F4F5),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color:
-              accent ? McColors.accent.withValues(alpha: 0.18) : McColors.line,
+          color: accent
+              ? PointStayColors.accent.withValues(alpha: 0.18)
+              : McColors.line,
         ),
       ),
       child: Padding(
@@ -780,7 +784,7 @@ class _ValuePill extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: accent ? McColors.accent : McColors.ink,
+            color: accent ? PointStayColors.accent : McColors.ink,
             fontSize: 12,
             fontWeight: FontWeight.w400,
           ),

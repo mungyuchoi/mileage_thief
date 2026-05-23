@@ -1018,6 +1018,8 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
             'branchId': widget.branchId,
           },
           lockBoardSelection: true,
+          accentColor: GiftcardColors.accent,
+          accentSoftColor: GiftcardColors.accentSoft,
         ),
       ),
     );
@@ -1094,7 +1096,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
       floatingActionButton: _selectedTabIndex == 0
           ? FloatingActionButton.extended(
               heroTag: 'branch_feed_post_create_${widget.branchId}',
-              backgroundColor: McColors.accent,
+              backgroundColor: GiftcardColors.accent,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_outlined),
               label: const Text('글쓰기'),
@@ -1104,7 +1106,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
       body: _isLoadingBranch
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              color: McColors.accent,
+              color: GiftcardColors.accent,
               backgroundColor: Colors.white,
               onRefresh: () async {
                 await Future.wait([
@@ -1222,12 +1224,12 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: McColors.accentSoft,
+                  color: GiftcardColors.accentSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.storefront_outlined,
-                  color: McColors.accent,
+                  color: GiftcardColors.accent,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1304,13 +1306,13 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: McColors.accentSoft,
+        color: GiftcardColors.accentSoft,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         '인증',
         style: McTextStyles.micro.copyWith(
-          color: McColors.accent,
+          color: GiftcardColors.accent,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -1894,7 +1896,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
                     : const Icon(Icons.edit_outlined, size: 18),
                 label: Text(_isAddingComment ? '등록 중' : '등록'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: McColors.accent,
+                  backgroundColor: GiftcardColors.accent,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -1963,12 +1965,13 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: McColors.accentSoft,
+                backgroundColor: GiftcardColors.accentSoft,
                 backgroundImage: photoUrl != null && photoUrl.isNotEmpty
                     ? NetworkImage(photoUrl)
                     : null,
                 child: photoUrl == null || photoUrl.isEmpty
-                    ? const Icon(Icons.person, size: 16, color: McColors.accent)
+                    ? const Icon(Icons.person,
+                        size: 16, color: GiftcardColors.accent)
                     : null,
               ),
               const SizedBox(width: 8),
@@ -2345,7 +2348,7 @@ class _BranchEditSheetState extends State<_BranchEditSheet> {
                     ElevatedButton(
                       onPressed: _isSaving || _isUploading ? null : _save,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: McColors.accent,
+                        backgroundColor: GiftcardColors.accent,
                         foregroundColor: Colors.white,
                       ),
                       child: Text(_isSaving ? '저장 중' : '저장'),
@@ -2706,7 +2709,7 @@ class _ActionChipButton extends StatelessWidget {
             Icon(
               icon,
               size: 15,
-              color: enabled ? McColors.accent : McColors.mutedLight,
+              color: enabled ? GiftcardColors.accent : McColors.mutedLight,
             ),
             const SizedBox(width: 5),
             Text(
@@ -2769,13 +2772,13 @@ class _MiniPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: McColors.accentSoft,
+        color: GiftcardColors.accentSoft,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
         style: McTextStyles.micro.copyWith(
-          color: McColors.accent,
+          color: GiftcardColors.accent,
           fontWeight: FontWeight.w800,
         ),
       ),

@@ -534,7 +534,7 @@ class _HotelSearchSheetState extends State<_HotelSearchSheet> {
                 height: 58,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: McColors.accent,
+                    backgroundColor: PointStayColors.accent,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -663,7 +663,7 @@ TextSpan _highlightHotelName(String name, String query) {
     fontWeight: FontWeight.w700,
   );
   const highlightStyle = TextStyle(
-    color: McColors.accent,
+    color: PointStayColors.accent,
     fontSize: 15,
     fontWeight: FontWeight.w900,
   );
@@ -1316,7 +1316,7 @@ Future<BitmapDescriptor> _buildHotelNameMarkerIcon(String name) async {
   );
 
   const pinCenter = Offset(width / 2, pinTop + pinRadius);
-  final pinPaint = Paint()..color = McColors.accent;
+  final pinPaint = Paint()..color = PointStayColors.accent;
   final pinShadowPaint = Paint()
     ..color = Colors.black.withValues(alpha: 0.2)
     ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 5);

@@ -78,7 +78,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
           PointHotelFavoriteButton(
             hotel: hotel,
             color: McColors.ink,
-            selectedColor: McColors.accent,
+            selectedColor: PointStayColors.accent,
             size: 30,
             padding: const EdgeInsets.all(8),
             minTouchSize: 48,
@@ -117,7 +117,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
                 const SizedBox(width: 12),
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: McColors.accent,
+                    backgroundColor: PointStayColors.accent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 22,
@@ -561,7 +561,7 @@ class _GalleryLoadingPanel extends StatelessWidget {
               padding: EdgeInsets.all(18),
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                color: McColors.accent,
+                color: PointStayColors.accent,
               ),
             ),
           ),
@@ -976,7 +976,7 @@ class _HotelMapCard extends StatelessWidget {
                   tooltip: 'Google 지도 열기',
                   onPressed: () => _launchHotelMap(hotel),
                   style: IconButton.styleFrom(
-                    backgroundColor: McColors.accent,
+                    backgroundColor: PointStayColors.accent,
                     foregroundColor: Colors.white,
                     fixedSize: const Size(42, 42),
                   ),
@@ -1398,7 +1398,7 @@ class _CalendarItemData {
 }
 
 class _CalendarDayCell extends StatelessWidget {
-  static const _rateColor = McColors.accent;
+  static const _rateColor = PointStayColors.accent;
 
   final DateTime date;
   final DateTime focusedMonth;

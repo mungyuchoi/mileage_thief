@@ -381,6 +381,7 @@ const SCRAP_ALLOWED_TAGS = new Set([
   "h4",
 ]);
 const SCRAP_NAVER = "naver_blog";
+const SCRAP_NAVER_CAFE = "naver_cafe";
 const SCRAP_AAGAG = "aagag_issue";
 const SCRAP_MAX_COMMUNITY_LABELS = 5;
 const POINT_STAY_FEATURE_LABELS = {
@@ -421,6 +422,13 @@ function normalizeScrapSourceValue(value) {
   const normalized = raw.toLowerCase().replace(/-/g, "_");
   if (normalized === "naver" || normalized === SCRAP_NAVER) {
     return SCRAP_NAVER;
+  }
+  if (
+    normalized === "cafe" ||
+    normalized === "naver_cafe" ||
+    normalized === SCRAP_NAVER_CAFE
+  ) {
+    return SCRAP_NAVER_CAFE;
   }
   if (
     normalized === "aagag" ||
@@ -479,6 +487,14 @@ function normalizeScrapUrl(rawUrl, rawSourceType) {
       parsed.pathname = `/${encodeURIComponent(blogId)}/${logNo}`;
       parsed.search = "";
     }
+  } else if (host === "cafe.naver.com" || host === "m.cafe.naver.com") {
+    if (sourceType && sourceType !== SCRAP_NAVER_CAFE) {
+      throw new HttpsError(
+          "invalid-argument",
+          "선택한 소스와 URL 도메인이 일치하지 않습니다.",
+      );
+    }
+    sourceType = SCRAP_NAVER_CAFE;
   } else if (host === "aagag.com") {
     if (sourceType && sourceType !== SCRAP_AAGAG) {
       throw new HttpsError(
@@ -496,7 +512,7 @@ function normalizeScrapUrl(rawUrl, rawSourceType) {
   } else {
     throw new HttpsError(
         "invalid-argument",
-        "네이버 블로그 또는 AAGAG URL만 지원합니다.",
+        "네이버 블로그, 네이버 카페 또는 AAGAG URL만 지원합니다.",
     );
   }
 
@@ -526,6 +542,9 @@ function scrapRequestHeaders(sourceType) {
   };
   if (sourceType === SCRAP_NAVER) {
     headers.Referer = "https://m.blog.naver.com/";
+  }
+  if (sourceType === SCRAP_NAVER_CAFE) {
+    headers.Referer = "https://cafe.naver.com/";
   }
   if (sourceType === SCRAP_AAGAG) {
     headers.Referer = "https://aagag.com/";
@@ -560,6 +579,24 @@ async function fetchScrapHtml(url, sourceType) {
  * @return {Promise<string>}
  */
 async function resolveScrapHtmlForParsing(html, url, sourceType) {
+  if (sourceType === SCRAP_NAVER_CAFE) {
+    if (
+      html.includes("CafeViewer") ||
+      html.includes("ArticleContentBox") ||
+      html.includes("id=\"tbody\"")
+    ) {
+      return html;
+    }
+
+    const $ = cheerio.load(html);
+    const frameSrc = $("iframe#cafe_main, iframe[name='cafe_main']")
+        .first()
+        .attr("src");
+    if (!frameSrc) return html;
+    const frameUrl = new URL(frameSrc, url).toString();
+    return fetchScrapHtml(frameUrl, sourceType);
+  }
+
   if (sourceType !== SCRAP_NAVER || html.includes("se-main-container")) {
     return html;
   }
@@ -782,6 +819,83 @@ function parseNaverBlogScrap(html, sourceUrl) {
 }
 
 /**
+ * 네이버 카페 HTML을 게시글 데이터로 파싱한다.
+ * @param {string} html
+ * @param {string} sourceUrl
+ * @return {Object}
+ */
+function parseNaverCafeScrap(html, sourceUrl) {
+  const $ = cheerio.load(html, {decodeEntities: false});
+  let title = cleanScrapText(
+      $(".ArticleTitle .title_text, .title_area .title_text, h3.title_text")
+          .first()
+          .text(),
+  );
+  if (!title) {
+    title = cleanScrapText($("meta[property='og:title']").attr("content"));
+  }
+  if (!title) {
+    title = cleanScrapText($("title").first().text())
+        .replace(/\s*:\s*네이버\s*카페\s*$/i, "")
+        .trim();
+  }
+
+  const scrapedAuthor = cleanScrapText(
+      $(".WriterInfo .nickname, .nick_box .nickname, .article_writer .nickname")
+          .first()
+          .text(),
+  );
+  const scrapedDateText = cleanScrapText(
+      $(".ArticleContentBox .date, .article_info .date, .date")
+          .first()
+          .text(),
+  );
+  let contentHtml = $("div.content.CafeViewer").first().html() || "";
+  if (!contentHtml) {
+    contentHtml = $(".CafeViewer").first().html() || "";
+  }
+  if (!contentHtml) {
+    contentHtml = $("#tbody, .article_viewer, .ArticleContentBox, " +
+      ".se-main-container")
+        .first()
+        .html() || "";
+  }
+
+  const content$ = cheerio.load(contentHtml, {decodeEntities: false}, false);
+  content$("img").each((index, img) => {
+    const $img = content$(img);
+    let src = $img.attr("data-lazy-src") ||
+      $img.attr("data-src") ||
+      $img.attr("src") ||
+      "";
+    src = safeScrapUrl(src, sourceUrl);
+    if (src) $img.attr("src", src);
+    if (($img.attr("alt") || "") === "") $img.removeAttr("alt");
+  });
+  content$("video").each((index, video) => {
+    const $video = content$(video);
+    const src = safeScrapUrl(
+        $video.attr("src") ||
+          $video.find("source").first().attr("src") ||
+          $video.attr("data-src"),
+        sourceUrl,
+    );
+    const poster = safeScrapUrl($video.attr("poster"), sourceUrl);
+    if (src) $video.attr("src", src);
+    if (poster) $video.attr("poster", poster);
+  });
+
+  const sanitized = sanitizeScrapHtml(content$.root().html() || "", sourceUrl);
+  return {
+    sourceType: SCRAP_NAVER_CAFE,
+    title,
+    scrapedAuthor,
+    scrapedDateText,
+    contentHtml: sanitized,
+  };
+}
+
+/**
  * AAGAG media id를 HTML에 넣어도 되는 짧은 토큰으로 제한한다.
  * @param {unknown} value
  * @return {string}
@@ -914,7 +1028,10 @@ function buildScrapPreviewHtml(parsed, sourceUrl) {
     `<p style="margin:4px 0;color:#666;font-size:14px;">` +
       `${escapedMeta}</p>` :
     "";
-  const sourceHtml = parsed.sourceType === SCRAP_NAVER ?
+  const sourceHtml = (
+    parsed.sourceType === SCRAP_NAVER ||
+    parsed.sourceType === SCRAP_NAVER_CAFE
+  ) ?
     `<p>출처: <a href="${escapedSourceUrl}">` +
       `${escapedSourceUrl}</a></p>` :
     "";
@@ -935,11 +1052,17 @@ function buildScrapPreviewHtml(parsed, sourceUrl) {
  * @return {string}
  */
 function buildScrapPublishHtml(parsed, sourceUrl) {
-  if (parsed.sourceType !== SCRAP_NAVER) {
+  if (
+    parsed.sourceType !== SCRAP_NAVER &&
+    parsed.sourceType !== SCRAP_NAVER_CAFE
+  ) {
     return parsed.contentHtml;
   }
+  const sourceLabel = parsed.sourceType === SCRAP_NAVER_CAFE ?
+    "네이버 카페" :
+    "네이버 블로그";
   return [
-    "<p>네이버 블로그 스크랩한 게시글입니다.</p>",
+    `<p>${sourceLabel} 스크랩한 게시글입니다.</p>`,
     "<p>&nbsp;</p>",
     parsed.contentHtml,
     `<p>출처: <a href="${escapeScrapHtml(sourceUrl)}">`,
@@ -1086,9 +1209,14 @@ async function validateScrapPayload(rawUrl, rawSourceType) {
       normalized.normalizedUrl,
       normalized.sourceType,
   );
-  const parsed = normalized.sourceType === SCRAP_AAGAG ?
-    parseAagagScrap(html, normalized.normalizedUrl) :
-    parseNaverBlogScrap(html, normalized.normalizedUrl);
+  let parsed;
+  if (normalized.sourceType === SCRAP_AAGAG) {
+    parsed = parseAagagScrap(html, normalized.normalizedUrl);
+  } else if (normalized.sourceType === SCRAP_NAVER_CAFE) {
+    parsed = parseNaverCafeScrap(html, normalized.normalizedUrl);
+  } else {
+    parsed = parseNaverBlogScrap(html, normalized.normalizedUrl);
+  }
   const warnings = [];
   if (!parsed.title) warnings.push("제목을 찾지 못했습니다.");
   if (!parsed.contentHtml) warnings.push("본문을 찾지 못했습니다.");
@@ -3765,7 +3893,7 @@ exports.validateScrapPost = onCall({
 });
 
 /**
- * 일반 사용자용 네이버 블로그 스크랩 URL을 검증한다.
+ * 일반 사용자용 네이버 블로그/카페 스크랩 URL을 검증한다.
  */
 exports.validateUserScrapPost = onCall({
   region: CARD_REGION,
@@ -3774,7 +3902,14 @@ exports.validateUserScrapPost = onCall({
 }, async (request) => {
   requireAuthUid(request);
   const data = request.data || {};
-  return validateScrapPayload(data.url, SCRAP_NAVER);
+  const sourceType = normalizeScrapSourceValue(data.sourceType) || SCRAP_NAVER;
+  if (sourceType !== SCRAP_NAVER && sourceType !== SCRAP_NAVER_CAFE) {
+    throw new HttpsError(
+        "permission-denied",
+        "사용자 스크랩은 네이버 블로그와 네이버 카페만 지원합니다.",
+    );
+  }
+  return validateScrapPayload(data.url, sourceType);
 });
 
 /**
@@ -3815,7 +3950,7 @@ exports.publishScrapPost = onCall({
 });
 
 /**
- * 일반 사용자용 네이버 블로그 스크랩 글을 본인 명의로 발행한다.
+ * 일반 사용자용 네이버 블로그/카페 스크랩 글을 본인 명의로 발행한다.
  */
 exports.publishUserScrapPost = onCall({
   region: CARD_REGION,
@@ -3829,6 +3964,13 @@ exports.publishUserScrapPost = onCall({
   if (!boardId) {
     throw new HttpsError("invalid-argument", "카테고리를 선택해주세요.");
   }
+  const sourceType = normalizeScrapSourceValue(data.sourceType) || SCRAP_NAVER;
+  if (sourceType !== SCRAP_NAVER && sourceType !== SCRAP_NAVER_CAFE) {
+    throw new HttpsError(
+        "permission-denied",
+        "사용자 스크랩은 네이버 블로그와 네이버 카페만 지원합니다.",
+    );
+  }
 
   const boardEntry = await requireUserScrapBoard(boardId);
   return publishScrapPayload({
@@ -3836,7 +3978,7 @@ exports.publishUserScrapPost = onCall({
     authorUid: uid,
     publisherUid: uid,
     rawUrl: data.url,
-    rawSourceType: SCRAP_NAVER,
+    rawSourceType: sourceType,
     titleOverride,
     adminPublish: false,
     rawLabels: data.labels,

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../const/colors.dart';
+
 /// 지점별 이벤트 관리 화면
 /// - branches/{branchId}/events 컬렉션을 리스트로 보여주고
 /// - 각 이벤트의 isActive를 스위치로 토글
@@ -329,12 +331,12 @@ class _BranchEventManageScreenState extends State<BranchEventManageScreen> {
     }
 
     try {
-      final DocumentReference<Map<String, dynamic>> eventRef =
-          FirebaseFirestore.instance
-              .collection('branches')
-              .doc(widget.branchId)
-              .collection('events')
-              .doc();
+      final DocumentReference<Map<String, dynamic>> eventRef = FirebaseFirestore
+          .instance
+          .collection('branches')
+          .doc(widget.branchId)
+          .collection('events')
+          .doc();
 
       await eventRef.set(<String, dynamic>{
         'name': name,
@@ -415,7 +417,7 @@ class _BranchEventManageScreenState extends State<BranchEventManageScreen> {
             return const Center(
               child: CircularProgressIndicator(
                 valueColor:
-                    AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                    AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
               ),
             );
           }
@@ -439,12 +441,10 @@ class _BranchEventManageScreenState extends State<BranchEventManageScreen> {
               final d = docs[index];
               final Map<String, dynamic> data = d.data();
               final String name = (data['name'] as String?) ?? d.id;
-              final int peanut =
-                  (data['peanutCount'] as int?) ?? 0;
+              final int peanut = (data['peanutCount'] as int?) ?? 0;
               final bool isActive =
                   (data['isActive'] == null) || (data['isActive'] == true);
-              final Timestamp? createdAtTs =
-                  data['createdAt'] as Timestamp?;
+              final Timestamp? createdAtTs = data['createdAt'] as Timestamp?;
               final String createdAtStr = createdAtTs == null
                   ? ''
                   : DateTime.fromMillisecondsSinceEpoch(
@@ -470,7 +470,7 @@ class _BranchEventManageScreenState extends State<BranchEventManageScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.event_note, color: Color(0xFF74512D)),
+                    const Icon(Icons.event_note, color: GiftcardColors.accent),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -556,7 +556,7 @@ class _BranchEventManageScreenState extends State<BranchEventManageScreen> {
                         ),
                         Switch(
                           value: isActive,
-                          activeColor: const Color(0xFF74512D),
+                          activeColor: GiftcardColors.accent,
                           onChanged: (bool value) async {
                             try {
                               await d.reference.update(
@@ -582,5 +582,3 @@ class _BranchEventManageScreenState extends State<BranchEventManageScreen> {
     );
   }
 }
-
-

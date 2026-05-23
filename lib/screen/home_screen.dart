@@ -347,6 +347,12 @@ class _HomeBottomNavigationBar extends StatelessWidget {
         children: List.generate(_homeTabDestinations.length, (index) {
           final destination = _homeTabDestinations[index];
           final selected = index == currentIndex;
+          final selectedAccent = currentIndex == _HomeTab.giftcard.index
+              ? GiftcardColors.accent
+              : McColors.accent;
+          final selectedAccentSoft = currentIndex == _HomeTab.giftcard.index
+              ? GiftcardColors.accentSoft
+              : McColors.accentSoft;
           return Expanded(
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
@@ -356,7 +362,7 @@ class _HomeBottomNavigationBar extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: selected ? McColors.accentSoft : Colors.transparent,
+                  color: selected ? selectedAccentSoft : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -367,7 +373,7 @@ class _HomeBottomNavigationBar extends StatelessWidget {
                           ? destination.filledIcon
                           : destination.outlinedIcon,
                       size: 21,
-                      color: selected ? McColors.accent : McColors.mutedLight,
+                      color: selected ? selectedAccent : McColors.mutedLight,
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -379,7 +385,7 @@ class _HomeBottomNavigationBar extends StatelessWidget {
                         fontWeight: index == _HomeTab.usefulInfo.index
                             ? _mileageSettingActionTitleTextStyle.fontWeight
                             : FontWeight.w700,
-                        color: selected ? McColors.accent : McColors.muted,
+                        color: selected ? selectedAccent : McColors.muted,
                       ),
                     ),
                   ],
@@ -933,6 +939,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return ScrollableUnderlineTabBar(
       controller: _giftcardTabController,
       labels: const ['정보', '특가', '지도', '시세', '계산', '지점'],
+      indicatorColor: GiftcardColors.accent,
     );
   }
 
@@ -1131,7 +1138,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   return FloatingActionButton(
                     elevation: 8,
                     backgroundColor: Colors.white.withValues(alpha: 0.90),
-                    foregroundColor: const Color(0xFF74512D),
+                    foregroundColor: GiftcardColors.accent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                       side: BorderSide(
@@ -1162,7 +1169,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     return FloatingActionButton(
                       elevation: 8,
                       backgroundColor: Colors.white.withValues(alpha: 0.90),
-                      foregroundColor: const Color(0xFF74512D),
+                      foregroundColor: GiftcardColors.accent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                         side: BorderSide(

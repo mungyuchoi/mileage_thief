@@ -9,6 +9,7 @@ class SegmentTabBar extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
   final Color activeColor;
+  final Color accentColor;
   final Color backgroundColor;
   final bool isScrollable;
 
@@ -19,6 +20,7 @@ class SegmentTabBar extends StatelessWidget {
     this.padding = const EdgeInsets.all(4),
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.activeColor = McColors.accentSoft,
+    this.accentColor = McColors.accent,
     this.backgroundColor = McColors.field,
     this.isScrollable = false,
   });
@@ -43,10 +45,10 @@ class SegmentTabBar extends StatelessWidget {
         indicator: BoxDecoration(
           color: activeColor,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: McColors.accent.withValues(alpha: 0.18)),
+          border: Border.all(color: accentColor.withValues(alpha: 0.18)),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: McColors.accent,
+        labelColor: accentColor,
         unselectedLabelColor: McColors.muted,
         labelStyle: McTextStyles.tabSelected,
         unselectedLabelStyle: McTextStyles.tab,
@@ -63,6 +65,7 @@ class ScrollableUnderlineTabBar extends StatefulWidget {
   final List<String> labels;
   final EdgeInsetsGeometry padding;
   final double separatorWidth;
+  final Color indicatorColor;
 
   const ScrollableUnderlineTabBar({
     super.key,
@@ -70,6 +73,7 @@ class ScrollableUnderlineTabBar extends StatefulWidget {
     required this.labels,
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.separatorWidth = 20,
+    this.indicatorColor = McColors.accent,
   });
 
   @override
@@ -196,6 +200,7 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
           return _UnderlineTabButton(
             label: widget.labels[index],
             selected: index == _selectedIndex,
+            indicatorColor: widget.indicatorColor,
             onTap: () => _selectTab(index),
           );
         },
@@ -207,11 +212,13 @@ class _ScrollableUnderlineTabBarState extends State<ScrollableUnderlineTabBar> {
 class _UnderlineTabButton extends StatelessWidget {
   final String label;
   final bool selected;
+  final Color indicatorColor;
   final VoidCallback onTap;
 
   const _UnderlineTabButton({
     required this.label,
     required this.selected,
+    required this.indicatorColor,
     required this.onTap,
   });
 
@@ -246,7 +253,7 @@ class _UnderlineTabButton extends StatelessWidget {
                 width: selected ? 32 : 0,
                 height: 2.5,
                 decoration: BoxDecoration(
-                  color: McColors.accent,
+                  color: indicatorColor,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),

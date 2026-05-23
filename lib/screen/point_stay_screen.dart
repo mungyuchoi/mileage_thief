@@ -22,6 +22,7 @@ import 'community_post_create_simple_screen.dart';
 import 'marriott_stay_list_screen.dart';
 import 'marriott_stay_form_screen.dart';
 import 'point_hotel_detail_screen.dart';
+import 'user_scrap_upload_screen.dart';
 
 enum _PointStayTabKind {
   feed,
@@ -29,6 +30,13 @@ enum _PointStayTabKind {
   records,
   hotel,
   explore,
+}
+
+enum _PointStayCreateAction {
+  write,
+  blog,
+  cafe,
+  hotelRequest,
 }
 
 class _PointStayTabConfig {
@@ -112,6 +120,7 @@ class _PointStayScreenState extends State<PointStayScreen>
       <String, List<_PointStayFeedPost>>{};
   final Set<String> _loadingFeatureIds = <String>{};
   int _selectedTabIndex = 0;
+  bool _pointStayActionMenuOpen = false;
 
   _PointStayTabConfig get _selectedTabConfig => _tabConfigs[_selectedTabIndex];
 
@@ -138,7 +147,10 @@ class _PointStayScreenState extends State<PointStayScreen>
   void _handleTabChanged() {
     final nextIndex = _tabController.index;
     if (_selectedTabIndex == nextIndex) return;
-    setState(() => _selectedTabIndex = nextIndex);
+    setState(() {
+      _selectedTabIndex = nextIndex;
+      _pointStayActionMenuOpen = false;
+    });
     final config = _selectedTabConfig;
     AnalyticsService.instance.logAction('sub_tab_selected', params: {
       'tab_group': 'point_stay',
@@ -325,6 +337,8 @@ class _PointStayScreenState extends State<PointStayScreen>
               labels.map((label) => label.toMap()).toList(growable: false),
           entityRefs: labelPayload.entityRefs,
           lockBoardSelection: true,
+          accentColor: PointStayColors.accent,
+          accentSoftColor: PointStayColors.accentSoft,
         ),
       ),
     );
@@ -333,6 +347,153 @@ class _PointStayScreenState extends State<PointStayScreen>
         config.featureId ?? CommunityLabel.pointStayFeatureId,
         force: true,
       );
+    }
+  }
+
+  Future<void> _openPointStayCreateOptions([
+    _PointStayTabConfig? sourceConfig,
+  ]) async {
+    final config = sourceConfig ?? _selectedTabConfig;
+    final action = await showModalBottomSheet<_PointStayCreateAction>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _PointStayCreateActionSheet(
+        accentColor: PointStayColors.accent,
+        onSelected: (action) => Navigator.of(context).pop(action),
+      ),
+    );
+    if (action == null || !mounted) return;
+    await _runPointStayCreateAction(action, config);
+  }
+
+  Future<void> _runPointStayCreateAction(
+    _PointStayCreateAction action,
+    _PointStayTabConfig config,
+  ) async {
+    switch (action) {
+      case _PointStayCreateAction.write:
+        await _openPointStayPostCreate(config);
+        break;
+      case _PointStayCreateAction.blog:
+        await _openPointStayScrapUpload(
+          UserScrapUploadSource.naverBlog,
+          config,
+        );
+        break;
+      case _PointStayCreateAction.cafe:
+        await _openPointStayScrapUpload(
+          UserScrapUploadSource.naverCafe,
+          config,
+        );
+        break;
+      case _PointStayCreateAction.hotelRequest:
+        await _openHotelRequestDialog();
+        break;
+    }
+  }
+
+  Future<void> _openPointStayScrapUpload(
+    UserScrapUploadSource source,
+    _PointStayTabConfig config,
+  ) async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+
+    AnalyticsService.instance
+        .logAction('point_stay_scrap_upload_open', params: {
+      'screen': 'point_stay',
+      'source': source.name,
+      'feature_id': config.featureId ?? CommunityLabel.pointStayFeatureId,
+    });
+
+    final result = await Navigator.of(context).push<UserScrapUploadResult>(
+      MaterialPageRoute<UserScrapUploadResult>(
+        settings: const RouteSettings(name: 'user_scrap_upload'),
+        builder: (_) => UserScrapUploadScreen(
+          initialSource: source,
+          initialLabels: [CommunityLabel.pointStay()],
+          preferredBoardId: 'review',
+          preferredBoardNameKeywords: const [
+            '호텔항공리뷰',
+            '호텔 항공 리뷰',
+            '호텔/항공 리뷰',
+            '호텔항공',
+          ],
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+    await _loadFeedPosts(CommunityLabel.pointStayFeatureId, force: true);
+  }
+
+  Future<void> _openHotelRequestDialog() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+
+    final input = await showDialog<_HotelRequestInput>(
+      context: context,
+      builder: (dialogContext) => const _HotelRequestDialog(),
+    );
+    if (input == null || !mounted) return;
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final reportRef = firestore
+          .collection('reports')
+          .doc('hotels')
+          .collection('hotels')
+          .doc();
+      final userReportRef = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('reports')
+          .doc(reportRef.id);
+      final now = FieldValue.serverTimestamp();
+      final displayName = user.displayName?.trim().isNotEmpty == true
+          ? user.displayName!.trim()
+          : user.email?.trim().isNotEmpty == true
+              ? user.email!.trim()
+              : '사용자';
+      final data = <String, Object?>{
+        'reportId': reportRef.id,
+        'reportPath': reportRef.path,
+        'userReportPath': userReportRef.path,
+        'type': 'hotel_request',
+        'reason': 'hotel_request',
+        'status': 'pending',
+        'hotelName': input.hotelName,
+        'url': input.url,
+        'targetSummary': input.hotelName,
+        'detail': input.url.isEmpty ? '' : input.url,
+        'reporterUid': user.uid,
+        'reporterName': displayName,
+        'reportedAt': now,
+        'createdAt': now,
+        'updatedAt': now,
+        'source': 'point_stay',
+      };
+      final batch = firestore.batch();
+      batch.set(reportRef, data);
+      batch.set(userReportRef, data);
+      await batch.commit();
+
+      AnalyticsService.instance
+          .logAction('point_stay_hotel_request_created', params: {
+        'screen': 'point_stay',
+        'has_url': input.url.isNotEmpty,
+      });
+      Fluttertoast.showToast(msg: '호텔 요청이 접수되었습니다.');
+    } catch (error) {
+      debugPrint('호텔 요청 저장 오류: $error');
+      Fluttertoast.showToast(msg: '호텔 요청 저장 중 오류가 발생했습니다.');
     }
   }
 
@@ -350,7 +511,10 @@ class _PointStayScreenState extends State<PointStayScreen>
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         settings: const RouteSettings(name: 'marriott_stay_form'),
-        builder: (_) => MarriottStayFormScreen(initialRecord: record),
+        builder: (_) => MarriottStayFormScreen(
+          initialRecord: record,
+          accentColor: PointStayColors.accent,
+        ),
       ),
     );
   }
@@ -362,7 +526,9 @@ class _PointStayScreenState extends State<PointStayScreen>
     Navigator.of(context).push(
       MaterialPageRoute(
         settings: const RouteSettings(name: 'marriott_stay_list'),
-        builder: (_) => const MarriottStayListScreen(),
+        builder: (_) => const MarriottStayListScreen(
+          accentColor: PointStayColors.accent,
+        ),
       ),
     );
   }
@@ -444,11 +610,19 @@ class _PointStayScreenState extends State<PointStayScreen>
   Widget? _buildFloatingActionButton() {
     final config = _selectedTabConfig;
     if (config.featureId != null) {
-      return FloatingActionButton.extended(
+      return _PointStayFloatingActionMenu(
+        isOpen: _pointStayActionMenuOpen,
         heroTag: 'point_stay_${config.featureId}_post_create',
-        icon: const Icon(Icons.edit_outlined),
-        label: const Text('글쓰기'),
-        onPressed: () => _openPointStayPostCreate(config),
+        accentColor: PointStayColors.accent,
+        onToggle: () {
+          setState(() {
+            _pointStayActionMenuOpen = !_pointStayActionMenuOpen;
+          });
+        },
+        onAction: (action) async {
+          setState(() => _pointStayActionMenuOpen = false);
+          await _runPointStayCreateAction(action, config);
+        },
       );
     }
     if (config.kind == _PointStayTabKind.records) {
@@ -465,38 +639,86 @@ class _PointStayScreenState extends State<PointStayScreen>
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    return Scaffold(
-      backgroundColor: McColors.background,
-      floatingActionButton: _buildFloatingActionButton(),
-      appBar: AppBar(
-        title: const Text('포인트 숙박'),
-        backgroundColor: Colors.white,
-        foregroundColor: McColors.ink,
-        elevation: 0.4,
-      ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            ScrollableUnderlineTabBar(
-              controller: _tabController,
-              labels: _tabConfigs
-                  .map((config) => config.label)
-                  .toList(growable: false),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refreshCurrentTab,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(0, 0, 0, 24 + bottomInset),
-                  children: [
-                    _buildSelectedTab(),
-                  ],
+    return Theme(
+      data: _pointStayTheme(context),
+      child: Scaffold(
+        backgroundColor: McColors.background,
+        floatingActionButton: _buildFloatingActionButton(),
+        appBar: AppBar(
+          title: const Text('포인트 숙박'),
+          backgroundColor: Colors.white,
+          foregroundColor: McColors.ink,
+          elevation: 0.4,
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              ScrollableUnderlineTabBar(
+                controller: _tabController,
+                labels: _tabConfigs
+                    .map((config) => config.label)
+                    .toList(growable: false),
+                indicatorColor: PointStayColors.accent,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refreshCurrentTab,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(0, 0, 0, 24 + bottomInset),
+                    children: [
+                      _buildSelectedTab(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  ThemeData _pointStayTheme(BuildContext context) {
+    final base = Theme.of(context);
+    final colorScheme = base.colorScheme.copyWith(
+      primary: PointStayColors.accent,
+      secondary: PointStayColors.accent,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+    );
+
+    return base.copyWith(
+      colorScheme: colorScheme,
+      primaryColor: PointStayColors.accent,
+      progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
+        color: PointStayColors.accent,
+      ),
+      floatingActionButtonTheme: base.floatingActionButtonTheme.copyWith(
+        backgroundColor: PointStayColors.accent,
+        foregroundColor: Colors.white,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: PointStayColors.accent,
+          textStyle: McTextStyles.bodyStrong,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: PointStayColors.accent,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: PointStayColors.accent,
+            width: 1.2,
+          ),
         ),
       ),
     );
@@ -575,7 +797,7 @@ class _PointStayScreenState extends State<PointStayScreen>
                 ),
                 const SizedBox(height: 10),
                 TextButton.icon(
-                  onPressed: () => _openPointStayPostCreate(config),
+                  onPressed: () => _openPointStayCreateOptions(config),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text('첫 글 남기기'),
                 ),
@@ -624,7 +846,7 @@ class _PointStayScreenState extends State<PointStayScreen>
               profile: profile,
               hotelCount: hotels.length,
               postCount: posts.length,
-              onWrite: () => _openPointStayPostCreate(config),
+              onWrite: () => _openPointStayCreateOptions(config),
             ),
             const SizedBox(height: 8),
             _BrandHotelSection(
@@ -643,7 +865,7 @@ class _PointStayScreenState extends State<PointStayScreen>
                   _BrandFeedSectionHeader(
                     profile: profile,
                     postCount: posts.length,
-                    onWrite: () => _openPointStayPostCreate(config),
+                    onWrite: () => _openPointStayCreateOptions(config),
                   ),
                   const SizedBox(height: 10),
                   if (isInitialLoading)
@@ -666,7 +888,7 @@ class _PointStayScreenState extends State<PointStayScreen>
                   else if (posts.isEmpty)
                     _BrandEmptyFeedContent(
                       profile: profile,
-                      onWrite: () => _openPointStayPostCreate(config),
+                      onWrite: () => _openPointStayCreateOptions(config),
                     )
                   else ...[
                     _BrandFeaturedPostCard(
@@ -1028,7 +1250,7 @@ class _BrandStayHero extends StatelessWidget {
                     Text(
                       profile.programName,
                       style: const TextStyle(
-                        color: McColors.accent,
+                        color: PointStayColors.accent,
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
                       ),
@@ -1085,7 +1307,7 @@ class _BrandStayHero extends StatelessWidget {
               icon: const Icon(Icons.edit_outlined, size: 18),
               label: Text('${profile.label} 포숙 공유'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: McColors.accent,
+                foregroundColor: PointStayColors.accent,
                 textStyle: const TextStyle(fontWeight: FontWeight.w400),
                 side: const BorderSide(color: McColors.line),
                 shape: RoundedRectangleBorder(
@@ -1109,7 +1331,7 @@ class _BrandChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: McColors.accentSoft,
+        color: PointStayColors.accentSoft,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -1117,7 +1339,7 @@ class _BrandChip extends StatelessWidget {
         child: Text(
           label,
           style: const TextStyle(
-            color: McColors.accent,
+            color: PointStayColors.accent,
             fontSize: 12,
             fontWeight: FontWeight.w400,
           ),
@@ -1417,7 +1639,7 @@ class _HotelValueChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: accent ? McColors.accentSoft : McColors.field,
+        color: accent ? PointStayColors.accentSoft : McColors.field,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -1425,7 +1647,7 @@ class _HotelValueChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: accent ? McColors.accent : McColors.inkSoft,
+            color: accent ? PointStayColors.accent : McColors.inkSoft,
             fontSize: 11,
             fontWeight: FontWeight.w400,
           ),
@@ -1616,7 +1838,7 @@ class _BrandFeaturedPostCard extends StatelessWidget {
                       Text(
                         '댓글 ${post.commentCount}개',
                         style: const TextStyle(
-                          color: McColors.accent,
+                          color: PointStayColors.accent,
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                         ),
@@ -1696,6 +1918,311 @@ class _PointStayPanel extends StatelessWidget {
         color: Colors.white,
       ),
       child: child,
+    );
+  }
+}
+
+class _PointStayFloatingActionMenu extends StatelessWidget {
+  final bool isOpen;
+  final String heroTag;
+  final Color accentColor;
+  final VoidCallback onToggle;
+  final ValueChanged<_PointStayCreateAction> onAction;
+
+  const _PointStayFloatingActionMenu({
+    required this.isOpen,
+    required this.heroTag,
+    required this.accentColor,
+    required this.onToggle,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: isOpen
+              ? Column(
+                  key: const ValueKey('point_stay_actions_open'),
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _PointStayFabAction(
+                      label: '글쓰기',
+                      icon: Icons.edit_outlined,
+                      accentColor: accentColor,
+                      onTap: () => onAction(_PointStayCreateAction.write),
+                    ),
+                    _PointStayFabAction(
+                      label: '블로그 가져오기',
+                      icon: Icons.article_outlined,
+                      accentColor: accentColor,
+                      onTap: () => onAction(_PointStayCreateAction.blog),
+                    ),
+                    _PointStayFabAction(
+                      label: '카페 가져오기',
+                      icon: Icons.forum_outlined,
+                      accentColor: accentColor,
+                      onTap: () => onAction(_PointStayCreateAction.cafe),
+                    ),
+                    _PointStayFabAction(
+                      label: '호텔 요청',
+                      icon: Icons.hotel_outlined,
+                      accentColor: accentColor,
+                      onTap: () =>
+                          onAction(_PointStayCreateAction.hotelRequest),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                )
+              : const SizedBox.shrink(),
+        ),
+        FloatingActionButton(
+          heroTag: heroTag,
+          tooltip: isOpen ? '닫기' : '작성 메뉴',
+          onPressed: onToggle,
+          child: Icon(isOpen ? Icons.close_rounded : Icons.edit_outlined),
+        ),
+      ],
+    );
+  }
+}
+
+class _PointStayFabAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  const _PointStayFabAction({
+    required this.label,
+    required this.icon,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: Colors.white,
+            elevation: 3,
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: McColors.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          FloatingActionButton.small(
+            heroTag: null,
+            tooltip: label,
+            backgroundColor: Colors.white,
+            foregroundColor: accentColor,
+            onPressed: onTap,
+            child: Icon(icon),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PointStayCreateActionSheet extends StatelessWidget {
+  final Color accentColor;
+  final ValueChanged<_PointStayCreateAction> onSelected;
+
+  const _PointStayCreateActionSheet({
+    required this.accentColor,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 14, 16, 14 + bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 38,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD8DCE3),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _PointStayActionTile(
+            label: '글쓰기',
+            icon: Icons.edit_outlined,
+            accentColor: accentColor,
+            onTap: () => onSelected(_PointStayCreateAction.write),
+          ),
+          _PointStayActionTile(
+            label: '블로그 가져오기',
+            icon: Icons.article_outlined,
+            accentColor: accentColor,
+            onTap: () => onSelected(_PointStayCreateAction.blog),
+          ),
+          _PointStayActionTile(
+            label: '카페 가져오기',
+            icon: Icons.forum_outlined,
+            accentColor: accentColor,
+            onTap: () => onSelected(_PointStayCreateAction.cafe),
+          ),
+          _PointStayActionTile(
+            label: '호텔 요청',
+            icon: Icons.hotel_outlined,
+            accentColor: accentColor,
+            onTap: () => onSelected(_PointStayCreateAction.hotelRequest),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PointStayActionTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  const _PointStayActionTile({
+    required this.label,
+    required this.icon,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: accentColor.withValues(alpha: 0.11),
+        foregroundColor: accentColor,
+        child: Icon(icon),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: onTap,
+    );
+  }
+}
+
+class _HotelRequestInput {
+  final String hotelName;
+  final String url;
+
+  const _HotelRequestInput({
+    required this.hotelName,
+    required this.url,
+  });
+}
+
+class _HotelRequestDialog extends StatefulWidget {
+  const _HotelRequestDialog();
+
+  @override
+  State<_HotelRequestDialog> createState() => _HotelRequestDialogState();
+}
+
+class _HotelRequestDialogState extends State<_HotelRequestDialog> {
+  final TextEditingController _hotelController = TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _hotelController.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final hotelName = _hotelController.text.trim();
+    final url = _urlController.text.trim();
+    if (hotelName.isEmpty) {
+      setState(() => _errorText = '호텔명을 입력해주세요.');
+      return;
+    }
+    Navigator.of(context).pop(
+      _HotelRequestInput(
+        hotelName: hotelName,
+        url: url,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      title: const Text(
+        '호텔 요청',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _hotelController,
+            autofocus: true,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: '호텔명',
+              hintText: '예: JW 메리어트 제주',
+              errorText: _errorText,
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: (_) {
+              if (_errorText != null) setState(() => _errorText = null);
+            },
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _urlController,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(
+              labelText: 'URL (선택)',
+              hintText: '공식/예약/참고 URL',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('요청'),
+        ),
+      ],
     );
   }
 }

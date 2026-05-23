@@ -78,7 +78,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
                                 style: const TextStyle(color: Colors.black),
                               ),
                               value: selected.contains(id),
-                              activeColor: McColors.accent,
+                              activeColor: GiftcardColors.accent,
                               onChanged: (v) {
                                 setState(() {
                                   if (v == true) {
@@ -98,7 +98,7 @@ Future<List<String>?> _showGiftcardSelectDialog(BuildContext context) async {
                       child: Text(
                         '선택한 상품권: ${selected.length}개 · 예상 땅콩 소모: ${selected.length * 3}개',
                         style: McTextStyles.meta.copyWith(
-                          color: McColors.accent,
+                          color: GiftcardColors.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -204,7 +204,7 @@ Future<bool> _confirmAndSpendPeanutsForRecommend(
                         style: TextStyle(color: Colors.black),
                       ),
                       value: localDontShow,
-                      activeColor: const Color(0xFF74512D),
+                      activeColor: GiftcardColors.accent,
                       onChanged: (v) {
                         setState(() {
                           localDontShow = v ?? false;
@@ -369,7 +369,7 @@ class _RateLabel extends StatelessWidget {
             height: 16,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0x1174512D),
+              color: const Color(0x11DC7606),
               borderRadius: BorderRadius.circular(999),
             ),
             child: const Text(
@@ -377,7 +377,7 @@ class _RateLabel extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF74512D),
+                color: GiftcardColors.accent,
               ),
             ),
           ),
@@ -415,7 +415,7 @@ class GiftcardRatesTab extends StatelessWidget {
           }
           return const Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+              valueColor: AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
             ),
           );
         }
@@ -627,8 +627,8 @@ class _RecommendEntryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           gradient: const LinearGradient(
             colors: [
-              Color(0xFF74512D),
-              Color(0xFFB38A60),
+              GiftcardColors.accent,
+              GiftcardColors.accentBorder,
             ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -652,7 +652,7 @@ class _RecommendEntryCard extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.auto_awesome,
-                color: Color(0xFF74512D),
+                color: GiftcardColors.accent,
               ),
             ),
             const SizedBox(width: 14),
@@ -994,6 +994,8 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
             'giftcardId': widget.giftcardId,
           },
           lockBoardSelection: true,
+          accentColor: GiftcardColors.accent,
+          accentSoftColor: GiftcardColors.accentSoft,
         ),
       ),
     );
@@ -1067,7 +1069,7 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
       floatingActionButton: _selectedTabIndex == 0
           ? FloatingActionButton.extended(
               heroTag: 'giftcard_feed_post_create_${widget.giftcardId}',
-              backgroundColor: McColors.accent,
+              backgroundColor: GiftcardColors.accent,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_outlined),
               label: const Text('글쓰기'),
@@ -1077,11 +1079,12 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
       body: _isLoadingGiftcard && _giftcard == null
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
               ),
             )
           : RefreshIndicator(
-              color: McColors.accent,
+              color: GiftcardColors.accent,
               backgroundColor: Colors.white,
               onRefresh: _refreshAll,
               child: ListView(
@@ -1150,7 +1153,7 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
                 width: 58,
                 height: 58,
                 decoration: BoxDecoration(
-                  color: hasImageLogo ? Colors.white : const Color(0x1174512D),
+                  color: hasImageLogo ? Colors.white : const Color(0x11DC7606),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -1170,14 +1173,14 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
                               fit: BoxFit.contain,
                               errorBuilder: (_, __, ___) => const Icon(
                                 Icons.card_giftcard_outlined,
-                                color: Color(0xFF74512D),
+                                color: GiftcardColors.accent,
                                 size: 30,
                               ),
                             ),
                           )
                         : const Icon(
                             Icons.card_giftcard_outlined,
-                            color: Color(0xFF74512D),
+                            color: GiftcardColors.accent,
                             size: 30,
                           ),
               ),
@@ -1471,13 +1474,13 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0x1174512D),
+                    color: const Color(0x11DC7606),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.storefront_outlined,
                     size: 18,
-                    color: Color(0xFF74512D),
+                    color: GiftcardColors.accent,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1917,7 +1920,7 @@ class _GiftcardSummaryPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: McColors.accent),
+          Icon(icon, size: 17, color: GiftcardColors.accent),
           const SizedBox(width: 6),
           Text(
             '$label $value',
@@ -1950,7 +1953,7 @@ class _GiftcardInfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: McColors.accent),
+          Icon(icon, size: 18, color: GiftcardColors.accent),
           const SizedBox(width: 10),
           SizedBox(
             width: 84,
@@ -2172,7 +2175,8 @@ class _GiftcardRecommendDashboardPageState
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(McColors.accent),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
               ),
             )
           : _error != null
@@ -2640,7 +2644,7 @@ class BranchRatesDetailPage extends StatelessWidget {
               child: const Text(
                 '리뷰 쓰기',
                 style: TextStyle(
-                  color: Color(0xFF74512D),
+                  color: GiftcardColors.accent,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2659,7 +2663,8 @@ class BranchRatesDetailPage extends StatelessWidget {
             }
             return const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
               ),
             );
           }
@@ -2999,7 +3004,7 @@ class _BranchDailyRatesChartCard extends StatelessWidget {
       Color(0xFFF4511E), // orange
       Color(0xFF8E24AA), // purple
       Color(0xFF00897B), // teal
-      Color(0xFF6D4C41), // brown
+      GiftcardColors.accent, // giftcard orange
       Color(0xFF546E7A), // blueGrey
       Color(0xFF3949AB), // indigo
       Color(0xFFC0CA33), // lime

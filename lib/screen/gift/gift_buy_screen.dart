@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
+import '../../const/colors.dart';
 import '../../services/analytics_service.dart';
 import '../../services/card_transaction_service.dart';
 
@@ -674,7 +675,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                       ElevatedButton(
                         onPressed: _createTemplateFromCurrentForm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF74512D),
+                          backgroundColor: GiftcardColors.accent,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
@@ -866,7 +867,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFF74512D))),
+            colorScheme:
+                const ColorScheme.light(primary: GiftcardColors.accent)),
         child: child!,
       ),
     );
@@ -1305,8 +1307,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                                                                 .circular(12),
                                                         border: Border.all(
                                                           color: isSelected
-                                                              ? const Color(
-                                                                  0xFF74512D)
+                                                              ? GiftcardColors
+                                                                  .accent
                                                               : const Color(
                                                                   0xFFE8ECF4),
                                                           width: isSelected
@@ -1330,8 +1332,8 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                                                                     .ellipsis,
                                                             style: TextStyle(
                                                               color: isSelected
-                                                                  ? const Color(
-                                                                      0xFF74512D)
+                                                                  ? GiftcardColors
+                                                                      .accent
                                                                   : const Color(
                                                                       0xFF1F1F28),
                                                               fontSize: 14,
@@ -1440,11 +1442,11 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                               label: Text(cardName),
                               selected: isSelected,
                               showCheckmark: false,
-                              selectedColor: const Color(0xFF74512D),
+                              selectedColor: GiftcardColors.accent,
                               backgroundColor: const Color(0xFFF7F8FC),
                               side: BorderSide(
                                 color: isSelected
-                                    ? const Color(0xFF74512D)
+                                    ? GiftcardColors.accent
                                     : const Color(0xFFE8ECF4),
                                 width: isSelected ? 1.5 : 1,
                               ),
@@ -1513,7 +1515,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                           ChoiceChip(
                             label: const Text('신용'),
                             selected: _payType == '신용',
-                            selectedColor: const Color(0xFF74512D),
+                            selectedColor: GiftcardColors.accent,
                             labelStyle: TextStyle(
                                 color: _payType == '신용'
                                     ? Colors.white
@@ -1523,7 +1525,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                           ChoiceChip(
                             label: const Text('체크'),
                             selected: _payType == '체크',
-                            selectedColor: const Color(0xFF74512D),
+                            selectedColor: GiftcardColors.accent,
                             labelStyle: TextStyle(
                                 color: _payType == '체크'
                                     ? Colors.white
@@ -1592,11 +1594,12 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                                         BorderSide(color: Colors.black26)),
                                 focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
-                                        color: Color(0xFF74512D), width: 2)),
+                                        color: GiftcardColors.accent,
+                                        width: 2)),
                                 border: OutlineInputBorder(),
                                 labelStyle: TextStyle(color: Colors.black54),
                                 floatingLabelStyle:
-                                    TextStyle(color: Color(0xFF74512D)),
+                                    TextStyle(color: GiftcardColors.accent),
                               ),
                             ),
                           ),
@@ -1605,7 +1608,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                             child: TextField(
                               controller: _qtyController,
                               keyboardType: TextInputType.number,
-                              cursorColor: const Color(0xFF74512D),
+                              cursorColor: GiftcardColors.accent,
                               decoration: const InputDecoration(
                                 labelText: '수량',
                                 border: OutlineInputBorder(),
@@ -1614,10 +1617,11 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                                         BorderSide(color: Colors.black26)),
                                 focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
-                                        color: Color(0xFF74512D), width: 2)),
+                                        color: GiftcardColors.accent,
+                                        width: 2)),
                                 labelStyle: TextStyle(color: Colors.black54),
                                 floatingLabelStyle:
-                                    TextStyle(color: Color(0xFF74512D)),
+                                    TextStyle(color: GiftcardColors.accent),
                               ),
                             ),
                           ),
@@ -1631,7 +1635,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.black),
-                        cursorColor: const Color(0xFF74512D),
+                        cursorColor: GiftcardColors.accent,
                         decoration: const InputDecoration(
                           labelText: '매입가(권당, 원)',
                           border: OutlineInputBorder(),
@@ -1639,10 +1643,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                               borderSide: BorderSide(color: Colors.black26)),
                           focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color(0xFF74512D), width: 2)),
+                                  color: GiftcardColors.accent, width: 2)),
                           labelStyle: TextStyle(color: Colors.black54),
                           floatingLabelStyle:
-                              TextStyle(color: Color(0xFF74512D)),
+                              TextStyle(color: GiftcardColors.accent),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -1654,7 +1658,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.black),
-                        cursorColor: const Color(0xFF74512D),
+                        cursorColor: GiftcardColors.accent,
                         decoration: const InputDecoration(
                           labelText: '할인율(%)',
                           border: OutlineInputBorder(),
@@ -1662,10 +1666,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                               borderSide: BorderSide(color: Colors.black26)),
                           focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color(0xFF74512D), width: 2)),
+                                  color: GiftcardColors.accent, width: 2)),
                           labelStyle: TextStyle(color: Colors.black54),
                           floatingLabelStyle:
-                              TextStyle(color: Color(0xFF74512D)),
+                              TextStyle(color: GiftcardColors.accent),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1686,7 +1690,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                         controller: _memoController,
                         maxLines: 3,
                         style: const TextStyle(color: Colors.black),
-                        cursorColor: const Color(0xFF74512D),
+                        cursorColor: GiftcardColors.accent,
                         decoration: const InputDecoration(
                           hintText: '메모를 입력하세요',
                           border: OutlineInputBorder(),
@@ -1694,10 +1698,10 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                               borderSide: BorderSide(color: Colors.black26)),
                           focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color(0xFF74512D), width: 2)),
+                                  color: GiftcardColors.accent, width: 2)),
                           labelStyle: TextStyle(color: Colors.black54),
                           floatingLabelStyle:
-                              TextStyle(color: Color(0xFF74512D)),
+                              TextStyle(color: GiftcardColors.accent),
                           hintStyle: TextStyle(color: Colors.black38),
                         ),
                       ),
@@ -1725,7 +1729,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                       child: ElevatedButton(
                         onPressed: _saving ? null : _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF74512D),
+                          backgroundColor: GiftcardColors.accent,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
@@ -1744,7 +1748,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                             child: ElevatedButton(
                               onPressed: _saving ? null : _save,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF74512D),
+                                backgroundColor: GiftcardColors.accent,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
@@ -1763,7 +1767,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                             child: ElevatedButton(
                               onPressed: _saving ? null : _delete,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF74512D),
+                                backgroundColor: GiftcardColors.accent,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
@@ -1782,7 +1786,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                   child: ElevatedButton(
                     onPressed: _saving ? null : _save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF74512D),
+                      backgroundColor: GiftcardColors.accent,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       elevation: 0,

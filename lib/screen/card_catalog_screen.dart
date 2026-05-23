@@ -26,7 +26,7 @@ const Color _cardInk = McColors.ink;
 const Color _cardLine = McColors.line;
 const Color _cardMuted = McColors.muted;
 const Color _cardPage = McColors.background;
-const Color _cardAccent = McColors.accent;
+const Color _cardAccent = CardColors.accent;
 
 class CardCatalogScreen extends StatefulWidget {
   final VoidCallback? onRequireLogin;
@@ -1428,6 +1428,8 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
             'cardId': product.id,
           },
           lockBoardSelection: true,
+          accentColor: CardColors.accent,
+          accentSoftColor: CardColors.accentSoft,
         ),
       ),
     );

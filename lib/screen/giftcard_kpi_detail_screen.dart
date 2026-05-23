@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:mileage_thief/const/colors.dart';
 import 'package:mileage_thief/model/giftcard_info_data.dart';
 import 'package:mileage_thief/model/giftcard_period.dart';
 import 'package:mileage_thief/services/giftcard_service.dart';
@@ -230,11 +231,11 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: const Color(0x1174512D),
+              color: const Color(0x11DC7606),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.info_outline,
-                color: Color(0xFF74512D), size: 18),
+                color: GiftcardColors.accent, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -413,7 +414,7 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
                     : Icons.check_circle_outline,
                 filled: true,
                 fillColor: status == 'open'
-                    ? const Color(0xFF74512D)
+                    ? GiftcardColors.accent
                     : Colors.green.shade600,
               ),
               const SizedBox(width: 8),
@@ -594,19 +595,20 @@ class _GiftcardKpiDetailScreenState extends State<GiftcardKpiDetailScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF74512D),
+        backgroundColor: GiftcardColors.accent,
         onPressed: _openFabActions,
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF74512D)),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(GiftcardColors.accent),
               ),
             )
           : RefreshIndicator(
               onRefresh: () => _load(forceRefresh: true),
-              color: const Color(0xFF74512D),
+              color: GiftcardColors.accent,
               backgroundColor: Colors.white,
               child: Builder(
                 builder: (context) {

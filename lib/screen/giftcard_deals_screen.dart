@@ -13,9 +13,9 @@ import '../services/branch_service.dart';
 import '../services/giftcard_deal_service.dart';
 import '../const/colors.dart';
 
-const Color _giftDealAccent = McColors.accent;
-const Color _giftDealAccentSoft = McColors.accentSoft;
-const Color _giftDealAccentBorder = Color(0xFFB89B7C);
+const Color _giftDealAccent = GiftcardColors.accent;
+const Color _giftDealAccentSoft = GiftcardColors.accentSoft;
+const Color _giftDealAccentBorder = GiftcardColors.accentBorder;
 
 class GiftcardDealsScreen extends StatefulWidget {
   const GiftcardDealsScreen({super.key});

@@ -23,7 +23,7 @@ class GiftActionPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
-            color: McColors.accent,
+            color: GiftcardColors.accent,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -43,7 +43,7 @@ class GiftActionPill extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 18, color: McColors.accent),
+                child: Icon(icon, size: 18, color: GiftcardColors.accent),
               ),
               const SizedBox(width: 10),
               Text(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
+import '../const/colors.dart';
 import '../branch/card_manage.dart';
 import '../services/analytics_service.dart';
 import '../services/card_transaction_service.dart';
@@ -147,7 +148,7 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF74512D),
+                      color: CardColors.accent,
                     ),
                   );
                 }
@@ -177,7 +178,7 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
         setState(_reload);
         await _future;
       },
-      color: const Color(0xFF74512D),
+      color: CardColors.accent,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
         children: [
@@ -203,7 +204,7 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
                   icon: const Icon(Icons.credit_card_rounded, size: 18),
                   label: Text(data.cards.isEmpty ? '카드 추가' : '카드 설정'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF74512D),
+                    backgroundColor: CardColors.accent,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     minimumSize: const Size.fromHeight(46),
@@ -220,8 +221,8 @@ class _MyCardDashboardScreenState extends State<MyCardDashboardScreen> {
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text('수동 입력'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF74512D),
-                    side: const BorderSide(color: Color(0xFF74512D)),
+                    foregroundColor: CardColors.accent,
+                    side: const BorderSide(color: CardColors.accent),
                     minimumSize: const Size.fromHeight(46),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -354,7 +355,7 @@ class _CardDetailScreenState extends State<_CardDetailScreen> {
           body: snapshot.connectionState == ConnectionState.waiting &&
                   data == null
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF74512D)),
+                  child: CircularProgressIndicator(color: CardColors.accent),
                 )
               : summary == null
                   ? const Center(child: Text('카드 정보를 찾을 수 없습니다.'))
@@ -451,7 +452,7 @@ class _ManualTransactionSheetState extends State<_ManualTransactionSheet> {
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF74512D)),
+          colorScheme: const ColorScheme.light(primary: CardColors.accent),
         ),
         child: child!,
       ),
@@ -561,7 +562,7 @@ class _ManualTransactionSheetState extends State<_ManualTransactionSheet> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('실적 인정'),
                 value: _performanceEligible,
-                activeThumbColor: const Color(0xFF74512D),
+                activeThumbColor: CardColors.accent,
                 onChanged: (value) =>
                     setState(() => _performanceEligible = value),
               ),
@@ -570,7 +571,7 @@ class _ManualTransactionSheetState extends State<_ManualTransactionSheet> {
                 title: Text(
                     '마일 적립${_defaultRule > 0 ? ' ($_defaultRule원/마일)' : ''}'),
                 value: _rewardEligible,
-                activeThumbColor: const Color(0xFF74512D),
+                activeThumbColor: CardColors.accent,
                 onChanged: (value) => setState(() => _rewardEligible = value),
               ),
               const SizedBox(height: 12),
@@ -580,7 +581,7 @@ class _ManualTransactionSheetState extends State<_ManualTransactionSheet> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF74512D),
+                    backgroundColor: CardColors.accent,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -711,7 +712,7 @@ class _TransactionOverrideSheetState extends State<_TransactionOverrideSheet> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('실적 인정'),
                 value: _performanceEligible,
-                activeThumbColor: const Color(0xFF74512D),
+                activeThumbColor: CardColors.accent,
                 onChanged: (value) =>
                     setState(() => _performanceEligible = value),
               ),
@@ -719,7 +720,7 @@ class _TransactionOverrideSheetState extends State<_TransactionOverrideSheet> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('마일 적립'),
                 value: _rewardEligible,
-                activeThumbColor: const Color(0xFF74512D),
+                activeThumbColor: CardColors.accent,
                 onChanged: (value) => setState(() => _rewardEligible = value),
               ),
               const SizedBox(height: 8),
@@ -739,7 +740,7 @@ class _TransactionOverrideSheetState extends State<_TransactionOverrideSheet> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('이 사용처에 계속 적용'),
                 value: _applyToFuture,
-                activeColor: const Color(0xFF74512D),
+                activeColor: CardColors.accent,
                 onChanged: (value) =>
                     setState(() => _applyToFuture = value ?? false),
               ),
@@ -750,7 +751,7 @@ class _TransactionOverrideSheetState extends State<_TransactionOverrideSheet> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF74512D),
+                    backgroundColor: CardColors.accent,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -891,10 +892,10 @@ class _SummaryMetric extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: const Color(0xFF74512D).withValues(alpha: 0.1),
+            color: CardColors.accent.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFF74512D), size: 19),
+          child: Icon(icon, color: CardColors.accent, size: 19),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -949,7 +950,7 @@ class _CardSummaryTile extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.credit_card_rounded, color: Color(0xFF74512D)),
+                const Icon(Icons.credit_card_rounded, color: CardColors.accent),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -970,7 +971,7 @@ class _CardSummaryTile extends StatelessWidget {
                 value: hasTarget ? summary.progress : 0,
                 minHeight: 8,
                 backgroundColor: Colors.grey[200],
-                color: const Color(0xFF74512D),
+                color: CardColors.accent,
               ),
             ),
             const SizedBox(height: 10),
@@ -997,7 +998,7 @@ class _CardSummaryTile extends StatelessWidget {
               children: [
                 _StatusPill(
                   text: '마일 ${won.format(summary.rewardMiles)}',
-                  color: const Color(0xFF74512D),
+                  color: CardColors.accent,
                 ),
                 _StatusPill(
                   text: '거래 ${summary.transactions.length}건',
@@ -1049,7 +1050,7 @@ class _CardDetailHeader extends StatelessWidget {
             value: summary.targetSpendKRW > 0 ? summary.progress : 0,
             minHeight: 8,
             backgroundColor: Colors.grey[200],
-            color: const Color(0xFF74512D),
+            color: CardColors.accent,
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -1058,7 +1059,7 @@ class _CardDetailHeader extends StatelessWidget {
             children: [
               _StatusPill(
                 text: '실적 ${won.format(summary.performanceAmountKRW)}원',
-                color: const Color(0xFF74512D),
+                color: CardColors.accent,
               ),
               _StatusPill(
                 text: '예상 ${won.format(summary.rewardMiles)}마일',
@@ -1135,7 +1136,7 @@ class _TransactionTile extends StatelessWidget {
                 _StatusPill(
                   text: transaction.performanceEligible ? '실적 인정' : '실적 제외',
                   color: transaction.performanceEligible
-                      ? const Color(0xFF74512D)
+                      ? CardColors.accent
                       : Colors.deepOrange,
                 ),
                 _StatusPill(

@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../const/colors.dart';
+
 class BranchStep2Page extends StatefulWidget {
   final double latitude;
   final double longitude;
@@ -72,16 +74,15 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
 
   Future<void> _pickTime(String day, bool isOpen) async {
     final now = TimeOfDay.now();
-    final currentTime = isOpen 
-        ? _dayOpenTime[day] ?? now
-        : _dayCloseTime[day] ?? now;
-    
+    final currentTime =
+        isOpen ? _dayOpenTime[day] ?? now : _dayCloseTime[day] ?? now;
+
     final picked = await showTimePicker(
       context: context,
       initialTime: currentTime,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF74512D)),
+          colorScheme: const ColorScheme.light(primary: GiftcardColors.accent),
         ),
         child: child!,
       ),
@@ -105,42 +106,62 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
   }
 
   void _onSubmit() {
-    setState(() { _error = null; });
+    setState(() {
+      _error = null;
+    });
     final id = _branchIdController.text.trim();
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
 
     final idValid = RegExp(r'^[a-z0-9_]+$').hasMatch(id);
     if (id.isEmpty || !idValid) {
-      setState(() { _error = 'branchId는 소문자/숫자/_(언더스코어)만 사용하세요.'; });
+      setState(() {
+        _error = 'branchId는 소문자/숫자/_(언더스코어)만 사용하세요.';
+      });
       return;
     }
     if (name.isEmpty) {
-      setState(() { _error = '지점명을 입력하세요.'; });
+      setState(() {
+        _error = '지점명을 입력하세요.';
+      });
       return;
     }
     if (phone.isEmpty) {
-      setState(() { _error = '전화번호를 입력하세요.'; });
+      setState(() {
+        _error = '전화번호를 입력하세요.';
+      });
       return;
     }
 
     // 요일/시간 검증 및 openingHours 구성
     final bool anyDaySelected = _dayOpen.values.any((v) => v == true);
     if (!anyDaySelected) {
-      setState(() { _error = '영업 요일을 선택하세요.'; });
+      setState(() {
+        _error = '영업 요일을 선택하세요.';
+      });
       return;
     }
 
     // 각 요일별 시간 검증
     final Map<String, String> dayTimeMap = {};
-    final dayNames = {'월': 'mon', '화': 'tue', '수': 'wed', '목': 'thu', '금': 'fri', '토': 'sat', '일': 'sun'};
-    
+    final dayNames = {
+      '월': 'mon',
+      '화': 'tue',
+      '수': 'wed',
+      '목': 'thu',
+      '금': 'fri',
+      '토': 'sat',
+      '일': 'sun'
+    };
+
     for (final day in _dayOpen.keys) {
       if (_dayOpen[day] == true) {
         final openTime = _dayOpenTime[day];
         final closeTime = _dayCloseTime[day];
         if (openTime == null || closeTime == null) {
-          setState(() { _error = '${day}요일의 영업 시간을 선택하세요.'; });
+          setState(() {
+            _error = '${day}요일의 영업 시간을 선택하세요.';
+          });
           return;
         }
         final timeRange = '${_formatTime(openTime)}-${_formatTime(closeTime)}';
@@ -151,7 +172,7 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
     // 동일한 시간을 가진 요일들을 그룹화
     final Map<String, String> openingHours = {};
     final Map<String, List<String>> timeGroupMap = {};
-    
+
     // 시간별로 요일 그룹화
     for (final entry in dayTimeMap.entries) {
       final time = entry.value;
@@ -165,21 +186,21 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
     for (final entry in timeGroupMap.entries) {
       final time = entry.key;
       final days = List<String>.from(entry.value);
-      
+
       if (days.isEmpty) continue;
-      
+
       // 요일 순서 정의
       final dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-      
+
       // 요일 순서대로 정렬
       days.sort((a, b) => dayOrder.indexOf(a).compareTo(dayOrder.indexOf(b)));
-      
+
       // 연속된 요일 그룹 찾기
       int i = 0;
       while (i < days.length) {
         int startIdx = dayOrder.indexOf(days[i]);
         int endIdx = startIdx;
-        
+
         // 연속된 요일 찾기
         while (i + 1 < days.length) {
           final nextIdx = dayOrder.indexOf(days[i + 1]);
@@ -190,12 +211,12 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
             break;
           }
         }
-        
+
         // 그룹 키 생성
         final startDay = dayOrder[startIdx];
         final endDay = dayOrder[endIdx];
         String groupKey;
-        
+
         if (startIdx == endIdx) {
           // 단일 요일
           groupKey = startDay;
@@ -211,7 +232,7 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
             groupKey = '$startDay$endDay';
           }
         }
-        
+
         openingHours[groupKey] = time;
         i++;
       }
@@ -234,14 +255,19 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
     required String notice,
   }) async {
     if (_saving) return;
-    setState(() { _saving = true; });
+    setState(() {
+      _saving = true;
+    });
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
       final String fullAddress = (widget.detailAddress.trim().isEmpty)
           ? widget.address
           : '${widget.address} ${widget.detailAddress.trim()}';
 
-      await FirebaseFirestore.instance.collection('branches').doc(branchId).set({
+      await FirebaseFirestore.instance
+          .collection('branches')
+          .doc(branchId)
+          .set({
         'branchId': branchId,
         'name': name,
         'phone': phone,
@@ -258,10 +284,15 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = '저장 중 오류가 발생했습니다.'; });
+      setState(() {
+        _error = '저장 중 오류가 발생했습니다.';
+      });
       Fluttertoast.showToast(msg: '저장 실패: $e');
     } finally {
-      if (mounted) setState(() { _saving = false; });
+      if (mounted)
+        setState(() {
+          _saving = false;
+        });
     }
   }
 
@@ -285,14 +316,18 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                   Expanded(
                     child: Container(
                       height: 4,
-                      decoration: BoxDecoration(color: const Color(0xFF74512D), borderRadius: BorderRadius.circular(2)),
+                      decoration: BoxDecoration(
+                          color: GiftcardColors.accent,
+                          borderRadius: BorderRadius.circular(2)),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Container(
                       height: 4,
-                      decoration: BoxDecoration(color: const Color(0xFF74512D), borderRadius: BorderRadius.circular(2)),
+                      decoration: BoxDecoration(
+                          color: GiftcardColors.accent,
+                          borderRadius: BorderRadius.circular(2)),
                     ),
                   ),
                 ],
@@ -301,7 +336,11 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
             const SizedBox(height: 16),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('상품권 지점의\n정보를 알려주세요', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.black)),
+              child: Text('상품권 지점의\n정보를 알려주세요',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black)),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -312,11 +351,17 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                   children: [
                     Row(
                       children: const [
-                        Text('branchId', style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text('branchId',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                         SizedBox(width: 4),
-                        Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        Text('필수',
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
                         SizedBox(width: 8),
-                        Expanded(child: Text('(소문자, 숫자, _ 만 사용 가능)', textAlign: TextAlign.right, style: TextStyle(color: Colors.black54, fontSize: 12))),
+                        Expanded(
+                            child: Text('(소문자, 숫자, _ 만 사용 가능)',
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                    color: Colors.black54, fontSize: 12))),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -324,24 +369,30 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       controller: _branchIdController,
                       decoration: InputDecoration(
                         hintText: '예: gangnam_main',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                          borderSide: const BorderSide(
+                              color: GiftcardColors.accent, width: 2),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: const [
-                        Text('지점명', style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text('지점명',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                         SizedBox(width: 4),
-                        Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        Text('필수',
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -349,24 +400,30 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         hintText: '예: 강남점',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                          borderSide: const BorderSide(
+                              color: GiftcardColors.accent, width: 2),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: const [
-                        Text('전화번호', style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text('전화번호',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                         SizedBox(width: 4),
-                        Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        Text('필수',
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -375,24 +432,30 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         hintText: '예: 031-123-1234',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                          borderSide: const BorderSide(
+                              color: GiftcardColors.accent, width: 2),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: const [
-                        Text('영업 시간', style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text('영업 시간',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                         SizedBox(width: 4),
-                        Text('필수', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        Text('필수',
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -406,8 +469,11 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                               ChoiceChip(
                                 selected: selected,
                                 label: Text(day),
-                                selectedColor: const Color(0xFF74512D),
-                                labelStyle: TextStyle(color: selected ? Colors.white : Colors.black87),
+                                selectedColor: GiftcardColors.accent,
+                                labelStyle: TextStyle(
+                                    color: selected
+                                        ? Colors.white
+                                        : Colors.black87),
                                 onSelected: (v) => setState(() {
                                   _dayOpen[day] = v;
                                   if (!v) {
@@ -422,12 +488,15 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                                   child: OutlinedButton(
                                     onPressed: () => _pickTime(day, true),
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFFE6E6E9)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                      side: const BorderSide(
+                                          color: Color(0xFFE6E6E9)),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 8),
                                     ),
                                     child: Text(
                                       _formatTime(_dayOpenTime[day]),
-                                      style: const TextStyle(color: Colors.black87, fontSize: 12),
+                                      style: const TextStyle(
+                                          color: Colors.black87, fontSize: 12),
                                     ),
                                   ),
                                 ),
@@ -438,12 +507,15 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                                   child: OutlinedButton(
                                     onPressed: () => _pickTime(day, false),
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFFE6E6E9)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                      side: const BorderSide(
+                                          color: Color(0xFFE6E6E9)),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 8),
                                     ),
                                     child: Text(
                                       _formatTime(_dayCloseTime[day]),
-                                      style: const TextStyle(color: Colors.black87, fontSize: 12),
+                                      style: const TextStyle(
+                                          color: Colors.black87, fontSize: 12),
                                     ),
                                   ),
                                 ),
@@ -455,23 +527,28 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       );
                     }).toList(),
                     const SizedBox(height: 16),
-                    const Text('안내사항 (선택)', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Text('안내사항 (선택)',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _noticeController,
                       maxLines: 3,
                       decoration: InputDecoration(
                         hintText: '지점 이용 안내를 입력하세요 (선택)',
-                        filled: true, fillColor: Colors.white,
+                        filled: true,
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE6E6E9)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE6E6E9)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF74512D), width: 2),
+                          borderSide: const BorderSide(
+                              color: GiftcardColors.accent, width: 2),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                     if (_error != null) ...[
@@ -492,9 +569,11 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Color(0xFFE6E6E9)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('이전', style: TextStyle(color: Colors.black87)),
+                      child: const Text('이전',
+                          style: TextStyle(color: Colors.black87)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -502,11 +581,15 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
                     child: ElevatedButton(
                       onPressed: _onSubmit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF74512D),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: GiftcardColors.accent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      child: const Text('완료', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      child: const Text('완료',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -518,5 +601,3 @@ class _BranchStep2PageState extends State<BranchStep2Page> {
     );
   }
 }
-
-
