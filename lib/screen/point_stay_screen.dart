@@ -1164,7 +1164,8 @@ List<PointHotel> _brandHotels(
       if (hasRate != 0) return hasRate;
       final value = b.krwPerPoint.compareTo(a.krwPerPoint);
       if (value != 0) return value;
-      return b.rating.compareTo(a.rating);
+      return (b.milecatchRatingAverage ?? 0)
+          .compareTo(a.milecatchRatingAverage ?? 0);
     });
 }
 
@@ -1578,14 +1579,28 @@ class _BrandHotelCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Icon(Icons.star_rounded, size: 15),
-                        Text(
-                          hotel.rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                        if (hotel.hasMilecatchReviews) ...[
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 15,
+                            color: Color(0xFFFACC15),
                           ),
-                        ),
+                          Text(
+                            hotel.milecatchRatingAverage!.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ] else
+                          const Text(
+                            '리뷰 없음',
+                            style: TextStyle(
+                              color: Color(0xFF717171),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 4),

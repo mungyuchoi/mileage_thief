@@ -9,6 +9,7 @@ import 'admin_hotel_request_manage_screen.dart';
 import 'admin_insight_manage_screen.dart';
 import 'admin_report_manage_screen.dart';
 import 'admin_scrap_upload_screen.dart';
+import 'admin_version_manage_screen.dart';
 import 'card_catalog_screen.dart';
 import 'contest_manage_screen.dart';
 
@@ -104,6 +105,13 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '사용자, 게시글, 신고, 콘테스트 현황을 한눈에 봅니다.',
                       icon: Icons.dashboard_customize_outlined,
                       onTap: () => _open(const AdminStatsDashboardScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '버전 관리',
+                      description:
+                          'Realtime Database의 Android, iPhone 최신 버전을 수정합니다.',
+                      icon: Icons.system_update_alt_outlined,
+                      onTap: () => _open(const AdminVersionManageScreen()),
                     ),
                     _AdminMenuTile(
                       title: '기간별 통계',

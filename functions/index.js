@@ -4486,6 +4486,74 @@ exports.onGiftcardRadarSourceWritten = onDocumentWritten({
 });
 
 /**
+ * 호텔 리뷰 평점 집계를 갱신한다.
+ */
+exports.onPointHotelReviewWritten = onDocumentWritten({
+  document: "pointHotels/{hotelId}/reviews/{reviewId}",
+  region: "asia-northeast3",
+}, async (event) => {
+  try {
+    const {hotelId, reviewId} = event.params;
+    const hotelRef = admin.firestore()
+        .collection("pointHotels")
+        .doc(hotelId);
+    await admin.firestore().runTransaction(async (transaction) => {
+      const hotelDoc = await transaction.get(hotelRef);
+      if (!hotelDoc.exists) {
+        logger.warn(
+            `호텔 리뷰 집계 대상 없음: hotelId=${hotelId}, ` +
+            `reviewId=${reviewId}`,
+        );
+        return;
+      }
+
+      const reviewsSnapshot = await transaction.get(
+          hotelRef.collection("reviews"),
+      );
+      let nextCount = 0;
+      let nextSum = 0;
+      reviewsSnapshot.forEach((reviewDoc) => {
+        const rating = activeHotelReviewRating(reviewDoc.data());
+        if (rating === null) {
+          return;
+        }
+        nextCount += 1;
+        nextSum += rating;
+      });
+
+      const update = {
+        milecatchRatingCount: nextCount,
+        milecatchRatingSum: nextSum,
+        milecatchRatingAverage: nextCount === 0 ?
+          null :
+          Math.round((nextSum / nextCount) * 10) / 10,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      transaction.set(hotelRef, update, {merge: true});
+    });
+  } catch (error) {
+    logger.error(`호텔 리뷰 집계 오류: ${error.message}`, error);
+  }
+});
+
+/**
+ * 집계 가능한 호텔 리뷰 평점을 반환한다.
+ * @param {Object|null} data
+ * @return {number|null}
+ */
+function activeHotelReviewRating(data) {
+  if (!data || data.isDeleted === true) {
+    return null;
+  }
+  const rating = Number(data.rating);
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return null;
+  }
+  return Math.round(rating);
+}
+
+/**
  * 커뮤니티 정보성 게시글이 생성되면 benefitNews 레이더 구독과 매칭
  */
 exports.onCommunityRadarPostCreated = onDocumentCreated({

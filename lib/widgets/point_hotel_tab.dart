@@ -956,19 +956,33 @@ class _HotelCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.star_rounded, size: 18),
-                    const SizedBox(width: 3),
-                    Text(
-                      hotel.rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                if (hotel.hasMilecatchReviews)
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 18,
+                        color: Color(0xFFFACC15),
                       ),
+                      const SizedBox(width: 3),
+                      Text(
+                        hotel.milecatchRatingAverage!.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  const Text(
+                    '리뷰 없음',
+                    style: TextStyle(
+                      color: Color(0xFF717171),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
+                  ),
               ],
             ),
             const SizedBox(height: 5),

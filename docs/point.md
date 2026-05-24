@@ -68,10 +68,12 @@ v1 기준 권장 구조는 아래 두 계층이다.
 | --- | --- | --- | --- | --- |
 | `pointHotelPrograms/{programId}` | 호텔 프로그램/브랜드 메타 | 허용 | 금지 | 허용 |
 | `pointHotels/{hotelId}` | 호텔 기본 정보와 대표 가격 | 허용 | 금지 | 허용 |
+| `pointHotels/{hotelId}/reviews/{reviewId}` | 마일캐치 호텔 리뷰 원본 | 허용 | 인증 사용자 본인 리뷰 | 허용 |
 | `pointHotels/{hotelId}/calendarYears/{yearKey}` | 앱이 읽는 최신 연별 포인트/현금가 map | 허용 | 금지 | 허용 |
 | `pointHotels/{hotelId}/calendarYearRuns/{yearKey_runSlot}` | 수집 실행별 연별 변경 이력 | 관리자만 | 금지 | 허용 |
 | `pointAwardIndexes/{indexId}` | 탐색 탭 후보 묶음 | 허용 | 금지 | 허용 |
 | `pointHotelSyncRuns/{runId}` | 크론 실행 로그 | 관리자만 | 금지 | 허용 |
+| `users/{uid}/hotel_reviews/{reviewId}` | 프로필용 호텔 리뷰 미러 | 본인만 | 본인만 | 허용 |
 
 ## 4. 문서 스키마
 
@@ -139,6 +141,9 @@ v1 기준 권장 구조는 아래 두 계층이다.
   "galleryUrls": ["https://example.com/hotel.jpg"],
   "rating": 4.6,
   "guestFavorite": true,
+  "milecatchRatingAverage": 4.8,
+  "milecatchRatingCount": 12,
+  "milecatchRatingSum": 58,
   "description": "런던 성수기 현금가가 높을 때 포인트 가치가 돋보이는 호텔입니다.",
   "amenities": ["스파", "수영장", "라운지", "강변 위치"],
   "amenityKeys": ["spa", "pool", "lounge", "river"],
@@ -188,8 +193,11 @@ v1 기준 권장 구조는 아래 두 계층이다.
 | `brand` | string | 화면에 표시할 브랜드명 |
 | `imageUrl` | string | 대표 이미지 |
 | `galleryUrls` | string[] | 상세 이미지 |
-| `rating` | number | 표시용 평점 |
-| `guestFavorite` | boolean | 추천/선호 배지 |
+| `rating` | number | 외부 수집 평점. 화면에는 표시하지 않는다 |
+| `guestFavorite` | boolean | 외부 수집 기반 추천/선호 값. 화면 평점 대체로 쓰지 않는다 |
+| `milecatchRatingAverage` | number? | 마일캐치 사용자 리뷰 평균 평점 |
+| `milecatchRatingCount` | number | 마일캐치 사용자 리뷰 개수 |
+| `milecatchRatingSum` | number | Cloud Functions 집계용 평점 합계 |
 | `description` | string | 호텔 소개 |
 | `amenities` | string[] | 표시용 편의시설 |
 | `amenityKeys` | string[] | 필터용 편의시설 키 |
@@ -200,6 +208,31 @@ v1 기준 권장 구조는 아래 두 계층이다.
 | `status` | string | `active`, `inactive`, `hidden` |
 | `createdAt` | timestamp | 최초 생성 시각 |
 | `updatedAt` | timestamp | 마지막 갱신 시각 |
+
+### `pointHotels/{hotelId}/reviews/{reviewId}`
+
+호텔 상세의 마일캐치 리뷰 원본이다. 사용자는 같은 호텔에 여러 리뷰를 작성할 수 있다. v1은 평점과 텍스트만 지원하고, 이미지는 저장하지 않는다.
+
+```json
+{
+  "reviewId": "autoId",
+  "hotelId": "marriott_lhrwm",
+  "authorId": "uid",
+  "authorDisplayName": "닉네임",
+  "authorPhotoURL": "https://example.com/photo.jpg",
+  "rating": 5,
+  "content": "포인트 차감 대비 위치와 라운지 체감이 좋았습니다.",
+  "hotelName": "The Westin London City",
+  "brand": "Westin",
+  "locationText": "London, United Kingdom",
+  "imageUrl": "https://example.com/hotel.jpg",
+  "createdAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp",
+  "isDeleted": false
+}
+```
+
+리뷰 생성/삭제/평점 변경 시 Cloud Function이 `pointHotels/{hotelId}`의 `milecatchRatingAverage`, `milecatchRatingCount`, `milecatchRatingSum`을 갱신한다. 프로필 탭은 같은 `reviewId`로 `users/{uid}/hotel_reviews/{reviewId}` 미러를 읽는다.
 
 ### `pointHotels/{hotelId}/calendarYears/{yearKey}`
 
@@ -686,7 +719,7 @@ crontab 또는 Cloud Scheduler가 주기적으로 서버 작업을 실행한다.
 
 호텔 메타데이터와 날짜별 가격/포인트 캘린더는 실행 주기가 다르므로 별도 작업으로 분리한다.
 
-- 호텔 메타데이터: 월 1회 수준. Marriott은 `python3 task/point/hotel/marriott/update_marriott_hotels_from_firestore.py`를 실행한다. 이 작업은 Firestore `pointHotels`에서 `programId == marriott`, `status`가 `active` 또는 `pending`인 문서를 읽고, 각 문서의 `officialUrl`을 CDP Chrome 파서로 열어 호텔명, 주소, 좌표, 평점, 이미지, 편의시설 등을 다시 파싱한 뒤 `pointHotels/{hotelId}`에 upsert한다. 새 Marriott 호텔을 운영자가 추가할 때는 `pointHotels/{hotelId}`에 `programId`, `officialUrl`, `status: pending`만 먼저 넣어도 다음 호텔 메타데이터 배치에서 `active` 문서로 완성된다.
+- 호텔 메타데이터: 월 1회 수준. Marriott은 `python3 task/point/hotel/marriott/update_marriott_hotels_from_firestore.py`를 실행한다. 이 작업은 Firestore `pointHotels`에서 `programId == marriott`, `status`가 `active` 또는 `pending`인 문서를 읽고, 각 문서의 `officialUrl`을 CDP Chrome 파서로 열어 호텔명, 주소, 좌표, 외부 평점(비노출 수집값), 이미지, 편의시설 등을 다시 파싱한 뒤 `pointHotels/{hotelId}`에 upsert한다. 새 Marriott 호텔을 운영자가 추가할 때는 `pointHotels/{hotelId}`에 `programId`, `officialUrl`, `status: pending`만 먼저 넣어도 다음 호텔 메타데이터 배치에서 `active` 문서로 완성된다.
 - 날짜별 포인트/현금가: 하루 2~3회 이상. Marriott은 `python3 task/point/marriott/update_marriott_calendar_from_firestore.py`를 실행한다. 등록된 호텔의 `propertyCode`를 기준으로 1년치 캘린더를 월 단위 window로 나누어 가져오고, 포인트와 현금가를 날짜별로 병합해 `calendarYears`와 `calendarYearRuns`에 저장한다.
 
 권장 주기:
@@ -758,6 +791,17 @@ match /pointHotels/{hotelId} {
   allow read: if resource.data.status == "active";
   allow write: if false;
 
+  match /reviews/{reviewId} {
+    allow read: if get(/databases/$(database)/documents/pointHotels/$(hotelId))
+      .data.status == "active";
+    allow create: if request.auth != null
+      && request.resource.data.authorId == request.auth.uid
+      && request.resource.data.hotelId == hotelId;
+    allow update: if false;
+    allow delete: if request.auth != null
+      && resource.data.authorId == request.auth.uid;
+  }
+
   match /calendarYears/{yearKey} {
     allow read: if resource.data.stale == false;
     allow write: if false;
@@ -777,6 +821,12 @@ match /pointAwardIndexes/{indexId} {
 match /pointHotelSyncRuns/{runId} {
   allow read, write: if false;
 }
+
+match /users/{uid}/hotel_reviews/{reviewId} {
+  allow read, create, delete: if request.auth != null
+    && request.auth.uid == uid;
+  allow update: if false;
+}
 ```
 
 Firestore Rules는 필터가 아니므로 쿼리 기반 컬렉션은 항상 `status == active`, `stale == false` 같은 조건을 포함해야 한다. `pointAwardIndexes`는 문서 ID 직접 조회라서 복합 인덱스를 만들지 않는다.
@@ -795,10 +845,12 @@ Firestore Rules는 필터가 아니므로 쿼리 기반 컬렉션은 항상 `sta
 | `brand` | `pointHotels.brand`, `pointAwardIndexes.items[].brand` |
 | `imageUrl` | `pointHotels.imageUrl`, `pointAwardIndexes.items[].imageUrl` |
 | `galleryUrls` | `pointHotels.galleryUrls` |
-| `rating` | `pointHotels.rating`, `pointAwardIndexes.items[].rating` |
+| `rating` | 레거시 외부 평점. 신규 화면 표시에는 쓰지 않음 |
+| `milecatchRatingAverage` | `pointHotels.milecatchRatingAverage` |
+| `milecatchRatingCount` | `pointHotels.milecatchRatingCount` |
 | `pointsPerNight` | `pointHotels.currentAward.pointsPerNight`, `calendarYears.days.{dMMdd}.p` |
 | `cashPerNightKrw` | `pointHotels.currentAward.cashPerNightKrw`, `calendarYears.days.{dMMdd}.c` |
-| `guestFavorite` | `pointHotels.guestFavorite`, `pointAwardIndexes.items[].guestFavorite` |
+| `guestFavorite` | 레거시 외부 선호 값. 신규 화면 평점 대체로 쓰지 않음 |
 | `description` | `pointHotels.description` |
 | `amenities` | `pointHotels.amenities` |
 | `calendarPoints` | `pointHotels.calendarPreview`, `calendarYears.days` |

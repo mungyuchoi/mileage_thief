@@ -22,7 +22,8 @@ class PointHotelService {
       final sorted = [...hotels]..sort((a, b) {
           final score = b.sortScore.compareTo(a.sortScore);
           if (score != 0) return score;
-          final rating = b.rating.compareTo(a.rating);
+          final rating = (b.milecatchRatingAverage ?? 0)
+              .compareTo(a.milecatchRatingAverage ?? 0);
           if (rating != 0) return rating;
           return a.name.compareTo(b.name);
         });

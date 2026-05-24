@@ -23,6 +23,7 @@ import '../screen/peanut_history_screen.dart';
 import '../utils/ad_removal_utils.dart';
 import '../services/card_transaction_service.dart';
 import '../services/point_hotel_like_service.dart';
+import '../services/point_hotel_review_service.dart';
 import '../widgets/shopping_mall_grid.dart';
 import 'my_card_dashboard_screen.dart';
 import 'point_hotel_detail_screen.dart';
@@ -96,6 +97,13 @@ class _MyPageScreenState extends State<MyPageScreen>
   bool _hasMoreBranchComments = true;
   bool _isBranchCommentsLoading = false;
   final ScrollController _branchCommentsScrollController = ScrollController();
+
+  // 호텔 리뷰 페이징
+  List<DocumentSnapshot> _hotelReviews = [];
+  DocumentSnapshot? _lastHotelReviewDoc;
+  bool _hasMoreHotelReviews = true;
+  bool _isHotelReviewsLoading = false;
+  final ScrollController _hotelReviewsScrollController = ScrollController();
 
   bool _isUpdatingProfileImage = false;
   bool _isUpdatingDisplayName = false;
@@ -206,6 +214,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _bookmarksScrollController.addListener(_onBookmarksScroll);
     _likedHotelsScrollController.addListener(_onLikedHotelsScroll);
     _branchCommentsScrollController.addListener(_onBranchCommentsScroll);
+    _hotelReviewsScrollController.addListener(_onHotelReviewsScroll);
     _initAdState();
     _loadInterstitialAd();
     _loadRewardedAd();
@@ -222,6 +231,7 @@ class _MyPageScreenState extends State<MyPageScreen>
     _bookmarksScrollController.dispose();
     _likedHotelsScrollController.dispose();
     _branchCommentsScrollController.dispose();
+    _hotelReviewsScrollController.dispose();
     _myPageBannerAd?.dispose();
     _interstitialAd?.dispose();
     _rewardedAd?.dispose();
@@ -245,8 +255,8 @@ class _MyPageScreenState extends State<MyPageScreen>
   }
 
   void _initializeTabController() {
-    // 게시글, 댓글, 리뷰, 좋아요, 북마크, 호텔 → 총 6개 탭
-    _tabController = TabController(length: 6, vsync: this);
+    // 게시글, 댓글, 리뷰, 호텔 리뷰, 좋아요, 북마크, 호텔 → 총 7개 탭
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   void _onPostsScroll() {
@@ -303,6 +313,15 @@ class _MyPageScreenState extends State<MyPageScreen>
     }
   }
 
+  void _onHotelReviewsScroll() {
+    if (_hotelReviewsScrollController.position.pixels >=
+        _hotelReviewsScrollController.position.maxScrollExtent - 200) {
+      if (!_isHotelReviewsLoading && _hasMoreHotelReviews) {
+        _loadHotelReviews(loadMore: true);
+      }
+    }
+  }
+
   Future<void> _loadUserProfile() async {
     final user = AuthService.currentUser;
     if (user != null) {
@@ -327,6 +346,7 @@ class _MyPageScreenState extends State<MyPageScreen>
       _loadBookmarks(),
       _loadLikedHotels(),
       _loadBranchComments(),
+      _loadHotelReviews(),
     ]);
   }
 
@@ -565,6 +585,53 @@ class _MyPageScreenState extends State<MyPageScreen>
       print('사용자 지점 리뷰 로드 오류: $e');
       setState(() {
         _isBranchCommentsLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadHotelReviews({bool loadMore = false}) async {
+    final user = AuthService.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isHotelReviewsLoading = true;
+    });
+
+    try {
+      if (!loadMore) {
+        _lastHotelReviewDoc = null;
+      }
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection(PointHotelReviewService.userCollectionName)
+          .orderBy('createdAt', descending: true)
+          .limit(_pageSize);
+
+      if (loadMore && _lastHotelReviewDoc != null) {
+        query = query.startAfterDocument(_lastHotelReviewDoc!);
+      }
+
+      final querySnapshot = await query.get();
+
+      if (loadMore) {
+        _hotelReviews.addAll(querySnapshot.docs);
+      } else {
+        _hotelReviews = querySnapshot.docs;
+      }
+
+      if (querySnapshot.docs.isNotEmpty) {
+        _lastHotelReviewDoc = querySnapshot.docs.last;
+      }
+
+      _hasMoreHotelReviews = querySnapshot.docs.length == _pageSize;
+      setState(() {
+        _isHotelReviewsLoading = false;
+      });
+    } catch (e) {
+      debugPrint('사용자 호텔 리뷰 로드 오류: $e');
+      setState(() {
+        _isHotelReviewsLoading = false;
       });
     }
   }
@@ -2172,6 +2239,28 @@ class _MyPageScreenState extends State<MyPageScreen>
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  const Text('호텔 리뷰'),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${_hotelReviews.length}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
                                   const Text('좋아요'),
                                   const SizedBox(width: 4),
                                   Container(
@@ -2247,6 +2336,7 @@ class _MyPageScreenState extends State<MyPageScreen>
                   _buildPostsList(),
                   _buildCommentsList(),
                   _buildBranchCommentsList(),
+                  _buildHotelReviewsList(),
                   _buildLikedPostsList(),
                   _buildBookmarksList(),
                   _buildLikedHotelsList(),
@@ -3284,6 +3374,173 @@ class _MyPageScreenState extends State<MyPageScreen>
     );
   }
 
+  Widget _buildHotelReviewsList() {
+    if (_isHotelReviewsLoading && _hotelReviews.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF74512D)),
+      );
+    }
+
+    if (_hotelReviews.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.rate_review_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('작성한 호텔 리뷰가 없습니다', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _hotelReviewsScrollController,
+      padding: _tabListPadding(),
+      itemCount: _hotelReviews.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _hotelReviews.length) {
+          if (_isHotelReviewsLoading) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF74512D)),
+              ),
+            );
+          }
+          return const SizedBox(height: 20);
+        }
+
+        final hotelReview =
+            _hotelReviews[index].data() as Map<String, dynamic>? ?? {};
+        final createdAt = (hotelReview['createdAt'] as Timestamp?)?.toDate() ??
+            DateTime.now();
+        final hotelId = (hotelReview['hotelId'] ?? '').toString();
+        final hotelName =
+            (hotelReview['hotelName'] as String?)?.trim().isNotEmpty == true
+                ? hotelReview['hotelName'] as String
+                : '호텔명 없음';
+        final locationText =
+            (hotelReview['locationText'] as String?)?.trim().isNotEmpty == true
+                ? hotelReview['locationText'] as String
+                : (hotelReview['brand'] as String? ?? '');
+        final content =
+            (hotelReview['content'] as String?)?.trim().isNotEmpty == true
+                ? hotelReview['content'] as String
+                : '리뷰 내용 없음';
+        final rating = _hotelReviewRating(hotelReview['rating']);
+        final imageUrl = hotelReview['imageUrl'] as String? ?? '';
+
+        return GestureDetector(
+          onTap: hotelId.isEmpty ? null : () => _openLikedHotel(hotelId),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 62,
+                      height: 62,
+                      child: imageUrl.isEmpty
+                          ? const ColoredBox(
+                              color: Color(0xFFE5E7EB),
+                              child: Icon(Icons.hotel_outlined),
+                            )
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const ColoredBox(
+                                color: Color(0xFFE5E7EB),
+                                child: Icon(Icons.hotel_outlined),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hotelName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        if (locationText.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            locationText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            for (var star = 1; star <= 5; star++)
+                              Icon(
+                                star <= rating
+                                    ? Icons.star_rounded
+                                    : Icons.star_border_rounded,
+                                color: const Color(0xFFFACC15),
+                                size: 15,
+                              ),
+                            const SizedBox(width: 6),
+                            Text(
+                              DateFormat('yyyy.MM.dd').format(createdAt),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 7),
+                        Text(
+                          content,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLikedPostsList() {
     if (_isLikedPostsLoading) {
       return const Center(
@@ -3396,6 +3653,11 @@ class _MyPageScreenState extends State<MyPageScreen>
   String _removeHtmlTags(String htmlString) {
     RegExp exp = RegExp(r"<[^>]*>", multiLine: true, caseSensitive: true);
     return htmlString.replaceAll(exp, '');
+  }
+
+  int _hotelReviewRating(dynamic value) {
+    final parsed = value is num ? value.round() : int.tryParse('$value') ?? 0;
+    return parsed.clamp(1, 5);
   }
 
   // boardId로 게시판 이름 가져오기

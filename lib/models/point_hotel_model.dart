@@ -110,6 +110,9 @@ class PointHotel {
   final List<PointHotelInfoSection> detailSections;
   final List<PointHotelCalendarEntry> calendarEntries;
   final int sortScore;
+  final double? milecatchRatingAverage;
+  final int milecatchRatingCount;
+  final int milecatchRatingSum;
 
   const PointHotel({
     required this.id,
@@ -142,6 +145,9 @@ class PointHotel {
     this.detailSections = const [],
     this.calendarEntries = const [],
     this.sortScore = 0,
+    this.milecatchRatingAverage,
+    this.milecatchRatingCount = 0,
+    this.milecatchRatingSum = 0,
   });
 
   factory PointHotel.fromFirestore(
@@ -225,6 +231,9 @@ class PointHotel {
       detailSections: detailSections,
       calendarEntries: calendarEntries,
       sortScore: _asInt(data['sortScore']),
+      milecatchRatingAverage: _asNullableDouble(data['milecatchRatingAverage']),
+      milecatchRatingCount: _asInt(data['milecatchRatingCount']),
+      milecatchRatingSum: _asInt(data['milecatchRatingSum']),
     );
   }
 
@@ -250,6 +259,14 @@ class PointHotel {
   bool get hasAwardRate => pointsPerNight > 0;
 
   bool get hasCashRate => cashPerNightKrw > 0;
+
+  bool get hasMilecatchReviews =>
+      milecatchRatingCount > 0 && milecatchRatingAverage != null;
+
+  String get milecatchRatingText {
+    if (!hasMilecatchReviews) return '아직 마일캐치 리뷰 없음';
+    return '${milecatchRatingAverage!.toStringAsFixed(1)} · 마일캐치 리뷰 $milecatchRatingCount개';
+  }
 
   double get krwPerPoint {
     if (!hasAwardRate || !hasCashRate) return 0;

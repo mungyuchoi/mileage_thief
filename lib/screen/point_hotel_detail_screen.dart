@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
+import '../models/point_hotel_review_model.dart';
+import '../services/point_hotel_review_service.dart';
 import '../widgets/admob_banner.dart';
 import '../widgets/image_viewer.dart';
 import '../widgets/point_hotel_favorite_button.dart';
@@ -29,11 +34,15 @@ class PointHotelDetailScreen extends StatefulWidget {
 class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
   DateTime? _selectedCheckIn;
   List<PointHotelCalendarEntry>? _fullCalendarEntries;
+  PointHotel? _liveHotel;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _hotelSubscription;
 
   @override
   void initState() {
     super.initState();
     _selectedCheckIn = _initialSelectedCheckIn();
+    _watchHotelDocument();
     _loadFullCalendarEntries();
   }
 
@@ -43,10 +52,32 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
     if (oldWidget.hotel.id != widget.hotel.id) {
       _selectedCheckIn = _initialSelectedCheckIn();
       _fullCalendarEntries = null;
+      _liveHotel = null;
+      _watchHotelDocument();
       _loadFullCalendarEntries();
     } else if (!DateUtils.isSameDay(oldWidget.checkIn, widget.checkIn)) {
       _selectedCheckIn = _initialSelectedCheckIn();
     }
+  }
+
+  @override
+  void dispose() {
+    _hotelSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _watchHotelDocument() {
+    _hotelSubscription?.cancel();
+    final hotelId = widget.hotel.id;
+    if (hotelId.isEmpty) return;
+    _hotelSubscription = FirebaseFirestore.instance
+        .collection('pointHotels')
+        .doc(hotelId)
+        .snapshots()
+        .listen((doc) {
+      if (!mounted || !doc.exists || widget.hotel.id != hotelId) return;
+      setState(() => _liveHotel = PointHotel.fromFirestore(doc));
+    });
   }
 
   DateTime? _initialSelectedCheckIn() {
@@ -96,7 +127,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final hotel = widget.hotel;
+    final hotel = _liveHotel ?? widget.hotel;
     final nights = widget.nights;
     final checkIn = _selectedCheckIn;
     final calendarEntries = _calendarEntries;
@@ -203,13 +234,36 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.star_rounded, size: 18),
-              const SizedBox(width: 3),
-              Text(
-                hotel.rating.toStringAsFixed(1),
-                style: const TextStyle(fontWeight: FontWeight.w400),
-              ),
-              const SizedBox(width: 8),
+              if (hotel.hasMilecatchReviews) ...[
+                const Icon(
+                  Icons.star_rounded,
+                  size: 18,
+                  color: Color(0xFFFACC15),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  hotel.milecatchRatingAverage!.toStringAsFixed(1),
+                  style: const TextStyle(fontWeight: FontWeight.w400),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '마일캐치 리뷰 ${hotel.milecatchRatingCount}개',
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ] else ...[
+                const Text(
+                  '아직 마일캐치 리뷰 없음',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Text(
                   hotel.locationText,
@@ -315,7 +369,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          _ReviewBox(rating: hotel.rating, reviewCount: hotel.reviewCount),
+          _HotelReviewsSection(hotel: hotel),
           const SizedBox(height: 90),
         ],
       ),
@@ -328,7 +382,6 @@ bool _hasQuickFacts(PointHotel hotel) {
       hotel.phone.isNotEmpty ||
       hotel.checkInTime.isNotEmpty ||
       hotel.checkOutTime.isNotEmpty ||
-      hotel.reviewCount != null ||
       hotel.loyaltyProgram.isNotEmpty;
 }
 
@@ -914,12 +967,6 @@ class _QuickFactsGrid extends StatelessWidget {
           icon: Icons.call_outlined,
           label: '전화',
           value: hotel.phone,
-        ),
-      if (hotel.reviewCount != null)
-        _QuickFact(
-          icon: Icons.reviews_outlined,
-          label: '리뷰',
-          value: '${NumberFormat('#,###').format(hotel.reviewCount)}개',
         ),
       if (hotel.loyaltyProgram.isNotEmpty)
         _QuickFact(
@@ -1716,14 +1763,189 @@ String _trimCompact(double value) {
   return fixed.endsWith('.0') ? fixed.substring(0, fixed.length - 2) : fixed;
 }
 
-class _ReviewBox extends StatelessWidget {
-  final double rating;
-  final int? reviewCount;
+class _HotelReviewsSection extends StatelessWidget {
+  final PointHotel hotel;
 
-  const _ReviewBox({
-    required this.rating,
-    required this.reviewCount,
-  });
+  const _HotelReviewsSection({required this.hotel});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _MilecatchReviewSummary(hotel: hotel),
+        const SizedBox(height: 12),
+        StreamBuilder<List<PointHotelReview>>(
+          stream: PointHotelReviewService.instance.watchRecentReviews(
+            hotelId: hotel.id,
+            limit: 2,
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 18),
+                child: Center(child: CircularProgressIndicator.adaptive()),
+              );
+            }
+            final reviews = snapshot.data ?? const <PointHotelReview>[];
+            if (reviews.isEmpty) {
+              return const _HotelReviewEmptyState();
+            }
+            return Column(
+              children: [
+                for (var index = 0; index < reviews.length; index++) ...[
+                  _HotelReviewItem(review: reviews[index]),
+                  if (index != reviews.length - 1) const SizedBox(height: 8),
+                ],
+                if (hotel.milecatchRatingCount > reviews.length) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () => _openAllHotelReviews(context, hotel),
+                      child: const Text('리뷰 더보기'),
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        _HotelReviewComposer(hotel: hotel),
+      ],
+    );
+  }
+}
+
+class _MilecatchReviewSummary extends StatelessWidget {
+  final PointHotel hotel;
+
+  const _MilecatchReviewSummary({required this.hotel});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasReviews = hotel.hasMilecatchReviews;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Row(
+        children: [
+          if (hasReviews) ...[
+            Column(
+              children: [
+                Text(
+                  hotel.milecatchRatingAverage!.toStringAsFixed(1),
+                  style: const TextStyle(
+                    color: McColors.ink,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                _RatingStars(rating: hotel.milecatchRatingAverage!, size: 14),
+              ],
+            ),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Text(
+                '마일캐치 사용자 ${NumberFormat('#,###').format(hotel.milecatchRatingCount)}명이 남긴 평점입니다.',
+                style: McTextStyles.body,
+              ),
+            ),
+          ] else ...[
+            const Icon(
+              Icons.rate_review_outlined,
+              color: PointStayColors.accent,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                '아직 마일캐치 리뷰가 없습니다. 포인트 숙박 경험을 첫 번째로 남겨주세요.',
+                style: McTextStyles.body,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HotelReviewEmptyState extends StatelessWidget {
+  const _HotelReviewEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: McColors.field,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: McColors.line),
+      ),
+      child: const Text(
+        '아직 등록된 리뷰가 없습니다.',
+        style: McTextStyles.body,
+      ),
+    );
+  }
+}
+
+class _HotelReviewComposer extends StatefulWidget {
+  final PointHotel hotel;
+
+  const _HotelReviewComposer({required this.hotel});
+
+  @override
+  State<_HotelReviewComposer> createState() => _HotelReviewComposerState();
+}
+
+class _HotelReviewComposerState extends State<_HotelReviewComposer> {
+  final TextEditingController _controller = TextEditingController();
+  int _rating = 5;
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showSnack(context, '로그인이 필요합니다.');
+      return;
+    }
+    final content = _controller.text.trim();
+    if (content.isEmpty) {
+      _showSnack(context, '리뷰 내용을 입력해 주세요.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await PointHotelReviewService.instance.addReview(
+        hotel: widget.hotel,
+        rating: _rating,
+        content: content,
+      );
+      if (!mounted) return;
+      _controller.clear();
+      setState(() => _rating = 5);
+      _showSnack(context, '리뷰가 등록되었습니다.');
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(context, '리뷰 등록 중 오류가 발생했습니다.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1733,43 +1955,349 @@ class _ReviewBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: McColors.line),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            children: [
-              Text(
-                rating.toStringAsFixed(1),
-                style: const TextStyle(
-                  color: McColors.ink,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => const Icon(
-                    Icons.star_rounded,
-                    color: Color(0xFFFACC15),
-                    size: 14,
-                  ),
-                ),
-              ),
-            ],
+          const Text('리뷰 쓰기', style: McTextStyles.bodyStrong),
+          const SizedBox(height: 10),
+          _EditableRatingStars(
+            rating: _rating,
+            onChanged: (value) => setState(() => _rating = value),
           ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Text(
-              reviewCount == null
-                  ? '위치와 객실 컨디션이 안정적이고, 포인트 차감 대비 체감 가치가 좋은 편입니다.'
-                  : 'Marriott 투숙객 평점 기준 ${NumberFormat('#,###').format(reviewCount)}개의 후기가 반영되어 있습니다.',
-              style: McTextStyles.body,
+          const SizedBox(height: 10),
+          TextField(
+            controller: _controller,
+            maxLines: 4,
+            minLines: 2,
+            decoration: const InputDecoration(
+              hintText: '포인트 숙박 경험과 호텔 체감 가치를 남겨주세요.',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: _isSubmitting ? null : _submit,
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.edit_outlined, size: 18),
+              label: Text(_isSubmitting ? '등록 중' : '등록'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PointStayColors.accent,
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _EditableRatingStars extends StatelessWidget {
+  final int rating;
+  final ValueChanged<int> onChanged;
+
+  const _EditableRatingStars({
+    required this.rating,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var index = 1; index <= 5; index++)
+          IconButton(
+            onPressed: () => onChanged(index),
+            tooltip: '$index점',
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            icon: Icon(
+              index <= rating ? Icons.star_rounded : Icons.star_border_rounded,
+              color: const Color(0xFFFACC15),
+              size: 28,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HotelReviewItem extends StatelessWidget {
+  final PointHotelReview review;
+  final VoidCallback? onDeleted;
+
+  const _HotelReviewItem({
+    required this.review,
+    this.onDeleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final isMine = currentUid != null && currentUid == review.authorId;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 15,
+                backgroundColor: PointStayColors.accentSoft,
+                backgroundImage: review.authorPhotoURL.isEmpty
+                    ? null
+                    : NetworkImage(review.authorPhotoURL),
+                child: review.authorPhotoURL.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        size: 17,
+                        color: PointStayColors.accent,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  review.authorDisplayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: McTextStyles.bodyStrong,
+                ),
+              ),
+              Text(
+                _reviewDateLabel(review.createdAt),
+                style: McTextStyles.micro,
+              ),
+              if (isMine)
+                IconButton(
+                  onPressed: () => _confirmDeleteReview(context, review),
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  tooltip: '리뷰 삭제',
+                  visualDensity: VisualDensity.compact,
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _RatingStars(rating: review.rating.toDouble()),
+          const SizedBox(height: 8),
+          Text(review.content, style: McTextStyles.body),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteReview(
+    BuildContext context,
+    PointHotelReview review,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('리뷰 삭제', style: McTextStyles.sectionTitle),
+        content: const Text('해당 호텔 리뷰를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !context.mounted) return;
+
+    try {
+      await PointHotelReviewService.instance.deleteReview(review);
+      if (!context.mounted) return;
+      onDeleted?.call();
+      _showSnack(context, '리뷰가 삭제되었습니다.');
+    } catch (_) {
+      if (!context.mounted) return;
+      _showSnack(context, '리뷰 삭제 중 오류가 발생했습니다.');
+    }
+  }
+}
+
+class _RatingStars extends StatelessWidget {
+  final double rating;
+  final double size;
+
+  const _RatingStars({
+    required this.rating,
+    this.size = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeCount = rating.round().clamp(0, 5);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 1; index <= 5; index++)
+          Icon(
+            index <= activeCount
+                ? Icons.star_rounded
+                : Icons.star_border_rounded,
+            color: const Color(0xFFFACC15),
+            size: size,
+          ),
+      ],
+    );
+  }
+}
+
+class _HotelReviewListSheet extends StatefulWidget {
+  final PointHotel hotel;
+
+  const _HotelReviewListSheet({required this.hotel});
+
+  @override
+  State<_HotelReviewListSheet> createState() => _HotelReviewListSheetState();
+}
+
+class _HotelReviewListSheetState extends State<_HotelReviewListSheet> {
+  final List<PointHotelReview> _reviews = <PointHotelReview>[];
+  DocumentSnapshot<Map<String, dynamic>>? _lastDocument;
+  bool _isLoading = false;
+  bool _hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMore();
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoading || !_hasMore) return;
+    setState(() => _isLoading = true);
+    try {
+      final page = await PointHotelReviewService.instance.fetchReviews(
+        hotelId: widget.hotel.id,
+        startAfter: _lastDocument,
+      );
+      if (!mounted) return;
+      setState(() {
+        _reviews.addAll(page.reviews);
+        _lastDocument = page.lastDocument;
+        _hasMore = page.hasMore;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(context, '리뷰를 불러오지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.82,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '리뷰 ${NumberFormat('#,###').format(widget.hotel.milecatchRatingCount)}',
+                      style: McTextStyles.sectionTitle.copyWith(
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: _reviews.isEmpty && _isLoading
+                    ? const Center(child: CircularProgressIndicator.adaptive())
+                    : _reviews.isEmpty
+                        ? const Center(child: Text('아직 등록된 리뷰가 없습니다.'))
+                        : ListView.separated(
+                            itemCount: _reviews.length + (_hasMore ? 1 : 0),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              if (index == _reviews.length) {
+                                return Center(
+                                  child: TextButton(
+                                    onPressed: _isLoading ? null : _loadMore,
+                                    child: Text(
+                                      _isLoading ? '불러오는 중' : '더 보기',
+                                    ),
+                                  ),
+                                );
+                              }
+                              final review = _reviews[index];
+                              return _HotelReviewItem(
+                                review: review,
+                                onDeleted: () {
+                                  setState(() {
+                                    _reviews.removeWhere(
+                                      (item) => item.id == review.id,
+                                    );
+                                  });
+                                },
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _openAllHotelReviews(BuildContext context, PointHotel hotel) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
+    builder: (_) => _HotelReviewListSheet(hotel: hotel),
+  );
+}
+
+String _reviewDateLabel(DateTime? date) {
+  if (date == null) return '';
+  return DateFormat('yyyy.MM.dd').format(date);
+}
+
+void _showSnack(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 1),
+    ),
+  );
 }
 
 class _AmenityGrid extends StatelessWidget {
