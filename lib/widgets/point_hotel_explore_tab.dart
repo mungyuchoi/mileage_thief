@@ -6,6 +6,7 @@ import '../models/point_award_index_model.dart';
 import '../screen/point_hotel_detail_screen.dart';
 import '../services/point_award_index_service.dart';
 import '../services/point_hotel_service.dart';
+import 'admob_banner.dart';
 
 class PointHotelExploreTab extends StatefulWidget {
   const PointHotelExploreTab({super.key});
@@ -316,6 +317,7 @@ class _ExploreContent extends StatelessWidget {
           const SizedBox(height: 18),
           _ExploreSummary(candidates: candidates, nights: nights),
           const SizedBox(height: 12),
+          const AppBannerAd(padding: EdgeInsets.only(bottom: 12)),
           for (final candidate in candidates) ...[
             _AwardCandidateCard(
               candidate: candidate,

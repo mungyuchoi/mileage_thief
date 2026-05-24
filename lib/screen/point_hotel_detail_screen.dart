@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
+import '../widgets/admob_banner.dart';
 import '../widgets/image_viewer.dart';
 import '../widgets/point_hotel_favorite_button.dart';
 
@@ -240,6 +241,7 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
             checkIn: checkIn,
             calendarEntries: calendarEntries,
           ),
+          const AppBannerAd(padding: EdgeInsets.only(top: 16)),
           if (_hasQuickFacts(hotel)) ...[
             const SizedBox(height: 22),
             Text(
@@ -1275,8 +1277,7 @@ class _PointCalendarState extends State<_PointCalendar> {
         widget.hotel,
         calendarEntries: widget.calendarEntries,
       ),
-    ]
-      ..sort((a, b) => a.date.compareTo(b.date));
+    ]..sort((a, b) => a.date.compareTo(b.date));
     if (entries.isEmpty) {
       final now = DateTime.now();
       return DateTime(now.year, now.month);
@@ -1297,8 +1298,7 @@ class _PointCalendarState extends State<_PointCalendar> {
         widget.hotel,
         calendarEntries: widget.calendarEntries,
       ),
-    ]
-      ..sort((a, b) => a.date.compareTo(b.date));
+    ]..sort((a, b) => a.date.compareTo(b.date));
     if (entries.isEmpty) return const _CalendarEmptyState();
 
     final focusedMonth = _visibleMonth;

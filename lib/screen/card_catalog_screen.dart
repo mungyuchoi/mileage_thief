@@ -17,6 +17,7 @@ import '../models/community_label_model.dart';
 import '../services/analytics_service.dart';
 import '../services/branch_service.dart';
 import '../services/card_catalog_service.dart';
+import '../widgets/admob_banner.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
@@ -249,6 +250,11 @@ class _CardCatalogScreenState extends State<CardCatalogScreen> {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: header),
+        const SliverToBoxAdapter(
+          child: AppBannerAd(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+          ),
+        ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
           sliver: SliverList(
@@ -1015,6 +1021,7 @@ class _CardProductDetailScreenState extends State<CardProductDetailScreen>
             separatorWidth: 18,
           ),
           const SizedBox(height: 12),
+          const AppBannerAd(padding: EdgeInsets.only(bottom: 12)),
           _buildSelectedTab(
             product: product,
             issuerUrl: issuerUrl,

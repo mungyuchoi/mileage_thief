@@ -8,35 +8,31 @@ import '../models/giftcard_deal_model.dart';
 
 class GiftcardDealService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const int _maxDealsLimit = 80;
   static const int _maxSourcesLimit = 120;
   static const Duration _cacheTtl = Duration(minutes: 3);
-  static final Map<int, Stream<List<GiftcardDeal>>> _dealStreams = {};
-  static final Map<int, List<GiftcardDeal>> _dealCache = {};
+  static final Map<int?, Stream<List<GiftcardDeal>>> _dealStreams = {};
+  static final Map<int?, List<GiftcardDeal>> _dealCache = {};
+  static final _CacheEntry<List<GiftcardDeal>> _allDealsCache =
+      _CacheEntry<List<GiftcardDeal>>();
   static final Map<int, _CacheEntry<List<GiftcardDeal>>> _topDealsCache = {};
   static final _CacheEntry<List<GiftcardDealSource>> _sourcesCache =
       _CacheEntry<List<GiftcardDealSource>>();
 
-  static List<GiftcardDeal>? peekDeals({int limit = _maxDealsLimit}) {
-    final deals = _cachedDealsForLimit(_effectiveDealsLimit(limit));
+  static List<GiftcardDeal>? peekDeals({int? limit}) {
+    final effectiveLimit = _effectiveDealsLimit(limit);
+    final deals = effectiveLimit == null
+        ? _cachedDealsForAll(allowPartial: true)
+        : _cachedDealsForLimit(effectiveLimit);
     if (deals == null) return null;
     return List<GiftcardDeal>.unmodifiable(deals);
   }
 
-  static Stream<List<GiftcardDeal>> watchDeals({int limit = _maxDealsLimit}) {
+  static Stream<List<GiftcardDeal>> watchDeals({int? limit}) {
     final effectiveLimit = _effectiveDealsLimit(limit);
     return _dealStreams.putIfAbsent(
       effectiveLimit,
-      () => _firestore
-          .collection('giftcardDeals')
-          .orderBy('discountRate', descending: true)
-          .limit(effectiveLimit)
-          .snapshots()
-          .map((snapshot) {
-        final deals = snapshot.docs
-            .map(GiftcardDeal.fromDoc)
-            .where((deal) => deal.status != 'disabled')
-            .toList(growable: false);
+      () => _dealsQuery(limit: effectiveLimit).snapshots().map((snapshot) {
+        final deals = _dealsFromDocs(snapshot.docs);
         _dealCache[effectiveLimit] = deals;
         return deals;
       }).asBroadcastStream(),
@@ -56,11 +52,32 @@ class GiftcardDealService {
     return doc.exists ? GiftcardDeal.fromDoc(doc) : null;
   }
 
+  static Future<List<GiftcardDeal>> loadDeals({
+    bool forceRefresh = false,
+  }) async {
+    final cachedDeals = _cachedDealsForAll();
+    if (!forceRefresh && cachedDeals != null) {
+      return List<GiftcardDeal>.unmodifiable(cachedDeals);
+    }
+
+    return _cached(
+      entry: _allDealsCache,
+      force: forceRefresh,
+      copy: (data) => List<GiftcardDeal>.unmodifiable(data),
+      loader: () async {
+        final snapshot = await _dealsQuery().get();
+        final deals = _dealsFromDocs(snapshot.docs);
+        _dealCache[null] = deals;
+        return deals;
+      },
+    );
+  }
+
   static Future<List<GiftcardDeal>> loadTopDeals({
     int limit = 6,
     bool forceRefresh = false,
   }) async {
-    final effectiveLimit = _effectiveDealsLimit(limit);
+    final effectiveLimit = _effectiveDealsLimit(limit) ?? 1;
     final cachedDeals = _cachedDealsForLimit(effectiveLimit);
     if (!forceRefresh && cachedDeals != null) {
       return cachedDeals.take(effectiveLimit).toList(growable: false);
@@ -75,15 +92,8 @@ class GiftcardDealService {
       force: forceRefresh,
       copy: (data) => List<GiftcardDeal>.unmodifiable(data),
       loader: () async {
-        final snapshot = await _firestore
-            .collection('giftcardDeals')
-            .orderBy('discountRate', descending: true)
-            .limit(effectiveLimit)
-            .get();
-        final deals = snapshot.docs
-            .map(GiftcardDeal.fromDoc)
-            .where((deal) => deal.status != 'disabled')
-            .toList(growable: false);
+        final snapshot = await _dealsQuery(limit: effectiveLimit).get();
+        final deals = _dealsFromDocs(snapshot.docs);
         _dealCache[effectiveLimit] = deals;
         return deals;
       },
@@ -592,15 +602,49 @@ class GiftcardDealService {
     return values.where((value) => value > 0 && seen.add(value)).toList();
   }
 
-  static int _effectiveDealsLimit(int limit) {
-    return limit.clamp(1, _maxDealsLimit).toInt();
+  static Query<Map<String, dynamic>> _dealsQuery({int? limit}) {
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('giftcardDeals')
+        .orderBy('discountRate', descending: true);
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    return query;
+  }
+
+  static List<GiftcardDeal> _dealsFromDocs(
+    Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    return docs
+        .map(GiftcardDeal.fromDoc)
+        .where((deal) => deal.status != 'disabled')
+        .toList(growable: false);
+  }
+
+  static int? _effectiveDealsLimit(int? limit) {
+    if (limit == null) return null;
+    return limit < 1 ? 1 : limit;
+  }
+
+  static List<GiftcardDeal>? _cachedDealsForAll({bool allowPartial = false}) {
+    final allDeals = _dealCache[null] ?? _allDealsCache.data;
+    if (allDeals != null) return allDeals;
+    if (!allowPartial) return null;
+    if (_dealCache.isEmpty) return null;
+    final candidates = _dealCache.entries
+        .where((entry) => entry.key != null)
+        .toList()
+      ..sort((a, b) => b.key!.compareTo(a.key!));
+    return candidates.isEmpty ? null : candidates.first.value;
   }
 
   static List<GiftcardDeal>? _cachedDealsForLimit(int limit) {
+    final allDeals = _dealCache[null];
+    if (allDeals != null) return allDeals.take(limit).toList(growable: false);
     final candidates = _dealCache.entries
-        .where((entry) => entry.key >= limit)
+        .where((entry) => entry.key != null && entry.key! >= limit)
         .toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+      ..sort((a, b) => a.key!.compareTo(b.key!));
     if (candidates.isEmpty) return null;
     return candidates.first.value.take(limit).toList(growable: false);
   }

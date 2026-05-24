@@ -35,8 +35,7 @@ Future<void> showGiftcardDealAlertEditor(
     return;
   }
 
-  final loadedDeals =
-      deals ?? await GiftcardDealService.loadTopDeals(limit: 80);
+  final loadedDeals = deals ?? await GiftcardDealService.loadDeals();
   final editorDeals = <GiftcardDeal>[
     if (deal != null && !loadedDeals.any((item) => item.id == deal.id)) deal,
     ...loadedDeals,
@@ -65,13 +64,20 @@ Future<void> showGiftcardDealAlertEditor(
 
 class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
   static const List<String> _preferredBrandOrder = ['현대', '롯데', '신세계'];
+  static const String _sortByBestDiscount = 'discount_desc';
+  static const String _sortByLowestPrice = 'price_asc';
+  static const String _sortByHighestPrice = 'price_desc';
 
   late final Stream<List<GiftcardDeal>> _dealsStream;
   late final List<GiftcardDeal>? _initialDeals;
 
   String _brandFilter = '전체';
+  String _sortBy = _sortByBestDiscount;
+  Set<int> _selectedDenominations = <int>{};
   List<GiftcardDeal>? _cachedViewModelSource;
   String? _cachedViewModelBrandFilter;
+  String? _cachedViewModelSortBy;
+  String? _cachedViewModelDenominationFilterKey;
   _GiftcardDealsViewModel? _cachedViewModel;
 
   @override
@@ -98,10 +104,7 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
         return RefreshIndicator(
           onRefresh: () async {
             try {
-              await GiftcardDealService.loadTopDeals(
-                limit: 80,
-                forceRefresh: true,
-              );
+              await GiftcardDealService.loadDeals(forceRefresh: true);
             } catch (_) {
               Fluttertoast.showToast(msg: '특가 정보를 새로고침하지 못했습니다.');
             }
@@ -129,51 +132,7 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 54,
-                  child: ListView.separated(
-                    key: const PageStorageKey<String>(
-                      'giftcard-deals-brand-filter-scroll',
-                    ),
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (context, index) {
-                      final brand = viewModel.brands[index];
-                      final selected = brand == viewModel.selectedBrandFilter;
-                      return ChoiceChip(
-                        label: Text(brand),
-                        selected: selected,
-                        onSelected: (_) {
-                          setState(() => _brandFilter = brand);
-                          AnalyticsService.instance.logAction(
-                            'giftcard_rate_filter_applied',
-                            params: {
-                              'screen': 'giftcard_deals',
-                              'filter': 'brand',
-                              'value': brand == '전체' ? 'all' : 'brand',
-                            },
-                          );
-                        },
-                        selectedColor: _giftDealAccentSoft,
-                        checkmarkColor: _giftDealAccent,
-                        labelStyle: TextStyle(
-                          color: selected
-                              ? _giftDealAccent
-                              : const Color(0xFF374151),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        backgroundColor: Colors.white,
-                        side: BorderSide(
-                          color: selected
-                              ? _giftDealAccentBorder
-                              : const Color(0xFFE5E7EB),
-                        ),
-                      );
-                    },
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemCount: viewModel.brands.length,
-                  ),
-                ),
+                child: _buildFilterSection(viewModel),
               ),
               if (snapshot.connectionState == ConnectionState.waiting &&
                   deals.isEmpty)
@@ -209,11 +168,355 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
     );
   }
 
+  Widget _buildFilterSection(_GiftcardDealsViewModel viewModel) {
+    final hasActiveFilters = _hasActiveFilters;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _GiftcardDealFilterButton(
+                  label: _sortLabel(_sortBy),
+                  icon: _sortIcon(_sortBy),
+                  selected: _sortBy != _sortByBestDiscount,
+                  onTap: _showSortSheet,
+                ),
+                const SizedBox(width: 8),
+                _GiftcardDealFilterButton(
+                  label: _denominationFilterLabel(),
+                  icon: Icons.payments_outlined,
+                  selected: _selectedDenominations.isNotEmpty,
+                  onTap: () => _showDenominationSheet(viewModel),
+                ),
+                if (hasActiveFilters) ...[
+                  const SizedBox(width: 8),
+                  _GiftcardDealFilterButton(
+                    label: '초기화',
+                    icon: Icons.refresh_rounded,
+                    onTap: _resetFilters,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 42,
+            child: ListView.separated(
+              key: const PageStorageKey<String>(
+                'giftcard-deals-brand-filter-scroll',
+              ),
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, index) {
+                final brand = viewModel.brands[index];
+                final selected = brand == viewModel.selectedBrandFilter;
+                return ChoiceChip(
+                  label: Text(brand),
+                  selected: selected,
+                  onSelected: (_) {
+                    setState(() => _brandFilter = brand);
+                    AnalyticsService.instance.logAction(
+                      'giftcard_rate_filter_applied',
+                      params: {
+                        'screen': 'giftcard_deals',
+                        'filter': 'brand',
+                        'value': brand == '전체' ? 'all' : 'brand',
+                      },
+                    );
+                  },
+                  selectedColor: _giftDealAccentSoft,
+                  checkmarkColor: _giftDealAccent,
+                  labelStyle: TextStyle(
+                    color: selected ? _giftDealAccent : const Color(0xFF374151),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  backgroundColor: Colors.white,
+                  side: BorderSide(
+                    color: selected
+                        ? _giftDealAccentBorder
+                        : const Color(0xFFE5E7EB),
+                  ),
+                );
+              },
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemCount: viewModel.brands.length,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool get _hasActiveFilters =>
+      _brandFilter != '전체' ||
+      _selectedDenominations.isNotEmpty ||
+      _sortBy != _sortByBestDiscount;
+
+  String _denominationFilterLabel() {
+    if (_selectedDenominations.isEmpty) return '권종 전체';
+    if (_selectedDenominations.length == 1) {
+      return _formatDenomination(_selectedDenominations.first);
+    }
+    return '${_selectedDenominations.length}개 권종';
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _brandFilter = '전체';
+      _selectedDenominations = <int>{};
+      _sortBy = _sortByBestDiscount;
+    });
+    AnalyticsService.instance.logAction(
+      'giftcard_rate_filter_applied',
+      params: {
+        'screen': 'giftcard_deals',
+        'filter': 'reset',
+        'value': 'all',
+      },
+    );
+  }
+
+  void _showSortSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+                child: Text(
+                  '정렬 선택',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              _buildSortOption(
+                label: '할인율 높은순',
+                value: _sortByBestDiscount,
+                icon: Icons.local_offer_outlined,
+              ),
+              _buildSortOption(
+                label: '최저가순',
+                value: _sortByLowestPrice,
+                icon: Icons.arrow_upward_rounded,
+              ),
+              _buildSortOption(
+                label: '가격 높은순',
+                value: _sortByHighestPrice,
+                icon: Icons.arrow_downward_rounded,
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortOption({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    final selected = _sortBy == value;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: selected ? _giftDealAccent : const Color(0xFF9CA3AF),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: selected ? _giftDealAccent : const Color(0xFF111827),
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      trailing: selected
+          ? const Icon(Icons.check_rounded, color: _giftDealAccent)
+          : null,
+      onTap: () {
+        if (_sortBy != value) {
+          setState(() => _sortBy = value);
+          AnalyticsService.instance.logAction(
+            'giftcard_rate_filter_applied',
+            params: {
+              'screen': 'giftcard_deals',
+              'filter': 'sort',
+              'value': value,
+            },
+          );
+        }
+        Navigator.of(context).pop();
+      },
+    );
+  }
+
+  void _showDenominationSheet(_GiftcardDealsViewModel viewModel) {
+    var draftSelection = Set<int>.from(_selectedDenominations);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    '권종 선택',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '10만원권, 30만원권, 50만원권처럼 찾는 금액만 모아볼 수 있습니다.',
+                    style: TextStyle(color: Color(0xFF6B7280), height: 1.35),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('전체'),
+                        selected: draftSelection.isEmpty,
+                        onSelected: (_) =>
+                            setModalState(() => draftSelection.clear()),
+                        selectedColor: _giftDealAccentSoft,
+                        checkmarkColor: _giftDealAccent,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                          color: draftSelection.isEmpty
+                              ? _giftDealAccentBorder
+                              : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      for (final amount in viewModel.denominationOptions)
+                        FilterChip(
+                          label: Text(_formatDenomination(amount)),
+                          selected: draftSelection.contains(amount),
+                          onSelected: (_) => setModalState(() {
+                            if (!draftSelection.add(amount)) {
+                              draftSelection.remove(amount);
+                            }
+                          }),
+                          selectedColor: _giftDealAccentSoft,
+                          checkmarkColor: _giftDealAccent,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(
+                            color: draftSelection.contains(amount)
+                                ? _giftDealAccentBorder
+                                : const Color(0xFFE5E7EB),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF6B7280),
+                        ),
+                        onPressed: () =>
+                            setModalState(() => draftSelection.clear()),
+                        child: const Text('선택 해제'),
+                      ),
+                      const Spacer(),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _giftDealAccent,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          final changed = _denominationKey(draftSelection) !=
+                              _denominationKey(_selectedDenominations);
+                          if (changed) {
+                            setState(() {
+                              _selectedDenominations =
+                                  Set<int>.from(draftSelection);
+                            });
+                            AnalyticsService.instance.logAction(
+                              'giftcard_rate_filter_applied',
+                              params: {
+                                'screen': 'giftcard_deals',
+                                'filter': 'denomination',
+                                'value': draftSelection.isEmpty
+                                    ? 'all'
+                                    : draftSelection.length,
+                              },
+                            );
+                          }
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('적용'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   _GiftcardDealsViewModel _viewModelFor(List<GiftcardDeal> deals) {
+    final denominationFilterKey = _denominationKey(_selectedDenominations);
     final cached = _cachedViewModel;
     if (cached != null &&
         identical(_cachedViewModelSource, deals) &&
-        _cachedViewModelBrandFilter == _brandFilter) {
+        _cachedViewModelBrandFilter == _brandFilter &&
+        _cachedViewModelSortBy == _sortBy &&
+        _cachedViewModelDenominationFilterKey == denominationFilterKey) {
       return cached;
     }
 
@@ -240,26 +543,71 @@ class _GiftcardDealsScreenState extends State<GiftcardDealsScreen> {
     ]);
     final selectedBrandFilter =
         brands.contains(_brandFilter) ? _brandFilter : '전체';
+    final denominationOptions = {
+      ..._dealDenominationFilterOptions(deals),
+      ..._selectedDenominations,
+    }.toList()
+      ..sort();
+    final selectedDenominations = Set<int>.from(_selectedDenominations);
     final filteredDeals = deals
         .where((deal) =>
             selectedBrandFilter == '전체' ||
             deal.brandName == selectedBrandFilter)
+        .where((deal) =>
+            selectedDenominations.isEmpty ||
+            selectedDenominations.contains(_dealAmount(deal)))
         .toList()
       ..sort((a, b) {
-        final rate = b.discountRate.compareTo(a.discountRate);
-        if (rate != 0) return rate;
-        return a.priceKRW.compareTo(b.priceKRW);
+        switch (_sortBy) {
+          case _sortByLowestPrice:
+            return _compareByLowestPrice(a, b);
+          case _sortByHighestPrice:
+            return _compareByHighestPrice(a, b);
+          case _sortByBestDiscount:
+          default:
+            return _compareByBestDiscount(a, b);
+        }
       });
+    final bestDealCandidates = filteredDeals.toList()
+      ..sort(_compareByBestDiscount);
 
     final viewModel = _GiftcardDealsViewModel(
       brands: brands,
       selectedBrandFilter: selectedBrandFilter,
+      denominationOptions: denominationOptions,
       filteredDeals: List<GiftcardDeal>.unmodifiable(filteredDeals),
+      bestDeal: bestDealCandidates.isEmpty ? null : bestDealCandidates.first,
     );
     _cachedViewModelSource = deals;
     _cachedViewModelBrandFilter = _brandFilter;
+    _cachedViewModelSortBy = _sortBy;
+    _cachedViewModelDenominationFilterKey = denominationFilterKey;
     _cachedViewModel = viewModel;
     return viewModel;
+  }
+
+  String _sortLabel(String sortBy) {
+    switch (sortBy) {
+      case _sortByLowestPrice:
+        return '최저가순';
+      case _sortByHighestPrice:
+        return '가격 높은순';
+      case _sortByBestDiscount:
+      default:
+        return '할인율 높은순';
+    }
+  }
+
+  IconData _sortIcon(String sortBy) {
+    switch (sortBy) {
+      case _sortByLowestPrice:
+        return Icons.arrow_upward_rounded;
+      case _sortByHighestPrice:
+        return Icons.arrow_downward_rounded;
+      case _sortByBestDiscount:
+      default:
+        return Icons.local_offer_outlined;
+    }
   }
 
   Future<void> _openBuyUrl(GiftcardDeal deal) async {
@@ -407,15 +755,69 @@ class _GiftcardDealsViewModel {
   const _GiftcardDealsViewModel({
     required this.brands,
     required this.selectedBrandFilter,
+    required this.denominationOptions,
     required this.filteredDeals,
+    required this.bestDeal,
   });
 
   final List<String> brands;
   final String selectedBrandFilter;
+  final List<int> denominationOptions;
   final List<GiftcardDeal> filteredDeals;
+  final GiftcardDeal? bestDeal;
+}
 
-  GiftcardDeal? get bestDeal =>
-      filteredDeals.isEmpty ? null : filteredDeals.first;
+class _GiftcardDealFilterButton extends StatelessWidget {
+  const _GiftcardDealFilterButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.selected = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? _giftDealAccent : const Color(0xFF374151);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? _giftDealAccentSoft : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? _giftDealAccentBorder : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: foreground),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 132),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _GiftcardDealListItem extends StatefulWidget {
@@ -2150,6 +2552,41 @@ int _dealAmount(GiftcardDeal deal) {
   return deal.denominationKRW;
 }
 
+String _denominationKey(Iterable<int> values) {
+  final sorted = values.toList()..sort();
+  return sorted.join(',');
+}
+
+int _compareByBestDiscount(GiftcardDeal a, GiftcardDeal b) {
+  final rate = b.discountRate.compareTo(a.discountRate);
+  if (rate != 0) return rate;
+  return _compareByLowestPrice(a, b);
+}
+
+int _compareByLowestPrice(GiftcardDeal a, GiftcardDeal b) {
+  final price = _sortableLowPrice(a).compareTo(_sortableLowPrice(b));
+  if (price != 0) return price;
+  final rate = b.discountRate.compareTo(a.discountRate);
+  if (rate != 0) return rate;
+  return a.displayTitle.compareTo(b.displayTitle);
+}
+
+int _compareByHighestPrice(GiftcardDeal a, GiftcardDeal b) {
+  final price = _sortableHighPrice(b).compareTo(_sortableHighPrice(a));
+  if (price != 0) return price;
+  final rate = b.discountRate.compareTo(a.discountRate);
+  if (rate != 0) return rate;
+  return a.displayTitle.compareTo(b.displayTitle);
+}
+
+int _sortableLowPrice(GiftcardDeal deal) {
+  return deal.priceKRW > 0 ? deal.priceKRW : 1 << 62;
+}
+
+int _sortableHighPrice(GiftcardDeal deal) {
+  return deal.priceKRW > 0 ? deal.priceKRW : -1;
+}
+
 String _formatRateInput(double value) {
   if (value == value.roundToDouble()) return value.toStringAsFixed(0);
   return value.toStringAsFixed(1);
@@ -2217,6 +2654,19 @@ List<int> _denominationOptions(List<GiftcardDeal> deals) {
     10000,
     30000,
     50000,
+    100000,
+    300000,
+    500000,
+  };
+  for (final deal in deals) {
+    final amount = _dealAmount(deal);
+    if (amount > 0) values.add(amount);
+  }
+  return values.toList()..sort();
+}
+
+List<int> _dealDenominationFilterOptions(List<GiftcardDeal> deals) {
+  final values = <int>{
     100000,
     300000,
     500000,

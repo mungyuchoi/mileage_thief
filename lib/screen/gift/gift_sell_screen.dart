@@ -109,7 +109,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           _selectedLotId = _openLots.first['lotId'] as String;
           _selectedLot = _openLots.first;
           // lot 선택 시 수량을 전체 수량으로 초기화
-          final totalQty = (_selectedLot!['qty'] as int?) ?? 0;
+          final totalQty = _intValue(_selectedLot!['qty']);
           _qtyController.text = totalQty.toString();
         } else {
           _qtyController.text = '0';
@@ -146,6 +146,23 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     }
   }
 
+  int _intValue(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) {
+      return int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    }
+    return 0;
+  }
+
+  String _formatWonValue(dynamic value) {
+    final amount = _intValue(value);
+    return amount.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match match) => '${match[1]},',
+        );
+  }
+
   void _onLotChanged(String? lotId) {
     setState(() {
       _selectedLotId = lotId;
@@ -153,7 +170,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           _openLots.firstWhere((e) => e['lotId'] == lotId, orElse: () => {});
       // lot 변경 시 수량을 전체 수량으로 초기화
       if (_selectedLot != null && _selectedLot!.isNotEmpty) {
-        final totalQty = (_selectedLot!['qty'] as int?) ?? 0;
+        final totalQty = _intValue(_selectedLot!['qty']);
         _qtyController.text = totalQty.toString();
       } else {
         _qtyController.text = '0';
@@ -162,7 +179,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   }
 
   void _onSellUnitChanged() {
-    final face = (_selectedLot?['faceValue'] as int?) ?? 0;
+    final face = _intValue(_selectedLot?['faceValue']);
     final unit = int.tryParse(
         _sellUnitController.text.replaceAll(RegExp(r'[^0-9]'), ''));
     if (unit == null || face == 0) return;
@@ -177,7 +194,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   }
 
   void _onDiscountChanged() {
-    final face = (_selectedLot?['faceValue'] as int?) ?? 0;
+    final face = _intValue(_selectedLot?['faceValue']);
     final disc = double.tryParse(_discountController.text);
     if (disc == null || face == 0) return;
     final unit = (face * (1 - disc / 100)).round();
@@ -193,8 +210,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   int _getSellQty() {
     if (widget.editSaleId != null) {
       // 수정 모드일 때는 기존 판매 수량 사용
-      return (_existingSale?['qty'] as int?) ??
-          ((_selectedLot?['qty'] as int?) ?? 0);
+      final existingQty = _intValue(_existingSale?['qty']);
+      return existingQty > 0 ? existingQty : _intValue(_selectedLot?['qty']);
     }
     // 신규 모드일 때는 입력된 수량 사용
     return int.tryParse(
@@ -212,7 +229,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
   int _buyTotal() {
     final qty = _getSellQty();
-    final unit = (_selectedLot?['buyUnit'] as int?) ?? 0;
+    final unit = _intValue(_selectedLot?['buyUnit']);
     return qty * unit;
   }
 
@@ -292,7 +309,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       });
       return;
     }
-    final totalQty = (_selectedLot?['qty'] as int?) ?? 0;
+    final totalQty = _intValue(_selectedLot?['qty']);
     if (sellQty > totalQty) {
       setState(() {
         _error = '판매 수량이 전체 수량보다 많을 수 없습니다.';
@@ -306,7 +323,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     });
     try {
       final qty = sellQty;
-      final faceValue = (_selectedLot?['faceValue'] as int?) ?? 100000;
+      final rawFaceValue = _intValue(_selectedLot?['faceValue']);
+      final faceValue = rawFaceValue > 0 ? rawFaceValue : 100000;
       final buyTotal = _buyTotal();
       final sellTotal = qty * sellUnit;
       final discount = 100 * (1 - (sellUnit / faceValue));
@@ -360,7 +378,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
         if (qty < totalQty) {
           // 부분 판매: lot 분할
-          final originalLotBuyUnit = (_selectedLot!['buyUnit'] as int?) ?? 0;
+          final originalLotBuyUnit = _intValue(_selectedLot!['buyUnit']);
           final originalLotTotalBuy = originalLotBuyUnit * qty;
           final originalLotMiles =
               milePerKRW == 0 ? 0 : (originalLotTotalBuy / milePerKRW).round();
@@ -379,10 +397,10 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           final remainingQty = totalQty - qty;
           final newLotId = 'lot_${DateTime.now().millisecondsSinceEpoch}';
           final newLotData = {
-            'faceValue': (_selectedLot!['faceValue'] as int?) ?? 100000,
+            'faceValue': faceValue,
             'buyDate': _selectedLot!['buyDate'],
             'payType': _selectedLot!['payType'],
-            'buyUnit': (_selectedLot!['buyUnit'] as int?) ?? 0,
+            'buyUnit': _intValue(_selectedLot!['buyUnit']),
             'discount': (_selectedLot!['discount'] as num?)?.toDouble() ?? 0,
             'qty': remainingQty,
             'cardId': _selectedLot!['cardId'],
@@ -831,7 +849,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                           return DropdownMenuItem<String>(
                             value: l['lotId'] as String,
                             child: Text(
-                              '${l['giftcardId'] ?? ''}  ${l['buyUnit']}원 x ${l['qty']}  |  $dateLabel$memoText',
+                              '${l['giftcardId'] ?? ''}  액면 ${_formatWonValue(l['faceValue'])}원  매입 ${_formatWonValue(l['buyUnit'])}원 x ${l['qty']}  |  $dateLabel$memoText',
                               style: const TextStyle(color: Colors.black),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
@@ -928,7 +946,8 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                           keyboardType: TextInputType.number,
                           cursorColor: GiftcardColors.accent,
                           decoration: InputDecoration(
-                            labelText: '판매 수량 (최대 ${_selectedLot!['qty']}개)',
+                            labelText:
+                                '판매 수량 (최대 ${_intValue(_selectedLot?['qty'])}개)',
                             hintText: '0',
                             border: const OutlineInputBorder(),
                             enabledBorder: const OutlineInputBorder(

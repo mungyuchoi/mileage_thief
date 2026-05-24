@@ -9,6 +9,7 @@ import '../const/colors.dart';
 import '../models/card_product_model.dart';
 import '../services/analytics_service.dart';
 import '../services/card_catalog_service.dart';
+import '../widgets/admob_banner.dart';
 import 'card_catalog_screen.dart';
 
 const Color _hubInk = McColors.ink;
@@ -317,6 +318,8 @@ class _RecommendTabState extends State<_RecommendTab> {
             onChanged: _updateProfile,
           ),
           const SizedBox(height: 12),
+          const AppBannerAd(),
+          const SizedBox(height: 12),
           FutureBuilder<CardRecommendationDashboard>(
             future: _dashboardFuture,
             initialData: fallbackDashboard,
@@ -400,6 +403,7 @@ class _RankingTab extends StatelessWidget {
               title: '마일캐치 랭킹',
               subtitle: '조회, 좋아요, 댓글과 마일리지/여행 키워드를 함께 봅니다.',
             ),
+            const AppBannerAd(padding: EdgeInsets.only(bottom: 14)),
             if (isInitialLoading) ...[
               const LinearProgressIndicator(
                 minHeight: 2,
@@ -476,6 +480,7 @@ class _IssuerTab extends StatelessWidget {
               title: '카드사별 보기',
               subtitle: '카드사별 대표 카드, 마일리지 카드, 진행 이벤트를 빠르게 봅니다.',
             ),
+            const AppBannerAd(padding: EdgeInsets.only(bottom: 14)),
             if (issuerNames.isEmpty)
               const _HubEmptyState(
                 icon: Icons.account_balance_outlined,
@@ -537,6 +542,7 @@ class _EventTab extends StatelessWidget {
               title: '캐시백/이벤트',
               subtitle: '외부 신청 링크는 출처로 연결하고, 마일캐치에서는 조건을 비교합니다.',
             ),
+            const AppBannerAd(padding: EdgeInsets.only(bottom: 14)),
             if (visibleEvents.isEmpty)
               const _HubEmptyState(
                 icon: Icons.local_offer_outlined,

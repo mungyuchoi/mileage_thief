@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -12,6 +13,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../const/colors.dart';
@@ -124,6 +126,19 @@ class _UsefulInfoMemoryCache {
     return _entries[key]?.data as T?;
   }
 
+  static bool isFresh(String key) {
+    final fetchedAt = _entries[key]?.fetchedAt;
+    return fetchedAt != null && DateTime.now().difference(fetchedAt) < ttl;
+  }
+
+  static void put<T>(String key, T data) {
+    final entry = _entries.putIfAbsent(key, () => _CacheEntry<T>());
+    final typedEntry = entry as _CacheEntry<T>;
+    typedEntry
+      ..data = data
+      ..fetchedAt = DateTime.now();
+  }
+
   static Future<T> get<T>(
     String key,
     Future<T> Function() loader, {
@@ -168,6 +183,156 @@ class _UsefulInfoMemoryCache {
   }
 }
 
+class _PersistentCacheResult<T> {
+  final T data;
+  final DateTime fetchedAt;
+
+  const _PersistentCacheResult({
+    required this.data,
+    required this.fetchedAt,
+  });
+}
+
+class _UsefulInfoPersistentCache {
+  static const String _guideAdsKey = 'guide_ads_cache_v1';
+  static const String _rateTableKeyPrefix = 'guide_giftcard_rates_cache_v1_';
+  static const Duration maxAge = Duration(hours: 24);
+
+  static Future<_PersistentCacheResult<_GuideAds>?> loadGuideAds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_guideAdsKey);
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+      final fetchedAt = _decodeFetchedAt(decoded);
+      if (fetchedAt == null || _isExpired(fetchedAt)) return null;
+      final items = decoded['items'];
+      if (items is! List) return null;
+
+      final now = DateTime.now();
+      final ads = items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .map(_decodeGuideAd)
+          .whereType<Map<String, dynamic>>()
+          .where((ad) => _isGuideAdActive(ad, now))
+          .toList();
+      return _PersistentCacheResult(data: ads, fetchedAt: fetchedAt);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> saveGuideAds(_GuideAds ads) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final payload = <String, dynamic>{
+        'fetchedAtMillis': DateTime.now().millisecondsSinceEpoch,
+        'items': ads.map(_encodeGuideAd).toList(),
+      };
+      await prefs.setString(_guideAdsKey, jsonEncode(payload));
+    } catch (_) {}
+  }
+
+  static Future<_PersistentCacheResult<_GiftcardRateTableData>?> loadRateTable(
+      String userKey) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_rateTableKey(userKey));
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+      final fetchedAt = _decodeFetchedAt(decoded);
+      if (fetchedAt == null || _isExpired(fetchedAt)) return null;
+      final data = decoded['data'];
+      if (data is! Map<String, dynamic>) return null;
+      return _PersistentCacheResult(
+        data: _GiftcardRateTableData.fromJson(data),
+        fetchedAt: fetchedAt,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> saveRateTable(
+    String userKey,
+    _GiftcardRateTableData data,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final payload = <String, dynamic>{
+        'fetchedAtMillis': DateTime.now().millisecondsSinceEpoch,
+        'data': data.toJson(),
+      };
+      await prefs.setString(_rateTableKey(userKey), jsonEncode(payload));
+    } catch (_) {}
+  }
+
+  static DateTime? _decodeFetchedAt(Map<String, dynamic> payload) {
+    final fetchedAtMillis = payload['fetchedAtMillis'];
+    if (fetchedAtMillis is! int) return null;
+    return DateTime.fromMillisecondsSinceEpoch(fetchedAtMillis);
+  }
+
+  static bool _isExpired(DateTime fetchedAt) {
+    return DateTime.now().difference(fetchedAt) > maxAge;
+  }
+
+  static String _rateTableKey(String userKey) {
+    return '$_rateTableKeyPrefix${base64Url.encode(utf8.encode(userKey))}';
+  }
+
+  static Map<String, dynamic> _encodeGuideAd(Map<String, dynamic> ad) {
+    return <String, dynamic>{
+      'id': (ad['id'] ?? '').toString(),
+      'imageUrl': (ad['imageUrl'] ?? '').toString(),
+      'linkType': (ad['linkType'] ?? 'web').toString(),
+      'linkValue': (ad['linkValue'] ?? '').toString(),
+      'priority': (ad['priority'] as num?)?.toInt(),
+      'startAtMillis': _timestampMillis(ad['startAt']),
+      'endAtMillis': _timestampMillis(ad['endAt']),
+    };
+  }
+
+  static Map<String, dynamic>? _decodeGuideAd(Map<String, dynamic> data) {
+    final id = (data['id'] ?? '').toString();
+    final imageUrl = (data['imageUrl'] ?? '').toString();
+    if (id.isEmpty && imageUrl.isEmpty) return null;
+    return <String, dynamic>{
+      'id': id,
+      'imageUrl': imageUrl,
+      'linkType': (data['linkType'] ?? 'web').toString(),
+      'linkValue': (data['linkValue'] ?? '').toString(),
+      'priority': data['priority'],
+      if (data['startAtMillis'] is int)
+        'startAt': Timestamp.fromDate(
+          DateTime.fromMillisecondsSinceEpoch(data['startAtMillis'] as int),
+        ),
+      if (data['endAtMillis'] is int)
+        'endAt': Timestamp.fromDate(
+          DateTime.fromMillisecondsSinceEpoch(data['endAtMillis'] as int),
+        ),
+    };
+  }
+
+  static int? _timestampMillis(dynamic value) {
+    if (value is Timestamp) return value.millisecondsSinceEpoch;
+    if (value is DateTime) return value.millisecondsSinceEpoch;
+    if (value is int) return value;
+    return null;
+  }
+
+  static bool _isGuideAdActive(Map<String, dynamic> ad, DateTime now) {
+    final startAt = (ad['startAt'] as Timestamp?)?.toDate();
+    final endAt = (ad['endAt'] as Timestamp?)?.toDate();
+    final startOk = startAt == null || !startAt.isAfter(now);
+    final endOk = endAt == null || !endAt.isBefore(now);
+    return startOk && endOk;
+  }
+}
+
 class UsefulInfoScreen extends StatefulWidget {
   final OpenCommunityCallback onOpenCommunity;
   final VoidCallback onOpenGiftcard;
@@ -203,6 +368,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       Future.value(RadarTravelProfile.defaults());
   Future<List<RadarItem>> _radarItemsFuture = Future.value(const []);
   Future<double?> _radarAverageCostFuture = Future.value(null);
+  bool _guideAdsRefreshInFlight = false;
 
   @override
   void initState() {
@@ -262,11 +428,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
       _categoryService.getBoards,
       force: force,
     );
-    _guideAdsFuture = _cached(
-      'guideAds',
-      _fetchGuideAds,
-      force: force,
-    );
+    _guideAdsFuture = _loadGuideAds(force: force);
     _loadRadar(force: force);
   }
 
@@ -316,6 +478,49 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     bool force = false,
   }) {
     return _UsefulInfoMemoryCache.get<T>(key, loader, force: force);
+  }
+
+  Future<_GuideAds> _loadGuideAds({bool force = false}) async {
+    if (!force) {
+      final memoryCache = _UsefulInfoMemoryCache.peek<_GuideAds>('guideAds');
+      if (memoryCache != null) {
+        if (!_UsefulInfoMemoryCache.isFresh('guideAds')) {
+          unawaited(_refreshGuideAdsInBackground());
+        }
+        return memoryCache;
+      }
+
+      final diskCache = await _UsefulInfoPersistentCache.loadGuideAds();
+      if (diskCache != null) {
+        final cachedAds = diskCache.data;
+        _UsefulInfoMemoryCache.put<_GuideAds>('guideAds', cachedAds);
+        unawaited(_refreshGuideAdsInBackground());
+        return cachedAds;
+      }
+    }
+
+    final ads = await _fetchGuideAds();
+    _UsefulInfoMemoryCache.put<_GuideAds>('guideAds', ads);
+    unawaited(_UsefulInfoPersistentCache.saveGuideAds(ads));
+    return ads;
+  }
+
+  Future<void> _refreshGuideAdsInBackground() async {
+    if (_guideAdsRefreshInFlight) return;
+    _guideAdsRefreshInFlight = true;
+    try {
+      final ads = await _fetchGuideAds();
+      _UsefulInfoMemoryCache.put<_GuideAds>('guideAds', ads);
+      unawaited(_UsefulInfoPersistentCache.saveGuideAds(ads));
+      if (!mounted) return;
+      setState(() {
+        _guideAdsFuture = Future.value(ads);
+      });
+    } catch (_) {
+      // 캐시가 이미 화면에 있으므로 백그라운드 갱신 실패는 조용히 무시합니다.
+    } finally {
+      _guideAdsRefreshInFlight = false;
+    }
   }
 
   @override
@@ -3426,6 +3631,7 @@ class _GiftcardRateTableSection extends StatefulWidget {
 }
 
 class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
+  static const Duration _refreshTtl = Duration(minutes: 2);
   static final Map<String, _GiftcardRateTableData> _cacheByUserKey = {};
   static final Map<String, Future<_GiftcardRateTableData>> _inFlightByUserKey =
       {};
@@ -3488,19 +3694,42 @@ class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
     }
   }
 
-  Future<_GiftcardRateTableData> _loadTableData({bool force = false}) {
+  Future<_GiftcardRateTableData> _loadTableData({bool force = false}) async {
     final userKey = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
-    final cached = _cacheByUserKey[userKey];
-    if (!force && cached != null) {
-      return Future.value(cached);
+    if (!force) {
+      final cached = _cacheByUserKey[userKey];
+      if (cached != null) {
+        if (_needsRefresh(cached)) {
+          _refreshTableDataInBackground(userKey);
+        }
+        return cached;
+      }
+
+      final diskCache = await _UsefulInfoPersistentCache.loadRateTable(userKey);
+      if (diskCache != null) {
+        final cachedData = diskCache.data;
+        _cacheByUserKey[userKey] = cachedData;
+        if (_needsRefresh(cachedData)) {
+          _refreshTableDataInBackground(userKey);
+        }
+        return cachedData;
+      }
     }
 
-    if (!force && _inFlightByUserKey[userKey] != null) {
-      return _inFlightByUserKey[userKey]!;
-    }
+    return _fetchAndCacheTableData(userKey);
+  }
+
+  bool _needsRefresh(_GiftcardRateTableData data) {
+    return DateTime.now().difference(data.fetchedAt) >= _refreshTtl;
+  }
+
+  Future<_GiftcardRateTableData> _fetchAndCacheTableData(String userKey) {
+    final inFlight = _inFlightByUserKey[userKey];
+    if (inFlight != null) return inFlight;
 
     final future = _fetchTableData().then((data) {
       _cacheByUserKey[userKey] = data;
+      unawaited(_UsefulInfoPersistentCache.saveRateTable(userKey, data));
       return data;
     });
     _inFlightByUserKey[userKey] = future;
@@ -3510,6 +3739,18 @@ class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
       }
     });
     return future;
+  }
+
+  void _refreshTableDataInBackground(String userKey) {
+    if (_inFlightByUserKey[userKey] != null) return;
+    unawaited(
+      _fetchAndCacheTableData(userKey).then((data) {
+        if (!mounted || _isRefreshing) return;
+        setState(() {
+          _future = Future.value(data);
+        });
+      }).catchError((_) {}),
+    );
   }
 
   Future<_GiftcardRateTableData> _fetchTableData() async {
@@ -4902,6 +5143,73 @@ class _GiftcardRateTableData {
     required this.cells,
     required this.fetchedAt,
   });
+
+  factory _GiftcardRateTableData.fromJson(Map<String, dynamic> json) {
+    final rawBranches = json['branches'];
+    final rawGiftcardIds = json['giftcardIds'];
+    final rawGiftcardNames = json['giftcardNames'];
+    final rawCells = json['cells'];
+    final fetchedAtMillis = json['fetchedAtMillis'];
+
+    return _GiftcardRateTableData(
+      branches: rawBranches is List
+          ? rawBranches
+              .whereType<Map>()
+              .map((item) => _GiftcardRateBranch.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ))
+              .toList()
+          : const <_GiftcardRateBranch>[],
+      giftcardIds: rawGiftcardIds is List
+          ? rawGiftcardIds.map((id) => id.toString()).toList()
+          : const <String>[],
+      giftcardNames: rawGiftcardNames is Map
+          ? rawGiftcardNames.map(
+              (key, value) => MapEntry(key.toString(), value.toString()),
+            )
+          : const <String, String>{},
+      cells: rawCells is Map
+          ? rawCells.map((giftcardId, branchMap) {
+              final typedBranchMap = branchMap is Map
+                  ? branchMap.map((branchId, cell) {
+                      return MapEntry(
+                        branchId.toString(),
+                        cell is Map
+                            ? _GiftcardRateCell.fromJson(
+                                Map<String, dynamic>.from(cell),
+                              )
+                            : const _GiftcardRateCell(
+                                sellPrice: null,
+                                sellFeeRate: null,
+                              ),
+                      );
+                    })
+                  : <String, _GiftcardRateCell>{};
+              return MapEntry(giftcardId.toString(), typedBranchMap);
+            })
+          : const <String, Map<String, _GiftcardRateCell>>{},
+      fetchedAt: fetchedAtMillis is int
+          ? DateTime.fromMillisecondsSinceEpoch(fetchedAtMillis)
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'branches': branches.map((branch) => branch.toJson()).toList(),
+      'giftcardIds': giftcardIds,
+      'giftcardNames': giftcardNames,
+      'cells': cells.map(
+        (giftcardId, branchCells) => MapEntry(
+          giftcardId,
+          branchCells.map(
+            (branchId, cell) => MapEntry(branchId, cell.toJson()),
+          ),
+        ),
+      ),
+      'fetchedAtMillis': fetchedAt.millisecondsSinceEpoch,
+    };
+  }
 }
 
 class _GiftcardRateBranch {
@@ -4912,6 +5220,20 @@ class _GiftcardRateBranch {
     required this.id,
     required this.name,
   });
+
+  factory _GiftcardRateBranch.fromJson(Map<String, dynamic> json) {
+    return _GiftcardRateBranch(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'name': name,
+    };
+  }
 }
 
 class _GiftcardRateGiftcard {
@@ -4935,6 +5257,13 @@ class _GiftcardRateCell {
     required this.sellFeeRate,
   });
 
+  factory _GiftcardRateCell.fromJson(Map<String, dynamic> json) {
+    return _GiftcardRateCell(
+      sellPrice: (json['sellPrice'] as num?)?.toInt(),
+      sellFeeRate: (json['sellFeeRate'] as num?)?.toDouble(),
+    );
+  }
+
   factory _GiftcardRateCell.fromMap(Map<String, dynamic> data) {
     final num? price = data['sellPrice_general'] as num?;
     return _GiftcardRateCell(
@@ -4942,6 +5271,13 @@ class _GiftcardRateCell {
       sellFeeRate: (data['sellFeeRate_general'] as num?)?.toDouble() ??
           _rateFromPrice(price),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'sellPrice': sellPrice,
+      'sellFeeRate': sellFeeRate,
+    };
   }
 
   String get displayText {

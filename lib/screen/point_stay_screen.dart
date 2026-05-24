@@ -12,6 +12,7 @@ import '../models/point_hotel_model.dart';
 import '../services/analytics_service.dart';
 import '../services/marriott_stay_service.dart';
 import '../services/point_hotel_service.dart';
+import '../widgets/admob_banner.dart';
 import '../widgets/marriott_stay_records_tab.dart';
 import '../widgets/point_hotel_explore_tab.dart';
 import '../widgets/point_hotel_favorite_button.dart';
@@ -857,6 +858,8 @@ class _PointStayScreenState extends State<PointStayScreen>
               hasError: snapshot.hasError,
               onHotelTap: _openHotelFromBrand,
             ),
+            const SizedBox(height: 8),
+            const AppBannerAd(padding: EdgeInsets.symmetric(horizontal: 16)),
             const SizedBox(height: 8),
             _PointStayPanel(
               child: Column(

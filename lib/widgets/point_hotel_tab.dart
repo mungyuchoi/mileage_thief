@@ -9,6 +9,7 @@ import '../const/colors.dart';
 import '../models/point_hotel_model.dart';
 import '../screen/point_hotel_detail_screen.dart';
 import '../services/point_hotel_service.dart';
+import 'admob_banner.dart';
 import 'point_hotel_favorite_button.dart';
 
 enum _HotelViewMode { list, map }
@@ -188,6 +189,7 @@ class _HotelContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              const AppBannerAd(padding: EdgeInsets.only(bottom: 16)),
               if (hotels.isEmpty)
                 _HotelMessageState(
                   icon: Icons.search_off_rounded,

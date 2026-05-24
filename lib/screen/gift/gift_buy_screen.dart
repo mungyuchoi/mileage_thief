@@ -35,7 +35,7 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
   String? _selectedWhereToBuyId;
   String _payType = '신용';
   DateTime _buyDate = DateTime.now();
-  final List<int> _faceValueOptions = [10000, 50000, 100000, 500000];
+  final List<int> _faceValueOptions = [10000, 50000, 100000, 300000, 500000];
   int? _selectedFaceValue = 100000;
 
   bool _saving = false;
