@@ -53,7 +53,7 @@ const String _dealsQuickActionIconAsset = 'asset/icon/quick_deals.png';
 const String _cardQuickActionIconAsset = 'asset/icon/quick_card.png';
 const String _giftcardQuickActionIconAsset = 'asset/icon/quick_giftcard.png';
 const String _hotelQuickActionIconAsset = 'asset/icon/quick_hotel.png';
-const int _pointStayMinimumRank = 3;
+const int _pointStayMinimumRank = 2;
 const String _gradeGuidePostId = 'e466cdbe-2ab6-48c5-8060-c0950f6b84f6';
 const String _gradeGuidePostDateString = '20250825';
 const String _gradeGuideBoardId = 'notice';
@@ -991,7 +991,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
               ],
             ),
             content: const Text(
-              '포인트 숙박은 이코노미 Lv.3 이상부터 이용할 수 있습니다.\n\n'
+              '포인트 숙박은 이코노미 Lv.2 이상부터 이용할 수 있습니다.\n\n'
               '등급 안내 게시글에서 레벨업 조건을 확인해 주세요.',
               style: TextStyle(
                 color: Colors.black87,

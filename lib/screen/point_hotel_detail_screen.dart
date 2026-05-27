@@ -14,6 +14,7 @@ import '../services/point_hotel_review_service.dart';
 import '../widgets/admob_banner.dart';
 import '../widgets/image_viewer.dart';
 import '../widgets/point_hotel_favorite_button.dart';
+import '../widgets/segment_tab_bar.dart';
 
 class PointHotelDetailScreen extends StatefulWidget {
   final PointHotel hotel;
@@ -31,16 +32,23 @@ class PointHotelDetailScreen extends StatefulWidget {
   State<PointHotelDetailScreen> createState() => _PointHotelDetailScreenState();
 }
 
-class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
+class _PointHotelDetailScreenState extends State<PointHotelDetailScreen>
+    with SingleTickerProviderStateMixin {
+  static const List<String> _detailTabs = ['캘린더', '정보', '시설', '후기'];
+
+  late final TabController _tabController;
   DateTime? _selectedCheckIn;
   List<PointHotelCalendarEntry>? _fullCalendarEntries;
   PointHotel? _liveHotel;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _hotelSubscription;
+  int _selectedTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: _detailTabs.length, vsync: this);
+    _tabController.addListener(_handleTabChanged);
     _selectedCheckIn = _initialSelectedCheckIn();
     _watchHotelDocument();
     _loadFullCalendarEntries();
@@ -63,7 +71,15 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
   @override
   void dispose() {
     _hotelSubscription?.cancel();
+    _tabController.removeListener(_handleTabChanged);
+    _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleTabChanged() {
+    final nextIndex = _tabController.index;
+    if (_selectedTabIndex == nextIndex) return;
+    setState(() => _selectedTabIndex = nextIndex);
   }
 
   void _watchHotelDocument() {
@@ -123,6 +139,138 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
 
   void _handleCalendarDateSelected(DateTime date) {
     setState(() => _selectedCheckIn = DateUtils.dateOnly(date));
+  }
+
+  Widget _buildSelectedTab({
+    required PointHotel hotel,
+    required DateTime? checkIn,
+    required List<PointHotelCalendarEntry> calendarEntries,
+  }) {
+    switch (_selectedTabIndex) {
+      case 1:
+        return _buildInfoTab(hotel);
+      case 2:
+        return _buildAmenityTab(hotel);
+      case 3:
+        return _buildReviewTab(hotel);
+      case 0:
+      default:
+        return _buildCalendarTab(
+          hotel: hotel,
+          checkIn: checkIn,
+          calendarEntries: calendarEntries,
+        );
+    }
+  }
+
+  Widget _buildCalendarTab({
+    required PointHotel hotel,
+    required DateTime? checkIn,
+    required List<PointHotelCalendarEntry> calendarEntries,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '포인트 캘린더',
+          style: McTextStyles.sectionTitle.copyWith(
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _PointCalendar(
+          hotel: hotel,
+          calendarEntries: calendarEntries,
+          checkIn: checkIn,
+          onDateSelected: _handleCalendarDateSelected,
+        ),
+        if (hotel.pointCalendarNote.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            hotel.pointCalendarNote,
+            style: McTextStyles.meta,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildInfoTab(PointHotel hotel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_hasQuickFacts(hotel)) ...[
+          Text(
+            '기본 정보',
+            style: McTextStyles.sectionTitle.copyWith(
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _QuickFactsGrid(hotel: hotel),
+          const SizedBox(height: 22),
+        ],
+        if (_hasMapLocation(hotel)) ...[
+          Text(
+            '위치',
+            style: McTextStyles.sectionTitle.copyWith(
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _HotelMapCard(hotel: hotel),
+          const SizedBox(height: 22),
+        ],
+        Text(
+          '호텔 소개',
+          style: McTextStyles.sectionTitle.copyWith(
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(hotel.description, style: McTextStyles.body),
+        for (final section in hotel.detailSections) ...[
+          const SizedBox(height: 24),
+          _DetailInfoSection(section: section),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAmenityTab(PointHotel hotel) {
+    final amenities = hotel.displayAmenities;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '편의시설',
+          style: McTextStyles.sectionTitle.copyWith(
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (amenities.isEmpty)
+          const _HotelEmptyPanel(message: '등록된 편의시설 정보가 없습니다.')
+        else
+          _AmenityGrid(amenities: amenities),
+      ],
+    );
+  }
+
+  Widget _buildReviewTab(PointHotel hotel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '후기',
+          style: McTextStyles.sectionTitle.copyWith(
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _HotelReviewsSection(hotel: hotel),
+      ],
+    );
   }
 
   @override
@@ -296,82 +444,45 @@ class _PointHotelDetailScreenState extends State<PointHotelDetailScreen> {
             calendarEntries: calendarEntries,
           ),
           const AppBannerAd(padding: EdgeInsets.only(top: 16)),
-          if (_hasQuickFacts(hotel)) ...[
-            const SizedBox(height: 22),
-            Text(
-              '기본 정보',
-              style: McTextStyles.sectionTitle.copyWith(
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _QuickFactsGrid(hotel: hotel),
-          ],
-          if (_hasMapLocation(hotel)) ...[
-            const SizedBox(height: 22),
-            Text(
-              '위치',
-              style: McTextStyles.sectionTitle.copyWith(
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _HotelMapCard(hotel: hotel),
-          ],
-          const SizedBox(height: 22),
-          Text(
-            '호텔 소개',
-            style: McTextStyles.sectionTitle.copyWith(
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(hotel.description, style: McTextStyles.body),
-          const SizedBox(height: 22),
-          Text(
-            '포인트 캘린더',
-            style: McTextStyles.sectionTitle.copyWith(
-              fontWeight: FontWeight.w400,
-            ),
-          ),
           const SizedBox(height: 12),
-          _PointCalendar(
+          ScrollableUnderlineTabBar(
+            controller: _tabController,
+            labels: _detailTabs,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            separatorWidth: 18,
+            indicatorColor: PointStayColors.accent,
+          ),
+          const SizedBox(height: 16),
+          _buildSelectedTab(
             hotel: hotel,
-            calendarEntries: calendarEntries,
             checkIn: checkIn,
-            onDateSelected: _handleCalendarDateSelected,
+            calendarEntries: calendarEntries,
           ),
-          if (hotel.pointCalendarNote.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              hotel.pointCalendarNote,
-              style: McTextStyles.meta,
-            ),
-          ],
-          const SizedBox(height: 22),
-          Text(
-            '편의시설',
-            style: McTextStyles.sectionTitle.copyWith(
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _AmenityGrid(amenities: hotel.displayAmenities),
-          for (final section in hotel.detailSections) ...[
-            const SizedBox(height: 24),
-            _DetailInfoSection(section: section),
-          ],
-          const SizedBox(height: 22),
-          Text(
-            '후기',
-            style: McTextStyles.sectionTitle.copyWith(
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _HotelReviewsSection(hotel: hotel),
           const SizedBox(height: 90),
         ],
+      ),
+    );
+  }
+}
+
+class _HotelEmptyPanel extends StatelessWidget {
+  final String message;
+
+  const _HotelEmptyPanel({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: McColors.field,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: McColors.line),
+      ),
+      child: Text(
+        message,
+        style: McTextStyles.body,
       ),
     );
   }

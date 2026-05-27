@@ -15,6 +15,7 @@ import 'community_detail_screen.dart';
 import 'follower_list_screen.dart';
 import 'following_list_screen.dart';
 import 'level_detail_screen.dart';
+import 'point_balance_manage_screen.dart';
 import 'sky_effect_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -25,6 +26,7 @@ import '../services/card_transaction_service.dart';
 import '../services/point_hotel_like_service.dart';
 import '../services/point_hotel_review_service.dart';
 import '../widgets/shopping_mall_grid.dart';
+import '../widgets/profile_point_summary.dart';
 import 'my_card_dashboard_screen.dart';
 import 'point_hotel_detail_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -335,6 +337,22 @@ class _MyPageScreenState extends State<MyPageScreen>
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _openPointBalanceManage() async {
+    final user = AuthService.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'point_balance_manage'),
+        builder: (context) => PointBalanceManageScreen(uid: user.uid),
+      ),
+    );
   }
 
   Future<void> _loadAllTabData() async {
@@ -2131,6 +2149,9 @@ class _MyPageScreenState extends State<MyPageScreen>
                       // 프로필 영역
                       _buildProfileHeader(),
                       const SizedBox(height: 8),
+                      // 대표 포인트 영역
+                      _buildPointSummarySection(),
+                      const SizedBox(height: 8),
                       // 레벨 영역
                       _buildLevelSection(),
                       const SizedBox(height: 8),
@@ -2602,6 +2623,19 @@ class _MyPageScreenState extends State<MyPageScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPointSummarySection() {
+    final user = AuthService.currentUser;
+    if (user == null || userProfile == null) {
+      return const SizedBox.shrink();
+    }
+
+    return ProfilePointSummary(
+      uid: user.uid,
+      userProfile: userProfile!,
+      onManage: _openPointBalanceManage,
     );
   }
 

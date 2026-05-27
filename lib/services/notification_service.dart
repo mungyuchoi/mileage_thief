@@ -17,6 +17,11 @@ class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+  final List<VoidCallback> _pendingNavigationActions = <VoidCallback>[];
+  bool _navigationReady = false;
+  bool _navigationFlushScheduled = false;
+  String? _lastDeepLinkSignature;
+  DateTime? _lastDeepLinkHandledAt;
 
   // 전역 네비게이션 키 (앱 전체에서 사용)
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -84,6 +89,7 @@ class NotificationService {
 
     // 로컬 알림 초기화
     await _initializeLocalNotifications();
+    await _handleLocalNotificationLaunchDetails();
 
     // 포그라운드 메시지 핸들러
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -138,6 +144,75 @@ class NotificationService {
           .createNotificationChannel(commentReplyChannel);
       await androidImplementation.createNotificationChannel(commentLikeChannel);
       await androidImplementation.createNotificationChannel(radarChannel);
+    }
+  }
+
+  void markNavigationReady() {
+    _navigationReady = true;
+    _flushPendingNavigationActions();
+  }
+
+  void _runNavigationWhenReady(VoidCallback action) {
+    if (!_navigationReady || navigatorKey.currentState == null) {
+      _pendingNavigationActions.add(action);
+      _scheduleNavigationFlush();
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_navigationReady || navigatorKey.currentState == null) {
+        _pendingNavigationActions.add(action);
+        _scheduleNavigationFlush();
+        return;
+      }
+      action();
+    });
+  }
+
+  void _scheduleNavigationFlush() {
+    if (!_navigationReady || _navigationFlushScheduled) return;
+    _navigationFlushScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigationFlushScheduled = false;
+      _flushPendingNavigationActions();
+
+      if (_navigationReady && _pendingNavigationActions.isNotEmpty) {
+        Future<void>.delayed(
+          const Duration(milliseconds: 100),
+          _scheduleNavigationFlush,
+        );
+      }
+    });
+  }
+
+  void _flushPendingNavigationActions() {
+    if (!_navigationReady || navigatorKey.currentState == null) return;
+    if (_pendingNavigationActions.isEmpty) return;
+
+    final actions = List<VoidCallback>.from(_pendingNavigationActions);
+    _pendingNavigationActions.clear();
+
+    for (final action in actions) {
+      _runNavigationWhenReady(action);
+    }
+  }
+
+  Future<void> _handleLocalNotificationLaunchDetails() async {
+    try {
+      final launchDetails =
+          await _localNotifications.getNotificationAppLaunchDetails();
+      final response = launchDetails?.notificationResponse;
+      if (launchDetails?.didNotificationLaunchApp == true &&
+          response?.payload != null) {
+        debugPrint('로컬 알림으로 앱 실행: ${response!.payload}');
+        _handleLocalNotificationPayload(
+          response.payload!,
+          source: 'local_notification_initial',
+        );
+      }
+    } catch (e) {
+      debugPrint('로컬 알림 launch details 확인 오류: $e');
     }
   }
 
@@ -216,18 +291,27 @@ class NotificationService {
     print('로컬 알림 클릭: ${response.payload}');
 
     if (response.payload != null) {
-      try {
-        // payload에서 딥링크 데이터 파싱
-        final payloadString = response.payload!;
-        final data = _parsePayloadToMap(payloadString);
+      _handleLocalNotificationPayload(
+        response.payload!,
+        source: 'local_notification',
+      );
+    }
+  }
 
-        if (data.isNotEmpty) {
-          _logNotificationOpen(data, 'local_notification');
-          _handleDeepLink(data);
-        }
-      } catch (e) {
-        print('로컬 알림 payload 파싱 오류: $e');
+  void _handleLocalNotificationPayload(
+    String payload, {
+    required String source,
+  }) {
+    try {
+      // payload에서 딥링크 데이터 파싱
+      final data = _parsePayloadToMap(payload);
+
+      if (data.isNotEmpty) {
+        _logNotificationOpen(data, source);
+        _handleDeepLink(data);
       }
+    } catch (e) {
+      print('로컬 알림 payload 파싱 오류: $e');
     }
   }
 
@@ -246,6 +330,8 @@ class NotificationService {
 
   /// 딥링크 처리
   void _handleDeepLink(Map<String, dynamic> data) {
+    if (!_markDeepLinkIfNotDuplicate(data)) return;
+
     final type = data['type'];
     AnalyticsService.instance.logAction('deep_link_open', params: {
       'source': 'notification',
@@ -319,6 +405,28 @@ class NotificationService {
     }
   }
 
+  bool _markDeepLinkIfNotDuplicate(Map<String, dynamic> data) {
+    final signature = [
+      data['type'],
+      data['postId'],
+      data['date'],
+      data['commentId'],
+      data['dealId'] ?? data['giftcardDealId'],
+    ].map((value) => value?.toString() ?? '').join('|');
+    final now = DateTime.now();
+
+    if (_lastDeepLinkSignature == signature &&
+        _lastDeepLinkHandledAt != null &&
+        now.difference(_lastDeepLinkHandledAt!) < const Duration(seconds: 2)) {
+      debugPrint('중복 알림 딥링크 무시: $signature');
+      return false;
+    }
+
+    _lastDeepLinkSignature = signature;
+    _lastDeepLinkHandledAt = now;
+    return true;
+  }
+
   void _logNotificationOpen(Map<String, dynamic> data, String source) {
     AnalyticsService.instance.logAction('notification_open', params: {
       'source': source,
@@ -333,8 +441,8 @@ class NotificationService {
   /// 게시글 상세 페이지로 이동 (좋아요 알림)
   void _navigateToPostDetail(
       String postId, String date, String boardId, String boardName) {
-    if (navigatorKey.currentState != null) {
-      navigatorKey.currentState!.pushNamed(
+    _runNavigationWhenReady(() {
+      navigatorKey.currentState?.pushNamed(
         '/community/detail',
         arguments: {
           'postId': postId,
@@ -343,14 +451,14 @@ class NotificationService {
           'boardName': boardName,
         },
       );
-    }
+    });
   }
 
   /// 게시글 상세 페이지로 이동 + 특정 댓글 스크롤
   void _navigateToPostDetailWithComment(String postId, String date,
       String boardId, String boardName, String? commentId) {
-    if (navigatorKey.currentState != null) {
-      navigatorKey.currentState!.pushNamed(
+    _runNavigationWhenReady(() {
+      navigatorKey.currentState?.pushNamed(
         '/community/detail',
         arguments: {
           'postId': postId,
@@ -360,27 +468,27 @@ class NotificationService {
           'scrollToCommentId': commentId, // 댓글 스크롤용
         },
       );
-    }
+    });
   }
 
   /// 레이더 알림함으로 이동
   void _navigateToRadarNotifications() {
-    if (navigatorKey.currentState != null) {
-      navigatorKey.currentState!.push(
+    _runNavigationWhenReady(() {
+      navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (_) => const RadarNotificationScreen(),
         ),
       );
-    }
+    });
   }
 
   void _navigateToGiftcardDeal(String dealId) {
-    if (navigatorKey.currentState != null) {
-      navigatorKey.currentState!.pushNamed(
+    _runNavigationWhenReady(() {
+      navigatorKey.currentState?.pushNamed(
         '/giftcard/deal',
         arguments: {'dealId': dealId},
       );
-    }
+    });
   }
 
   /// FCM 토큰 저장

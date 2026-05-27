@@ -11,10 +11,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import '../const/colors.dart';
 import '../models/community_label_model.dart';
+import '../models/giftcard_deal_model.dart';
 import '../services/analytics_service.dart';
+import '../services/giftcard_deal_service.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
+import 'giftcard_deals_screen.dart';
 
 // 추천 대시보드 땅콩 안내 다이얼로그 "다시 보지 않기" 플래그
 const String _kRecommendPeanutDialogDontShowKey =
@@ -707,10 +710,12 @@ class GiftcardBrandRatesPage extends StatefulWidget {
 
 class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     with SingleTickerProviderStateMixin {
-  static const List<String> _tabs = ['피드', '시세', '정보'];
+  static const List<String> _tabs = ['피드', '특가', '시세', '정보'];
 
   final NumberFormat _won = NumberFormat('#,###');
   late final TabController _tabController;
+  late final Stream<List<GiftcardDeal>> _dealsStream;
+  late final List<GiftcardDeal>? _initialDeals;
 
   Map<String, dynamic>? _giftcard;
   List<Map<String, dynamic>> _rateRows = <Map<String, dynamic>>[];
@@ -741,6 +746,8 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     );
     _tabController = TabController(length: _tabs.length, vsync: this);
     _tabController.addListener(_handleTabChanged);
+    _dealsStream = GiftcardDealService.watchDeals();
+    _initialDeals = GiftcardDealService.peekDeals();
     _loadGiftcard();
     _loadRateRows();
     _loadFeedPosts();
@@ -757,7 +764,7 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     final nextIndex = _tabController.index;
     if (_selectedTabIndex == nextIndex) return;
     setState(() => _selectedTabIndex = nextIndex);
-    const tabNames = ['feed', 'rates', 'info'];
+    const tabNames = ['feed', 'deals', 'rates', 'info'];
     AnalyticsService.instance.logAction('sub_tab_selected', params: {
       'tab_group': 'giftcard_rates',
       'tab': tabNames[nextIndex],
@@ -770,6 +777,7 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
       _loadGiftcard(),
       _loadRateRows(),
       _loadFeedPosts(),
+      GiftcardDealService.loadDeals(forceRefresh: true).then((_) {}),
     ]);
   }
 
@@ -1110,8 +1118,10 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
   Widget _buildSelectedTab() {
     switch (_selectedTabIndex) {
       case 1:
-        return _buildRatesTab();
+        return _buildDealsTab();
       case 2:
+        return _buildRatesTab();
+      case 3:
         return _buildInfoTab();
       case 0:
       default:
@@ -1418,6 +1428,505 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
           if (i != _rateRows.length - 1) const SizedBox(height: 12),
         ],
       ],
+    );
+  }
+
+  Widget _buildDealsTab() {
+    return StreamBuilder<List<GiftcardDeal>>(
+      stream: _dealsStream,
+      initialData: _initialDeals,
+      builder: (context, snapshot) {
+        final allDeals = snapshot.data ?? const <GiftcardDeal>[];
+        if (snapshot.hasError && allDeals.isEmpty) {
+          return const _GiftcardSectionCard(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text('특가를 불러오지 못했습니다.')),
+            ),
+          );
+        }
+
+        final deals = allDeals
+            .where((deal) => deal.hasLivePrice)
+            .where(_matchesCurrentGiftcard)
+            .toList()
+          ..sort(_compareGiftcardDealsForDetail);
+
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            deals.isEmpty) {
+          return _buildLoadingCard('특가를 불러오는 중입니다.');
+        }
+
+        if (deals.isEmpty) {
+          return _GiftcardSectionCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.local_offer_outlined,
+                    color: McColors.mutedLight,
+                    size: 38,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '아직 $_effectiveGiftcardName 온라인 특가가 없습니다.',
+                    style: McTextStyles.body,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '상품권 탭의 특가 수집 목록에 등록되면 이곳에서 바로 비교할 수 있습니다.',
+                    style: McTextStyles.meta,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final bestDeal = deals.first;
+        final bestByAmount = _bestDealsByAmount(deals);
+        return Column(
+          children: [
+            _buildDealSummaryCard(
+              bestDeal: bestDeal,
+              dealCount: deals.length,
+              amountCount: bestByAmount.length,
+              merchantCount: _merchantCount(deals),
+              deals: deals,
+            ),
+            const SizedBox(height: 12),
+            _GiftcardSectionCard(
+              title: '권종별 베스트',
+              child: Column(
+                children: [
+                  for (int i = 0; i < bestByAmount.length; i++) ...[
+                    _buildBestDealByAmountRow(bestByAmount[i], deals),
+                    if (i != bestByAmount.length - 1) const Divider(height: 18),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('전체 특가 후보', style: McTextStyles.sectionTitle),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children: [
+                for (int i = 0; i < deals.length; i++) ...[
+                  _buildDealCard(deals[i], deals),
+                  if (i != deals.length - 1) const SizedBox(height: 12),
+                ],
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDealSummaryCard({
+    required GiftcardDeal bestDeal,
+    required int dealCount,
+    required int amountCount,
+    required int merchantCount,
+    required List<GiftcardDeal> deals,
+  }) {
+    return _GiftcardSectionCard(
+      title: '특가 요약',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: GiftcardColors.accentSoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_offer_outlined,
+                  color: GiftcardColors.accent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${bestDeal.discountRate.toStringAsFixed(2)}% 할인',
+                      style: const TextStyle(
+                        color: McColors.ink,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${bestDeal.merchantName} · ${_formatDealDenomination(_dealAmount(bestDeal))} · ${_formatDealWon(bestDeal.priceKRW)}',
+                      style: McTextStyles.meta,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _marketComparisonText(bestDeal),
+            style: McTextStyles.body.copyWith(height: 1.35),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _GiftcardDealMetric(label: '추적 특가', value: '$dealCount개'),
+              const SizedBox(width: 8),
+              _GiftcardDealMetric(label: '권종', value: '$amountCount개'),
+              const SizedBox(width: 8),
+              _GiftcardDealMetric(label: '상점', value: '$merchantCount곳'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: GiftcardColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => _openDealBuyUrl(bestDeal),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: const Text('최고 특가 구매'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: GiftcardColors.accent,
+                  side: const BorderSide(color: GiftcardColors.accentBorder),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                ),
+                onPressed: () => _openDealAlertEditor(deals, deal: bestDeal),
+                icon: const Icon(Icons.notifications_none_rounded, size: 18),
+                label: const Text('알림'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBestDealByAmountRow(
+    _GiftcardAmountDealGroup group,
+    List<GiftcardDeal> deals,
+  ) {
+    final deal = group.bestDeal;
+    return InkWell(
+      onTap: () => _openDealDetail(deal),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: GiftcardColors.accentSoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.payments_outlined,
+                color: GiftcardColors.accent,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatDealDenomination(group.amountKRW),
+                    style: McTextStyles.bodyStrong,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${deal.merchantName} · ${group.dealCount}개 후보',
+                    style: McTextStyles.meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _formatDealWon(deal.priceKRW),
+                  style: McTextStyles.bodyStrong,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${deal.discountRate.toStringAsFixed(2)}%',
+                  style: McTextStyles.micro.copyWith(
+                    color: GiftcardColors.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 2),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: '알림',
+              onPressed: () => _openDealAlertEditor(deals, deal: deal),
+              icon: const Icon(
+                Icons.notifications_none_rounded,
+                color: GiftcardColors.accent,
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDealCard(GiftcardDeal deal, List<GiftcardDeal> deals) {
+    final saving = _dealSavingKRW(deal);
+    final seenAt = deal.lastSeenAt ?? deal.updatedAt ?? deal.lastChangedAt;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDealDetail(deal),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: McColors.line),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: GiftcardColors.accentSoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.card_giftcard_outlined,
+                      color: GiftcardColors.accent,
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          deal.displayTitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: McTextStyles.bodyStrong,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${deal.merchantName} · ${_formatDealDenomination(_dealAmount(deal))}',
+                          style: McTextStyles.meta,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.black38),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _GiftcardDealPill(
+                    icon: Icons.local_offer_outlined,
+                    label: '${deal.discountRate.toStringAsFixed(2)}%',
+                  ),
+                  _GiftcardDealPill(
+                    icon: Icons.payments_outlined,
+                    label: _formatDealWon(deal.priceKRW),
+                  ),
+                  if (saving > 0)
+                    _GiftcardDealPill(
+                      icon: Icons.savings_outlined,
+                      label: '${_formatDealWon(saving)} 절약',
+                    ),
+                  if (seenAt != null)
+                    _GiftcardDealPill(
+                      icon: Icons.update,
+                      label: _formatTimestamp(seenAt),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: GiftcardColors.accent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                      ),
+                      onPressed: () => _openDealBuyUrl(deal),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: const Text('구매'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: GiftcardColors.accent,
+                      side:
+                          const BorderSide(color: GiftcardColors.accentBorder),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
+                    ),
+                    onPressed: () => _openDealAlertEditor(deals, deal: deal),
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                      size: 18,
+                    ),
+                    label: const Text('알림'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool _matchesCurrentGiftcard(GiftcardDeal deal) {
+    final aliases = _giftcardDealAliases(
+      giftcardId: widget.giftcardId,
+      giftcardName: _effectiveGiftcardName,
+      giftcardData: _giftcard,
+    );
+    final dealKeys = <String>{
+      _dealMatchKey(deal.brandId),
+      _dealMatchKey(deal.brandName),
+      _dealMatchKey(deal.displayTitle),
+      _dealMatchKey(deal.title),
+    }..remove('');
+
+    for (final alias in aliases) {
+      if (alias.isEmpty) continue;
+      for (final key in dealKeys) {
+        if (key == alias) return true;
+        if (alias.length >= 3 && key.contains(alias)) return true;
+        if (key.length >= 3 && alias.contains(key)) return true;
+      }
+    }
+    return false;
+  }
+
+  String _marketComparisonText(GiftcardDeal deal) {
+    final marketBuyRate = _calcRateFromPrice(_num(_giftcard?['bestBuyPrice']));
+    final discount = deal.discountRate;
+    if (marketBuyRate == null || discount <= 0) {
+      return '온라인 구매 특가 기준입니다. 가격은 상시 변동될 수 있으니 구매 전 최종가를 확인해주세요.';
+    }
+    final diff = discount - marketBuyRate;
+    final comparison = diff.abs() < 0.05
+        ? '지점 살 때 최저 시세와 거의 같은 할인율입니다.'
+        : diff > 0
+            ? '지점 살 때 최저 시세보다 ${diff.toStringAsFixed(2)}%p 유리합니다.'
+            : '지점 살 때 최저 시세보다 ${diff.abs().toStringAsFixed(2)}%p 낮습니다.';
+    return '$comparison 구매 전 사용처와 결제 조건은 판매 페이지에서 확인해주세요.';
+  }
+
+  Future<void> _openDealBuyUrl(GiftcardDeal deal) async {
+    final uri = Uri.tryParse(deal.buyUrl);
+    if (uri == null || !uri.hasScheme) {
+      Fluttertoast.showToast(msg: '구매 링크가 올바르지 않습니다.');
+      return;
+    }
+    AnalyticsService.instance.logAction('giftcard_rate_open', params: {
+      'screen': 'giftcard_rates',
+      'giftcard_id': widget.giftcardId,
+      'deal_id': deal.id,
+      'source': 'brand_deal_buy',
+      'price_krw': deal.priceKRW,
+    });
+    AnalyticsService.instance.logAction('external_link_open', params: {
+      'screen': 'giftcard_rates',
+      'giftcard_id': widget.giftcardId,
+      'deal_id': deal.id,
+      'source': 'giftcard_brand_deal_buy',
+    });
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      Fluttertoast.showToast(msg: '구매 링크를 열 수 없습니다.');
+    }
+  }
+
+  Future<void> _openDealAlertEditor(
+    List<GiftcardDeal> deals, {
+    GiftcardDeal? deal,
+  }) async {
+    AnalyticsService.instance.logAction('giftcard_rate_open', params: {
+      'screen': 'giftcard_rates',
+      'giftcard_id': widget.giftcardId,
+      'deal_id': deal?.id,
+      'source': 'brand_deal_alert',
+    });
+    await showGiftcardDealAlertEditor(
+      context,
+      deals: deals,
+      deal: deal,
+    );
+  }
+
+  void _openDealDetail(GiftcardDeal deal) {
+    AnalyticsService.instance.logAction('giftcard_rate_open', params: {
+      'screen': 'giftcard_rates',
+      'giftcard_id': widget.giftcardId,
+      'deal_id': deal.id,
+      'source': 'brand_deal_detail',
+    });
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => GiftcardDealDetailScreen(dealId: deal.id),
+      ),
     );
   }
 
@@ -1970,6 +2479,242 @@ class _GiftcardInfoRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GiftcardDealMetric extends StatelessWidget {
+  const _GiftcardDealMetric({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: McColors.field,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: McColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: McTextStyles.micro),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: McTextStyles.bodyStrong,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GiftcardDealPill extends StatelessWidget {
+  const _GiftcardDealPill({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: GiftcardColors.accentSoft,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: GiftcardColors.accentBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: GiftcardColors.accent),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: McTextStyles.micro.copyWith(
+              color: GiftcardColors.accent,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GiftcardAmountDealGroup {
+  const _GiftcardAmountDealGroup({
+    required this.amountKRW,
+    required this.bestDeal,
+    required this.dealCount,
+  });
+
+  final int amountKRW;
+  final GiftcardDeal bestDeal;
+  final int dealCount;
+}
+
+List<_GiftcardAmountDealGroup> _bestDealsByAmount(List<GiftcardDeal> deals) {
+  final byAmount = <int, List<GiftcardDeal>>{};
+  for (final deal in deals) {
+    final amount = _dealAmount(deal);
+    if (amount <= 0) continue;
+    byAmount.putIfAbsent(amount, () => <GiftcardDeal>[]).add(deal);
+  }
+
+  final groups = byAmount.entries.map((entry) {
+    final amountDeals = entry.value..sort(_compareGiftcardDealsForDetail);
+    return _GiftcardAmountDealGroup(
+      amountKRW: entry.key,
+      bestDeal: amountDeals.first,
+      dealCount: amountDeals.length,
+    );
+  }).toList()
+    ..sort((a, b) => a.amountKRW.compareTo(b.amountKRW));
+  return groups;
+}
+
+int _merchantCount(List<GiftcardDeal> deals) {
+  return deals
+      .map((deal) => deal.merchantName.trim())
+      .where((name) => name.isNotEmpty)
+      .toSet()
+      .length;
+}
+
+int _compareGiftcardDealsForDetail(GiftcardDeal a, GiftcardDeal b) {
+  final discount = b.discountRate.compareTo(a.discountRate);
+  if (discount != 0) return discount;
+
+  final saving = _dealSavingKRW(b).compareTo(_dealSavingKRW(a));
+  if (saving != 0) return saving;
+
+  final price = _sortableDealPrice(a).compareTo(_sortableDealPrice(b));
+  if (price != 0) return price;
+
+  return a.displayTitle.compareTo(b.displayTitle);
+}
+
+int _sortableDealPrice(GiftcardDeal deal) {
+  return deal.priceKRW > 0 ? deal.priceKRW : 1 << 62;
+}
+
+int _dealAmount(GiftcardDeal deal) {
+  if (deal.faceValueKRW > 0) return deal.faceValueKRW;
+  return deal.denominationKRW;
+}
+
+int _dealSavingKRW(GiftcardDeal deal) {
+  if (deal.discountAmountKRW > 0) return deal.discountAmountKRW;
+  final amount = _dealAmount(deal);
+  if (amount <= 0 || deal.priceKRW <= 0) return 0;
+  return (amount - deal.priceKRW).clamp(0, amount);
+}
+
+String _formatDealWon(int value) {
+  if (value <= 0) return '-';
+  return '${NumberFormat('#,###').format(value)}원';
+}
+
+String _formatDealDenomination(int value) {
+  if (value >= 10000 && value % 10000 == 0) {
+    return '${value ~/ 10000}만원권';
+  }
+  return _formatDealWon(value);
+}
+
+Set<String> _giftcardDealAliases({
+  required String giftcardId,
+  required String giftcardName,
+  required Map<String, dynamic>? giftcardData,
+}) {
+  final rawAliases = <String>[giftcardId, giftcardName];
+
+  void addAliasValue(Object? value) {
+    if (value is Iterable) {
+      for (final item in value) {
+        addAliasValue(item);
+      }
+      return;
+    }
+    final text = _string(value);
+    if (text.isNotEmpty) rawAliases.add(text);
+  }
+
+  if (giftcardData != null) {
+    addAliasValue(giftcardData['aliases']);
+    addAliasValue(giftcardData['aliasNames']);
+    addAliasValue(giftcardData['dealAliases']);
+  }
+
+  const knownAliases = <String, List<String>>{
+    'book_and_life': ['북앤라이프', '도서문화', '도서문화상품권', 'book and life'],
+    'bookandlife': ['북앤라이프', '도서문화', '도서문화상품권', 'book and life'],
+    'culture_land': ['컬쳐랜드', '문화상품권'],
+    'cultureland': ['컬쳐랜드', '문화상품권'],
+    'happy_money': ['해피머니'],
+    'happymoney': ['해피머니'],
+    'online_culture': ['온라인문화'],
+    'onlineculture': ['온라인문화'],
+    'shinsegae': ['신세계', '이마트', 'SSG상품권'],
+    'lotte': ['롯데', '롯데백화점'],
+    'hyundai': ['현대', '현대백화점'],
+    'galleria': ['갤러리아'],
+    'kumkang': ['금강', '금강제화'],
+    'costco': ['코스트코'],
+    'eland': ['이랜드'],
+    'samsung': ['삼성'],
+    'nh': ['농협', 'NH'],
+    'nonghyup': ['농협', 'NH'],
+    'ak': ['AK', '애경'],
+    'cj': ['CJ'],
+    'cjgift': ['CJ'],
+    'ssg': ['SSG', '쓱'],
+    'smile_money': ['스마일머니'],
+    'smilemoney': ['스마일머니'],
+    'lpoint': ['엘포인트', 'LPOINT', 'L.POINT', 'L포인트'],
+  };
+
+  final idKeys = {
+    giftcardId.trim().toLowerCase(),
+    _dealMatchKey(giftcardId),
+  };
+  for (final key in idKeys) {
+    rawAliases.addAll(knownAliases[key] ?? const <String>[]);
+  }
+
+  return rawAliases
+      .map(_dealMatchKey)
+      .where((value) => value.isNotEmpty)
+      .toSet();
+}
+
+String _dealMatchKey(String value) {
+  var text = value.trim().toLowerCase();
+  if (text.isEmpty) return '';
+  text = text
+      .replaceAll(RegExp(r'[\s_\-·./\\()[\]{}]+'), '')
+      .replaceAll('상품권', '')
+      .replaceAll('모바일', '')
+      .replaceAll('온라인전용', '')
+      .replaceAll('온라인', '')
+      .replaceAll('전용', '')
+      .replaceAll('백화점', '')
+      .replaceAll('교환권', '')
+      .replaceAll('교환용', '');
+  return text;
 }
 
 String _string(Object? value, {String fallback = ''}) {
