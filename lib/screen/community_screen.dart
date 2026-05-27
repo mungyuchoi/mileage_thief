@@ -103,7 +103,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       boardName: '마일캐치 사용법',
     ),
     _CommunityBoardTab(
-      boardId: 'hot_deal',
+      boardId: 'hotdeal',
       label: '핫딜',
       boardName: '핫딜',
     ),
@@ -153,6 +153,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     'free': '자유게시판',
     'deal': '적립/카드 혜택',
     'milecatch_guide': '마일캐치 사용법',
+    'hotdeal': '핫딜',
     'hot_deal': '핫딜',
     'question': '마일리지',
     'seat_share': '좌석 공유',
@@ -193,6 +194,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   String _normalizedInitialBoardId() {
     final boardId = widget.initialBoardId.trim();
+    if (boardId == 'hot_deal') return 'hotdeal';
     return boardId.isEmpty ? 'all' : boardId;
   }
 

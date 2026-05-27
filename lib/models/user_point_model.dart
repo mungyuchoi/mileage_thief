@@ -52,7 +52,7 @@ class PointBrandCatalog {
       category: PointCategory.airline,
       name: '대한항공',
       assetPath: 'asset/icon/points/korean_air.png',
-      fallbackAssetPath: 'asset/icon/quick_korean_air.png',
+      fallbackAssetPath: 'asset/img/app_dan.png',
       pointLabel: '마일',
       sortOrder: 10,
     ),

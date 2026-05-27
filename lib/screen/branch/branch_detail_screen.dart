@@ -1036,6 +1036,7 @@ class _BranchDetailScreenState extends State<BranchDetailScreen>
       'free': '자유게시판',
       'deal': '적립/카드 혜택',
       'milecatch_guide': '마일캐치 사용법',
+      'hotdeal': '핫딜',
       'hot_deal': '핫딜',
       'question': '마일리지',
       'seats': '오늘의 좌석',

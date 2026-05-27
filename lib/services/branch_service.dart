@@ -779,6 +779,7 @@ class BranchService {
       'free': '자유게시판',
       'deal': '적립/카드 혜택',
       'milecatch_guide': '마일캐치 사용법',
+      'hotdeal': '핫딜',
       'hot_deal': '핫딜',
       'question': '마일리지',
       'seats': '오늘의 좌석',
@@ -797,7 +798,12 @@ class BranchService {
     String? boardName,
     BuildContext? context,
   }) {
-    final normalizedBoardId = boardId.trim().isEmpty ? 'all' : boardId.trim();
+    final trimmedBoardId = boardId.trim();
+    final normalizedBoardId = trimmedBoardId.isEmpty
+        ? 'all'
+        : trimmedBoardId == 'hot_deal'
+            ? 'hotdeal'
+            : trimmedBoardId;
     final screen = CommunityScreen(
       initialBoardId: normalizedBoardId,
       initialBoardName: _communityBoardNameFor(normalizedBoardId, boardName),

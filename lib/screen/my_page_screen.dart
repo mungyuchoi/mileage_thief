@@ -2381,52 +2381,91 @@ class _MyPageScreenState extends State<MyPageScreen>
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // 프로필 이미지
-          Stack(
+          // 프로필 이미지 + 땅콩 수
+          Row(
             children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.grey[300],
-                backgroundImage: userProfile!['photoURL'] != null &&
-                        userProfile!['photoURL'].toString().isNotEmpty
-                    ? NetworkImage(userProfile!['photoURL'])
-                    : null,
-                child: userProfile!['photoURL'] == null ||
-                        userProfile!['photoURL'].toString().isEmpty
-                    ? const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.grey,
-                      )
-                    : null,
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: _isUpdatingProfileImage ? null : _updateProfileImage,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _isUpdatingProfileImage
-                          ? Colors.grey[300]
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: _isUpdatingProfileImage
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.grey,
+              const Expanded(child: SizedBox()),
+              Expanded(
+                child: Center(
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: userProfile!['photoURL'] != null &&
+                                userProfile!['photoURL'].toString().isNotEmpty
+                            ? NetworkImage(userProfile!['photoURL'])
+                            : null,
+                        child: userProfile!['photoURL'] == null ||
+                                userProfile!['photoURL'].toString().isEmpty
+                            ? const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.grey,
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: _isUpdatingProfileImage
+                              ? null
+                              : _updateProfileImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: _isUpdatingProfileImage
+                                  ? Colors.grey[300]
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                          )
-                        : const Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: Colors.grey,
+                            child: _isUpdatingProfileImage
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.edit,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'asset/img/peanuts.png',
+                        width: 18,
+                        height: 18,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          '${userProfile!['peanutCount'] ?? 0}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600]!,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -2513,41 +2552,6 @@ class _MyPageScreenState extends State<MyPageScreen>
                 ),
               ),
             ),
-          const SizedBox(height: 16),
-          // 좋아요/땅콩 수
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.favorite,
-                color: Colors.pink[300],
-                size: 16,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '좋아요 ${userProfile!['likesReceived'] ?? 0}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Image.asset(
-                'asset/img/peanuts.png',
-                width: 18,
-                height: 18,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${userProfile!['peanutCount'] ?? 0}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600]!,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 24),
           // 팔로워/팔로잉 수
           Row(

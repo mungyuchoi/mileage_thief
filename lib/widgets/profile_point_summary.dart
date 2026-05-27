@@ -57,7 +57,7 @@ class _ProfilePointSummaryState extends State<ProfilePointSummary> {
                       '내 대표 포인트',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.normal,
                         color: Colors.black,
                       ),
                     ),
@@ -148,8 +148,6 @@ class ProfilePointShareCard extends StatelessWidget {
     };
     final displayName = (userProfile['displayName'] ?? '사용자').toString();
     final photoURL = (userProfile['photoURL'] ?? '').toString();
-    final likes = _asInt(userProfile['likesReceived']);
-    final peanuts = _asInt(userProfile['peanutCount']);
 
     return Container(
       width: 390,
@@ -219,36 +217,6 @@ class ProfilePointShareCard extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                         color: Colors.black,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.favorite, color: Colors.pink[300], size: 15),
-                        const SizedBox(width: 4),
-                        Text(
-                          '좋아요 ${_formatNumber(likes)}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Image.asset(
-                          'asset/img/peanuts.png',
-                          width: 16,
-                          height: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatNumber(peanuts),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -551,14 +519,12 @@ class _PointSummaryTile extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      '${_formatNumber(item.balance)} ${item.pointLabel}',
-                      maxLines: 1,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black,
-                      ),
+                    child: _PointAmountText(
+                      amount: item.balance,
+                      label: item.pointLabel,
+                      amountSize: 16,
+                      labelSize: 12,
+                      amountWeight: FontWeight.normal,
                     ),
                   ),
                 ],
@@ -639,17 +605,23 @@ class _SharePointRow extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,
-              child: Text(
-                item == null
-                    ? '-'
-                    : '${_formatNumber(item.balance)} ${item.pointLabel}',
-                maxLines: 1,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                ),
-              ),
+              child: item == null
+                  ? const Text(
+                      '-',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    )
+                  : _PointAmountText(
+                      amount: item.balance,
+                      label: item.pointLabel,
+                      amountSize: 20,
+                      labelSize: 13,
+                      amountWeight: FontWeight.w900,
+                    ),
             ),
           ),
         ],
@@ -690,6 +662,51 @@ class _PointIconButton extends StatelessWidget {
             color: onTap == null ? Colors.black26 : Colors.black87,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PointAmountText extends StatelessWidget {
+  const _PointAmountText({
+    required this.amount,
+    required this.label,
+    required this.amountSize,
+    required this.labelSize,
+    required this.amountWeight,
+  });
+
+  final int amount;
+  final String label;
+  final double amountSize;
+  final double labelSize;
+  final FontWeight amountWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      maxLines: 1,
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: _formatNumber(amount),
+            style: TextStyle(
+              fontSize: amountSize,
+              fontWeight: amountWeight,
+              color: Colors.black,
+              height: 1,
+            ),
+          ),
+          TextSpan(
+            text: ' $label',
+            style: TextStyle(
+              fontSize: labelSize,
+              fontWeight: FontWeight.w400,
+              color: Colors.black,
+              height: 1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -747,10 +764,3 @@ Color _categoryLineColor(String category) {
 }
 
 String _formatNumber(int value) => NumberFormat.decimalPattern().format(value);
-
-int _asInt(dynamic value) {
-  if (value == null) return 0;
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value.toString().replaceAll(RegExp(r'[^0-9-]'), '')) ?? 0;
-}

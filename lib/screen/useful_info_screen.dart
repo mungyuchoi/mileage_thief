@@ -4014,6 +4014,7 @@ class _GiftcardRateTableSectionState extends State<_GiftcardRateTableSection> {
     return _SectionShell(
       title: '상품권 시세',
       icon: Icons.card_giftcard_outlined,
+      showHeader: false,
       child: FutureBuilder<_GiftcardRateTableData>(
         future: _future,
         builder: (context, snapshot) {
@@ -5648,12 +5649,14 @@ class _SectionShell extends StatelessWidget {
   final IconData icon;
   final Widget child;
   final VoidCallback? onTapHeader;
+  final bool showHeader;
 
   const _SectionShell({
     required this.title,
     required this.icon,
     required this.child,
     this.onTapHeader,
+    this.showHeader = true,
   });
 
   @override
@@ -5669,34 +5672,36 @@ class _SectionShell extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              onTap: onTapHeader,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
-                          color: Color(0xFF1D1D1F),
+            if (showHeader) ...[
+              InkWell(
+                onTap: onTapHeader,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF1D1D1F),
+                          ),
                         ),
                       ),
-                    ),
-                    if (onTapHeader != null)
-                      const Icon(
-                        Icons.chevron_right,
-                        size: 22,
-                        color: Colors.black45,
-                      ),
-                  ],
+                      if (onTapHeader != null)
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 22,
+                          color: Colors.black45,
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 9),
+              const SizedBox(height: 9),
+            ],
             child,
           ],
         ),

@@ -137,37 +137,41 @@ class _PointBalanceManageScreenState extends State<PointBalanceManageScreen> {
                 Expanded(child: _buildBrandList()),
               ],
             ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 10, 16, 28),
-        child: SizedBox(
-          height: 52,
-          child: ElevatedButton(
-            onPressed: _loading || _saving ? null : _save,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: McColors.accent,
-              disabledBackgroundColor: Colors.grey[300],
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      bottomNavigationBar: Container(
+        color: Colors.white,
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 36),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _loading || _saving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: McColors.accent,
+                disabledBackgroundColor: Colors.grey[300],
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      '저장',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
             ),
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    '저장',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
           ),
         ),
       ),
