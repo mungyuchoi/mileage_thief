@@ -229,6 +229,10 @@ const NOTIFICATION_PREF_KEYS = {
   radarBenefitNews: "radar_benefit_news",
 };
 const CARD_REGION = "asia-northeast3";
+const MOCK_EXAM_REGION = "asia-northeast3";
+const MOCK_EXAM_STATUSES = new Set(["draft", "published", "locked"]);
+const MOCK_EXAM_RETRY_PEANUT_COST = 50;
+const MOCK_EXAM_SUBMIT_PEANUT_REWARD = 100;
 const CARD_CATALOG_DOC_ID = "catalog";
 const CARD_PRODUCT_FIELDS = new Set([
   "name",
@@ -360,6 +364,160 @@ async function requireCardAdmin(uid) {
   if (!hasAdminRole(userDoc.data() && userDoc.data().roles)) {
     throw new HttpsError("permission-denied", "관리자 권한이 필요합니다.");
   }
+}
+
+/**
+ * 마일고사 루트 문서 ref
+ * @return {FirebaseFirestore.DocumentReference}
+ */
+function mockExamRootRef() {
+  return admin.firestore().collection("mockExam").doc("main");
+}
+
+/**
+ * 숫자형 값을 안전하게 number로 변환하고 기본값을 반환한다.
+ * @param {unknown} value
+ * @param {number} fallback
+ * @return {number}
+ */
+function numberOr(value, fallback) {
+  const parsed = asOptionalNumber(value);
+  return parsed === null ? fallback : parsed;
+}
+
+/**
+ * 마일고사 회차 접근 가능 여부를 확인한다.
+ * @param {string} uid
+ * @param {string} examId
+ * @return {Promise<Object>}
+ */
+async function loadMockExamAccess(uid, examId) {
+  const normalizedExamId = asIdString(examId);
+  if (!normalizedExamId) {
+    throw new HttpsError("invalid-argument", "examId가 필요합니다.");
+  }
+
+  const db = admin.firestore();
+  const examRef = mockExamRootRef().collection("exams").doc(normalizedExamId);
+  const userRef = db.collection("users").doc(uid);
+  const [examDoc, userDoc] = await Promise.all([examRef.get(), userRef.get()]);
+  if (!examDoc.exists) {
+    throw new HttpsError("not-found", "마일고사 회차를 찾을 수 없습니다.");
+  }
+
+  const examData = examDoc.data() || {};
+  const userData = userDoc.data() || {};
+  const isAdmin = hasAdminRole(userData.roles);
+  const status = asOptionalString(examData.status) || "draft";
+  if (
+    status === "published" ||
+    ((status === "draft" || status === "locked") && isAdmin)
+  ) {
+    return {
+      examRef,
+      examId: normalizedExamId,
+      examData,
+      userData,
+      isAdmin,
+    };
+  }
+
+  const message = status === "locked" ?
+    "잠긴 마일고사입니다." :
+    "아직 공개되지 않은 마일고사입니다.";
+  throw new HttpsError("permission-denied", message);
+}
+
+/**
+ * 랭킹에 표시할 사용자 이름을 가져온다.
+ * @param {Object} userData
+ * @return {string}
+ */
+function mockExamDisplayName(userData) {
+  const candidates = [
+    userData.displayName,
+    userData.nickname,
+    userData.name,
+    userData.email,
+  ];
+  for (const candidate of candidates) {
+    const value = asOptionalString(candidate);
+    if (value) return value;
+  }
+  return "익명";
+}
+
+/**
+ * 랭킹에 표시할 사용자 사진 URL을 가져온다.
+ * @param {Object} userData
+ * @return {string}
+ */
+function mockExamPhotoUrl(userData) {
+  return asOptionalString(userData.photoUrl) ||
+    asOptionalString(userData.photoURL) ||
+    asOptionalString(userData.profileImage) ||
+    "";
+}
+
+/**
+ * 제출 답안을 questionId -> choiceId 맵으로 정규화한다.
+ * @param {unknown} answers
+ * @return {Map<string, string|null>}
+ */
+function normalizeMockExamAnswers(answers) {
+  if (!Array.isArray(answers)) {
+    throw new HttpsError("invalid-argument", "answers 배열이 필요합니다.");
+  }
+
+  const normalized = new Map();
+  for (const item of answers) {
+    if (!item || typeof item !== "object") {
+      throw new HttpsError("invalid-argument", "답안 형식이 올바르지 않습니다.");
+    }
+    const questionId = asIdString(item.questionId);
+    if (!questionId) {
+      throw new HttpsError("invalid-argument", "questionId가 필요합니다.");
+    }
+    const selected = asIdString(item.selectedChoiceId).toLowerCase();
+    normalized.set(questionId, selected || null);
+  }
+  return normalized;
+}
+
+/**
+ * 문제 선택지 ID 목록을 가져온다.
+ * @param {Object} questionData
+ * @return {Set<string>}
+ */
+function mockExamChoiceIds(questionData) {
+  const choices = Array.isArray(questionData.choices) ?
+    questionData.choices :
+    [];
+  return new Set(choices.map((choice) => {
+    if (!choice || typeof choice !== "object") return "";
+    return asIdString(choice.id).toLowerCase();
+  }).filter((id) => id.length > 0));
+}
+
+/**
+ * 문제 선택지 표시 텍스트를 가져온다.
+ * @param {Object} questionData
+ * @param {string|null} choiceId
+ * @return {string}
+ */
+function mockExamChoiceText(questionData, choiceId) {
+  if (!choiceId) return "미응답";
+  const choices = Array.isArray(questionData.choices) ?
+    questionData.choices :
+    [];
+  for (const choice of choices) {
+    if (!choice || typeof choice !== "object") continue;
+    if (asIdString(choice.id).toLowerCase() === choiceId) {
+      const text = asOptionalString(choice.text);
+      return text || choiceId;
+    }
+  }
+  return choiceId;
 }
 
 const SCRAP_ALLOWED_TAGS = new Set([
@@ -4167,6 +4325,602 @@ async function publishScrapPayload(params) {
     postPath,
   };
 }
+
+/**
+ * 관리자용 마일고사 회차 상태 변경.
+ */
+exports.updateMockExamStatus = onCall({
+  region: MOCK_EXAM_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+
+  const data = request.data || {};
+  const examId = asIdString(data.examId);
+  const status = asOptionalString(data.status);
+  if (!examId) {
+    throw new HttpsError("invalid-argument", "examId가 필요합니다.");
+  }
+  if (!status || !MOCK_EXAM_STATUSES.has(status)) {
+    throw new HttpsError(
+        "invalid-argument",
+        "status는 draft, published, locked 중 하나여야 합니다.",
+    );
+  }
+
+  const examRef = mockExamRootRef().collection("exams").doc(examId);
+  const examDoc = await examRef.get();
+  if (!examDoc.exists) {
+    throw new HttpsError("not-found", "마일고사 회차를 찾을 수 없습니다.");
+  }
+
+  await examRef.update({
+    status,
+    statusUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    statusUpdatedBy: uid,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    ok: true,
+    examId,
+    status,
+  };
+});
+
+/**
+ * 마일고사 응시 attempt를 생성한다.
+ */
+exports.startMockExam = onCall({
+  region: MOCK_EXAM_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const access = await loadMockExamAccess(uid, data.examId);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const userRootRef = mockExamRootRef().collection("users").doc(uid);
+  const attemptRef = userRootRef.collection("attempts").doc();
+  const progressRef = userRootRef.collection("progress").doc(access.examId);
+
+  await admin.firestore().runTransaction(async (transaction) => {
+    const progressDoc = await transaction.get(progressRef);
+    const progressData = progressDoc.data() || {};
+    const submittedAttempts = numberOr(progressData.attemptCount, 0);
+    const retryTickets = numberOr(progressData.retryTickets, 0);
+    const requiresRetryTicket = progressData.completed === true ||
+      submittedAttempts > 0;
+    if (requiresRetryTicket && retryTickets <= 0) {
+      throw new HttpsError(
+          "failed-precondition",
+          "재도전권이 필요합니다.",
+      );
+    }
+
+    transaction.set(attemptRef, {
+      examId: access.examId,
+      roundNo: numberOr(access.examData.roundNo, 0),
+      status: "started",
+      questionCount: numberOr(access.examData.questionCount, 0),
+      totalScore: numberOr(access.examData.totalScore, 100),
+      score: 0,
+      correctCount: 0,
+      durationSeconds: 0,
+      categoryScores: {},
+      answers: [],
+      isBestAttempt: false,
+      retryTicketConsumed: requiresRetryTicket,
+      source: asOptionalString(data.source) || "app",
+      campaign: asOptionalString(data.campaign) || null,
+      referrerUid: asOptionalString(data.referrerUid) || null,
+      startedAt: now,
+      submittedAt: null,
+      updatedAt: now,
+    });
+    const progressPayload = {
+      examId: access.examId,
+      unlocked: true,
+      unlockedAt: now,
+      lastAttemptAt: now,
+      updatedAt: now,
+    };
+    if (requiresRetryTicket) {
+      progressPayload.retryTickets = admin.firestore.FieldValue.increment(-1);
+      progressPayload.retryTicketsUsed =
+        admin.firestore.FieldValue.increment(1);
+    }
+    transaction.set(progressRef, progressPayload, {merge: true});
+  });
+
+  return {
+    attemptId: attemptRef.id,
+    examId: access.examId,
+  };
+});
+
+/**
+ * 마일고사 결과 공유 보상으로 회차당 재도전권 1장을 지급한다.
+ */
+exports.grantMockExamShareRetry = onCall({
+  region: MOCK_EXAM_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const attemptId = asIdString(data.attemptId);
+  if (!attemptId) {
+    throw new HttpsError("invalid-argument", "attemptId가 필요합니다.");
+  }
+
+  const access = await loadMockExamAccess(uid, data.examId);
+  const shareUrl = asOptionalString(data.shareUrl);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const userRootRef = mockExamRootRef().collection("users").doc(uid);
+  const attemptRef = userRootRef.collection("attempts").doc(attemptId);
+  const progressRef = userRootRef.collection("progress").doc(access.examId);
+  const rewardRef = userRootRef
+      .collection("shareRewards")
+      .doc(`result_share_${access.examId}`);
+  const shareRef = mockExamRootRef()
+      .collection("shares")
+      .doc(`result_share_${uid}_${access.examId}`);
+
+  let granted = false;
+  await admin.firestore().runTransaction(async (transaction) => {
+    const attemptDoc = await transaction.get(attemptRef);
+    const progressDoc = await transaction.get(progressRef);
+    if (!attemptDoc.exists) {
+      throw new HttpsError("not-found", "응시 결과를 찾을 수 없습니다.");
+    }
+
+    const attemptData = attemptDoc.data() || {};
+    if (asIdString(attemptData.examId) !== access.examId) {
+      throw new HttpsError(
+          "invalid-argument",
+          "응시 기록과 회차가 일치하지 않습니다.",
+      );
+    }
+    if (asOptionalString(attemptData.status) !== "submitted") {
+      throw new HttpsError(
+          "failed-precondition",
+          "제출 완료된 결과만 공유 보상을 받을 수 있습니다.",
+      );
+    }
+
+    const progressData = progressDoc.data() || {};
+    if (progressData.shareRewardGranted === true) {
+      transaction.update(attemptRef, {
+        sharedCount: admin.firestore.FieldValue.increment(1),
+        lastSharedAt: now,
+        updatedAt: now,
+      });
+      return;
+    }
+
+    granted = true;
+    transaction.set(progressRef, {
+      examId: access.examId,
+      retryTickets: admin.firestore.FieldValue.increment(1),
+      shareRewardGranted: true,
+      shareRewardAttemptId: attemptId,
+      shareRewardedAt: now,
+      updatedAt: now,
+    }, {merge: true});
+    transaction.set(rewardRef, {
+      examId: access.examId,
+      attemptId,
+      shareId: shareRef.id,
+      rewardType: "retry_ticket",
+      amount: 1,
+      reason: "result_share",
+      createdAt: now,
+    }, {merge: true});
+    transaction.set(shareRef, {
+      examId: access.examId,
+      attemptId,
+      ownerUid: uid,
+      roundNo: numberOr(access.examData.roundNo, 0),
+      score: numberOr(attemptData.score, 0),
+      shareUrl: shareUrl || null,
+      campaign: `mock_exam_round_${numberOr(access.examData.roundNo, 0)}`,
+      createdAt: now,
+      updatedAt: now,
+      clickCount: 0,
+      completedReferralCount: 0,
+    }, {merge: true});
+    transaction.update(attemptRef, {
+      sharedCount: admin.firestore.FieldValue.increment(1),
+      lastSharedAt: now,
+      updatedAt: now,
+    });
+  });
+
+  return {
+    granted,
+    retryTicketsAdded: granted ? 1 : 0,
+  };
+});
+
+/**
+ * 땅콩을 차감하고 마일고사 재도전권 1장을 지급한다.
+ */
+exports.purchaseMockExamRetryWithPeanuts = onCall({
+  region: MOCK_EXAM_REGION,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const attemptId = asIdString(data.attemptId);
+  if (!attemptId) {
+    throw new HttpsError("invalid-argument", "attemptId가 필요합니다.");
+  }
+
+  const access = await loadMockExamAccess(uid, data.examId);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const db = admin.firestore();
+  const userRef = db.collection("users").doc(uid);
+  const userRootRef = mockExamRootRef().collection("users").doc(uid);
+  const attemptRef = userRootRef.collection("attempts").doc(attemptId);
+  const progressRef = userRootRef.collection("progress").doc(access.examId);
+  const historyRef = userRef.collection("peanut_history").doc();
+  const purchaseRef = userRootRef
+      .collection("retryPurchases")
+      .doc(historyRef.id);
+
+  await db.runTransaction(async (transaction) => {
+    const [userDoc, attemptDoc, progressDoc] = await Promise.all([
+      transaction.get(userRef),
+      transaction.get(attemptRef),
+      transaction.get(progressRef),
+    ]);
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+    }
+    if (!attemptDoc.exists) {
+      throw new HttpsError("not-found", "응시 결과를 찾을 수 없습니다.");
+    }
+
+    const attemptData = attemptDoc.data() || {};
+    if (asIdString(attemptData.examId) !== access.examId) {
+      throw new HttpsError(
+          "invalid-argument",
+          "응시 기록과 회차가 일치하지 않습니다.",
+      );
+    }
+    if (asOptionalString(attemptData.status) !== "submitted") {
+      throw new HttpsError(
+          "failed-precondition",
+          "제출 완료된 결과에서만 재도전권을 구매할 수 있습니다.",
+      );
+    }
+
+    const progressData = progressDoc.data() || {};
+    if (progressData.shareRewardGranted !== true) {
+      throw new HttpsError(
+          "failed-precondition",
+          "공유 재도전권을 먼저 받은 뒤 구매할 수 있습니다.",
+      );
+    }
+    if (numberOr(progressData.retryTickets, 0) > 0) {
+      throw new HttpsError(
+          "failed-precondition",
+          "이미 사용 가능한 재도전권이 있습니다.",
+      );
+    }
+
+    const userData = userDoc.data() || {};
+    const currentPeanuts = numberOr(userData.peanutCount, 0);
+    if (currentPeanuts < MOCK_EXAM_RETRY_PEANUT_COST) {
+      throw new HttpsError(
+          "failed-precondition",
+          `땅콩이 부족합니다. (필요: ${MOCK_EXAM_RETRY_PEANUT_COST}개)`,
+      );
+    }
+
+    transaction.update(userRef, {
+      peanutCount: admin.firestore.FieldValue.increment(
+          -MOCK_EXAM_RETRY_PEANUT_COST,
+      ),
+      updatedAt: now,
+    });
+    transaction.set(historyRef, {
+      type: "mock_exam_retry_purchase",
+      amount: -MOCK_EXAM_RETRY_PEANUT_COST,
+      examId: access.examId,
+      attemptId,
+      roundNo: numberOr(access.examData.roundNo, 0),
+      reason: "마일고사 재도전권 구매",
+      createdAt: now,
+    });
+    transaction.set(progressRef, {
+      examId: access.examId,
+      retryTickets: admin.firestore.FieldValue.increment(1),
+      peanutRetryTicketsPurchased: admin.firestore.FieldValue.increment(1),
+      lastRetryPurchasedAt: now,
+      updatedAt: now,
+    }, {merge: true});
+    transaction.set(purchaseRef, {
+      examId: access.examId,
+      attemptId,
+      historyId: historyRef.id,
+      costPeanuts: MOCK_EXAM_RETRY_PEANUT_COST,
+      status: "granted",
+      createdAt: now,
+    });
+  });
+
+  return {
+    ok: true,
+    retryTicketsAdded: 1,
+    costPeanuts: MOCK_EXAM_RETRY_PEANUT_COST,
+  };
+});
+
+/**
+ * 마일고사 답안을 서버에서 채점하고 랭킹을 갱신한다.
+ */
+exports.submitMockExam = onCall({
+  region: MOCK_EXAM_REGION,
+  timeoutSeconds: 60,
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const attemptId = asIdString(data.attemptId);
+  if (!attemptId) {
+    throw new HttpsError("invalid-argument", "attemptId가 필요합니다.");
+  }
+
+  const selectedAnswers = normalizeMockExamAnswers(data.answers);
+  const access = await loadMockExamAccess(uid, data.examId);
+  const questionsSnapshot = await access.examRef
+      .collection("questions")
+      .orderBy("order")
+      .get();
+  const answerKeysSnapshot = await mockExamRootRef()
+      .collection("answerKeys")
+      .doc(access.examId)
+      .collection("questions")
+      .get();
+
+  if (questionsSnapshot.empty) {
+    throw new HttpsError("failed-precondition", "문제가 없습니다.");
+  }
+  if (questionsSnapshot.size !== answerKeysSnapshot.size) {
+    throw new HttpsError(
+        "failed-precondition",
+        "문제 수와 정답표 수가 일치하지 않습니다.",
+    );
+  }
+
+  const questions = questionsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data() || {},
+  }));
+  const questionIds = new Set(questions.map((question) => question.id));
+  for (const questionId of selectedAnswers.keys()) {
+    if (!questionIds.has(questionId)) {
+      throw new HttpsError("invalid-argument", "알 수 없는 questionId입니다.");
+    }
+  }
+
+  const answerKeysById = new Map();
+  for (const doc of answerKeysSnapshot.docs) {
+    answerKeysById.set(doc.id, doc.data() || {});
+  }
+
+  const categoryScores = {};
+  const categories = Array.isArray(access.examData.categories) ?
+    access.examData.categories :
+    [];
+  for (const category of categories) {
+    const key = asIdString(category);
+    if (key) categoryScores[key] = 0;
+  }
+
+  let score = 0;
+  let correctCount = 0;
+  const gradedAnswers = [];
+  for (const question of questions) {
+    const questionData = question.data;
+    const answerKey = answerKeysById.get(question.id);
+    if (!answerKey) {
+      throw new HttpsError(
+          "failed-precondition",
+          "정답표가 누락된 문제가 있습니다.",
+      );
+    }
+
+    const choiceIds = mockExamChoiceIds(questionData);
+    const selectedChoiceId = selectedAnswers.has(question.id) ?
+      selectedAnswers.get(question.id) :
+      null;
+    if (selectedChoiceId) {
+      if (!choiceIds.has(selectedChoiceId)) {
+        throw new HttpsError(
+            "invalid-argument",
+            "선택지 ID가 문제 선택지와 일치하지 않습니다.",
+        );
+      }
+    }
+
+    const correctChoiceId = asIdString(answerKey.correctChoiceId)
+        .toLowerCase();
+    if (!correctChoiceId || !choiceIds.has(correctChoiceId)) {
+      throw new HttpsError(
+          "failed-precondition",
+          "정답표의 정답 ID가 문제 선택지와 일치하지 않습니다.",
+      );
+    }
+    const questionScore = numberOr(answerKey.score, numberOr(
+        questionData.score,
+        5,
+    ));
+    const category = asIdString(answerKey.category) ||
+      asIdString(questionData.category);
+    const isCorrect = selectedChoiceId === correctChoiceId;
+    if (category && categoryScores[category] === undefined) {
+      categoryScores[category] = 0;
+    }
+    if (isCorrect) {
+      score += questionScore;
+      correctCount += 1;
+      if (category) categoryScores[category] += questionScore;
+    }
+
+    gradedAnswers.push({
+      questionId: question.id,
+      selectedChoiceId: selectedChoiceId || null,
+      correctChoiceId,
+      answerText: asOptionalString(answerKey.answerText) ||
+        mockExamChoiceText(questionData, correctChoiceId),
+      isCorrect,
+      score: isCorrect ? questionScore : 0,
+      category,
+      explanation: asOptionalString(answerKey.explanation) || "",
+    });
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const userRef = admin.firestore().collection("users").doc(uid);
+  const rewardHistoryRef = userRef.collection("peanut_history").doc();
+  const userRootRef = mockExamRootRef().collection("users").doc(uid);
+  const attemptRef = userRootRef.collection("attempts").doc(attemptId);
+  const progressRef = userRootRef.collection("progress").doc(access.examId);
+  const leaderboardRef = mockExamRootRef()
+      .collection("leaderboards")
+      .doc(access.examId)
+      .collection("periods")
+      .doc("all")
+      .collection("entries")
+      .doc(uid);
+
+  let durationSeconds = 0;
+  let isBestAttempt = false;
+  let peanutRewardGranted = false;
+  await admin.firestore().runTransaction(async (transaction) => {
+    const attemptDoc = await transaction.get(attemptRef);
+    if (!attemptDoc.exists) {
+      throw new HttpsError("not-found", "응시 기록을 찾을 수 없습니다.");
+    }
+
+    const attemptData = attemptDoc.data() || {};
+    if (asIdString(attemptData.examId) !== access.examId) {
+      throw new HttpsError(
+          "invalid-argument",
+          "응시 기록과 회차가 일치하지 않습니다.",
+      );
+    }
+    if (asOptionalString(attemptData.status) === "submitted") {
+      throw new HttpsError("failed-precondition", "이미 제출된 응시입니다.");
+    }
+
+    const startedAt = asOptionalDate(attemptData.startedAt);
+    durationSeconds = startedAt ?
+      Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000)) :
+      0;
+
+    const progressDoc = await transaction.get(progressRef);
+    const progressData = progressDoc.data() || {};
+    const retryTicketConsumed = attemptData.retryTicketConsumed === true;
+    peanutRewardGranted = !retryTicketConsumed &&
+      progressData.submitPeanutRewardGranted !== true;
+    const previousBestScore = numberOr(progressData.bestScore, -1);
+    const rawPreviousBestDuration = numberOr(
+        progressData.bestDurationSeconds,
+        0,
+    );
+    const previousBestDuration = rawPreviousBestDuration > 0 ?
+      rawPreviousBestDuration :
+      Number.MAX_SAFE_INTEGER;
+    isBestAttempt = score > previousBestScore ||
+      (score === previousBestScore && durationSeconds < previousBestDuration);
+
+    const attemptPayload = {
+      examId: access.examId,
+      roundNo: numberOr(access.examData.roundNo, 0),
+      status: "submitted",
+      score,
+      totalScore: numberOr(access.examData.totalScore, 100),
+      correctCount,
+      questionCount: questions.length,
+      durationSeconds,
+      categoryScores,
+      answers: gradedAnswers,
+      isBestAttempt,
+      submittedAt: now,
+      updatedAt: now,
+    };
+    transaction.update(attemptRef, attemptPayload);
+
+    const progressPayload = {
+      examId: access.examId,
+      unlocked: true,
+      completed: true,
+      attemptCount: admin.firestore.FieldValue.increment(1),
+      lastAttemptAt: now,
+      lastSubmittedAt: now,
+      updatedAt: now,
+    };
+    if (peanutRewardGranted) {
+      progressPayload.submitPeanutRewardGranted = true;
+      progressPayload.submitPeanutRewardAmount = MOCK_EXAM_SUBMIT_PEANUT_REWARD;
+      progressPayload.submitPeanutRewardAttemptId = attemptId;
+      progressPayload.submitPeanutRewardedAt = now;
+    }
+    if (isBestAttempt) {
+      progressPayload.bestScore = score;
+      progressPayload.bestAttemptId = attemptId;
+      progressPayload.bestDurationSeconds = durationSeconds;
+      progressPayload.bestSubmittedAt = now;
+      progressPayload.categoryScores = categoryScores;
+    }
+    transaction.set(progressRef, progressPayload, {merge: true});
+
+    if (isBestAttempt) {
+      transaction.set(leaderboardRef, {
+        uid,
+        examId: access.examId,
+        periodKey: "all",
+        displayName: mockExamDisplayName(access.userData),
+        photoUrl: mockExamPhotoUrl(access.userData),
+        score,
+        durationSeconds,
+        attemptId,
+        categoryScores,
+        submittedAt: now,
+        updatedAt: now,
+      }, {merge: true});
+    }
+
+    if (peanutRewardGranted) {
+      transaction.set(userRef, {
+        peanutCount: admin.firestore.FieldValue.increment(
+            MOCK_EXAM_SUBMIT_PEANUT_REWARD,
+        ),
+        updatedAt: now,
+      }, {merge: true});
+      transaction.set(rewardHistoryRef, {
+        type: "mock_exam_submit_reward",
+        amount: MOCK_EXAM_SUBMIT_PEANUT_REWARD,
+        examId: access.examId,
+        attemptId,
+        roundNo: numberOr(access.examData.roundNo, 0),
+        reason: "마일고사 첫 응시 제출 보상",
+        createdAt: now,
+      });
+    }
+  });
+
+  return {
+    attemptId,
+    score,
+    correctCount,
+    questionCount: questions.length,
+    durationSeconds,
+    isBestAttempt,
+    peanutRewardGranted,
+    peanutRewardAmount: peanutRewardGranted ?
+      MOCK_EXAM_SUBMIT_PEANUT_REWARD :
+      0,
+  };
+});
 
 /**
  * 관리자 스크랩 URL을 검증하고 미리보기 데이터를 반환한다.

@@ -1,0 +1,283 @@
+{
+  "id": "milecatch_mock_exam_round_1_generation_prompt",
+  "title": "마일캐치 모의고사 1회 생성 프롬프트",
+  "version": 1,
+  "createdAt": "2026-05-28",
+  "language": "ko",
+  "purpose": "docs/exam/susasa_qna_20260528.json을 근거로 마일캐치 모의고사 1회 20문항을 생성한다.",
+  "referenceDocuments": [
+    {
+      "path": "docs/exam/milecatch_mock_exam_spec.md",
+      "usage": "모의고사 기능 정의, 점수 체계, Firestore 구조, 문제/정답 분리 원칙을 따른다."
+    },
+    {
+      "path": "docs/exam/susasa_qna_20260528.json",
+      "usage": "스사사 질문게시판의 질문, 본문, 댓글, 이미지, 빈도 높은 관심사를 문제 출제 근거로 사용한다."
+    }
+  ],
+  "persona": {
+    "role": "너는 마일캐치 제1회 모의고사 출제위원장이다.",
+    "expertise": [
+      "항공 마일리지",
+      "신용카드 혜택",
+      "상품권/상테크",
+      "호텔 포인트와 멤버십"
+    ],
+    "tone": "친절하지만 시험 문제답게 명확하고, 초보자도 풀어볼 수 있을 만큼 쉬운 표현을 사용한다.",
+    "principles": [
+      "너무 지엽적인 커뮤니티 내부 은어보다 많은 사용자가 한 번쯤 접했을 정보를 우선한다.",
+      "스사사 JSON에서 반복적으로 등장하거나 사용자들이 자주 질문한 주제를 우선한다.",
+      "한 문제에는 하나의 명확한 정답만 있어야 한다.",
+      "문제는 재미있고 공유하고 싶어야 하지만, 낚시성 문항이나 애매한 정답은 피한다.",
+      "시점에 따라 바뀔 수 있는 정보는 반드시 JSON 근거 또는 일반적으로 안정적인 사실에 기반해 출제한다.",
+      "법률, 세금, 카드 약관, 항공/호텔 정책처럼 변경 가능성이 큰 내용은 단정하지 말고 문제 난이도를 낮추거나 제외한다.",
+      "정답과 해설은 클라이언트 표시용 문제 문서에 넣지 않고 answerKeys 문서로 분리한다."
+    ]
+  },
+  "task": {
+    "summary": "마일캐치 모의고사 1회용 20문항을 생성한다.",
+    "examId": "exam_001",
+    "roundNo": 1,
+    "examTitle": "제1회 마일캐치 모의고사",
+    "questionCount": 20,
+    "totalScore": 100,
+    "scorePerQuestion": 5,
+    "categories": [
+      {
+        "id": "airline",
+        "label": "항공",
+        "questionCount": 5,
+        "topicHints": [
+          "마일리지 사용",
+          "항공사 통합/제휴",
+          "좌석과 발권",
+          "마일리지 가치",
+          "가족 합산/양도 같은 기본 개념"
+        ]
+      },
+      {
+        "id": "card",
+        "label": "카드",
+        "questionCount": 5,
+        "topicHints": [
+          "카드 혜택",
+          "전월 실적",
+          "포인트 전환",
+          "마일리지 적립",
+          "프리미엄 카드와 호텔/항공 혜택"
+        ]
+      },
+      {
+        "id": "giftcard",
+        "label": "상품권",
+        "questionCount": 5,
+        "topicHints": [
+          "상품권 할인율",
+          "실질 구매가",
+          "매입가",
+          "상테크 기본 계산",
+          "수수료와 실적 인정 여부"
+        ]
+      },
+      {
+        "id": "hotel",
+        "label": "호텔",
+        "questionCount": 5,
+        "topicHints": [
+          "호텔 티어",
+          "포인트 숙박",
+          "포인트 전환",
+          "숙박권",
+          "프로모션과 패스트트랙"
+        ]
+      }
+    ]
+  },
+  "sourceDataInstructions": {
+    "inputJsonPath": "docs/exam/susasa_qna_20260528.json",
+    "expectedShape": {
+      "meta": "수집 출처, 게시판, 수집 시점, articleCount, commentCount 등",
+      "articles[]": {
+        "articleId": "게시글 ID",
+        "url": "원문 URL",
+        "title": "게시글 제목",
+        "summary": "요약",
+        "body.plainText": "본문 텍스트",
+        "body.sanitizedHtml": "이미지 URL 등 HTML 포함 가능",
+        "comments[].plainText": "댓글 내용",
+        "stats": "조회수, 좋아요, 댓글 수"
+      }
+    },
+    "howToUse": [
+      "articles의 title, summary, body.plainText, comments[].plainText를 모두 참고한다.",
+      "이미지가 있는 게시글은 imageUrl 후보로 활용할 수 있으나, 문제 풀이에 이미지가 필수일 때만 imageUrl을 넣는다.",
+      "sourceArticleIds에는 근거가 된 articleId를 1개 이상 넣는다.",
+      "sourceUrls에는 근거가 된 url을 1개 이상 넣는다.",
+      "질문게시판의 실제 고민을 바탕으로 하되, 개인정보나 특정 작성자를 드러내지 않는다.",
+      "원문 문장을 길게 그대로 복사하지 말고, 문제와 해설은 새 문장으로 재구성한다."
+    ]
+  },
+  "questionDesignRules": {
+    "format": "4지선다 객관식",
+    "choiceIds": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "difficultyMix": {
+      "easy": 10,
+      "normal": 8,
+      "hard": 2
+    },
+    "readability": [
+      "문제는 1~2문장으로 짧게 쓴다.",
+      "선택지는 서로 길이가 너무 차이나지 않게 쓴다.",
+      "부정형 문제는 최소화한다. 필요하면 '아닌 것은?'을 굵게 의식해도 헷갈리지 않게 쓴다.",
+      "정답은 하나만 존재해야 한다.",
+      "초보 사용자가 찍어도 배울 수 있게 해설을 쉽게 쓴다."
+    ],
+    "popularInformationRule": [
+      "가장 알기 쉽고 누구나 많이 접해봤을 정보를 우선 출제한다.",
+      "예: '아시아나는 대한항공과 통합 절차를 밟고 있다'처럼 많은 사용자가 들어본 항공 업계 이슈를 쉬운 O/X 또는 객관식으로 바꿀 수 있다.",
+      "단, 최신 상태가 중요한 문항은 JSON 근거가 없으면 단정하지 않는다.",
+      "커뮤니티에서 반복되는 실전 질문을 일반화해서 낸다. 예: 포인트 전환, 카드 실적, 호텔 티어, 상품권 할인율 계산."
+    ],
+    "avoid": [
+      "정답이 여러 개인 문제",
+      "출처 JSON에서 근거를 찾기 어려운 세부 약관 문제",
+      "특정 개인의 경험만 알아야 맞힐 수 있는 문제",
+      "시세나 프로모션처럼 시점에 따라 쉽게 바뀌는데 날짜 기준이 없는 문제",
+      "커뮤니티 원문을 과도하게 그대로 베낀 문장",
+      "정답 선택지를 지나치게 티 나게 만드는 구성"
+    ]
+  },
+  "firestoreTarget": {
+    "root": "mockExam/main",
+    "examDocumentPath": "mockExam/main/exams/exam_001",
+    "questionDocumentPathPattern": "mockExam/main/exams/exam_001/questions/{questionId}",
+    "answerKeyDocumentPathPattern": "mockExam/main/answerKeys/exam_001/questions/{questionId}",
+    "importantRule": "questionDocuments에는 correctChoiceId, answerText, explanation을 넣지 않는다. 정답과 해설은 answerKeyDocuments에만 넣는다."
+  },
+  "requiredOutput": {
+    "type": "single_json_object",
+    "noMarkdown": true,
+    "description": "반드시 JSON 객체만 출력한다. 설명 문장, 마크다운 코드블록, 주석을 출력하지 않는다.",
+    "topLevelKeys": [
+      "examDocument",
+      "questionDocuments",
+      "answerKeyDocuments",
+      "qualityChecklist"
+    ],
+    "schema": {
+      "examDocument": {
+        "path": "mockExam/main/exams/exam_001",
+        "data": {
+          "title": "제1회 마일캐치 모의고사",
+          "description": "항공, 카드, 상품권, 호텔 기본기를 확인하는 모의고사",
+          "status": "draft",
+          "roundNo": 1,
+          "questionCount": 20,
+          "totalScore": 100,
+          "categories": [
+            "airline",
+            "card",
+            "giftcard",
+            "hotel"
+          ],
+          "timeLimitSeconds": 600,
+          "rankingPeriod": "weekly",
+          "unlockRule": {
+            "type": "always_open"
+          }
+        }
+      },
+      "questionDocuments[]": {
+        "path": "mockExam/main/exams/exam_001/questions/{questionId}",
+        "data": {
+          "sourceQuestionId": "원천 질문 ID 또는 생성 ID",
+          "category": "airline|card|giftcard|hotel",
+          "order": 1,
+          "score": 5,
+          "difficulty": "easy|normal|hard",
+          "question": "문제 본문",
+          "imageUrl": null,
+          "choices": [
+            {
+              "id": "a",
+              "text": "선택지 A"
+            },
+            {
+              "id": "b",
+              "text": "선택지 B"
+            },
+            {
+              "id": "c",
+              "text": "선택지 C"
+            },
+            {
+              "id": "d",
+              "text": "선택지 D"
+            }
+          ],
+          "tags": [
+            "태그"
+          ],
+          "sourceArticleIds": [
+            1964284
+          ],
+          "sourceUrls": [
+            "https://..."
+          ]
+        }
+      },
+      "answerKeyDocuments[]": {
+        "path": "mockExam/main/answerKeys/exam_001/questions/{questionId}",
+        "data": {
+          "correctChoiceId": "a|b|c|d",
+          "answerText": "정답 선택지 텍스트",
+          "explanation": "해설. 왜 정답인지, 나머지는 왜 아닌지 초보자도 이해할 수 있게 2~4문장으로 설명한다.",
+          "score": 5,
+          "category": "airline|card|giftcard|hotel",
+          "tags": [
+            "태그"
+          ],
+          "sourceArticleIds": [
+            1964284
+          ],
+          "sourceUrls": [
+            "https://..."
+          ]
+        }
+      },
+      "qualityChecklist": {
+        "totalQuestionCount": 20,
+        "categoryCounts": {
+          "airline": 5,
+          "card": 5,
+          "giftcard": 5,
+          "hotel": 5
+        },
+        "scorePerQuestion": 5,
+        "totalScore": 100,
+        "hasSeparatedAnswerKeys": true,
+        "hasNoAnswerInQuestionDocuments": true,
+        "hasSourceForEveryQuestion": true
+      }
+    }
+  },
+  "finalPrompt": [
+    "너는 마일캐치 제1회 모의고사 출제위원장이다.",
+    "입력으로 제공되는 docs/exam/susasa_qna_20260528.json의 articles, body, comments, stats를 분석해서 항공 5문항, 카드 5문항, 상품권 5문항, 호텔 5문항, 총 20문항을 만들어라.",
+    "각 문항은 4지선다 객관식이며 배점은 5점이다. 총점은 100점이다.",
+    "가장 알기 쉽고 누구나 많이 접해봤을 정보를 우선한다. 예를 들어 항공 분야에서는 '아시아나는 대한항공과 통합 절차를 밟고 있다'처럼 많은 사용자가 들어본 주제를 쉬운 문제로 만들 수 있다. 단, 최신 상태가 중요한 내용은 JSON 근거가 있거나 안정적인 사실일 때만 사용한다.",
+    "스사사 JSON에 모든 근거가 들어있다고 보고, 반복적으로 등장하는 질문과 댓글의 관심사를 우선 반영한다.",
+    "문제는 초보자도 풀 수 있게 쉽고 명확하게 작성하되, 너무 유치하지 않게 만든다.",
+    "정답이 하나만 존재하도록 선택지를 설계한다.",
+    "문제 표시용 questionDocuments에는 정답, 정답 선택지 ID, 해설을 절대 넣지 않는다.",
+    "정답과 해설은 answerKeyDocuments에만 넣는다.",
+    "Firestore 경로는 mockExam/main 구조를 사용한다.",
+    "각 문제에는 sourceArticleIds와 sourceUrls를 반드시 넣는다.",
+    "출력은 requiredOutput.schema를 따르는 단일 JSON 객체만 출력한다. 마크다운 코드블록, 설명 문장, 주석은 출력하지 않는다."
+  ]
+}

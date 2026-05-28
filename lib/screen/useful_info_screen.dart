@@ -37,6 +37,7 @@ import 'deals/flight_deals_screen.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'giftcard_deals_screen.dart';
+import 'mock_exam/mock_exam_list_screen.dart';
 import 'point_stay_screen.dart';
 
 typedef _PostDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>;
@@ -53,6 +54,7 @@ const String _dealsQuickActionIconAsset = 'asset/icon/quick_deals.png';
 const String _cardQuickActionIconAsset = 'asset/icon/quick_card.png';
 const String _giftcardQuickActionIconAsset = 'asset/icon/quick_giftcard.png';
 const String _hotelQuickActionIconAsset = 'asset/icon/quick_hotel.png';
+const String _examQuickActionIconAsset = 'asset/icon/quick_exam.png';
 const int _pointStayMinimumRank = 2;
 const String _gradeGuidePostId = 'e466cdbe-2ab6-48c5-8060-c0950f6b84f6';
 const String _gradeGuidePostDateString = '20250825';
@@ -544,6 +546,17 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
           _QuickActionsSection(
             actions: [
               _QuickAction(
+                icon: Icons.quiz_outlined,
+                assetIcon: _examQuickActionIconAsset,
+                title: '마일고사',
+                subtitle: '랭킹 도전',
+                onTap: () => _trackQuickAction(
+                  action: 'mock_exam',
+                  targetScreen: 'mock_exam_list',
+                  open: _openMockExam,
+                ),
+              ),
+              _QuickAction(
                 icon: Icons.hotel_outlined,
                 assetIcon: _hotelQuickActionIconAsset,
                 title: '포숙',
@@ -934,6 +947,15 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     final openGuide = await _showPointStayAccessDialog();
     if (!mounted || openGuide != true) return;
     await _openGradeGuidePost();
+  }
+
+  void _openMockExam() {
+    if (FirebaseAuth.instance.currentUser == null) {
+      Fluttertoast.showToast(msg: '마일고사는 로그인 후 이용할 수 있습니다.');
+      _openProfileTabForLogin();
+      return;
+    }
+    _push(MockExamListScreen(onRequireLogin: _openProfileTabForLogin));
   }
 
   Future<Map<String, dynamic>?> _loadCurrentUserProfile() async {

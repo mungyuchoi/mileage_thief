@@ -7,6 +7,7 @@ import 'admin_category_manage_screen.dart';
 import 'admin_giftcard_deal_source_screen.dart';
 import 'admin_hotel_request_manage_screen.dart';
 import 'admin_insight_manage_screen.dart';
+import 'admin_mock_exam_manage_screen.dart';
 import 'admin_report_manage_screen.dart';
 import 'admin_scrap_upload_screen.dart';
 import 'admin_version_manage_screen.dart';
@@ -160,6 +161,12 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '콘테스트를 생성하고 관리합니다.',
                       icon: Icons.emoji_events_outlined,
                       onTap: () => _open(const ContestManageScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '마일고사 관리',
+                      description: '마일고사 회차의 공개, 잠금, 초안 상태를 관리합니다.',
+                      icon: Icons.quiz_outlined,
+                      onTap: () => _open(const AdminMockExamManageScreen()),
                     ),
                     _AdminMenuTile(
                       title: '신고 관리',

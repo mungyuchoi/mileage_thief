@@ -1,0 +1,1348 @@
+{
+  "examDocument": {
+    "path": "mockExam/main/exams/exam_002",
+    "data": {
+      "title": "제2회 마일캐치 모의고사",
+      "description": "이미지 문항과 실전 사례로 항공, 카드, 상품권, 호텔 기본기를 확인하는 모의고사",
+      "status": "locked",
+      "roundNo": 2,
+      "questionCount": 20,
+      "totalScore": 100,
+      "categories": [
+        "airline",
+        "card",
+        "giftcard",
+        "hotel"
+      ],
+      "timeLimitSeconds": 600,
+      "rankingPeriod": "weekly",
+      "unlockRule": {
+        "type": "always_open"
+      },
+      "sourceJsonPath": "docs/exam/susasa_qna_20260528.json",
+      "createdAt": "serverTimestamp",
+      "updatedAt": "serverTimestamp"
+    }
+  },
+  "questionDocuments": [
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q001",
+      "data": {
+        "questionId": "q001",
+        "sourceQuestionId": "susasa_1963982",
+        "category": "airline",
+        "order": 1,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 프레스티지 좌석도에서 날개 가까운 좌석을 고를 때, 가장 먼저 확인하면 좋은 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjFfMTE4/MDAxNzc5Mzc1MDIxMzg3.z4SoLbllVp-wkJSepnjuFEvLrNr6FYkytYYBw38l3eAg.zlGz8W0yQ9ftc2uNY7cFPvkPDIkVgCTfraIZsnVBMaMg.JPEG/1280_Screenshot_20260521_233727_Korean_Air.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "좌석도, 날개 위치, 실제 탑승 후기를 함께 본다"
+          },
+          {
+            "id": "b",
+            "text": "프레스티지는 어느 열이든 창밖 시야가 항상 같다"
+          },
+          {
+            "id": "c",
+            "text": "좌석 번호가 낮을수록 무조건 최신 좌석이다"
+          },
+          {
+            "id": "d",
+            "text": "기내식 메뉴를 보고 좌석을 먼저 정한다"
+          }
+        ],
+        "tags": [
+          "프레스티지",
+          "좌석도",
+          "날개뷰",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963982
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963982?boardtype=L&menuid=890&referrerAllArticles=false&page=5"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q002",
+      "data": {
+        "questionId": "q002",
+        "sourceQuestionId": "susasa_1964066",
+        "category": "airline",
+        "order": 2,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "마일리지 항공권 결제 화면에서 유류할증료가 0원처럼 보일 때 가장 적절한 태도는 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjNfMTYw/MDAxNzc5NTA1NzcxNDYw.oZbdlQn8m6EuaA88HxFu_MQSzkKH4fNd2hCL8EMp8Twg.k0fhljWDzgyx-JbkVT6B3CWtDT887ZUam0TmPbDpG3Qg.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "0원으로 보이면 모든 추가 비용이 영구히 면제된다"
+          },
+          {
+            "id": "b",
+            "text": "유류할증료는 모든 항공사와 노선에서 반드시 같다"
+          },
+          {
+            "id": "c",
+            "text": "오류일 수 있으니 최종 결제금액과 세금 조건을 확인한다"
+          },
+          {
+            "id": "d",
+            "text": "마일리지 항공권은 세금도 항상 마일로만 낸다"
+          }
+        ],
+        "tags": [
+          "유류할증료",
+          "마일리지발권",
+          "세금",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964066
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964066?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q003",
+      "data": {
+        "questionId": "q003",
+        "sourceQuestionId": "susasa_1959973_1964030",
+        "category": "airline",
+        "order": 3,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 유나이티드 항공권을 보며 대한항공 마일 적립을 기대할 때, 가장 맞는 설명은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMjZfOTgg/MDAxNzc0NTExNDg0MDY2.TE2OvXt4FU5G4cJagd9Jetf9H8wG0vJb0xveGmPGUucg.L7PT6aWiOXhRr_Oqx4x7hEy89-ps35K5rFmS8Zf_kckg.JPEG/IMG%EF%BC%BF6228.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "유나이티드는 스카이팀이므로 대한항공 적립이 항상 된다"
+          },
+          {
+            "id": "b",
+            "text": "유나이티드는 스카이팀이 아니므로 같은 방식으로 보면 안 된다"
+          },
+          {
+            "id": "c",
+            "text": "항공동맹과 예약 클래스는 마일 적립과 전혀 상관없다"
+          },
+          {
+            "id": "d",
+            "text": "좌석 위치가 좋으면 항공사와 무관하게 마일이 더 쌓인다"
+          }
+        ],
+        "tags": [
+          "항공동맹",
+          "스카이팀",
+          "제휴적립",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1959973,
+          1964030
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1959973?boardtype=L&menuid=890&referrerAllArticles=false&page=63",
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964030?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q004",
+      "data": {
+        "questionId": "q004",
+        "sourceQuestionId": "susasa_1960081",
+        "category": "airline",
+        "order": 4,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "가족 등록이 되어 있는데도 가족 마일 사용 화면이 예상과 다르다면, 가장 먼저 할 일은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMjhfMjc4/MDAxNzc0NjU2NDUxNzA3.x0k9cTsChy38ySll5t4iq6RWUrceEgpzwbozdZRRTY8g.lXZNaAiB6px4q_rb0uVZFw3T8QNp_kDaQbWMupPiqXUg.JPEG/Screenshot%EF%BC%BF20260328%EF%BC%BF090448%EF%BC%BFKorean_Air.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "가족 마일은 어떤 경우에도 사용할 수 없다고 본다"
+          },
+          {
+            "id": "b",
+            "text": "부족한 마일은 자동으로 현금처럼 충전된다고 본다"
+          },
+          {
+            "id": "c",
+            "text": "예약을 완료하면 가족 마일이 나중에 자동 합산된다"
+          },
+          {
+            "id": "d",
+            "text": "가족 등록, 차감 순서, 탑승자 조건을 다시 확인한다"
+          }
+        ],
+        "tags": [
+          "대한항공",
+          "가족마일",
+          "보너스항공권",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960081
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960081?boardtype=L&menuid=890&referrerAllArticles=false&page=62"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q005",
+      "data": {
+        "questionId": "q005",
+        "sourceQuestionId": "susasa_1964030",
+        "category": "airline",
+        "order": 5,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "제휴 항공사를 탔는데 대한항공 적립이 0마일로 보일 때 가장 먼저 의심할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "예약 클래스가 적립 대상에서 제외되었을 가능성"
+          },
+          {
+            "id": "b",
+            "text": "미국 국내선은 어느 항공사도 마일리지가 없다"
+          },
+          {
+            "id": "c",
+            "text": "제휴 항공사는 탑승 후 적립 확인을 할 필요가 없다"
+          },
+          {
+            "id": "d",
+            "text": "마일리지는 좌석 번호가 홀수일 때만 적립된다"
+          }
+        ],
+        "tags": [
+          "델타",
+          "예약클래스",
+          "마일리지적립"
+        ],
+        "sourceArticleIds": [
+          1964030
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964030?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q006",
+      "data": {
+        "questionId": "q006",
+        "sourceQuestionId": "susasa_1964270",
+        "category": "card",
+        "order": 6,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "편의점 앱 픽업 주문이 카드 특별적립으로 잡히지 않을 때 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjdfMTc2/MDAxNzc5ODY5NjEwMDEx.aKE-ierW4JRqxd3U_1MysxhgaHXdrysOjxKm-ahqonkg.C3z5Q7UqXGq7DsHWMxldtW0UkK8KuiYtQU4Zxs4vGaUg.JPEG/1779869313898.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "편의점 이름이 보이면 모든 앱 결제도 특별적립된다"
+          },
+          {
+            "id": "b",
+            "text": "앱 주문은 금액이 클수록 무조건 추가 적립된다"
+          },
+          {
+            "id": "c",
+            "text": "특별적립은 결제 다음 날 항상 수동으로 신청한다"
+          },
+          {
+            "id": "d",
+            "text": "카드사가 인식한 가맹점 업종과 결제 방식을 확인한다"
+          }
+        ],
+        "tags": [
+          "삼성앤마일리지",
+          "특별적립",
+          "가맹점업종",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964270
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964270?boardtype=L&menuid=890&referrerAllArticles=false&page=1"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q007",
+      "data": {
+        "questionId": "q007",
+        "sourceQuestionId": "susasa_1963975",
+        "category": "card",
+        "order": 7,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "카드 혜택에 '호텔/공항 각 월 3회 발렛 무료'라고 적혀 있다면 가장 안전한 해석은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjFfNTYg/MDAxNzc5MzY1MTk4NjE1.mGsjw9zcAreiLSldYnG-D807ns6fHUQZ6tNI1oj8_gQg.x5OH3cby2zndAa-gtwaJ2ixujAi0hSuG384jWEWFPCgg.PNG/%EC%8A%A4%ED%81%AC%EB%A6%B0%EC%83%B7_2026-05-21_%EC%98%A4%ED%9B%84_9.06.27.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "월 3회는 카드 보유 기간 전체 3회라는 뜻이다"
+          },
+          {
+            "id": "b",
+            "text": "월 한도와 별도 연간 한도 여부를 약관에서 함께 확인한다"
+          },
+          {
+            "id": "c",
+            "text": "공항 3회와 호텔 3회는 반드시 서로 합산된다"
+          },
+          {
+            "id": "d",
+            "text": "발렛 혜택은 전월실적과 이용처 조건을 보지 않아도 된다"
+          }
+        ],
+        "tags": [
+          "발렛파킹",
+          "카드혜택",
+          "월한도",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963975
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963975?boardtype=L&menuid=890&referrerAllArticles=false&page=5"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q008",
+      "data": {
+        "questionId": "q008",
+        "sourceQuestionId": "susasa_1964023",
+        "category": "card",
+        "order": 8,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "해외 결제를 앞두고 카드 Lock 화면을 봤을 때 가장 올바른 이해는 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjJfOTgg/MDAxNzc5NDI5Njg2MTY5.2cezim0e6uQpWJLmED6zHdsE-8teJuouLmVbGYxdROEg.AiQRoRSyL14A7AVWMzIhRRr62y_JL55FKEjyKAXk7mEg.PNG/IMG%EF%BC%BF4214.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Lock은 카드 디자인을 바꾸는 메뉴라 결제와 무관하다"
+          },
+          {
+            "id": "b",
+            "text": "모든 Lock을 켜두면 해외 결제가 더 잘 승인된다"
+          },
+          {
+            "id": "c",
+            "text": "어떤 결제 유형을 막는 설정인지 확인하고 필요한 것만 둔다"
+          },
+          {
+            "id": "d",
+            "text": "원화결제와 현지통화 결제는 수수료 차이가 없다"
+          }
+        ],
+        "tags": [
+          "해외결제",
+          "카드락",
+          "DCC",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964023
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964023?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q009",
+      "data": {
+        "questionId": "q009",
+        "sourceQuestionId": "susasa_1963867",
+        "category": "card",
+        "order": 9,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "지방세 납부용으로 카드를 새로 만들고 곧 해지하려는 계산에서 빠뜨리기 쉬운 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjBfOTYg/MDAxNzc5MjQ1NTU1MDg4.duaTvCbEa6_xtu-hhtS_R50uzK2TQTCxQ3E1_LHjCIQg.HBrkQDw_CNyCf9sp3-1jNZTALNz1zLS9SbjKc1gVOu0g.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "적립 제외, 연회비 환급, 혜택 회수 가능성"
+          },
+          {
+            "id": "b",
+            "text": "세금은 카드로 결제하면 항상 두 배 적립된다"
+          },
+          {
+            "id": "c",
+            "text": "카드 해지 후에도 바우처와 포인트는 무조건 유지된다"
+          },
+          {
+            "id": "d",
+            "text": "세금 납부는 전월실적 제외 여부를 볼 필요가 없다"
+          }
+        ],
+        "tags": [
+          "지방세",
+          "연회비",
+          "포인트적립",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963867
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963867?boardtype=L&menuid=890&referrerAllArticles=false&page=7"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q010",
+      "data": {
+        "questionId": "q010",
+        "sourceQuestionId": "susasa_1964210",
+        "category": "card",
+        "order": 10,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "프리미엄 여행 카드가 좋아 보일 때, 발급 전 가장 먼저 따져야 할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "연회비가 높을수록 무조건 이득이라는 점"
+          },
+          {
+            "id": "b",
+            "text": "카드 색상이 여행 분위기와 맞는지"
+          },
+          {
+            "id": "c",
+            "text": "한 장만 있으면 모든 소비처가 특별적립되는지"
+          },
+          {
+            "id": "d",
+            "text": "내 소비처와 여행 혜택을 실제로 쓸 가능성"
+          }
+        ],
+        "tags": [
+          "프리미엄카드",
+          "소비패턴",
+          "카드조합"
+        ],
+        "sourceArticleIds": [
+          1964210
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964210?boardtype=L&menuid=890&referrerAllArticles=false&page=2"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q011",
+      "data": {
+        "questionId": "q011",
+        "sourceQuestionId": "susasa_1963219",
+        "category": "giftcard",
+        "order": 11,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "백화점상품권을 카드로 사서 실적이나 마일리지를 기대할 때 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "상품권 봉투 색상이 카드사와 맞는지"
+          },
+          {
+            "id": "b",
+            "text": "백화점상품권은 모든 카드에서 무조건 적립된다"
+          },
+          {
+            "id": "c",
+            "text": "상품권 구매 가능 여부와 실적/적립 제외 조건"
+          },
+          {
+            "id": "d",
+            "text": "상품권은 결제 후 카드 승인 내역이 남지 않는다"
+          }
+        ],
+        "tags": [
+          "백화점상품권",
+          "실적인정",
+          "마일리지적립"
+        ],
+        "sourceArticleIds": [
+          1963219
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963219?boardtype=L&menuid=890&referrerAllArticles=false&page=18"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q012",
+      "data": {
+        "questionId": "q012",
+        "sourceQuestionId": "susasa_1963040",
+        "category": "giftcard",
+        "order": 12,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "사업자용 카드로 상품권을 살 때 월 100만원 한도 문제가 생긴다면, 가장 맞는 설명은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "사업자라는 말이 있으면 언제나 상품권 한도가 없다"
+          },
+          {
+            "id": "b",
+            "text": "개인카드, 사업자카드, 법인카드 성격에 따라 제한이 다를 수 있다"
+          },
+          {
+            "id": "c",
+            "text": "상품권 한도는 백화점마다 같아서 카드 종류와 무관하다"
+          },
+          {
+            "id": "d",
+            "text": "카드 앞면 글자만 보면 법인카드 여부를 항상 알 수 있다"
+          }
+        ],
+        "tags": [
+          "상품권한도",
+          "사업자카드",
+          "법인카드"
+        ],
+        "sourceArticleIds": [
+          1963040
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963040?boardtype=L&menuid=890&referrerAllArticles=false&page=21"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q013",
+      "data": {
+        "questionId": "q013",
+        "sourceQuestionId": "susasa_1958073",
+        "category": "giftcard",
+        "order": 13,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "상품권을 465,500원에 사서 460,000원을 회수하고 465마일을 얻었다면, 마일당 비용은 대략 얼마일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "약 11.8원"
+          },
+          {
+            "id": "b",
+            "text": "약 1.2원"
+          },
+          {
+            "id": "c",
+            "text": "약 55원"
+          },
+          {
+            "id": "d",
+            "text": "0원"
+          }
+        ],
+        "tags": [
+          "상테크",
+          "상품권",
+          "마일당비용",
+          "계산"
+        ],
+        "sourceArticleIds": [
+          1958073
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958073?boardtype=L&menuid=890&referrerAllArticles=false&page=92"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q014",
+      "data": {
+        "questionId": "q014",
+        "sourceQuestionId": "susasa_1960466",
+        "category": "giftcard",
+        "order": 14,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "카드 혜택으로 받는 식사권이나 금액권을 고를 때 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "금액이 더 큰 선택지는 조건과 무관하게 항상 유리하다"
+          },
+          {
+            "id": "b",
+            "text": "바우처는 일반 현금과 완전히 같은 방식으로 쓸 수 있다"
+          },
+          {
+            "id": "c",
+            "text": "후기가 없으면 유효기간도 없다고 보면 된다"
+          },
+          {
+            "id": "d",
+            "text": "사용처, 잔액 처리, 제외 조건"
+          }
+        ],
+        "tags": [
+          "바우처",
+          "금액권",
+          "식사권",
+          "사용조건"
+        ],
+        "sourceArticleIds": [
+          1960466
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960466?boardtype=L&menuid=890&referrerAllArticles=false&page=56"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q015",
+      "data": {
+        "questionId": "q015",
+        "sourceQuestionId": "susasa_1960464",
+        "category": "giftcard",
+        "order": 15,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "종이 상품권을 포인트로 전환한 뒤 원본을 처리할 때 가장 조심해야 할 점은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "포인트 전환 후 원본은 아무 곳에 버려도 안전하다"
+          },
+          {
+            "id": "b",
+            "text": "상품권은 포인트 전환 후에도 같은 금액으로 또 쓸 수 있다"
+          },
+          {
+            "id": "c",
+            "text": "전환 내역을 확인하고 원본 바코드가 타인에게 노출되지 않게 한다"
+          },
+          {
+            "id": "d",
+            "text": "고객취소 표시가 떠도 확인할 필요가 없다"
+          }
+        ],
+        "tags": [
+          "롯데상품권",
+          "포인트전환",
+          "바코드보안",
+          "취소"
+        ],
+        "sourceArticleIds": [
+          1960464
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960464?boardtype=L&menuid=890&referrerAllArticles=false&page=56"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q016",
+      "data": {
+        "questionId": "q016",
+        "sourceQuestionId": "susasa_1964299",
+        "category": "hotel",
+        "order": 16,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "아코르 패스트트랙이 계정에 활성화된 것처럼 보일 때 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjhfODMg/MDAxNzc5OTA0OTEwMzA0.jR1o0HjYwqkTzFkdmrBGv8VSX8ohY1BBpBRMDjuwPcgg.8QJKsthjNXQMdrFRedXk6KD6dHYXTtslEO1ZduS4Czog.JPEG/output%EF%BC%BF755703121.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "활성화 표시만 있으면 바로 플래티넘 확정"
+          },
+          {
+            "id": "b",
+            "text": "숙박 기간, 예약 경로, 인정 숙박 조건"
+          },
+          {
+            "id": "c",
+            "text": "카드 발급만 하면 모든 호텔 브랜드 티어가 자동 상승"
+          },
+          {
+            "id": "d",
+            "text": "패스트트랙은 예약 경로와 전혀 관계없음"
+          }
+        ],
+        "tags": [
+          "아코르",
+          "패스트트랙",
+          "호텔티어",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964299
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964299?boardtype=L&menuid=890&referrerAllArticles=false&page=1"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q017",
+      "data": {
+        "questionId": "q017",
+        "sourceQuestionId": "susasa_1964053",
+        "category": "hotel",
+        "order": 17,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "힐튼 포인트로 5박 예약을 고민할 때, 4+1 혜택 판단에 가장 중요한 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MjNfODcg/MDAxNzc5NDg2MzY4NzYy.0iGuCSP1OBNht3AsYhISloiN0UIwWk5tkCEc2DOn8I0g.y5fwawO3GBcT1ZxiKBt6kquJ3nMMUD98mgX1OD5uj6Yg.PNG/IMG%EF%BC%BF1334.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "포인트 예약 가능 여부와 스탠다드 리워드 조건"
+          },
+          {
+            "id": "b",
+            "text": "현금 요금이 높으면 모든 객실이 자동으로 4+1 적용"
+          },
+          {
+            "id": "c",
+            "text": "포인트를 옮기기 전에는 객실 조건을 볼 필요가 없음"
+          },
+          {
+            "id": "d",
+            "text": "프리미엄 객실이 섞여도 항상 무료 1박이 적용됨"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "포인트숙박",
+          "4박5일",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964053
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964053?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q018",
+      "data": {
+        "questionId": "q018",
+        "sourceQuestionId": "susasa_1960026",
+        "category": "hotel",
+        "order": 18,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "메리어트 프로모션의 '브랜드당 1 보너스 엘리트 숙박' 문구는 보통 어떻게 이해해야 할까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMjdfMzUg/MDAxNzc0NTc2NzQwMDQ3.ZUwUiMU616Zj34uOoZLw16cAe7DrzixhxswfxFauc94g.GgQF41nLLLpULB34ExY-JAtr7BeKSbD56RDmKjnIlHUg.JPEG/1774576671695.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "한 호텔에 10박하면 보너스 숙박도 10박이 붙는다"
+          },
+          {
+            "id": "b",
+            "text": "브랜드당이라는 말은 국가별이라는 뜻이다"
+          },
+          {
+            "id": "c",
+            "text": "같은 브랜드에서는 조건 충족 시 보너스 숙박 1박까지만 본다"
+          },
+          {
+            "id": "d",
+            "text": "프로모션 문구는 예약 경로와 무관하게 모두 적용된다"
+          }
+        ],
+        "tags": [
+          "메리어트",
+          "프로모션",
+          "엘리트나이트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960026
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960026?boardtype=L&menuid=890&referrerAllArticles=false&page=63"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q019",
+      "data": {
+        "questionId": "q019",
+        "sourceQuestionId": "susasa_1963859",
+        "category": "hotel",
+        "order": 19,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "호텔 티어 보유자가 직접 투숙하지 않고 가족만 가는 경우, 티어 혜택은 어떻게 보는 것이 안전할까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "예약자 이름만 있으면 가족에게 모든 티어 혜택이 자동 이전된다"
+          },
+          {
+            "id": "b",
+            "text": "포인트를 보탠 예약은 체크인 신분 확인을 하지 않는다"
+          },
+          {
+            "id": "c",
+            "text": "라운지와 조식은 동반자가 혼자 가도 항상 제공된다"
+          },
+          {
+            "id": "d",
+            "text": "회원 본인 투숙 조건이 핵심이라 혜택 보장을 기대하면 위험하다"
+          }
+        ],
+        "tags": [
+          "메리어트",
+          "플래티넘",
+          "티어혜택",
+          "본인투숙"
+        ],
+        "sourceArticleIds": [
+          1963859
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963859?boardtype=L&menuid=890&referrerAllArticles=false&page=7"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_002/questions/q020",
+      "data": {
+        "questionId": "q020",
+        "sourceQuestionId": "susasa_1961976",
+        "category": "hotel",
+        "order": 20,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "힐튼 무료숙박권으로 예약 가능한 객실을 판단할 때 가장 중요한 기준은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "디럭스라는 이름이 붙으면 모든 무료숙박권에서 제외된다"
+          },
+          {
+            "id": "b",
+            "text": "방 이름보다 스탠다드 리워드로 열리는 객실인지 확인한다"
+          },
+          {
+            "id": "c",
+            "text": "현금가가 비싼 방일수록 무료숙박권 예약이 더 쉽다"
+          },
+          {
+            "id": "d",
+            "text": "포인트 조회 화면을 보지 않아도 객실 가능 여부를 알 수 있다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "무료숙박권",
+          "스탠다드리워드"
+        ],
+        "sourceArticleIds": [
+          1961976
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1961976?boardtype=L&menuid=890&referrerAllArticles=false&page=36"
+        ]
+      }
+    }
+  ],
+  "answerKeyDocuments": [
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q001",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "좌석도, 날개 위치, 실제 탑승 후기를 함께 본다",
+        "explanation": "좌석 선택은 좌석 번호만 보고 결정하기보다 기종별 좌석도, 날개와 창문의 위치, 실제 탑승 후기까지 함께 보는 것이 안전합니다. 같은 프레스티지라도 열과 위치에 따라 창밖 시야나 동선 체감이 달라질 수 있습니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "프레스티지",
+          "좌석도",
+          "날개뷰",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963982
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963982?boardtype=L&menuid=890&referrerAllArticles=false&page=5"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q002",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "오류일 수 있으니 최종 결제금액과 세금 조건을 확인한다",
+        "explanation": "유류할증료가 0원으로 보이는 경우 실제로 노선이나 출발국 기준상 없을 수도 있고, 화면 표시나 시스템 이슈일 수도 있습니다. 마일리지 발권은 마일 차감 외에 세금과 수수료가 따로 붙을 수 있으니 최종 결제금액을 확인해야 합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "유류할증료",
+          "마일리지발권",
+          "세금",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964066
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964066?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q003",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "유나이티드는 스카이팀이 아니므로 같은 방식으로 보면 안 된다",
+        "explanation": "대한항공과 델타는 스카이팀 관계로 자주 함께 언급되지만, 유나이티드는 스카이팀이 아니라 스타얼라이언스 항공사입니다. 항공사 제휴와 동맹은 마일 적립 가능 여부에 큰 영향을 주므로 항공사와 예약 클래스를 함께 확인해야 합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "항공동맹",
+          "스카이팀",
+          "제휴적립",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1959973,
+          1964030
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1959973?boardtype=L&menuid=890&referrerAllArticles=false&page=63",
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964030?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q004",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "가족 등록, 차감 순서, 탑승자 조건을 다시 확인한다",
+        "explanation": "가족 마일 사용은 가족 등록 여부만으로 끝나지 않고, 실제 예약 화면에서 차감 순서나 탑승자 조건이 어떻게 적용되는지도 확인해야 합니다. 화면이 예상과 다르면 고객센터나 공식 안내로 현재 규칙을 확인하는 편이 안전합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "대한항공",
+          "가족마일",
+          "보너스항공권",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960081
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960081?boardtype=L&menuid=890&referrerAllArticles=false&page=62"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q005",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "예약 클래스가 적립 대상에서 제외되었을 가능성",
+        "explanation": "제휴 항공사를 탔다고 해서 모든 운임이 항상 적립되는 것은 아닙니다. 특히 할인 운임이나 특정 예약 클래스는 대한항공 적립률이 0일 수 있으므로 탑승 전후로 적립표와 예약 클래스를 확인해야 합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "델타",
+          "예약클래스",
+          "마일리지적립"
+        ],
+        "sourceArticleIds": [
+          1964030
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964030?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q006",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "카드사가 인식한 가맹점 업종과 결제 방식을 확인한다",
+        "explanation": "편의점 앱 주문이나 픽업 결제는 실제 매장 방문 결제와 다른 가맹점 업종으로 잡힐 수 있습니다. 카드 특별적립은 카드사가 인식한 업종과 결제 방식에 따라 달라지므로 적립 조건과 승인 내역을 먼저 확인해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "삼성앤마일리지",
+          "특별적립",
+          "가맹점업종",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964270
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964270?boardtype=L&menuid=890&referrerAllArticles=false&page=1"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q007",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "월 한도와 별도 연간 한도 여부를 약관에서 함께 확인한다",
+        "explanation": "월 3회는 보통 매월 사용할 수 있는 횟수 제한을 뜻하지만, 별도의 연간 한도나 이용처별 조건이 함께 붙을 수 있습니다. 카드 혜택은 짧은 안내 문구만 보지 말고 약관의 월 한도, 연 한도, 전월실적 조건을 함께 봐야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "발렛파킹",
+          "카드혜택",
+          "월한도",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963975
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963975?boardtype=L&menuid=890&referrerAllArticles=false&page=5"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q008",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "어떤 결제 유형을 막는 설정인지 확인하고 필요한 것만 둔다",
+        "explanation": "카드 Lock은 특정 결제 유형을 막는 보안 설정입니다. 해외 결제 전에는 원화결제 차단, 해외 오프라인 결제, 온라인 결제 등 각 항목이 무엇을 막는지 확인하고 내 사용 계획에 맞게 설정해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "해외결제",
+          "카드락",
+          "DCC",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964023
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964023?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q009",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "적립 제외, 연회비 환급, 혜택 회수 가능성",
+        "explanation": "세금 납부는 금액이 커서 포인트 적립 기회처럼 보이지만, 카드별로 적립 제외나 혜택 회수 조건이 있을 수 있습니다. 카드를 곧 해지할 계획이라면 연회비 환급, 이미 받은 혜택 차감, 포인트 유지 조건까지 함께 계산해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "지방세",
+          "연회비",
+          "포인트적립",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963867
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963867?boardtype=L&menuid=890&referrerAllArticles=false&page=7"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q010",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "내 소비처와 여행 혜택을 실제로 쓸 가능성",
+        "explanation": "프리미엄 카드의 적립률이나 바우처가 좋아 보여도 실제 소비처와 여행 패턴이 맞지 않으면 연회비를 회수하기 어렵습니다. 카드 조합은 혜택 이름보다 내가 반복해서 쓰는 소비처와 실제 사용 가능성을 기준으로 봐야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "프리미엄카드",
+          "소비패턴",
+          "카드조합"
+        ],
+        "sourceArticleIds": [
+          1964210
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964210?boardtype=L&menuid=890&referrerAllArticles=false&page=2"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q011",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "상품권 구매 가능 여부와 실적/적립 제외 조건",
+        "explanation": "상품권은 카드로 결제가 되더라도 실적이나 적립에서 제외될 수 있습니다. 상테크나 마일리지 적립을 기대한다면 구매 가능 여부, 월 한도, 실적 인정, 마일리지 적립 제외 조건을 카드별로 확인해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "백화점상품권",
+          "실적인정",
+          "마일리지적립"
+        ],
+        "sourceArticleIds": [
+          1963219
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963219?boardtype=L&menuid=890&referrerAllArticles=false&page=18"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q012",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "개인카드, 사업자카드, 법인카드 성격에 따라 제한이 다를 수 있다",
+        "explanation": "사업자용이라는 이름이 붙어도 실제로는 개인신용카드처럼 취급되어 상품권 구매 한도가 걸릴 수 있습니다. 법인카드, 법인개별카드, 개인사업자용 개인카드는 조건이 다를 수 있으니 카드 성격을 정확히 확인해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "상품권한도",
+          "사업자카드",
+          "법인카드"
+        ],
+        "sourceArticleIds": [
+          1963040
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963040?boardtype=L&menuid=890&referrerAllArticles=false&page=21"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q013",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "약 11.8원",
+        "explanation": "465,500원에 사서 460,000원을 회수했다면 현금 기준 손실은 5,500원입니다. 이 비용으로 465마일을 얻은 것이므로 5,500원을 465마일로 나누면 마일당 약 11.8원입니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "상테크",
+          "상품권",
+          "마일당비용",
+          "계산"
+        ],
+        "sourceArticleIds": [
+          1958073
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958073?boardtype=L&menuid=890&referrerAllArticles=false&page=92"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q014",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "사용처, 잔액 처리, 제외 조건",
+        "explanation": "금액이 더 큰 바우처라도 내가 갈 수 있는 매장에서 쓸 수 없거나 잔액 처리가 불리하면 체감 가치는 낮아집니다. 식사권, 금액권, 바우처는 일반 상품권과 조건이 다를 수 있으므로 사용처와 제외 조건을 먼저 확인해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "바우처",
+          "금액권",
+          "식사권",
+          "사용조건"
+        ],
+        "sourceArticleIds": [
+          1960466
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960466?boardtype=L&menuid=890&referrerAllArticles=false&page=56"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q015",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "전환 내역을 확인하고 원본 바코드가 타인에게 노출되지 않게 한다",
+        "explanation": "상품권을 포인트로 전환한 뒤에도 원본 바코드나 번호가 노출되면 취소나 확인 문제가 생길 수 있습니다. 전환 내역을 확인하고, 원본은 타인이 주워서 접근할 수 없도록 안전하게 폐기하거나 보관해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "롯데상품권",
+          "포인트전환",
+          "바코드보안",
+          "취소"
+        ],
+        "sourceArticleIds": [
+          1960464
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960464?boardtype=L&menuid=890&referrerAllArticles=false&page=56"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q016",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "숙박 기간, 예약 경로, 인정 숙박 조건",
+        "explanation": "패스트트랙은 화면에 활성화 표시가 보인다고 해서 등급 달성이 확정되는 구조로 보면 안 됩니다. 숙박 기간, 예약 경로, 인정 숙박 여부, 프로모션 세부 조건을 확인해야 실제로 티어 달성에 반영되는지 알 수 있습니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "아코르",
+          "패스트트랙",
+          "호텔티어",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964299
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964299?boardtype=L&menuid=890&referrerAllArticles=false&page=1"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q017",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "포인트 예약 가능 여부와 스탠다드 리워드 조건",
+        "explanation": "힐튼 포인트 숙박은 원하는 날짜에 포인트 예약 가능한 객실이 열려 있어야 판단할 수 있습니다. 4+1 같은 혜택은 객실 유형과 포인트 예약 조건에 영향을 받으므로, 현금가만 보지 말고 스탠다드 리워드 여부를 확인해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "포인트숙박",
+          "4박5일",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1964053
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964053?boardtype=L&menuid=890&referrerAllArticles=false&page=4"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q018",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "같은 브랜드에서는 조건 충족 시 보너스 숙박 1박까지만 본다",
+        "explanation": "'브랜드당 1'이라는 문구는 같은 브랜드에서 여러 박을 해도 보너스 인정이 제한될 수 있다는 뜻으로 이해해야 합니다. 프로모션은 브랜드, 기간, 예약 경로, 적립 조건이 중요하므로 문구를 그대로 여러 박으로 확대해석하면 안 됩니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "메리어트",
+          "프로모션",
+          "엘리트나이트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960026
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960026?boardtype=L&menuid=890&referrerAllArticles=false&page=63"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q019",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "회원 본인 투숙 조건이 핵심이라 혜택 보장을 기대하면 위험하다",
+        "explanation": "호텔 티어 혜택은 보통 티어 보유 회원 본인의 예약과 투숙을 기준으로 적용됩니다. 가족만 투숙하는 경우 체크인 자체나 조식, 라운지, 업그레이드 혜택이 보장되지 않을 수 있으므로 호텔에 사전 확인해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "메리어트",
+          "플래티넘",
+          "티어혜택",
+          "본인투숙"
+        ],
+        "sourceArticleIds": [
+          1963859
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963859?boardtype=L&menuid=890&referrerAllArticles=false&page=7"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_002/questions/q020",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "방 이름보다 스탠다드 리워드로 열리는 객실인지 확인한다",
+        "explanation": "무료숙박권 사용 가능 여부는 방 이름이 디럭스인지 스탠다드인지보다 포인트 예약에서 어떤 리워드 유형으로 열리는지가 더 중요합니다. 같은 이름의 객실이라도 호텔과 날짜에 따라 스탠다드 리워드 또는 프리미엄 리워드로 다르게 보일 수 있습니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "무료숙박권",
+          "스탠다드리워드"
+        ],
+        "sourceArticleIds": [
+          1961976
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1961976?boardtype=L&menuid=890&referrerAllArticles=false&page=36"
+        ]
+      }
+    }
+  ],
+  "qualityChecklist": {
+    "totalQuestionCount": 20,
+    "answerKeyCount": 20,
+    "categoryCounts": {
+      "airline": 5,
+      "card": 5,
+      "giftcard": 5,
+      "hotel": 5
+    },
+    "difficultyCounts": {
+      "easy": 10,
+      "normal": 8,
+      "hard": 2
+    },
+    "imageQuestionCount": 11,
+    "scorePerQuestion": 5,
+    "totalScore": 100,
+    "hasSeparatedAnswerKeys": true,
+    "hasNoAnswerInQuestionDocuments": true,
+    "hasSourceForEveryQuestion": true,
+    "firestoreRoot": "mockExam/main",
+    "sourceJsonPath": "docs/exam/susasa_qna_20260528.json"
+  }
+}

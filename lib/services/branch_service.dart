@@ -8,6 +8,7 @@ import '../screen/community_detail_screen.dart';
 import '../screen/contest_detail_screen.dart';
 import '../screen/giftcard_deals_screen.dart';
 import '../screen/giftcard_rates_screen.dart';
+import '../screen/mock_exam/mock_exam_list_screen.dart';
 import '../screen/giftcard_settlement_screen.dart';
 import '../screen/point_stay_screen.dart';
 import 'analytics_service.dart';
@@ -166,6 +167,16 @@ class BranchService {
       return;
     }
 
+    final mockExamId =
+        data['examId']?.toString() ?? _mockExamIdFromLinkValue(linkValue);
+    if (_isMockExamDestination(destination) ||
+        _isMockExamDestination(linkValue) ||
+        mockExamId != null) {
+      debugPrint('실제 딥링크 클릭 감지 - 마일고사로 이동: $mockExamId');
+      _navigateToMockExamList();
+      return;
+    }
+
     // 게시글 딥링크 처리
     final postId = data['postId']?.toString();
     final dateString = data['dateString']?.toString();
@@ -262,6 +273,16 @@ class BranchService {
     if (_isPointStayDestination(value)) {
       _logInternalDeepLinkOpen('point_stay');
       _navigateToPointStay(context: context);
+      return true;
+    }
+
+    if (_isMockExamDestination(value) ||
+        _mockExamIdFromLinkValue(value) != null) {
+      _logInternalDeepLinkOpen(
+        'mock_exam',
+        entityId: _mockExamIdFromLinkValue(value),
+      );
+      _navigateToMockExamList(context: context);
       return true;
     }
 
@@ -372,6 +393,18 @@ class BranchService {
         normalized == '/hotel/point-stay';
   }
 
+  bool _isMockExamDestination(String? value) {
+    if (value == null) return false;
+    final normalized =
+        value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+    return normalized == 'mock-exam' ||
+        normalized == 'mockexam' ||
+        normalized == 'mile-exam' ||
+        normalized == 'milecatch-exam' ||
+        normalized == 'mock/exam' ||
+        normalized == '/mock-exam';
+  }
+
   bool _isCommunityDestination(String? value) {
     if (value == null) return false;
     final normalized =
@@ -472,6 +505,19 @@ class BranchService {
           uri.queryParameters['giftcardDealId'] ??
           uri.queryParameters['id'];
       return dealId?.trim().isNotEmpty == true ? dealId!.trim() : null;
+    }
+    return null;
+  }
+
+  String? _mockExamIdFromLinkValue(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    const prefixes = ['mock-exam:', 'mock_exam:', 'mile-exam:'];
+    for (final prefix in prefixes) {
+      if (trimmed.toLowerCase().startsWith(prefix)) {
+        final id = trimmed.substring(prefix.length).trim();
+        return id.isEmpty ? null : id;
+      }
     }
     return null;
   }
@@ -770,6 +816,21 @@ class BranchService {
     );
   }
 
+  void _navigateToMockExamList({
+    BuildContext? context,
+  }) {
+    const screen = MockExamListScreen();
+    if (context != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
   String _communityBoardNameFor(String boardId, String? providedName) {
     final trimmedName = providedName?.trim();
     if (trimmedName != null && trimmedName.isNotEmpty) return trimmedName;
@@ -1049,6 +1110,62 @@ class BranchService {
       }
     } catch (e) {
       debugPrint('Branch 채팅 링크 생성 오류: $e');
+      return null;
+    }
+  }
+
+  /// 마일고사 결과 공유 링크 생성
+  Future<String?> createMockExamShareLink({
+    required String examId,
+    required String attemptId,
+    required int roundNo,
+    required int score,
+    String? referrerUid,
+    String? title,
+    String? description,
+  }) async {
+    try {
+      final campaign = 'mock_exam_round_$roundNo';
+      final buo = BranchUniversalObject(
+        canonicalIdentifier: 'mock_exam_${examId}_$attemptId',
+        title: title ?? '마일캐치 마일고사',
+        contentDescription: description ?? '마일캐치 마일고사에서 내 점수를 확인해보세요!',
+        contentMetadata: BranchContentMetaData()
+          ..addCustomMetadata('destination', 'mock-exam')
+          ..addCustomMetadata('screen', 'mock_exam_list')
+          ..addCustomMetadata('path', '/mock-exam')
+          ..addCustomMetadata('linkValue', 'mock-exam:$examId')
+          ..addCustomMetadata('examId', examId)
+          ..addCustomMetadata('attemptId', attemptId)
+          ..addCustomMetadata('roundNo', roundNo)
+          ..addCustomMetadata('sharedScore', score)
+          ..addCustomMetadata('campaign', campaign),
+      );
+
+      if (referrerUid != null && referrerUid.trim().isNotEmpty) {
+        buo.contentMetadata
+            ?.addCustomMetadata('referrerUid', referrerUid.trim());
+      }
+
+      final lp = BranchLinkProperties(
+        channel: 'mock_exam',
+        feature: 'sharing',
+        campaign: campaign,
+      );
+
+      final response = await FlutterBranchSdk.getShortUrl(
+        buo: buo,
+        linkProperties: lp,
+      );
+
+      if (response.success) {
+        debugPrint('Branch 마일고사 링크 생성 성공: ${response.result}');
+        return response.result;
+      }
+      debugPrint('Branch 마일고사 링크 생성 실패: ${response.errorMessage}');
+      return null;
+    } catch (e) {
+      debugPrint('Branch 마일고사 링크 생성 오류: $e');
       return null;
     }
   }
