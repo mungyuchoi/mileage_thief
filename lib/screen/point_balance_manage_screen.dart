@@ -79,7 +79,7 @@ class _PointBalanceManageScreenState extends State<PointBalanceManageScreen> {
 
   Future<void> _save() async {
     if (_saving) return;
-    FocusScope.of(context).unfocus();
+    _dismissKeyboard();
     setState(() => _saving = true);
     try {
       final balancesByBrandId = <String, int>{};
@@ -112,65 +112,74 @@ class _PointBalanceManageScreenState extends State<PointBalanceManageScreen> {
     }
   }
 
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: McColors.background,
-      appBar: AppBar(
-        title: const Text(
-          '포인트 관리',
-          style: TextStyle(fontWeight: FontWeight.w900),
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: _dismissKeyboard,
+      child: Scaffold(
+        backgroundColor: McColors.background,
+        appBar: AppBar(
+          title: const Text(
+            '포인트 관리',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.4,
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.4,
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                  child: _buildCategoryTabs(),
-                ),
-                Expanded(child: _buildBrandList()),
-              ],
-            ),
-      bottomNavigationBar: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 36),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _loading || _saving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: McColors.accent,
-                disabledBackgroundColor: Colors.grey[300],
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  Container(
+                    color: Colors.white,
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                    child: _buildCategoryTabs(),
+                  ),
+                  Expanded(child: _buildBrandList()),
+                ],
               ),
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        bottomNavigationBar: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 36),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _loading || _saving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: McColors.accent,
+                  disabledBackgroundColor: Colors.grey[300],
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        '저장',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    )
-                  : const Text(
-                      '저장',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+              ),
             ),
           ),
         ),
@@ -191,7 +200,10 @@ class _PointBalanceManageScreenState extends State<PointBalanceManageScreen> {
           final selected = _selectedCategory == category;
           return Expanded(
             child: InkWell(
-              onTap: () => setState(() => _selectedCategory = category),
+              onTap: () {
+                _dismissKeyboard();
+                setState(() => _selectedCategory = category);
+              },
               borderRadius: BorderRadius.circular(7),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
@@ -228,6 +240,7 @@ class _PointBalanceManageScreenState extends State<PointBalanceManageScreen> {
   Widget _buildBrandList() {
     final brands = PointBrandCatalog.byCategory(_selectedCategory);
     return ListView.separated(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       itemBuilder: (context, index) {
         return _PointBalanceBrandRow(
@@ -235,6 +248,7 @@ class _PointBalanceManageScreenState extends State<PointBalanceManageScreen> {
           controller: _controllers[brands[index].id]!,
           selectedRepresentative: _representativesByCategory[_selectedCategory],
           onRepresentativeChanged: (brandId) {
+            _dismissKeyboard();
             setState(() {
               _representativesByCategory[_selectedCategory] = brandId;
             });
