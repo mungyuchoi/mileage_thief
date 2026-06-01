@@ -1,0 +1,9 @@
+{
+  "userId": "SKYPASS_ID",
+  "password": "PASSWORD",
+  "traveler": {
+    "fqtvNumber": "123456789012",
+    "lastName": "LAST",
+    "firstName": "FIRST"
+  }
+}

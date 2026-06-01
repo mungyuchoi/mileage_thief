@@ -249,7 +249,7 @@ class _MockExamTakeScreenState extends State<MockExamTakeScreen> {
               color: Colors.white,
               child: SafeArea(
                 top: false,
-                bottom: false,
+                bottom: true,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                   child: SizedBox(

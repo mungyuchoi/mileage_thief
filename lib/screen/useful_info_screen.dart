@@ -31,12 +31,12 @@ import 'card_catalog_screen.dart';
 import 'card_hub_screen.dart';
 import 'community_chat_screen.dart';
 import 'community_detail_screen.dart';
-import 'dan_screen.dart';
 import 'deals/deals_screen.dart';
 import 'deals/flight_deals_screen.dart';
 import 'gift/gift_buy_screen.dart';
 import 'gift/gift_sell_screen.dart';
 import 'giftcard_deals_screen.dart';
+import 'korean_air_award_dashboard_screen.dart';
 import 'mock_exam/mock_exam_list_screen.dart';
 import 'point_stay_screen.dart';
 
@@ -49,7 +49,7 @@ typedef OpenCommunityCallback = void Function({
 });
 
 const String _chatQuickActionIconAsset = 'asset/icon/quick_chat.png';
-const String _koreanAirQuickActionIconAsset = 'asset/icon/quick_korean_air.png';
+const String _koreanAirQuickActionIconAsset = 'asset/img/app_dan.png';
 const String _dealsQuickActionIconAsset = 'asset/icon/quick_deals.png';
 const String _cardQuickActionIconAsset = 'asset/icon/quick_card.png';
 const String _giftcardQuickActionIconAsset = 'asset/icon/quick_giftcard.png';
@@ -557,6 +557,17 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                 ),
               ),
               _QuickAction(
+                icon: Icons.airplane_ticket_outlined,
+                assetIcon: _koreanAirQuickActionIconAsset,
+                title: '대한항공',
+                subtitle: '보너스석',
+                onTap: () => _trackQuickAction(
+                  action: 'korean_air_award_dashboard',
+                  targetScreen: 'korean_air_award_dashboard',
+                  open: () => _push(const KoreanAirAwardDashboardScreen()),
+                ),
+              ),
+              _QuickAction(
                 icon: Icons.hotel_outlined,
                 assetIcon: _hotelQuickActionIconAsset,
                 title: '포숙',
@@ -611,17 +622,6 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
                   action: 'deals',
                   targetScreen: 'deals',
                   open: () => _push(const DealsScreen()),
-                ),
-              ),
-              _QuickAction(
-                icon: Icons.airplane_ticket_outlined,
-                assetIcon: _koreanAirQuickActionIconAsset,
-                title: '대한항공',
-                subtitle: '마일리지 검색',
-                onTap: () => _trackQuickAction(
-                  action: 'dan_mileage_search',
-                  targetScreen: 'dan_mileage_search',
-                  open: () => _push(const SearchDanScreen()),
                 ),
               ),
               _QuickAction(

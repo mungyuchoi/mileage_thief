@@ -1,0 +1,1346 @@
+{
+  "examDocument": {
+    "path": "mockExam/main/exams/exam_005",
+    "data": {
+      "title": "제5회 마일캐치 모의고사",
+      "description": "실전 사례로 항공, 카드, 상품권, 호텔 판단력을 확인하는 모의고사",
+      "status": "locked",
+      "roundNo": 5,
+      "questionCount": 20,
+      "totalScore": 100,
+      "categories": [
+        "airline",
+        "card",
+        "giftcard",
+        "hotel"
+      ],
+      "timeLimitSeconds": 600,
+      "rankingPeriod": "weekly",
+      "unlockRule": {
+        "type": "always_open"
+      },
+      "sourceJsonPath": "docs/exam/susasa_qna_20260529.json",
+      "createdAt": "serverTimestamp",
+      "updatedAt": "serverTimestamp"
+    }
+  },
+  "questionDocuments": [
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q001",
+      "data": {
+        "questionId": "q001",
+        "sourceQuestionId": "susasa_1953201",
+        "category": "airline",
+        "order": 1,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 미국 입국 후 국내선으로 갈아타는 일정에서 환승 시간이 2시간 안팎으로 줄었습니다. 가장 실전적인 판단은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAxMDhfMTM3/MDAxNzY3ODQ3NzU3Mjk2.3MdUZQCcYrScoaAkdGKxW8QamsLpFmse5UalxEBcahIg.hiWxrurAL9O9ng-AIn51FeSXCNnm6h0jaBeRUD1Orh4g.JPEG/123.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "같은 예약이면 미국 입국 심사와 수하물 재위탁이 생략되므로 그대로 확약한다."
+          },
+          {
+            "id": "b",
+            "text": "2시간이면 어느 미국 공항에서도 충분하므로 터미널 이동은 고려하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "입국 심사, 수하물 회수와 재위탁, 터미널 이동, 지연 가능성을 함께 보고 항공사에 대체편이나 더 긴 환승을 문의한다."
+          },
+          {
+            "id": "d",
+            "text": "입국심사 앱을 쓰면 연착과 수하물 지연은 더 이상 변수로 보지 않아도 된다."
+          }
+        ],
+        "tags": [
+          "미국환승",
+          "스케줄변경",
+          "수하물재위탁",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1953201
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953201?boardtype=L&menuid=890&referrerAllArticles=false&page=184"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q002",
+      "data": {
+        "questionId": "q002",
+        "sourceQuestionId": "susasa_1954172",
+        "category": "airline",
+        "order": 2,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "모닝캄 승급까지 아주 적은 마일이 부족해 보입니다. 이 상황에서 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAxMTlfMjM2/MDAxNzY4ODI4NzIwNDc2.QVRBhdthw74oWXoH4zYiMYGOoArrAjxSNclo_WlkNtIg.kDVGtAVorushnaC8H8Mdt0FInz-TDzchLo4ATklUUyQg.PNG/IMG%EF%BC%BF5370.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이미 필요한 탑승 조건을 채웠는지, 부족분을 카드 적립이나 포인트 전환으로 채울 수 있는지, 반영 시점은 언제인지 확인한다."
+          },
+          {
+            "id": "b",
+            "text": "가족 계정의 잔여 마일을 합산하면 본인 등급도 자동으로 승급된다고 본다."
+          },
+          {
+            "id": "c",
+            "text": "항공권을 새로 예약만 하면 탑승 전이라도 승급 마일이 즉시 반영된다고 본다."
+          },
+          {
+            "id": "d",
+            "text": "남은 마일이 1,000마일 미만이면 등급 혜택이 작으므로 확인 없이 포기한다."
+          }
+        ],
+        "tags": [
+          "모닝캄",
+          "승급마일",
+          "카드적립",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1954172
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954172?boardtype=L&menuid=890&referrerAllArticles=false&page=161"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q003",
+      "data": {
+        "questionId": "q003",
+        "sourceQuestionId": "susasa_1957257",
+        "category": "airline",
+        "order": 3,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 접이식 금속 수저와 포크 세트를 기내에 들고 타려 합니다. 가장 안전한 준비는 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMjNfNTYg/MDAxNzcxNzczNjMzOTA1.9qJW7FdQ47tSHUpJoWmp8_lkKa0jPme1sioIL39aO2kg.kXjWnMRN5osGdE2mVVHnk30dLAM_9T4NK4caUYcXEwwg.JPEG/1280%EF%BC%BFScreenshot%EF%BC%BF20260223%EF%BC%BF001341%EF%BC%BFAliExpress.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "음식용 도구는 모두 생활용품이므로 재질이나 끝 모양과 관계없이 기내 반입이 가능하다."
+          },
+          {
+            "id": "b",
+            "text": "금속 포크가 포함되어 있어도 접이식이면 보안검색에서 절대 문제 되지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "나무젓가락과 플라스틱 수저도 액체류 규정 때문에 위탁수하물로 보내야 한다."
+          },
+          {
+            "id": "d",
+            "text": "나무나 플라스틱 대체품을 준비하고, 금속 포크처럼 뾰족한 물품은 공항 보안 규정과 현장 판단을 감안해 위탁도 고려한다."
+          }
+        ],
+        "tags": [
+          "기내반입",
+          "보안검색",
+          "여행소품",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1957257
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1957257?boardtype=L&menuid=890&referrerAllArticles=false&page=106"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q004",
+      "data": {
+        "questionId": "q004",
+        "sourceQuestionId": "susasa_1955009",
+        "category": "airline",
+        "order": 4,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "대한항공 마일리지가 많이 있지만 급하게 현금 200만원이 필요합니다. 마일리지의 현금화 가능성을 볼 때 가장 안전한 판단은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "커뮤니티에서 말하는 1마일 가치를 곱해 그 금액만큼 바로 현금으로 받을 수 있다고 본다."
+          },
+          {
+            "id": "b",
+            "text": "항공 마일리지는 보통 현금 계좌이체 수단이 아니므로 약관 위반 소지가 있는 양도나 대리판매보다 공식 사용처와 별도 금융 수단을 분리해 검토한다."
+          },
+          {
+            "id": "c",
+            "text": "타인에게 보너스 항공권을 발권해 주고 현금을 받으면 항상 항공사 약관상 문제가 없다."
+          },
+          {
+            "id": "d",
+            "text": "마일리지몰 상품을 아무거나 산 뒤 되팔면 수수료와 시세 위험 없이 같은 가치를 회수할 수 있다."
+          }
+        ],
+        "tags": [
+          "마일리지현금화",
+          "약관리스크",
+          "마일리지가치"
+        ],
+        "sourceArticleIds": [
+          1955009
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955009?boardtype=L&menuid=890&referrerAllArticles=false&page=146"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q005",
+      "data": {
+        "questionId": "q005",
+        "sourceQuestionId": "susasa_1956174",
+        "category": "airline",
+        "order": 5,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "가족은 마일리지로 대한항공 인, 아시아나 아웃을 잡았고 동행자는 유상으로 같은 일정에 맞춰야 합니다. 통합 발권을 기대할 때 가장 현실적인 접근은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "공식 통합 발권 조건이 나오기 전에는 기다림만 전제로 두지 말고, 다구간 검색, 편도 조합, 경유 허용 여부, 변경·취소 비용을 비교한다."
+          },
+          {
+            "id": "b",
+            "text": "항공사 통합이 예정되어 있으면 지금도 두 항공사의 직항을 한 예약번호로 반드시 묶을 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "마일리지 좌석과 유상 항공권은 가격 차이가 있어도 항상 같은 항공편으로 자동 배정된다."
+          },
+          {
+            "id": "d",
+            "text": "동행자가 경유를 어려워해도 가격이 낮으면 경유편을 확정하고 현장 도움만 기대한다."
+          }
+        ],
+        "tags": [
+          "통합발권",
+          "다구간",
+          "동행자발권"
+        ],
+        "sourceArticleIds": [
+          1956174
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956174?boardtype=L&menuid=890&referrerAllArticles=false&page=124"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q006",
+      "data": {
+        "questionId": "q006",
+        "sourceQuestionId": "susasa_1953899",
+        "category": "card",
+        "order": 6,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "해외 결제용 카드를 고를 때 적립률은 낮아졌지만 해외 수수료 포인트백은 유지된다는 안내를 봤습니다. 카드 효율을 비교하는 가장 좋은 방법은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "포인트 적립률만 보면 되므로 수수료 환급 방식이나 지급 시점은 계산에서 제외한다."
+          },
+          {
+            "id": "b",
+            "text": "연회비가 없으면 어떤 해외 결제에서도 다른 카드보다 무조건 유리하다고 본다."
+          },
+          {
+            "id": "c",
+            "text": "해외 ATM 수수료와 해외 가맹점 결제 수수료는 항상 같은 혜택으로 처리된다고 본다."
+          },
+          {
+            "id": "d",
+            "text": "환율, 해외이용 수수료, 국제브랜드 수수료, 포인트백 지급 시점, 제외 거래를 모두 반영해 실제 순비용으로 비교한다."
+          }
+        ],
+        "tags": [
+          "해외결제",
+          "수수료포인트백",
+          "트래블카드"
+        ],
+        "sourceArticleIds": [
+          1953899
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953899?boardtype=L&menuid=890&referrerAllArticles=false&page=168"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q007",
+      "data": {
+        "questionId": "q007",
+        "sourceQuestionId": "susasa_1955615",
+        "category": "card",
+        "order": 7,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 KB 헤리티지 라운지 혜택이 생각보다 적게 표시됩니다. 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMDRfMTg2/MDAxNzcwMTkzODEwOTYx.mLMoHGHIcaKkH_Tnh-zBWUof2uMAWVVp8i0qk2i0OWsg.oYlh9LqAJQ9S6Z-RTaTS57JYUdceGOA6I1easOIqzsEg.JPEG/KakaoTalk_20260204_172923719.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "KB 헤리티지라는 이름이 같으면 스마트, 클래식 등 세부 상품과 무관하게 횟수가 모두 같다."
+          },
+          {
+            "id": "b",
+            "text": "내가 가진 정확한 카드 상품명과 등급별 혜택표를 확인하고, 앱 표시가 그 상품 기준인지 비교한다."
+          },
+          {
+            "id": "c",
+            "text": "앱에 3회로 보이면 다른 라운지 프로그램 7회가 자동으로 숨겨진 것이므로 확인할 필요가 없다."
+          },
+          {
+            "id": "d",
+            "text": "라운지 횟수는 카드사 앱이 아니라 공항 라운지 직원에게만 문의해야 한다."
+          }
+        ],
+        "tags": [
+          "라운지혜택",
+          "카드상품명",
+          "KB헤리티지",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955615
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955615?boardtype=L&menuid=890&referrerAllArticles=false&page=134"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q008",
+      "data": {
+        "questionId": "q008",
+        "sourceQuestionId": "susasa_1954584",
+        "category": "card",
+        "order": 8,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "카드 캐시백 이벤트에 '대한항공카드 결제 이력' 같은 조건이 보입니다. 본인이 대상인지 판단할 때 가장 안전한 방법은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAxMjRfMjI2/MDAxNzY5MjQwMjU5MTQz.eIHwPJA-ZVNzPQuSBX_tnJlD5Y2rGqycqSkexnfCgZsg.a2M_NJ3sfNuOxqk9rDvc5BRxlJ6FcaoBVh3tWkqoW7Qg.PNG/IMG%EF%BC%BF4384.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "대한항공 항공권을 어떤 카드로든 결제한 적이 있으면 모든 대한항공카드 이벤트에서 제외된다고 본다."
+          },
+          {
+            "id": "b",
+            "text": "삼성앤마일리지처럼 다른 카드사의 항공 마일리지 카드도 현대 대한항공카드 결제 이력과 동일하게 본다."
+          },
+          {
+            "id": "c",
+            "text": "이벤트 대상 카드, 조회 기간, 기존 보유·사용 이력의 범위를 약관과 카드사 문의로 확인한 뒤 응모한다."
+          },
+          {
+            "id": "d",
+            "text": "이벤트 문구가 애매하면 일단 발급하고 조건 미충족 여부는 캐시백 지급일에만 확인한다."
+          }
+        ],
+        "tags": [
+          "카드이벤트",
+          "캐시백",
+          "응모조건",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1954584
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954584?boardtype=L&menuid=890&referrerAllArticles=false&page=154"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q009",
+      "data": {
+        "questionId": "q009",
+        "sourceQuestionId": "susasa_1955995",
+        "category": "card",
+        "order": 9,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 메탈 카드가 IC 리더기에서 가끔 결제 오류를 냅니다. 여행 전 카드 운용으로 가장 적절한 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMDhfMTAx/MDAxNzcwNTA1NzUxNzI4.blypuUOEiwJMj3C0wwgMCzUUSwXYa_oXvkH9EHYy_UAg.EF125n85R2tHQWqvbz31BCFI2DtdC9DTHR5xn2Oa_ggg.JPEG/1770505742034.jpeg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "반복되는 오류라면 카드사에 재발급이나 플라스틱 카드 옵션을 문의하고, 해외 결제·렌터카 보증용 예비 카드도 준비한다."
+          },
+          {
+            "id": "b",
+            "text": "터치리스가 한 번 성공하면 IC 오류는 더 이상 발생하지 않으므로 별도 대비가 필요 없다."
+          },
+          {
+            "id": "c",
+            "text": "메탈 카드 오류는 가맹점 단말기 문제이므로 재발급해도 아무 의미가 없다."
+          },
+          {
+            "id": "d",
+            "text": "해외에서는 마그네틱 결제가 항상 허용되므로 IC 오류는 신경 쓰지 않아도 된다."
+          }
+        ],
+        "tags": [
+          "메탈카드",
+          "결제오류",
+          "재발급",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955995
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955995?boardtype=L&menuid=890&referrerAllArticles=false&page=128"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q010",
+      "data": {
+        "questionId": "q010",
+        "sourceQuestionId": "susasa_1954152",
+        "category": "card",
+        "order": 10,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "본인 명의 라운지 카드가 두 장 있고, 본인 포함 4명이 공항 라운지에 들어가려 합니다. '본인+동반 1인' 혜택을 해석할 때 가장 안전한 설명은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "본인 명의 카드가 두 장이면 본인이 입장하지 않아도 카드 한 장당 타인 2명씩 입장시킬 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "같은 카드사의 카드라면 모든 라운지 혜택을 합산해 동반 인원 제한 없이 쓸 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "더라운지 앱에 등록만 되어 있으면 라운지 직원의 본인 확인 절차는 적용되지 않는다."
+          },
+          {
+            "id": "d",
+            "text": "보통 본인 사용이 전제되므로 두 혜택을 각각 본인+동반 1인으로 처리 가능한지 카드사, 앱, 라운지 현장 조건을 확인하고 초과 인원 유료 입장도 준비한다."
+          }
+        ],
+        "tags": [
+          "공항라운지",
+          "동반자혜택",
+          "카드혜택"
+        ],
+        "sourceArticleIds": [
+          1954152
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954152?boardtype=L&menuid=890&referrerAllArticles=false&page=162"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q011",
+      "data": {
+        "questionId": "q011",
+        "sourceQuestionId": "susasa_1956295",
+        "category": "giftcard",
+        "order": 11,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 면세점에서 네이버페이 할인이나 스페셜 쿠폰이 보이는데 결제창에서 적용되지 않습니다. 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMTFfMTk4/MDAxNzcwNzQyODkyNzU0.hORZBpDNul3lBkEEYP5q8hvb6folaLVdMLCON1tjUWIg.gVS0aMBZloG8acVCG-NB7lDuzw8EMBhh0W4Lqo79bEwg.JPEG/Screenshot%EF%BC%BF20260211%EF%BC%BF015932%EF%BC%BFLotte_Duty_Free.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "쿠폰을 받았으면 고가 브랜드나 일부 품목도 예외 없이 모두 할인된다."
+          },
+          {
+            "id": "b",
+            "text": "브랜드·품목 제외 조건, 결제수단 조건, 최소 결제금액, 최종 결제창 적용 여부를 확인하고 품목을 나눠 보며 원인을 찾는다."
+          },
+          {
+            "id": "c",
+            "text": "결제수단 할인이 보이지 않으면 면세점 시스템 오류이므로 그대로 결제한 뒤 자동 환급을 기다린다."
+          },
+          {
+            "id": "d",
+            "text": "쿠폰 적용이 안 되는 물건일수록 구매 후 고객센터에 요청하면 할인액을 소급 적용받을 수 있다."
+          }
+        ],
+        "tags": [
+          "면세쿠폰",
+          "결제할인",
+          "적용제외",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1956295
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956295?boardtype=L&menuid=890&referrerAllArticles=false&page=122"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q012",
+      "data": {
+        "questionId": "q012",
+        "sourceQuestionId": "susasa_1954415",
+        "category": "giftcard",
+        "order": 12,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이벤트로 받은 더라운지앱 1회 이용권을 휴대폰이 없는 자녀에게 쓰고 싶습니다. 가장 안전한 처리 순서는 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "보호자 앱에 등록된 쿠폰은 기명 여부와 관계없이 모든 가족이 현장에서 바로 쓸 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "쿠폰 번호만 있으면 등록 절차나 바코드 발급 없이 라운지 입구에서 번호를 말하면 된다."
+          },
+          {
+            "id": "c",
+            "text": "쿠폰이 기명인지 무기명인지, 등록 후 양도 사용이 가능한지, 자녀 이용 절차가 무엇인지 앱 고객센터나 이용조건으로 확인한 뒤 등록한다."
+          },
+          {
+            "id": "d",
+            "text": "자녀에게 휴대폰이 없으면 어떤 라운지 이용권도 사용할 수 없다."
+          }
+        ],
+        "tags": [
+          "라운지이용권",
+          "쿠폰사용",
+          "기명무기명"
+        ],
+        "sourceArticleIds": [
+          1954415
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954415?boardtype=L&menuid=890&referrerAllArticles=false&page=157"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q013",
+      "data": {
+        "questionId": "q013",
+        "sourceQuestionId": "susasa_1953097",
+        "category": "giftcard",
+        "order": 13,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "티몬 사태 이후 오랜만에 롯데백화점 상품권을 카드로 사려 합니다. 할인 판매처를 찾을 때 가장 안전한 태도는 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "할인율이 조금 낮더라도 공식·검증된 판매처와 카드 구매 가능 여부를 먼저 확인하고, 출처가 불분명한 딜은 피한다."
+          },
+          {
+            "id": "b",
+            "text": "네이버 검색에서 최저가로 보이면 판매처 신뢰도와 상품권 발송 방식은 확인하지 않아도 된다."
+          },
+          {
+            "id": "c",
+            "text": "백화점 상품권은 어떤 채널에서 사도 취소·환불·사용 제한 위험이 동일하다."
+          },
+          {
+            "id": "d",
+            "text": "상테크용 상품권은 할인율이 높을수록 항상 안전하므로 판매자 이력보다 가격만 본다."
+          }
+        ],
+        "tags": [
+          "백화점상품권",
+          "구매처리스크",
+          "상테크"
+        ],
+        "sourceArticleIds": [
+          1953097
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953097?boardtype=L&menuid=890&referrerAllArticles=false&page=186"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q014",
+      "data": {
+        "questionId": "q014",
+        "sourceQuestionId": "susasa_1952677",
+        "category": "giftcard",
+        "order": 14,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "힐튼 제휴카드 사용 조건을 채웠고 무료숙박권 지급을 기다립니다. 지급 시점을 판단할 때 가장 적절한 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "목표 사용액을 카드로 긁은 날 바로 숙박권과 등급이 계정에 들어온다고 본다."
+          },
+          {
+            "id": "b",
+            "text": "선결제를 언제 하든 카드사 집계월과 결제일에는 아무 영향이 없다고 본다."
+          },
+          {
+            "id": "c",
+            "text": "숙박권이 늦으면 힐튼 호텔에 메일을 보내면 카드사 지급 조건과 무관하게 즉시 발급된다."
+          },
+          {
+            "id": "d",
+            "text": "카드사 실적 산정 기준, 연회비·대금 납부 시점, 계정 반영 예정일을 확인하고 여행 예약은 지연 가능성까지 감안한다."
+          }
+        ],
+        "tags": [
+          "무료숙박권",
+          "제휴카드",
+          "지급시점"
+        ],
+        "sourceArticleIds": [
+          1952677
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1952677?boardtype=L&menuid=890&referrerAllArticles=false&page=196"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q015",
+      "data": {
+        "questionId": "q015",
+        "sourceQuestionId": "susasa_1957041",
+        "category": "giftcard",
+        "order": 15,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "메리어트 카드 이벤트로 35,000포인트 상당 무료숙박권 여러 장과 포인트를 모아 칸쿤 4박에 쓰려 합니다. 가장 균형 잡힌 판단은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "무료숙박권이 4장이면 객실 포인트가 1박 46,000포인트여도 추가 포인트 없이 4박이 자동 보장된다."
+          },
+          {
+            "id": "b",
+            "text": "숙박권별 사용 한도와 포인트 추가 가능 여부, 객실 포인트 변동, 예약 가능 여부, 신혼여행지 적합도와 유상 대안을 함께 비교한다."
+          },
+          {
+            "id": "c",
+            "text": "이벤트 실적을 채우면 숙박권이 즉시 들어오므로 항공권 발권 전에 호텔 가용성을 따로 볼 필요가 없다."
+          },
+          {
+            "id": "d",
+            "text": "숙박권은 포인트 숙박보다 항상 가치가 높으므로 여행 목적이나 호텔 위치는 고려하지 않는다."
+          }
+        ],
+        "tags": [
+          "무료숙박권",
+          "메리어트",
+          "포인트추가",
+          "신혼여행"
+        ],
+        "sourceArticleIds": [
+          1957041
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1957041?boardtype=L&menuid=890&referrerAllArticles=false&page=110"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q016",
+      "data": {
+        "questionId": "q016",
+        "sourceQuestionId": "susasa_1953791",
+        "category": "hotel",
+        "order": 16,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 같은 객실인데 성인 2명과 3명 검색 가격이 크게 다릅니다. 예약 전 가장 안전한 행동은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAxMTVfMTEx/MDAxNzY4NDUxMjk2MTk5.LMjcX8B3HIHPJPpI6BQqrbgMaOL5OcubcNNo8EBthUYg.6gWcxC3HUY-EdmJBLaSkf-fQHvn_e1hsv8ekpIGJtlAg.JPEG/Screenshot%EF%BC%BF20260115%EF%BC%BF130631%EF%BC%BFALL_Accor.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "객실 설명에 3인 가능이라고 되어 있으면 2인 요금으로 예약해도 추가 비용 없이 3명이 투숙할 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "조식 미포함 조건이면 성인 추가 요금이나 엑스트라베드 요금은 절대 발생하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "정확한 인원으로 검색한 요금과 호텔의 추가 인원·침대·세금 규정을 확인하고, 2인 예약 후 변경 가능 여부를 호텔에 문의한다."
+          },
+          {
+            "id": "d",
+            "text": "앱 가격 차이는 표시 오류일 가능성이 크므로 가장 저렴한 인원수로 예약한 뒤 체크인 때 말한다."
+          }
+        ],
+        "tags": [
+          "호텔예약",
+          "추가인원",
+          "엑스트라베드",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1953791
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953791?boardtype=L&menuid=890&referrerAllArticles=false&page=171"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q017",
+      "data": {
+        "questionId": "q017",
+        "sourceQuestionId": "susasa_1956654",
+        "category": "hotel",
+        "order": 17,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "아코르 앱에서 무료 취소 가능 날짜가 잘 보이지 않습니다. 취소 버튼을 누르기 전 가장 먼저 할 일은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMTVfMTk5/MDAxNzcxMTMzMDkwNjE5.Ww5CzLjf-ajtMQMRa0OB4KjfgedZ3fNCpQzGotJOODog.O7Vue5VnRV4OAA8iOeMghCbolzBBRMRrlTqBhGASJ04g.JPEG/1000069689.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "예약 상세와 요금 조건에서 무료 취소 기한을 다시 확인하고, 보이지 않으면 호텔이나 고객센터에 확인한 뒤 진행한다."
+          },
+          {
+            "id": "b",
+            "text": "취소 버튼이 보인다는 것은 언제 눌러도 수수료가 없다는 뜻이다."
+          },
+          {
+            "id": "c",
+            "text": "앱에서 날짜가 안 보이면 모든 예약은 취소불가 요금으로 간주한다."
+          },
+          {
+            "id": "d",
+            "text": "무료 취소 날짜는 체크인 하루 전으로 고정되어 있으므로 요금 조건을 볼 필요가 없다."
+          }
+        ],
+        "tags": [
+          "아코르",
+          "무료취소",
+          "예약조건",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1956654
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956654?boardtype=L&menuid=890&referrerAllArticles=false&page=117"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q018",
+      "data": {
+        "questionId": "q018",
+        "sourceQuestionId": "susasa_1955397",
+        "category": "hotel",
+        "order": 18,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 내가 하지 않은 예약이 호텔 앱에 갑자기 나타났습니다. 가장 적절한 초기 대응은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMDJfMjIx/MDAxNzcwMDI4MjAzNjQ0.mL4-PKvhXEQnUeKyKzXNcF9A1lK-KIhbz5Qd9XS-1CQg.Bky2dlVvdmab0zSnafs01QBO6xW8smNTvofYCBpnG44g.PNG/IMG_6325.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "내 앱에 보이는 예약이므로 내가 책임지고 바로 취소 수수료를 낸다."
+          },
+          {
+            "id": "b",
+            "text": "예약 출처를 모르더라도 앱에서 취소 버튼이 안 보이면 아무 조치 없이 둔다."
+          },
+          {
+            "id": "c",
+            "text": "호텔이 여행사 예약이라고 하면 내 계정과 연결된 예약인지 확인하지 않아도 된다."
+          },
+          {
+            "id": "d",
+            "text": "비밀번호와 결제수단을 점검하고, 호텔과 멤버십 고객센터에 예약자명·회원번호·예약 경로 확인 및 계정 연결 해제를 요청한다."
+          }
+        ],
+        "tags": [
+          "호텔앱",
+          "예약보안",
+          "멤버십번호",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955397
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955397?boardtype=L&menuid=890&referrerAllArticles=false&page=138"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q019",
+      "data": {
+        "questionId": "q019",
+        "sourceQuestionId": "susasa_1955440",
+        "category": "hotel",
+        "order": 19,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "아코르 다이닝 프로모션 등록 후 레스토랑 이용분이 기대와 다르게 적립되지 않은 것 같습니다. 가장 좋은 사후 점검은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMDNfMTEx/MDAxNzcwMDU3Nzg3MDQw.gQwuMnfmWsfJ5zOuDjT0i9Az2tAGyEiVJhVsyPLHJoIg.TRfR4nlQmSwpF7IsHDFxi5PA3oRCcC6VBS_yxzZYUK4g.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "프로모션에 등록했으면 룸차지, 현장 결제, 외부 결제 모두 같은 배율로 자동 적립된다고 본다."
+          },
+          {
+            "id": "b",
+            "text": "영수증과 인보이스를 보관하고, 프로모션의 결제 방식 조건과 적립 누락 여부를 확인해 호텔이나 ALL에 클레임한다."
+          },
+          {
+            "id": "c",
+            "text": "숙박 포인트가 들어왔으면 다이닝 포인트는 별도 확인할 필요가 없다."
+          },
+          {
+            "id": "d",
+            "text": "포인트가 예상보다 적으면 다음 투숙 때 자동 보정되므로 별도 증빙은 필요 없다."
+          }
+        ],
+        "tags": [
+          "아코르포인트",
+          "다이닝프로모션",
+          "적립누락",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955440
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955440?boardtype=L&menuid=890&referrerAllArticles=false&page=137"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_005/questions/q020",
+      "data": {
+        "questionId": "q020",
+        "sourceQuestionId": "susasa_1956032",
+        "category": "hotel",
+        "order": 20,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "리조트 객실 창틀에서 벌레를 발견했고 베드버그인지 걱정됩니다. 가장 적절한 대응은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAyMDhfMjg2/MDAxNzcwNTI1Nzc0MTgy.rPSOg4o2_k1pDZIidUFdbccDP4l-EgZCuVvr1pFT7_wg.euG0MFNWYSlVwytZjII5RA4erHKie7zF23nCfhDOHLcg.JPEG/1280%EF%BC%BF20260208%EF%BC%BF133955.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "벌레 사진만 보고 곧바로 전체 여행을 취소하고 별도 확인은 하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "창틀에서 죽은 벌레 하나를 봤다면 베드버그가 아니므로 침대와 짐은 확인하지 않아도 된다."
+          },
+          {
+            "id": "c",
+            "text": "사진을 남기고 침대 주변과 짐 보관 위치를 점검한 뒤, 호텔에 확인과 방 변경·방역 조치를 요청한다."
+          },
+          {
+            "id": "d",
+            "text": "호텔 직원에게 말하면 보상이 줄어드니 체크아웃 후에만 문의한다."
+          }
+        ],
+        "tags": [
+          "호텔위생",
+          "베드버그",
+          "객실점검",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1956032
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956032?boardtype=L&menuid=890&referrerAllArticles=false&page=127"
+        ]
+      }
+    }
+  ],
+  "answerKeyDocuments": [
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q001",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "입국 심사, 수하물 회수와 재위탁, 터미널 이동, 지연 가능성을 함께 보고 항공사에 대체편이나 더 긴 환승을 문의한다.",
+        "explanation": "미국 국제선 입국 후 국내선 환승은 입국심사, 수하물 회수, 재위탁, 터미널 이동이 생길 수 있습니다. 연결발권이어도 앞 항공편 지연과 공항 혼잡은 남아 있으므로, 짧아진 환승은 항공사에 대체편 가능성을 확인하는 것이 안전합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "미국환승",
+          "스케줄변경",
+          "수하물재위탁",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1953201
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953201?boardtype=L&menuid=890&referrerAllArticles=false&page=184"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q002",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "이미 필요한 탑승 조건을 채웠는지, 부족분을 카드 적립이나 포인트 전환으로 채울 수 있는지, 반영 시점은 언제인지 확인한다.",
+        "explanation": "등급 승급은 단순 잔액이 아니라 해당 프로그램의 인정 조건을 따라갑니다. 부족분이 작더라도 카드 적립이나 포인트 전환이 인정되는지, 언제 반영되는지에 따라 승급 가능성이 달라질 수 있습니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "모닝캄",
+          "승급마일",
+          "카드적립",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1954172
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954172?boardtype=L&menuid=890&referrerAllArticles=false&page=161"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q003",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "나무나 플라스틱 대체품을 준비하고, 금속 포크처럼 뾰족한 물품은 공항 보안 규정과 현장 판단을 감안해 위탁도 고려한다.",
+        "explanation": "나무나 플라스틱 식기는 대체로 문제가 적지만, 금속 포크처럼 뾰족한 물품은 길이와 형태, 보안검색 현장 판단에 영향을 받을 수 있습니다. 여행에서 물품 압수 리스크를 줄이려면 대체품을 준비하거나 위탁수하물로 보내는 편이 안전합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "기내반입",
+          "보안검색",
+          "여행소품",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1957257
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1957257?boardtype=L&menuid=890&referrerAllArticles=false&page=106"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q004",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "항공 마일리지는 보통 현금 계좌이체 수단이 아니므로 약관 위반 소지가 있는 양도나 대리판매보다 공식 사용처와 별도 금융 수단을 분리해 검토한다.",
+        "explanation": "마일리지의 체감 가치는 사용처에 따라 커질 수 있지만, 그것이 곧바로 현금화 가능한 금액이라는 뜻은 아닙니다. 타인 발권 대가 수취나 재판매는 약관과 거래 리스크가 생길 수 있어, 공식 사용처와 급전 해결 방법을 분리해서 판단해야 합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "마일리지현금화",
+          "약관리스크",
+          "마일리지가치"
+        ],
+        "sourceArticleIds": [
+          1955009
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955009?boardtype=L&menuid=890&referrerAllArticles=false&page=146"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q005",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "공식 통합 발권 조건이 나오기 전에는 기다림만 전제로 두지 말고, 다구간 검색, 편도 조합, 경유 허용 여부, 변경·취소 비용을 비교한다.",
+        "explanation": "항공사 통합 이슈는 실제 발권 시스템과 운항 노선, 유상 운임에 반영되기 전까지 단정하기 어렵습니다. 동행자가 같은 비행기를 타야 한다면 현재 가능한 다구간·편도·경유 조합과 변경 비용을 먼저 비교해야 합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "통합발권",
+          "다구간",
+          "동행자발권"
+        ],
+        "sourceArticleIds": [
+          1956174
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956174?boardtype=L&menuid=890&referrerAllArticles=false&page=124"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q006",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "환율, 해외이용 수수료, 국제브랜드 수수료, 포인트백 지급 시점, 제외 거래를 모두 반영해 실제 순비용으로 비교한다.",
+        "explanation": "해외 결제 카드는 적립률만으로 우열이 정해지지 않습니다. 수수료가 면제인지 사후 포인트백인지, 지급 시점과 제외 거래가 무엇인지까지 봐야 실제 지출액을 비교할 수 있습니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "해외결제",
+          "수수료포인트백",
+          "트래블카드"
+        ],
+        "sourceArticleIds": [
+          1953899
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953899?boardtype=L&menuid=890&referrerAllArticles=false&page=168"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q007",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "내가 가진 정확한 카드 상품명과 등급별 혜택표를 확인하고, 앱 표시가 그 상품 기준인지 비교한다.",
+        "explanation": "비슷한 이름의 카드라도 스마트, 클래식 등 세부 상품에 따라 라운지 횟수와 적용 프로그램이 다를 수 있습니다. 앱 표시가 이상해 보일 때는 먼저 본인 카드 상품명과 공식 혜택표를 맞춰 봐야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "라운지혜택",
+          "카드상품명",
+          "KB헤리티지",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955615
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955615?boardtype=L&menuid=890&referrerAllArticles=false&page=134"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q008",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "이벤트 대상 카드, 조회 기간, 기존 보유·사용 이력의 범위를 약관과 카드사 문의로 확인한 뒤 응모한다.",
+        "explanation": "캐시백 이벤트는 카드사, 대상 상품, 기존 보유 이력, 결제 이력 기간이 세밀하게 나뉩니다. 문구가 애매하면 임의 해석보다 카드사 약관과 고객센터 확인을 거친 뒤 발급하는 것이 안전합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "카드이벤트",
+          "캐시백",
+          "응모조건",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1954584
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954584?boardtype=L&menuid=890&referrerAllArticles=false&page=154"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q009",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "반복되는 오류라면 카드사에 재발급이나 플라스틱 카드 옵션을 문의하고, 해외 결제·렌터카 보증용 예비 카드도 준비한다.",
+        "explanation": "메탈 카드의 IC 인식 문제가 반복되면 여행지에서 결제 실패로 일정이 꼬일 수 있습니다. 카드사에 대체 발급 가능성을 확인하고, 보증금 결제용 예비 카드를 준비하는 것이 실전적으로 안전합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "메탈카드",
+          "결제오류",
+          "재발급",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955995
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955995?boardtype=L&menuid=890&referrerAllArticles=false&page=128"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q010",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "보통 본인 사용이 전제되므로 두 혜택을 각각 본인+동반 1인으로 처리 가능한지 카드사, 앱, 라운지 현장 조건을 확인하고 초과 인원 유료 입장도 준비한다.",
+        "explanation": "라운지 혜택의 '본인+동반 1인'은 본인 입장을 전제로 하는 경우가 많습니다. 카드 두 장을 한 번에 어떻게 처리할지는 앱과 현장 정책에 따라 달라질 수 있어, 초과 인원 비용까지 준비해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "공항라운지",
+          "동반자혜택",
+          "카드혜택"
+        ],
+        "sourceArticleIds": [
+          1954152
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954152?boardtype=L&menuid=890&referrerAllArticles=false&page=162"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q011",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "브랜드·품목 제외 조건, 결제수단 조건, 최소 결제금액, 최종 결제창 적용 여부를 확인하고 품목을 나눠 보며 원인을 찾는다.",
+        "explanation": "면세 쿠폰과 간편결제 할인은 모든 브랜드와 품목에 자동 적용되지 않습니다. 특히 고가 브랜드나 이미 할인율이 높은 품목은 제외될 수 있으므로 최종 결제창과 제외 조건을 확인해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "면세쿠폰",
+          "결제할인",
+          "적용제외",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1956295
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956295?boardtype=L&menuid=890&referrerAllArticles=false&page=122"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q012",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "쿠폰이 기명인지 무기명인지, 등록 후 양도 사용이 가능한지, 자녀 이용 절차가 무엇인지 앱 고객센터나 이용조건으로 확인한 뒤 등록한다.",
+        "explanation": "라운지 이용권은 쿠폰 성격에 따라 당첨자 본인만 쓸 수도 있고, 무기명 바코드 형태로 쓸 수도 있습니다. 등록 후 취소나 이전이 어려울 수 있으므로 사용 대상과 절차를 먼저 확인하는 것이 좋습니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "라운지이용권",
+          "쿠폰사용",
+          "기명무기명"
+        ],
+        "sourceArticleIds": [
+          1954415
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954415?boardtype=L&menuid=890&referrerAllArticles=false&page=157"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q013",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "할인율이 조금 낮더라도 공식·검증된 판매처와 카드 구매 가능 여부를 먼저 확인하고, 출처가 불분명한 딜은 피한다.",
+        "explanation": "상품권은 구매처 신뢰도와 취소·환불 안정성이 중요합니다. 특히 큰 금액을 반복 구매한다면 할인율보다 공식 판매처 여부와 카드 구매 조건, 발송 방식 확인이 먼저입니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "백화점상품권",
+          "구매처리스크",
+          "상테크"
+        ],
+        "sourceArticleIds": [
+          1953097
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953097?boardtype=L&menuid=890&referrerAllArticles=false&page=186"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q014",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "카드사 실적 산정 기준, 연회비·대금 납부 시점, 계정 반영 예정일을 확인하고 여행 예약은 지연 가능성까지 감안한다.",
+        "explanation": "제휴카드 무료숙박권은 사용액 발생일, 결제일, 선결제 처리, 연회비 납부 등 카드사 기준에 따라 반영 시점이 달라질 수 있습니다. 여행 일정이 가까우면 숙박권이 늦게 들어올 가능성까지 고려해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "무료숙박권",
+          "제휴카드",
+          "지급시점"
+        ],
+        "sourceArticleIds": [
+          1952677
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1952677?boardtype=L&menuid=890&referrerAllArticles=false&page=196"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q015",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "숙박권별 사용 한도와 포인트 추가 가능 여부, 객실 포인트 변동, 예약 가능 여부, 신혼여행지 적합도와 유상 대안을 함께 비교한다.",
+        "explanation": "무료숙박권은 정해진 포인트 한도와 객실 가용성 안에서만 가치가 납니다. 1박 필요 포인트가 숙박권 한도를 넘으면 추가 포인트가 필요할 수 있고, 칸쿤처럼 여행 목적이 뚜렷한 곳은 호텔 경험 자체도 함께 비교해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "무료숙박권",
+          "메리어트",
+          "포인트추가",
+          "신혼여행"
+        ],
+        "sourceArticleIds": [
+          1957041
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1957041?boardtype=L&menuid=890&referrerAllArticles=false&page=110"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q016",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "정확한 인원으로 검색한 요금과 호텔의 추가 인원·침대·세금 규정을 확인하고, 2인 예약 후 변경 가능 여부를 호텔에 문의한다.",
+        "explanation": "객실이 3인 투숙 가능하더라도 3번째 성인 요금, 엑스트라베드, 세금, 서비스 요금이 별도일 수 있습니다. 2인으로 예약한 뒤 현장에서 해결하려 하면 추가 비용이나 투숙 거절 리스크가 생길 수 있습니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "호텔예약",
+          "추가인원",
+          "엑스트라베드",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1953791
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953791?boardtype=L&menuid=890&referrerAllArticles=false&page=171"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q017",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "예약 상세와 요금 조건에서 무료 취소 기한을 다시 확인하고, 보이지 않으면 호텔이나 고객센터에 확인한 뒤 진행한다.",
+        "explanation": "취소 버튼이 보인다는 사실만으로 무료 취소가 보장되는 것은 아닙니다. 요금 조건과 무료 취소 기한을 확인하고, 앱에서 정보가 불명확하면 호텔이나 고객센터 확인 후 진행해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "아코르",
+          "무료취소",
+          "예약조건",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1956654
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956654?boardtype=L&menuid=890&referrerAllArticles=false&page=117"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q018",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "비밀번호와 결제수단을 점검하고, 호텔과 멤버십 고객센터에 예약자명·회원번호·예약 경로 확인 및 계정 연결 해제를 요청한다.",
+        "explanation": "모르는 예약이 보이면 단순 표시 오류일 수도 있지만, 회원번호 오입력이나 계정 보안 문제일 가능성도 확인해야 합니다. 결제수단을 점검하고 호텔·멤버십 고객센터에 예약 출처와 계정 연결 상태를 확인하는 것이 우선입니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "호텔앱",
+          "예약보안",
+          "멤버십번호",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955397
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955397?boardtype=L&menuid=890&referrerAllArticles=false&page=138"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q019",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "영수증과 인보이스를 보관하고, 프로모션의 결제 방식 조건과 적립 누락 여부를 확인해 호텔이나 ALL에 클레임한다.",
+        "explanation": "다이닝 프로모션은 현장 결제, 룸차지, 투숙 적립 등 조건에 따라 적용 방식이 달라질 수 있습니다. 사후 확인을 위해 영수증과 인보이스를 남겨 두고, 누락이 의심되면 공식 채널로 클레임해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "아코르포인트",
+          "다이닝프로모션",
+          "적립누락",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1955440
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955440?boardtype=L&menuid=890&referrerAllArticles=false&page=137"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_005/questions/q020",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "사진을 남기고 침대 주변과 짐 보관 위치를 점검한 뒤, 호텔에 확인과 방 변경·방역 조치를 요청한다.",
+        "explanation": "벌레 사진만으로 단정하거나 무시하는 것 모두 위험합니다. 증거를 남기고 침대 주변과 짐을 점검한 뒤, 호텔에 즉시 확인과 필요한 조치를 요청하는 것이 가장 실용적입니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "호텔위생",
+          "베드버그",
+          "객실점검",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1956032
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1956032?boardtype=L&menuid=890&referrerAllArticles=false&page=127"
+        ]
+      }
+    }
+  ],
+  "qualityChecklist": {
+    "totalQuestionCount": 20,
+    "answerKeyCount": 20,
+    "categoryCounts": {
+      "airline": 5,
+      "card": 5,
+      "giftcard": 5,
+      "hotel": 5
+    },
+    "difficultyCounts": {
+      "easy": 10,
+      "normal": 8,
+      "hard": 2
+    },
+    "answerDistribution": {
+      "a": 5,
+      "b": 5,
+      "c": 5,
+      "d": 5
+    },
+    "imageQuestionCount": 12,
+    "hasSeparatedAnswerKeys": true,
+    "hasNoAnswerInQuestionDocuments": true,
+    "hasSourceForEveryQuestion": true,
+    "avoidsPreviousRoundSourceOverlap": true,
+    "avoidsPreviousRoundImageOverlap": true,
+    "firestoreRoot": "mockExam/main",
+    "sourceJsonPath": "docs/exam/susasa_qna_20260529.json"
+  }
+}

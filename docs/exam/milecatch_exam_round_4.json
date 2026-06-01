@@ -1,0 +1,1357 @@
+{
+  "examDocument": {
+    "path": "mockExam/main/exams/exam_004",
+    "data": {
+      "title": "제4회 마일캐치 모의고사",
+      "description": "이미지와 살짝 웃긴 실전 상황으로 항공, 카드, 상품권, 호텔 판단력을 확인하는 모의고사",
+      "status": "locked",
+      "roundNo": 4,
+      "questionCount": 20,
+      "totalScore": 100,
+      "categories": [
+        "airline",
+        "card",
+        "giftcard",
+        "hotel"
+      ],
+      "timeLimitSeconds": 600,
+      "rankingPeriod": "weekly",
+      "unlockRule": {
+        "type": "always_open"
+      },
+      "sourceJsonPath": "docs/exam/susasa_qna_20260528.json",
+      "createdAt": "serverTimestamp",
+      "updatedAt": "serverTimestamp"
+    }
+  },
+  "questionDocuments": [
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q001",
+      "data": {
+        "questionId": "q001",
+        "sourceQuestionId": "susasa_1963203",
+        "category": "airline",
+        "order": 1,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 프레스티지 기내식 후보를 앞에 두고 마음속 기내식 내각회의가 열렸습니다. 가장 실전적인 행동은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MDlfMzAw/MDAxNzc4Mjc1MjU5NzQ1.cjP_6k4ywkf7dzvgr4XV_nRV_KIYohElgQm22aRZ3JAg.sfCPfgLLxAP-KOrZAN2YosCJY7-9JduHGPhNmOkbpNgg.JPEG/IMG_2220.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "승무원에게 메뉴별 별점표를 현장에서 작성해 달라고 한다"
+          },
+          {
+            "id": "b",
+            "text": "기내식은 탑승 후 원하는 만큼 바꿀 수 있다고 생각한다"
+          },
+          {
+            "id": "c",
+            "text": "후기와 내 취향을 참고해 사전 선택 마감 전 결정한다"
+          },
+          {
+            "id": "d",
+            "text": "좌석 번호가 높을수록 더 맛있는 메뉴가 나온다고 믿는다"
+          }
+        ],
+        "tags": [
+          "기내식",
+          "대한항공",
+          "사전선택",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963203
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963203?boardtype=L&menuid=890&referrerAllArticles=false&page=19"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q002",
+      "data": {
+        "questionId": "q002",
+        "sourceQuestionId": "susasa_1958040",
+        "category": "airline",
+        "order": 2,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 수하물이 다친 채 도착했습니다. 캐리어에게 위로의 말을 건네기 전에 가장 먼저 챙길 일은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMDNfMjA2/MDAxNzcyNTAwMjcyODU3.Nm2d43ucSGu5f7cxZhWEBFuNamXSAx6M08x9-XAOpHAg.e4Yfm8RShm6Ujv9TeFKCQqjCZ9Yw4tpNTM4kMRRMCXcg.JPEG/1280%EF%BC%BF20260226%EF%BC%BF233437.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "파손 사진을 남기고 공항에서 항공사 사고 접수를 한다"
+          },
+          {
+            "id": "b",
+            "text": "집에 가져간 뒤 며칠 뒤 생각나면 항공사에 연락한다"
+          },
+          {
+            "id": "c",
+            "text": "현장 보상금이 마음에 안 들면 아무 기록 없이 나온다"
+          },
+          {
+            "id": "d",
+            "text": "수하물 태그는 필요 없으니 바로 버리고 보험사에 전화한다"
+          }
+        ],
+        "tags": [
+          "수하물파손",
+          "사고접수",
+          "여행자보험",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1958040
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958040?boardtype=L&menuid=890&referrerAllArticles=false&page=93"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q003",
+      "data": {
+        "questionId": "q003",
+        "sourceQuestionId": "susasa_1960438",
+        "category": "airline",
+        "order": 3,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 같은 목적지의 여러 항공편을 한 예약번호로 대기 걸었습니다. 먼저 한 편이 확약되면 보통 어떻게 처리하면 좋을까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA0MDFfMTgz/MDAxNzc1MDEyMTc0NzA0.VNM-pU6hiZNm_AUAbrtLZm1wktZBBhUL6F-h7RGVX_8g.WMVU_cRk0E7Xrmw5XupxlY320zdwilLvm8vwlWzIMUMg.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "확약된 편은 자동 결제되므로 앱을 닫고 기다린다"
+          },
+          {
+            "id": "b",
+            "text": "두 편을 모두 탑승할 수 있으니 그대로 둔다"
+          },
+          {
+            "id": "c",
+            "text": "대기예약은 한 번 걸면 항공사도 취소할 수 없다"
+          },
+          {
+            "id": "d",
+            "text": "확약된 편을 남기고 나머지를 정리한 뒤 발권한다"
+          }
+        ],
+        "tags": [
+          "마일리지발권",
+          "대기예약",
+          "대한항공",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960438
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960438?boardtype=L&menuid=890&referrerAllArticles=false&page=57"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q004",
+      "data": {
+        "questionId": "q004",
+        "sourceQuestionId": "susasa_1962101",
+        "category": "airline",
+        "order": 4,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지의 '프리미엄 일반석'처럼 번역명이 애매할 때, 프리미엄 이코노미인지 확인하는 가장 안전한 방법은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA0MjNfMTYz/MDAxNzc2OTM4MTM1NjQy.ePoPcIgOnKH2nJymT8Ng86jwgSgdgfMGK87uqaw0drQg.jAboHQanWC-bcPjujjm-6lT-SQAF5aq8uFpGKwL6QVog.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "가격이 싸면 무조건 이코노미, 비싸면 무조건 비즈니스로 본다"
+          },
+          {
+            "id": "b",
+            "text": "항공사 공식 좌석등급, 운임, 수하물 조건을 대조한다"
+          },
+          {
+            "id": "c",
+            "text": "한국어 번역명이 비슷하면 좌석 간격도 항상 같다고 본다"
+          },
+          {
+            "id": "d",
+            "text": "예약대행사 화면만 보고 항공사 확인은 생략한다"
+          }
+        ],
+        "tags": [
+          "좌석등급",
+          "프리미엄이코노미",
+          "스위스항공",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1962101
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1962101?boardtype=L&menuid=890&referrerAllArticles=false&page=34"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q005",
+      "data": {
+        "questionId": "q005",
+        "sourceQuestionId": "susasa_1963663",
+        "category": "airline",
+        "order": 5,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 14시간 장거리 비즈니스 좌석을 고르는데 반려동물 자리와 갤리가 걱정됩니다. 가장 균형 잡힌 판단은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MTdfNDQg/MDAxNzc4OTc5NTAzOTM0.T41KtGWkBsArgC_oKD-J0rGadUWG4gpCPRVwtbnX9qkg.3KwV-kAq1TXNPy19JmB2sMtJgEKG40NL1oT9Ii06U0Qg.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "반려동물 표시는 귀여우니 무조건 그 옆자리를 고른다"
+          },
+          {
+            "id": "b",
+            "text": "비즈니스석은 갤리와 화장실 소음이 전혀 없다"
+          },
+          {
+            "id": "c",
+            "text": "수면 우선순위, 좌석도, 갤리 위치, 후기까지 함께 본다"
+          },
+          {
+            "id": "d",
+            "text": "좌석이 리셋되면 항공사가 항상 보상 좌석을 준다"
+          }
+        ],
+        "tags": [
+          "비즈니스좌석",
+          "장거리비행",
+          "좌석선택",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963663
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963663?boardtype=L&menuid=890&referrerAllArticles=false&page=11"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q006",
+      "data": {
+        "questionId": "q006",
+        "sourceQuestionId": "susasa_1959606",
+        "category": "card",
+        "order": 6,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 롯데힐튼과 현아플2 사이에서 '닭이 먼저냐 숙박권이 먼저냐' 고민 중입니다. 가장 합리적인 비교 기준은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMjJfMTA3/MDAxNzc0MTU2MTI1NjYz.pCDH6iMXQW6PGnyk9upA8EX-VxHSt6uhPSHnIeo2yPkg.3mO_cSALANTmxzHO91OA8jkuil3CI8Ii1VD9ThsyRV4g.PNG/IMG%EF%BC%BF6202.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "연회비가 더 비싼 카드가 언제나 더 이득이다"
+          },
+          {
+            "id": "b",
+            "text": "카드 이름에 호텔이 있으면 항공마일은 절대 포기해야 한다"
+          },
+          {
+            "id": "c",
+            "text": "친구가 쓰는 카드가 있으면 내 소비패턴도 자동으로 맞는다"
+          },
+          {
+            "id": "d",
+            "text": "연회비, 실적, 주 이용 호텔, 포인트 활용처를 함께 비교한다"
+          }
+        ],
+        "tags": [
+          "프리미엄카드",
+          "힐튼카드",
+          "현아플",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1959606
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1959606?boardtype=L&menuid=890&referrerAllArticles=false&page=68"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q007",
+      "data": {
+        "questionId": "q007",
+        "sourceQuestionId": "susasa_1962693",
+        "category": "card",
+        "order": 7,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 카드 이벤트가 '이 페이지를 통해 발급' 조건을 걸고 있습니다. 이미 카드가 도착한 사람의 첫 행동으로 가장 맞는 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MDFfNjEg/MDAxNzc3NTY1NDg5NTI2.Z6X5uG3t2CwYpGmzHaqFumAKhZYJNd9Vm8rYRxph0i4g.KZfDH_2phhGxBr3SS_4iN0WR47BQp6NWR0fXuxpx5rQg.PNG/IMG%EF%BC%BF7977.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "조건과 무관하게 이벤트 포인트는 모두 자동 지급된다고 믿는다"
+          },
+          {
+            "id": "b",
+            "text": "대상, 발급 경로, 기간, 결제 이력을 카드사에 확인한다"
+          },
+          {
+            "id": "c",
+            "text": "앱 화면을 닫으면 이벤트 참여 기록이 새로 생긴다"
+          },
+          {
+            "id": "d",
+            "text": "연회비를 아직 안 냈으면 모든 이벤트가 무조건 소급된다"
+          }
+        ],
+        "tags": [
+          "카드이벤트",
+          "발급경로",
+          "힐튼카드",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1962693
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1962693?boardtype=L&menuid=890&referrerAllArticles=false&page=27"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q008",
+      "data": {
+        "questionId": "q008",
+        "sourceQuestionId": "susasa_1960805",
+        "category": "card",
+        "order": 8,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 아코르 공홈 결제가 해외결제 이벤트 실적으로 잡힐지 궁금합니다. 가장 먼저 봐야 할 기준은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA0MDZfMTU1/MDAxNzc1NDU4NjQ1OTE2.9iuaaaOHgF2zl8yTKkc304X6y_vpnx87FpHl11RG09wg.UU-LCQQDguyUmDMpHCBCXJmg9-S92dLi5gmgxGn4nMcg.PNG/IMG%EF%BC%BF0296.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "호텔 위치, 결제 통화, 승인 가맹점이 국내인지 해외인지 확인한다"
+          },
+          {
+            "id": "b",
+            "text": "공홈이라는 단어가 있으면 모든 결제는 해외 승인이다"
+          },
+          {
+            "id": "c",
+            "text": "해외 브랜드 호텔이면 서울 호텔도 항상 해외 승인이다"
+          },
+          {
+            "id": "d",
+            "text": "캐시백 이벤트는 승인 국가와 무관하게 모두 적용된다"
+          }
+        ],
+        "tags": [
+          "해외결제",
+          "아코르",
+          "카드이벤트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960805
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960805?boardtype=L&menuid=890&referrerAllArticles=false&page=52"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q009",
+      "data": {
+        "questionId": "q009",
+        "sourceQuestionId": "susasa_1958271",
+        "category": "card",
+        "order": 9,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 카드사 몰 가격이 너무 좋아 보입니다. '이거 진짜 싼 거 맞나?'를 판단할 때 가장 좋은 방법은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMDVfNzcg/MDAxNzcyNzAxMjkyNTQ2.cql7PEcSfUqbNSS9w5MTDHctSIMY3s5TIyNtoBb57bQg.QbvpkYi4oBWOxJNYPydw3yTKQqszMZU6GHCqbCTofP0g.PNG/IMG_6584.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "포인트를 100% 쓰면 현금가 비교는 필요 없다"
+          },
+          {
+            "id": "b",
+            "text": "카드사 몰은 언제나 최저가라 검색할 필요가 없다"
+          },
+          {
+            "id": "c",
+            "text": "외부 최저가와 포인트 가치, 실결제액을 같이 비교한다"
+          },
+          {
+            "id": "d",
+            "text": "상품 사진이 크면 할인율도 자동으로 커진다"
+          }
+        ],
+        "tags": [
+          "카드사몰",
+          "포인트사용",
+          "가격비교",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1958271
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958271?boardtype=L&menuid=890&referrerAllArticles=false&page=89"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q010",
+      "data": {
+        "questionId": "q010",
+        "sourceQuestionId": "susasa_1964114",
+        "category": "card",
+        "order": 10,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "프리미엄 카드 2차년도 보너스 마일을 받은 뒤 바로 해지를 고민합니다. 연회비 환급을 기대할 때 가장 안전한 태도는 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "보너스 마일은 선물이라 연회비 환급과 아무 관련이 없다"
+          },
+          {
+            "id": "b",
+            "text": "마일을 받은 뒤에도 연회비는 항상 전액 환급된다"
+          },
+          {
+            "id": "c",
+            "text": "해지 후 마일만 남기면 카드사는 환급을 거절할 수 없다"
+          },
+          {
+            "id": "d",
+            "text": "보너스 지급 후 환급 제한 여부를 약관과 상담으로 확인한다"
+          }
+        ],
+        "tags": [
+          "프리미엄카드",
+          "연회비",
+          "보너스마일",
+          "해지"
+        ],
+        "sourceArticleIds": [
+          1964114
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964114?boardtype=L&menuid=890&referrerAllArticles=false&page=3"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q011",
+      "data": {
+        "questionId": "q011",
+        "sourceQuestionId": "susasa_1961711",
+        "category": "giftcard",
+        "order": 11,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 힐튼 무료숙박권에 사용 가능 브랜드가 적혀 있습니다. 특정 호텔이 되는지 가장 먼저 확인할 방법은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA0MThfMjYx/MDAxNzc2NDgyODcxMzY1.EaUiukIqgY1jdmKyLuFJ0udHqTYVQE1il7PMPntzRigg.vM2jiBmYYxTS1-sbYc1nTScSS44wNsMtQtx2M6ZPGMYg.JPEG/IMG%EF%BC%BF7732.JPG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "숙박권 약관과 공식 예약 필터에서 사용 가능 호텔을 확인한다"
+          },
+          {
+            "id": "b",
+            "text": "호텔 이름에 힐튼 글자가 없으면 모두 사용 불가로 본다"
+          },
+          {
+            "id": "c",
+            "text": "무료숙박권은 브랜드 제한 없이 모든 호텔에서 쓸 수 있다"
+          },
+          {
+            "id": "d",
+            "text": "사진에 보이는 글자 수가 많을수록 더 많은 호텔이 열린다"
+          }
+        ],
+        "tags": [
+          "숙박권",
+          "힐튼",
+          "브랜드확인",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1961711
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1961711?boardtype=L&menuid=890&referrerAllArticles=false&page=40"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q012",
+      "data": {
+        "questionId": "q012",
+        "sourceQuestionId": "susasa_1963710",
+        "category": "giftcard",
+        "order": 12,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 본보이 무료숙박 어워드가 들어왔습니다. 35,000포인트 숙박권을 이해하는 가장 맞는 설명은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MThfMTUz/MDAxNzc5MDYxMzY0Mzg1.jpUbOYlMJvKFhTwXg21sLcC2V6kjI4G2eR0KrbtcEgEg.yC-l0qqANCJTjHqFKY5ntMvUR22FnQxStKpYn68cYnkg.PNG/IMG%EF%BC%BF3568.PNG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "숙박권 하나로 같은 날 객실 두 개가 자동 예약된다"
+          },
+          {
+            "id": "b",
+            "text": "전 세계 모든 메리어트 호텔의 모든 객실에 쓸 수 있다"
+          },
+          {
+            "id": "c",
+            "text": "사용 가능 객실을 찾고 필요하면 개인 포인트 추가 가능 여부를 본다"
+          },
+          {
+            "id": "d",
+            "text": "숙박권은 앱에 보이면 현금처럼 어디서나 결제된다"
+          }
+        ],
+        "tags": [
+          "무료숙박권",
+          "본보이",
+          "포인트추가",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963710
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963710?boardtype=L&menuid=890&referrerAllArticles=false&page=10"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q013",
+      "data": {
+        "questionId": "q013",
+        "sourceQuestionId": "susasa_1959437",
+        "category": "giftcard",
+        "order": 13,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지의 기프트 숙박권에 요일 제한이 보이지 않는데 호텔은 평일만 된다고 합니다. 가장 현실적인 대응은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMTlfMjA0/MDAxNzczOTIxNTQyMDQy.-_pGegoHQE7I__Tt_HXsJCy2EGyNzYGfTpHL7LnRphAg.rAad3pMppmDvPoDL_hvVvGZHEBw4evXACZD9dF6ZnGAg.JPEG/IMG%EF%BC%BF3876.JPG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "종이에 제한이 없으면 예약부에 말하지 않고 바로 투숙한다"
+          },
+          {
+            "id": "b",
+            "text": "표기와 판매 조건을 증빙으로 남기고 호텔과 판매자에게 확인한다"
+          },
+          {
+            "id": "c",
+            "text": "숙박권은 중고거래 후 어떤 조건도 문제 삼을 수 없다"
+          },
+          {
+            "id": "d",
+            "text": "월요일에 한 번 예약하면 주말 예약권으로 자동 업그레이드된다"
+          }
+        ],
+        "tags": [
+          "기프트숙박권",
+          "이용조건",
+          "중고거래",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1959437
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1959437?boardtype=L&menuid=890&referrerAllArticles=false&page=70"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q014",
+      "data": {
+        "questionId": "q014",
+        "sourceQuestionId": "susasa_1963159",
+        "category": "giftcard",
+        "order": 14,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "항공사 크레딧 바우처를 받았지만 1년 안에 직접 여행 계획이 없습니다. 활용 가능성을 볼 때 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "항공 크레딧은 현금처럼 누구에게나 바로 송금할 수 있다"
+          },
+          {
+            "id": "b",
+            "text": "유효기간이 있으면 기간이 지나도 자동 연장된다"
+          },
+          {
+            "id": "c",
+            "text": "바우처는 좌석 업그레이드에는 절대 사용할 수 없다"
+          },
+          {
+            "id": "d",
+            "text": "양도 가능 여부와 타인 명의 예약 가능 여부를 약관으로 확인한다"
+          }
+        ],
+        "tags": [
+          "항공바우처",
+          "크레딧",
+          "유효기간",
+          "양도조건"
+        ],
+        "sourceArticleIds": [
+          1963159
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963159?boardtype=L&menuid=890&referrerAllArticles=false&page=19"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q015",
+      "data": {
+        "questionId": "q015",
+        "sourceQuestionId": "susasa_1961429",
+        "category": "giftcard",
+        "order": 15,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 면세 주류 한도를 계산해야 합니다. 400달러 기준을 볼 때 가장 먼저 확인할 가격은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA0MTRfMjQ4/MDAxNzc2MTYwMzk1MDE3.T3NXYh7hCW4Sfr2-KgjkaWn44eCiXF7BiLRs9KPWgzQg.HWNLkJ6luAWNpwviyThKPfPZ_4MRQMUY0EV8UG8Kgzgg.JPEG/60352.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "할인과 과세 포함 여부가 반영된 최종 구매가를 확인한다"
+          },
+          {
+            "id": "b",
+            "text": "면세점 최초 정가만 보면 할인 여부는 상관없다"
+          },
+          {
+            "id": "c",
+            "text": "카드 청구 할인 예정액은 항상 면세 한도에서 제외된다"
+          },
+          {
+            "id": "d",
+            "text": "술병 라벨이 고급스러우면 한도 계산에서 빠진다"
+          }
+        ],
+        "tags": [
+          "면세",
+          "주류한도",
+          "최종구매가",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1961429
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1961429?boardtype=L&menuid=890&referrerAllArticles=false&page=44"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q016",
+      "data": {
+        "questionId": "q016",
+        "sourceQuestionId": "susasa_1963014",
+        "category": "hotel",
+        "order": 16,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 호텔 객실 설명에 라운지가 보이는데, 티어 혜택은 2인 기준이라 헷갈립니다. 가장 안전한 확인 방법은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MDZfMTI2/MDAxNzc4MDM0NTM4MzIw.1w0A6hfSie46ZpT3pPp73DOMTG9oLurmo2o9R97pfWAg.MxBv7IwAKGvy_uc8pKFF9GB28xBW7fbAY46bCuGkWgEg.JPEG/IMG%EF%BC%BF8775.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "스위트라는 단어가 있으면 투숙 인원 전부 라운지가 무료다"
+          },
+          {
+            "id": "b",
+            "text": "티어 혜택과 객실 포함 혜택은 항상 완전히 같다"
+          },
+          {
+            "id": "c",
+            "text": "후기 하나를 보면 호텔의 모든 날짜 정책을 알 수 있다"
+          },
+          {
+            "id": "d",
+            "text": "예약 인원 기준 포함 혜택인지 호텔에 직접 확인한다"
+          }
+        ],
+        "tags": [
+          "라운지",
+          "객실혜택",
+          "페어몬트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963014
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963014?boardtype=L&menuid=890&referrerAllArticles=false&page=21"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q017",
+      "data": {
+        "questionId": "q017",
+        "sourceQuestionId": "susasa_1958343",
+        "category": "hotel",
+        "order": 17,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 힐튼 무료숙박권 예약에 만 15세 자녀가 함께합니다. 티어와 추가 인원 혜택을 볼 때 가장 맞는 설명은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjAzMDZfOTgg/MDAxNzcyNzY3OTYzMDg3.ovVzBe93VWkteGZcjYsrh0LPpseDBxmJp8myTnk-P_8g.qObDZ-hDQFpgAEtHUPTgPO9yxjXEsY2u5E3zG43AHZAg.JPEG/Screenshot%EF%BC%BF20260306%EF%BC%BF123224.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "무료숙박권이면 추가 인원 비용과 조식 비용이 모두 사라진다"
+          },
+          {
+            "id": "b",
+            "text": "체크인 시점 티어와 호텔별 추가 인원 정책을 함께 확인한다"
+          },
+          {
+            "id": "c",
+            "text": "다이아 티어면 전 세계 모든 호텔에서 3인 조식이 의무 제공된다"
+          },
+          {
+            "id": "d",
+            "text": "아이 나이는 호텔 정책과 무관하므로 입력하지 않아도 된다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "무료숙박권",
+          "추가인원",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1958343
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958343?boardtype=L&menuid=890&referrerAllArticles=false&page=88"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q018",
+      "data": {
+        "questionId": "q018",
+        "sourceQuestionId": "susasa_1963627",
+        "category": "hotel",
+        "order": 18,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 호텔럭스 예약에서 조식과 크레딧을 본 것 같은데 확정서에 안 보입니다. 이럴 때 가장 좋은 다음 행동은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MTZfMTMg/MDAxNzc4OTA0NTUwMzkw.pfwmpWiDh6-EIp8VBaIpRohx1jl1MWqNU6cakLWUYe0g.kbm0GEsfqIvCn45SJSTlUNJrRSjHBoIPXCPYNaOzsbEg.JPEG/IMG_0785.jpeg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "혜택은 마음속으로 봤으면 확정된 것으로 처리한다"
+          },
+          {
+            "id": "b",
+            "text": "체크아웃 후에야 혜택이 없었다는 걸 알면 가장 깔끔하다"
+          },
+          {
+            "id": "c",
+            "text": "예약 채널과 호텔에 포함 혜택을 문서로 확인한다"
+          },
+          {
+            "id": "d",
+            "text": "얼리 체크인과 레이트 체크아웃은 예약 순간 모두 보장된다"
+          }
+        ],
+        "tags": [
+          "호텔럭스",
+          "예약혜택",
+          "크레딧",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963627
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963627?boardtype=L&menuid=890&referrerAllArticles=false&page=12"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q019",
+      "data": {
+        "questionId": "q019",
+        "sourceQuestionId": "susasa_1963206",
+        "category": "hotel",
+        "order": 19,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 호텔 멤버십이 좋아 보이지만 실제로 2박 정도만 쓸 예정입니다. 가입 전 계산해야 할 핵심은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA1MDlfOTEg/MDAxNzc4Mjg1ODgzNDUw.c69KM-mBBOl9fPir91oPAi1t1D0uBd9l19i5RmH_jQEg.oUO_rx2_Os6jB23OvvdKMNe7ImBNdC3bZGmMQq9Hetkg.JPEG/IMG%EF%BC%BF2941.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "예상 이용 횟수, 예약 가능일, 추가금, 할인 금액을 비교한다"
+          },
+          {
+            "id": "b",
+            "text": "멤버십 이름이 예쁘면 본전은 이미 회수한 것이다"
+          },
+          {
+            "id": "c",
+            "text": "식사 예정이 있으면 객실 숙박권 제한은 볼 필요가 없다"
+          },
+          {
+            "id": "d",
+            "text": "연회비는 여행 기분값이므로 계산표에서 빼도 된다"
+          }
+        ],
+        "tags": [
+          "호텔멤버십",
+          "가입판단",
+          "스테이딜라이트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963206
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963206?boardtype=L&menuid=890&referrerAllArticles=false&page=18"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_004/questions/q020",
+      "data": {
+        "questionId": "q020",
+        "sourceQuestionId": "susasa_1960532",
+        "category": "hotel",
+        "order": 20,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 예전 아코르 카드 활용 후기를 보고 따라 하려는데 약관에는 현재 안 된다는 내용이 보입니다. 가장 맞는 태도는 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNjA0MDJfMjgg/MDAxNzc1MTE0NjI1OTk2.lUZnPqKGApUDbf9nHRsRMpFtZ9GDYvfACLqcCjg2ECQg.7pVLgy2zFUQ2juP72DlpHEKXbNtQq9OTQ5NWJO0Xo9Mg.JPEG/Screenshot_2026-04-02_at_09.47.55.JPG?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "예전 후기가 있으면 현재 약관은 자동으로 무효가 된다"
+          },
+          {
+            "id": "b",
+            "text": "최신 약관과 카드사/호텔 멤버십 안내를 기준으로 판단한다"
+          },
+          {
+            "id": "c",
+            "text": "검색 결과가 많을수록 과거 방식이 계속 살아 있다는 뜻이다"
+          },
+          {
+            "id": "d",
+            "text": "카드 이름이 비슷하면 모든 패스트트랙 조건도 동일하다"
+          }
+        ],
+        "tags": [
+          "아코르",
+          "익스플로러",
+          "최신약관",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960532
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960532?boardtype=L&menuid=890&referrerAllArticles=false&page=55"
+        ]
+      }
+    }
+  ],
+  "answerKeyDocuments": [
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q001",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "후기와 내 취향을 참고해 사전 선택 마감 전 결정한다",
+        "explanation": "기내식은 취향 차이가 크지만 사전 선택은 마감 시간이 있고, 노선과 클래스에 따라 메뉴가 달라질 수 있습니다. 후기는 참고 자료로 쓰되 내 취향과 실제 제공 조건을 확인해 미리 선택하는 것이 가장 실전적입니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "기내식",
+          "대한항공",
+          "사전선택",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963203
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963203?boardtype=L&menuid=890&referrerAllArticles=false&page=19"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q002",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "파손 사진을 남기고 공항에서 항공사 사고 접수를 한다",
+        "explanation": "수하물 파손은 현장에서 사진, 수하물 태그, 항공사 사고 접수 기록을 남기는 것이 중요합니다. 나중에 보험 청구나 항공사 문의를 하더라도 현장 기록이 있어야 설명이 쉬워집니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "수하물파손",
+          "사고접수",
+          "여행자보험",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1958040
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958040?boardtype=L&menuid=890&referrerAllArticles=false&page=93"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q003",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "확약된 편을 남기고 나머지를 정리한 뒤 발권한다",
+        "explanation": "한 예약 안에 여러 대기 편이 있을 때 먼저 확약되는 편을 발권하고, 필요 없는 대기는 정리하는 방식으로 처리할 수 있습니다. 실제 발권 전에는 예약 상태와 취소할 구간을 항공사 화면이나 상담으로 확인하는 것이 안전합니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "마일리지발권",
+          "대기예약",
+          "대한항공",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960438
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960438?boardtype=L&menuid=890&referrerAllArticles=false&page=57"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q004",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "항공사 공식 좌석등급, 운임, 수하물 조건을 대조한다",
+        "explanation": "예약대행사 번역명은 항공사 공식 명칭과 다르게 보일 수 있습니다. 좌석등급, 운임 클래스, 수하물 조건, 기종 좌석도를 항공사 정보와 대조해야 프리미엄 이코노미인지 더 정확히 판단할 수 있습니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "좌석등급",
+          "프리미엄이코노미",
+          "스위스항공",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1962101
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1962101?boardtype=L&menuid=890&referrerAllArticles=false&page=34"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q005",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "수면 우선순위, 좌석도, 갤리 위치, 후기까지 함께 본다",
+        "explanation": "장거리 비행에서는 작은 소음과 동선도 체감이 커질 수 있습니다. 반려동물 탑승 여부는 확정되지 않을 수 있으므로 좌석도, 갤리와 화장실 위치, 실제 후기, 본인의 수면 우선순위를 함께 보는 것이 좋습니다.",
+        "score": 5,
+        "category": "airline",
+        "tags": [
+          "비즈니스좌석",
+          "장거리비행",
+          "좌석선택",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963663
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963663?boardtype=L&menuid=890&referrerAllArticles=false&page=11"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q006",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "연회비, 실적, 주 이용 호텔, 포인트 활용처를 함께 비교한다",
+        "explanation": "프리미엄 카드는 혜택 이름보다 실제로 쓸 수 있는지가 핵심입니다. 힐튼을 자주 쓰는지, MR처럼 범용 포인트가 필요한지, 연회비와 실적을 감당할 수 있는지까지 함께 계산해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "프리미엄카드",
+          "힐튼카드",
+          "현아플",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1959606
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1959606?boardtype=L&menuid=890&referrerAllArticles=false&page=68"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q007",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "대상, 발급 경로, 기간, 결제 이력을 카드사에 확인한다",
+        "explanation": "카드 이벤트는 발급 경로, 신청 기간, 신규 여부, 결제 이력 같은 조건이 붙는 경우가 많습니다. 이미 발급이 된 상태라면 소급 가능 여부를 추측하지 말고 카드사 이벤트 조건과 상담으로 확인해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "카드이벤트",
+          "발급경로",
+          "힐튼카드",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1962693
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1962693?boardtype=L&menuid=890&referrerAllArticles=false&page=27"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q008",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "호텔 위치, 결제 통화, 승인 가맹점이 국내인지 해외인지 확인한다",
+        "explanation": "공홈 예약이라도 결제는 호텔 위치와 승인 구조에 따라 달라질 수 있습니다. 해외 호텔은 현지 통화나 해외 가맹점으로 승인될 수 있고, 국내 호텔은 국내 원화 승인일 수 있으므로 카드사 승인 내역까지 확인하는 편이 안전합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "해외결제",
+          "아코르",
+          "카드이벤트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960805
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960805?boardtype=L&menuid=890&referrerAllArticles=false&page=52"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q009",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "외부 최저가와 포인트 가치, 실결제액을 같이 비교한다",
+        "explanation": "카드사 몰은 가끔 좋은 가격이 나오지만 항상 최저가인 것은 아닙니다. 포인트를 쓰는 경우에도 포인트 가치와 실제 현금 지출, 외부 판매가를 같이 비교해야 진짜 할인인지 알 수 있습니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "카드사몰",
+          "포인트사용",
+          "가격비교",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1958271
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958271?boardtype=L&menuid=890&referrerAllArticles=false&page=89"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q010",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "보너스 지급 후 환급 제한 여부를 약관과 상담으로 확인한다",
+        "explanation": "연회비가 비싼 카드의 보너스 마일은 연회비 환급 조건과 연결될 수 있습니다. 보너스를 받은 뒤 해지하면 환급이 제한될 수 있으므로 약관과 카드사 안내를 먼저 확인해야 합니다.",
+        "score": 5,
+        "category": "card",
+        "tags": [
+          "프리미엄카드",
+          "연회비",
+          "보너스마일",
+          "해지"
+        ],
+        "sourceArticleIds": [
+          1964114
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1964114?boardtype=L&menuid=890&referrerAllArticles=false&page=3"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q011",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "숙박권 약관과 공식 예약 필터에서 사용 가능 호텔을 확인한다",
+        "explanation": "무료숙박권은 브랜드, 호텔, 날짜, 객실 재고에 따라 사용 가능 여부가 달라집니다. 이름만 보고 판단하지 말고 숙박권 조건과 공식 예약 화면의 필터 또는 고객센터 안내를 확인해야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "숙박권",
+          "힐튼",
+          "브랜드확인",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1961711
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1961711?boardtype=L&menuid=890&referrerAllArticles=false&page=40"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q012",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "사용 가능 객실을 찾고 필요하면 개인 포인트 추가 가능 여부를 본다",
+        "explanation": "무료숙박권은 정해진 포인트 한도와 사용 가능한 객실 조건이 있습니다. 모든 호텔과 객실이 열리는 것은 아니므로 날짜별 재고를 확인하고, 필요하면 개인 포인트 추가 가능 범위도 함께 봐야 합니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "무료숙박권",
+          "본보이",
+          "포인트추가",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963710
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963710?boardtype=L&menuid=890&referrerAllArticles=false&page=10"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q013",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "표기와 판매 조건을 증빙으로 남기고 호텔과 판매자에게 확인한다",
+        "explanation": "숙박권이나 기프트권은 사용 가능 요일, 제외일, 예약 방식 같은 조건이 중요합니다. 제한이 명확히 표시되지 않았다면 권면, 판매 글, 안내 문구를 증빙으로 남기고 호텔과 판매자에게 확인하는 것이 현실적인 대응입니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "기프트숙박권",
+          "이용조건",
+          "중고거래",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1959437
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1959437?boardtype=L&menuid=890&referrerAllArticles=false&page=70"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q014",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "양도 가능 여부와 타인 명의 예약 가능 여부를 약관으로 확인한다",
+        "explanation": "항공 크레딧은 현금처럼 자유롭게 양도되지 않는 경우가 많습니다. 다만 본인이 크레딧을 사용해 다른 사람 명의의 항공권을 예약할 수 있는지 등은 바우처 조건에 따라 달라지므로 약관 확인이 먼저입니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "항공바우처",
+          "크레딧",
+          "유효기간",
+          "양도조건"
+        ],
+        "sourceArticleIds": [
+          1963159
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963159?boardtype=L&menuid=890&referrerAllArticles=false&page=19"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q015",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "할인과 과세 포함 여부가 반영된 최종 구매가를 확인한다",
+        "explanation": "면세 한도는 실제 구매가와 과세 대상 금액을 확인해야 합니다. 정가만 보거나 할인 전 가격만 보면 실제 신고 기준을 놓칠 수 있으므로 영수증과 할인 내역을 함께 확인하는 것이 좋습니다.",
+        "score": 5,
+        "category": "giftcard",
+        "tags": [
+          "면세",
+          "주류한도",
+          "최종구매가",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1961429
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1961429?boardtype=L&menuid=890&referrerAllArticles=false&page=44"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q016",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "예약 인원 기준 포함 혜택인지 호텔에 직접 확인한다",
+        "explanation": "티어 혜택과 객실 상품에 포함된 혜택은 다를 수 있습니다. 라운지가 객실 요금에 포함된 것인지, 예약 인원 전원에게 제공되는지, 추가 인원 비용이 있는지를 호텔에 확인해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "라운지",
+          "객실혜택",
+          "페어몬트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963014
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963014?boardtype=L&menuid=890&referrerAllArticles=false&page=21"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q017",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "체크인 시점 티어와 호텔별 추가 인원 정책을 함께 확인한다",
+        "explanation": "호텔 티어 혜택은 보통 체크인 시점 상태가 중요하지만, 조식 인원과 엑스트라 베드, 3인 투숙 추가금은 호텔별 정책을 따릅니다. 다이아 등급이라도 모든 호텔에서 3인 혜택이 자동 보장되는 것은 아닙니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "무료숙박권",
+          "추가인원",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1958343
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1958343?boardtype=L&menuid=890&referrerAllArticles=false&page=88"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q018",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "예약 채널과 호텔에 포함 혜택을 문서로 확인한다",
+        "explanation": "조식이나 크레딧 같은 혜택은 예약 조건에 명시되어 있어야 나중에 확인하기 쉽습니다. 확정서에 보이지 않으면 예약 채널 화면, 앱, 이메일, 호텔 문의를 통해 포함 여부를 문서로 남기는 것이 안전합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "호텔럭스",
+          "예약혜택",
+          "크레딧",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963627
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963627?boardtype=L&menuid=890&referrerAllArticles=false&page=12"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q019",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "예상 이용 횟수, 예약 가능일, 추가금, 할인 금액을 비교한다",
+        "explanation": "호텔 멤버십은 혜택이 많아 보여도 실제 예약 가능일과 추가금, 본인이 쓸 횟수에 따라 가치가 달라집니다. 식사 할인과 숙박권을 실제 사용할 수 있는지 계산해야 본전 여부가 보입니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "호텔멤버십",
+          "가입판단",
+          "스테이딜라이트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1963206
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1963206?boardtype=L&menuid=890&referrerAllArticles=false&page=18"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_004/questions/q020",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "최신 약관과 카드사/호텔 멤버십 안내를 기준으로 판단한다",
+        "explanation": "호텔 카드와 멤버십 혜택은 시간이 지나며 조건이 바뀔 수 있습니다. 예전 후기는 참고자료일 뿐이고, 실제 신청 전에는 최신 약관과 카드사 또는 호텔 멤버십 안내를 기준으로 판단해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "아코르",
+          "익스플로러",
+          "최신약관",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1960532
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1960532?boardtype=L&menuid=890&referrerAllArticles=false&page=55"
+        ]
+      }
+    }
+  ],
+  "qualityChecklist": {
+    "totalQuestionCount": 20,
+    "categoryCounts": {
+      "airline": 5,
+      "card": 5,
+      "giftcard": 5,
+      "hotel": 5
+    },
+    "difficultyCounts": {
+      "easy": 10,
+      "normal": 8,
+      "hard": 2
+    },
+    "answerDistribution": {
+      "a": 5,
+      "b": 5,
+      "c": 5,
+      "d": 5
+    },
+    "imageQuestionCount": 18,
+    "hasSeparatedAnswerKeys": true,
+    "hasNoAnswerInQuestionDocuments": true,
+    "hasSourceForEveryQuestion": true,
+    "avoidsRound2AndRound3SourceOverlap": true,
+    "humorousToneIncluded": true
+  }
+}
