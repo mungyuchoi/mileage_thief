@@ -10,6 +10,7 @@ class GiftcardLedgerEntry {
   final String id;
   final String giftcardId;
   final String giftcardName;
+  final int faceValue;
   final DateTime dateTime;
   final int qty;
   final int unitPrice;
@@ -30,6 +31,7 @@ class GiftcardLedgerEntry {
     required this.id,
     required this.giftcardId,
     required this.giftcardName,
+    required this.faceValue,
     required this.dateTime,
     required this.qty,
     required this.unitPrice,
@@ -111,6 +113,7 @@ class GiftcardDailyLedgerMapper {
       final DateTime dt = _toDateTime(lot['buyDate']);
       final int qty = _asInt(lot['qty']);
       final int unit = _asInt(lot['buyUnit']);
+      final int faceValue = _asInt(lot['faceValue']);
       final double? discount = (lot['discount'] as num?)?.toDouble();
       final String cardId = (lot['cardId'] as String?) ?? '';
       final String? cardName = (cards[cardId]?['name'] as String?) ??
@@ -133,6 +136,7 @@ class GiftcardDailyLedgerMapper {
           id: id,
           giftcardId: giftcardId,
           giftcardName: name,
+          faceValue: faceValue,
           dateTime: dt,
           qty: qty,
           unitPrice: unit,
@@ -158,6 +162,7 @@ class GiftcardDailyLedgerMapper {
       final int qty = _asInt(sale['qty']);
       final int unit = _asInt(sale['sellUnit']);
       final int profit = _asInt(sale['profit']);
+      int faceValue = _asInt(sale['faceValue']);
       final double? discount = (sale['discount'] as num?)?.toDouble();
       final String? branchId = sale['branchId'] as String?;
       final String? branchName = (branchId == null || branchId.isEmpty)
@@ -169,6 +174,9 @@ class GiftcardDailyLedgerMapper {
       if (giftcardId.isEmpty && lotId != null) {
         final lot = lotById[lotId];
         giftcardId = (lot?['giftcardId'] as String?) ?? '';
+      }
+      if (faceValue <= 0 && lotId != null) {
+        faceValue = _asInt(lotById[lotId]?['faceValue']);
       }
       if (giftcardId.isEmpty) continue;
       if (filterGiftcardIds.isNotEmpty &&
@@ -182,6 +190,7 @@ class GiftcardDailyLedgerMapper {
           id: id,
           giftcardId: giftcardId,
           giftcardName: name,
+          faceValue: faceValue,
           dateTime: dt,
           qty: qty,
           unitPrice: unit,
@@ -431,9 +440,19 @@ class _LedgerEntryRow extends StatelessWidget {
       return s;
     }
 
+    String denominationLabel(int value) {
+      if (value <= 0) return '';
+      if (value % 10000 == 0) return '${value ~/ 10000}만원권';
+      return '${won.format(value)}원권';
+    }
+
     Widget pill(String text, {IconData? icon}) =>
         _MiniPill(text: text, icon: icon);
 
+    final String denomination = denominationLabel(entry.faceValue);
+    final String giftcardTitle = denomination.isEmpty
+        ? entry.giftcardName
+        : '${entry.giftcardName} $denomination';
     final pills = <Widget>[];
     if (isSell) {
       pills.add(pill('판매가 ${won.format(entry.unitPrice)}원',
@@ -444,13 +463,16 @@ class _LedgerEntryRow extends StatelessWidget {
       }
       pills.add(pill('손익 ${won.format(entry.profit)}원',
           icon: Icons.trending_up_outlined));
-      pills.add(pill(entry.giftcardName, icon: Icons.card_giftcard_outlined));
+      pills.add(pill(giftcardTitle, icon: Icons.card_giftcard_outlined));
       if (entry.branchName != null && entry.branchName!.isNotEmpty) {
         pills.add(pill(entry.branchName!, icon: Icons.store_outlined));
       }
     } else {
       pills.add(pill('매입가 ${won.format(entry.unitPrice)}원',
           icon: Icons.payments_outlined));
+      if (denomination.isNotEmpty) {
+        pills.add(pill('권종 $denomination', icon: Icons.card_giftcard_outlined));
+      }
       if (entry.discount != null) {
         pills.add(
             pill('할인율 ${fmtPercent(entry.discount!)}%', icon: Icons.percent));
@@ -486,7 +508,7 @@ class _LedgerEntryRow extends StatelessWidget {
       } else if (status == 'sold') {
         // sold 상태인 경우 교환완료 아이콘만 표시 (클릭 불가)
         pills.add(
-          _MiniPill(
+          const _MiniPill(
             text: '교환완료',
             icon: Icons.swap_horiz_outlined,
           ),
@@ -512,7 +534,7 @@ class _LedgerEntryRow extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${entry.qty}장 · ${entry.giftcardName}',
+                  '${entry.qty}장 · $giftcardTitle',
                   style: McTextStyles.bodyStrong.copyWith(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -3555,7 +3555,7 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
             _buildInfoSegmentTabBar(insideHorizontalPadding: true),
             filterHeader,
           ],
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
           physics: const AlwaysScrollableScrollPhysics(),
           onEdit: (entry) async {
             AnalyticsService.instance.logAction(
