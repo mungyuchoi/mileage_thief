@@ -25,6 +25,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import '../utils/image_compressor.dart';
+import '../utils/url_classification.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../services/peanut_history_service.dart';
 import '../services/community_labeled_post_index_service.dart';
@@ -1576,17 +1577,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   // 이미지 URL인지 확인하는 헬퍼 메서드
   bool _isImageUrl(String url) {
-    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-    final lowerUrl = _decodeHtmlEntities(url).toLowerCase();
-
-    // Firebase Storage 이미지 URL 패턴 확인
-    if (lowerUrl.contains('firebasestorage.googleapis.com') ||
-        lowerUrl.contains('storage.googleapis.com')) {
-      return true;
-    }
-
-    // 일반적인 이미지 확장자 확인
-    return imageExtensions.any((ext) => lowerUrl.contains(ext));
+    return UrlClassification.isDirectImageUrl(_decodeHtmlEntities(url));
   }
 
   String? _cleanImageUrl(String? value) {
