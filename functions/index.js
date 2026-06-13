@@ -7871,6 +7871,34 @@ exports.createKakaoCustomToken = onCall({
 });
 
 /**
+ * 세계지도 WebView(milecatch) 자동 로그인용 커스텀 토큰 발급.
+ *
+ * Flutter 앱(인증된 네이티브 사용자)이 호출하면, 그 사용자의 uid로
+ * 커스텀 토큰을 만들어 반환한다. WebView 안의 웹은 이 토큰으로
+ * signInWithCustomToken 하여 동일 사용자로 자동 로그인한다.
+ * 호출자가 이미 인증되어 있어야만(requireAuthUid) 자기 토큰을 받을 수 있다.
+ */
+exports.createWebViewCustomToken = onCall({
+  region: OAUTH_REGION,
+  timeoutSeconds: 30,
+  memory: "256MiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  try {
+    const token = await admin.auth().createCustomToken(uid, {
+      source: "world_map_webview",
+    });
+    return {token};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    logger.error("createWebViewCustomToken unexpected error", error);
+    throw new HttpsError("internal", "토큰 발급 중 오류가 발생했습니다.");
+  }
+});
+
+/**
  * 테스트용 함수 (배포 후 확인용)
  */
 exports.helloWorld = onRequest((request, response) => {

@@ -14,9 +14,10 @@ import '../services/world_share_service.dart';
 class WorldMapScreen extends StatefulWidget {
   const WorldMapScreen({super.key});
 
-  /// TODO: 배포 후 milecatch 웹 스테이징/운영 URL로 교체.
-  ///  - Firebase Hosting(mileagethief) 배포 URL 예: https://mileagethief.web.app/explore
-  static const String webUrl = 'https://mileagethief.web.app/explore';
+  /// milecatch 웹(운영) — mileagethief 프로젝트 커스텀 도메인.
+  /// 새 /explore 게임 코드는 milecatch 웹을 rebuild + `firebase deploy --only hosting`
+  /// 해야 라이브에 반영된다.
+  static const String webUrl = 'https://milecatch.com/explore';
 
   @override
   State<WorldMapScreen> createState() => _WorldMapScreenState();
