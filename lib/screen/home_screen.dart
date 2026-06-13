@@ -31,6 +31,7 @@ import 'giftcard_settlement_screen.dart';
 import 'my_card_dashboard_screen.dart';
 import 'notification_settings_screen.dart';
 import 'useful_info_screen.dart';
+import 'world_map_screen.dart';
 import 'user_scrap_upload_screen.dart';
 import 'user_report_history_screen.dart';
 import '../widgets/gift_action_pill.dart';
@@ -220,6 +221,7 @@ class ForceUpdateDialog extends StatelessWidget {
 enum _HomeTab {
   usefulInfo,
   community,
+  worldMap,
   giftcard,
   profile,
 }
@@ -249,6 +251,11 @@ const List<_HomeTabDestination> _homeTabDestinations = [
     label: '커뮤니티',
     outlinedIcon: Icons.forum_outlined,
     filledIcon: Icons.forum_rounded,
+  ),
+  _HomeTabDestination(
+    label: '세계지도',
+    outlinedIcon: Icons.public_outlined,
+    filledIcon: Icons.public_rounded,
   ),
   _HomeTabDestination(
     label: '상품권',
@@ -564,6 +571,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return switch (tab) {
       _HomeTab.usefulInfo => 'guide',
       _HomeTab.community => 'community',
+      _HomeTab.worldMap => 'world_map',
       _HomeTab.giftcard => 'giftcard',
       _HomeTab.profile => 'profile',
     };
@@ -1205,7 +1213,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Scaffold(
         extendBody: true,
         backgroundColor: const Color.fromRGBO(242, 242, 247, 1.0),
-        appBar: _currentTab == _HomeTab.community
+        appBar: (_currentTab == _HomeTab.community ||
+                _currentTab == _HomeTab.worldMap)
             ? null
             : _buildHomeAppBar(
                 actions: _currentTab == _HomeTab.profile
@@ -1262,6 +1271,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           onOpenGiftcard: () => _selectHomeTab(_HomeTab.giftcard),
           onOpenProfile: () => _selectHomeTab(_HomeTab.profile),
         );
+      case _HomeTab.worldMap:
+        return const WorldMapScreen();
       case _HomeTab.giftcard:
         return const SizedBox.shrink();
       case _HomeTab.profile:
