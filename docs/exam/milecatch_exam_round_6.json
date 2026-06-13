@@ -1,0 +1,1406 @@
+{
+  "examDocument": {
+    "path": "mockExam/main/exams/exam_006",
+    "data": {
+      "title": "제6회 힐튼고사: 시드니의 2만 포인트",
+      "description": "힐튼 포인트, 숙박권, 티어, 가족여행 판단력과 시드니님 보너스를 확인하는 호텔 특집 모의고사",
+      "status": "draft",
+      "roundNo": 6,
+      "questionCount": 20,
+      "totalScore": 100,
+      "categories": [
+        "hotel"
+      ],
+      "timeLimitSeconds": 600,
+      "rankingPeriod": "weekly",
+      "unlockRule": {
+        "type": "always_open"
+      },
+      "sourceJsonPath": "docs/exam/susasa_qna_20260601.json",
+      "sourceJsonPaths": [
+        "docs/exam/susasa_qna_20260601.json",
+        "docs/exam/susasa_qna_20260529.json",
+        "docs/exam/susasa_qna_20260528.json"
+      ],
+      "createdAt": "serverTimestamp",
+      "updatedAt": "serverTimestamp"
+    }
+  },
+  "questionDocuments": [
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q001",
+      "data": {
+        "questionId": "q001",
+        "sourceQuestionId": "susasa_1950260",
+        "category": "hotel",
+        "order": 1,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "하와이에서 렌트 없이 힐튼 하와이안 빌리지와 와이키키 중심 숙소를 고민한다면, 가장 먼저 따질 기준은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "금요일 불꽃놀이만 보고 힐튼 6박으로 고정한다"
+          },
+          {
+            "id": "b",
+            "text": "주요 식당·해변·투어 동선과 이동 방식을 먼저 본다"
+          },
+          {
+            "id": "c",
+            "text": "호텔 이름에 힐튼이 있으면 와이키키 어디든 동선이 같다"
+          },
+          {
+            "id": "d",
+            "text": "라군은 숙박객만 갈 수 있으니 무조건 힐튼에 묵는다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "하와이",
+          "와이키키",
+          "하와이안빌리지",
+          "동선"
+        ],
+        "sourceArticleIds": [
+          1950260
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1950260?boardtype=L&menuid=890&referrerAllArticles=false&page=251"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q002",
+      "data": {
+        "questionId": "q002",
+        "sourceQuestionId": "susasa_1948567",
+        "category": "hotel",
+        "order": 2,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "힐튼 베케이션 클럽 설명회를 들으면 숙박권이나 포인트를 준다는 제안을 받았습니다. 가장 실전적인 태도는 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "선물이 있으니 회원권 계약까지 바로 진행한다"
+          },
+          {
+            "id": "b",
+            "text": "설명회는 항상 무료 여행권이므로 조건 확인이 필요 없다"
+          },
+          {
+            "id": "c",
+            "text": "계약 의사가 없어도 반드시 구매해야 예의에 맞다"
+          },
+          {
+            "id": "d",
+            "text": "참석 조건과 보상 지급 조건을 확인하고 구매 압박에는 선을 긋는다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "베케이션클럽",
+          "설명회",
+          "타임쉐어",
+          "오퍼"
+        ],
+        "sourceArticleIds": [
+          1948567
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1948567?boardtype=L&menuid=890&referrerAllArticles=false&page=288"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q003",
+      "data": {
+        "questionId": "q003",
+        "sourceQuestionId": "susasa_1948623",
+        "category": "hotel",
+        "order": 3,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "롯데 힐튼 아멕스 프리미엄의 숙박권 환수 조건 문구가 바뀐 것처럼 보일 때, 가장 안전한 판단은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "카페 댓글 하나만 믿고 1년 되는 날 바로 해지한다"
+          },
+          {
+            "id": "b",
+            "text": "숙박권을 쓰면 어떤 경우에도 환수 조건이 사라진다"
+          },
+          {
+            "id": "c",
+            "text": "발급월·혜택제공월 기준과 환수 문구를 카드사에 기록으로 확인한다"
+          },
+          {
+            "id": "d",
+            "text": "연회비가 청구되면 모든 숙박권은 자동으로 안전해진다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "롯데힐튼",
+          "아멕스",
+          "무료숙박권",
+          "환수조건"
+        ],
+        "sourceArticleIds": [
+          1948623
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1948623?boardtype=L&menuid=890&referrerAllArticles=false&page=286"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q004",
+      "data": {
+        "questionId": "q004",
+        "sourceQuestionId": "susasa_1942968",
+        "category": "hotel",
+        "order": 4,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "롯데 힐튼 카드 숙박권으로 우마나 발리를 노린다면, 발급 전 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "여행 날짜의 기본 객실 가능 여부와 투숙 인원 조건"
+          },
+          {
+            "id": "b",
+            "text": "숙박권만 있으면 모든 스위트룸이 자동 예약되는지"
+          },
+          {
+            "id": "c",
+            "text": "카드 실적을 채우면 호텔이 무조건 방을 따로 열어주는지"
+          },
+          {
+            "id": "d",
+            "text": "발리 호텔은 가족 4명이 어떤 객실에도 무료로 들어가는지"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "우마나발리",
+          "무료숙박권",
+          "기본객실",
+          "가족여행"
+        ],
+        "sourceArticleIds": [
+          1942968
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1942968?boardtype=L&menuid=890&referrerAllArticles=false&page=420"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q005",
+      "data": {
+        "questionId": "q005",
+        "sourceQuestionId": "susasa_1951687",
+        "category": "hotel",
+        "order": 5,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "오사카에서 콘래드 9만 포인트와 월도프 12만 포인트를 고민한다면, 가장 합리적인 비교 기준은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "월도프라는 이름이 더 고급스러우니 포인트 차이는 무시한다"
+          },
+          {
+            "id": "b",
+            "text": "포인트 차이, 위치, 티어 혜택, 동반 자녀 조건을 함께 본다"
+          },
+          {
+            "id": "c",
+            "text": "콘래드가 9만 포인트면 라운지는 골드도 무조건 이용한다"
+          },
+          {
+            "id": "d",
+            "text": "포인트 숙박은 취소가 불가능하니 가격 비교가 의미 없다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "오사카",
+          "콘래드",
+          "월도프",
+          "포인트숙박"
+        ],
+        "sourceArticleIds": [
+          1951687
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1951687?boardtype=L&menuid=890&referrerAllArticles=false&page=221"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q006",
+      "data": {
+        "questionId": "q006",
+        "sourceQuestionId": "susasa_1954081",
+        "category": "hotel",
+        "order": 6,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "힐튼 다이아를 처음 써보며 “다이아를 느끼고 싶다”고 할 때, 기대치를 어떻게 잡는 것이 좋을까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "다이아면 성수기에도 스위트 업그레이드가 보장된다"
+          },
+          {
+            "id": "b",
+            "text": "국내 호텔은 다이아 혜택이 법적으로 모두 동일하다"
+          },
+          {
+            "id": "c",
+            "text": "조식은 의미 없고 객실 업그레이드만 혜택으로 본다"
+          },
+          {
+            "id": "d",
+            "text": "조식·라운지·업그레이드는 호텔과 재고에 따라 달라진다고 본다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "다이아",
+          "티어혜택",
+          "라운지",
+          "업그레이드"
+        ],
+        "sourceArticleIds": [
+          1954081
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954081?boardtype=L&menuid=890&referrerAllArticles=false&page=164"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q007",
+      "data": {
+        "questionId": "q007",
+        "sourceQuestionId": "susasa_1953793",
+        "category": "hotel",
+        "order": 7,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "발리에서 힐튼 리조트 3박 후 남은 2박을 고를 때 “호캉스와 조식”이 핵심이라면 무엇을 먼저 비교해야 할까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "호텔 이름보다 항공사 마일리지 적립률만 본다"
+          },
+          {
+            "id": "b",
+            "text": "조식은 모든 고급 호텔이 같으니 최저가만 본다"
+          },
+          {
+            "id": "c",
+            "text": "식사 만족도, 수영장, 이동 부담, 아이 컨디션을 함께 본다"
+          },
+          {
+            "id": "d",
+            "text": "올인클루시브를 신청하면 다른 2박은 아무 숙소나 괜찮다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "발리",
+          "조식",
+          "호캉스",
+          "가족여행"
+        ],
+        "sourceArticleIds": [
+          1953793
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953793?boardtype=L&menuid=890&referrerAllArticles=false&page=171"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q008",
+      "data": {
+        "questionId": "q008",
+        "sourceQuestionId": "susasa_1955182",
+        "category": "hotel",
+        "order": 8,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "발리 콘래드에서 원하는 날짜에 스탠다드룸이 거의 없고 유상가도 높아 보입니다. 가장 먼저 할 일은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "포인트 기본 객실 재고와 유상가를 나눠 보고 대체 호텔도 비교한다"
+          },
+          {
+            "id": "b",
+            "text": "콘래드는 언제나 포인트 숙박이 최저가라 바로 예약한다"
+          },
+          {
+            "id": "c",
+            "text": "스탠다드룸이 없어도 숙박권은 어떤 방에도 자동 적용된다"
+          },
+          {
+            "id": "d",
+            "text": "다이아 회원이면 성수기 유상가가 자동으로 낮아진다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "콘래드발리",
+          "스탠다드룸",
+          "포인트숙박",
+          "유상가"
+        ],
+        "sourceArticleIds": [
+          1955182
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955182?boardtype=L&menuid=890&referrerAllArticles=false&page=142"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q009",
+      "data": {
+        "questionId": "q009",
+        "sourceQuestionId": "susasa_1944664",
+        "category": "hotel",
+        "order": 9,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "방콕에서 신상 힐튼 계열 호텔과 검증된 콘래드 방콕을 고민할 때, 가장 균형 잡힌 판단은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "신상 호텔은 무조건 기존 호텔보다 서비스가 좋다"
+          },
+          {
+            "id": "b",
+            "text": "콘래드는 오래됐으니 포인트 숙박 가치가 항상 낮다"
+          },
+          {
+            "id": "c",
+            "text": "브랜드 등급, 위치, 객실 타입, 후기, 취소기한을 함께 본다"
+          },
+          {
+            "id": "d",
+            "text": "무료취소 기한은 포인트 예약에는 적용되지 않는다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "방콕",
+          "콘래드",
+          "큐리오",
+          "호텔선택"
+        ],
+        "sourceArticleIds": [
+          1944664
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1944664?boardtype=L&menuid=890&referrerAllArticles=false&page=378"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q010",
+      "data": {
+        "questionId": "q010",
+        "sourceQuestionId": "susasa_1942086",
+        "category": "hotel",
+        "order": 10,
+        "score": 5,
+        "difficulty": "hard",
+        "question": "힐튼 다이아 회원이 FHR로 예약할지 공홈으로 예약할지 고민한다면, 가장 먼저 비교할 항목은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "FHR이면 힐튼 다이아보다 무조건 더 높은 등급으로 대우받는다"
+          },
+          {
+            "id": "b",
+            "text": "공홈 예약은 조식 혜택이 전혀 없으니 항상 FHR이 이긴다"
+          },
+          {
+            "id": "c",
+            "text": "FHR은 호텔 포인트와 숙박 실적이 절대 적립되지 않는다"
+          },
+          {
+            "id": "d",
+            "text": "총요금, FHR 크레딧, 티어혜택 중복 가능성, 적립 조건을 비교한다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "FHR",
+          "다이아",
+          "공홈예약",
+          "혜택중복"
+        ],
+        "sourceArticleIds": [
+          1942086
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1942086?boardtype=L&menuid=890&referrerAllArticles=false&page=442"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q011",
+      "data": {
+        "questionId": "q011",
+        "sourceQuestionId": "susasa_1949181",
+        "category": "hotel",
+        "order": 11,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "힐튼 포인트 100% 보너스 구매 행사를 봤을 때, 가장 좋은 구매 기준은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "100% 보너스면 쓸 곳이 없어도 최대치로 산다"
+          },
+          {
+            "id": "b",
+            "text": "가까운 사용처와 차감가를 정한 뒤 포인트당 가치를 계산한다"
+          },
+          {
+            "id": "c",
+            "text": "포인트는 현금처럼 고정 가치라 계산할 필요가 없다"
+          },
+          {
+            "id": "d",
+            "text": "힐튼 포인트는 구매 즉시 대한항공 마일로 같은 가치 전환된다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "포인트구매",
+          "100%보너스",
+          "포인트가치",
+          "차감가"
+        ],
+        "sourceArticleIds": [
+          1949181
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1949181?boardtype=L&menuid=890&referrerAllArticles=false&page=274"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q012",
+      "data": {
+        "questionId": "q012",
+        "sourceQuestionId": "susasa_1940500",
+        "category": "hotel",
+        "order": 12,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "힐튼 골드 티어를 타인에게 구매하거나 양도받는 이야기를 봤을 때, 가장 안전한 판단은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "공식 규정, 계정 보안, 사기 가능성을 먼저 확인한다"
+          },
+          {
+            "id": "b",
+            "text": "저렴하면 계정 비밀번호를 바로 공유해도 된다"
+          },
+          {
+            "id": "c",
+            "text": "골드는 누구에게서 받아도 호텔이 무조건 보장한다"
+          },
+          {
+            "id": "d",
+            "text": "티어는 현금처럼 사고팔 수 있어 규정 확인이 필요 없다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "골드",
+          "티어양도",
+          "계정보안",
+          "비공식거래"
+        ],
+        "sourceArticleIds": [
+          1940500
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1940500?boardtype=L&menuid=890&referrerAllArticles=false&page=481"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q013",
+      "data": {
+        "questionId": "q013",
+        "sourceQuestionId": "susasa_1949521",
+        "category": "hotel",
+        "order": 13,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 하와이 빅아일랜드의 힐튼 계열 숙소 두 곳을 비교할 때, 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNTExMjRfNjAg/MDAxNzYzOTg2MTE3NjUw.PHbePS1p9EgAj4Op8hFxuS4jsqogmnNbPDRP0CsJHWkg.qPlgbNoqnOD3HD4j9RQHABYDuU4x2BQciMw2WHb4FYQg.PNG/%EC%8A%A4%ED%81%AC%EB%A6%B0%EC%83%B7_2025-11-24_210759.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "지도에서 오른쪽에 있으면 무조건 더 좋은 호텔이다"
+          },
+          {
+            "id": "b",
+            "text": "힐튼 이름이 붙으면 객실 구조와 위치는 모두 같다"
+          },
+          {
+            "id": "c",
+            "text": "평점이 높으면 가족 구성과 동선은 확인하지 않아도 된다"
+          },
+          {
+            "id": "d",
+            "text": "공식 호텔명, 위치, 객실 구조, 이동 동선을 함께 확인한다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "빅아일랜드",
+          "킹스랜드",
+          "이미지문항",
+          "호텔비교"
+        ],
+        "sourceArticleIds": [
+          1949521
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1949521?boardtype=L&menuid=890&referrerAllArticles=false&page=267"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q014",
+      "data": {
+        "questionId": "q014",
+        "sourceQuestionId": "susasa_1948559",
+        "category": "hotel",
+        "order": 14,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "이미지처럼 롯데 힐튼 카드 신규 이벤트를 보고 발급을 고민할 때, 가장 먼저 봐야 할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNTExMTJfMTIw/MDAxNzYyOTIzMzc2NTM5.yz2SWydMwKyT0V3HRfmcBKUcLLNdBQUl4KmXMFNOvnAg.IQrLHEF6sT6KAKb2CArOuPN6n_VH9-_7-6TSQWSMdAQg.PNG/image.png?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이벤트 이미지만 보이면 기존 결제 이력은 상관없다"
+          },
+          {
+            "id": "b",
+            "text": "카드 이름이 같으면 모든 링크의 혜택도 항상 같다"
+          },
+          {
+            "id": "c",
+            "text": "대상자 조건, 발급 경로, 직전 결제 이력, 행사 기간을 확인한다"
+          },
+          {
+            "id": "d",
+            "text": "캐시백 이벤트는 신청하지 않아도 자동으로 모두 적용된다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "롯데힐튼",
+          "캐시백",
+          "신규이벤트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1948559
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1948559?boardtype=L&menuid=890&referrerAllArticles=false&page=288"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q015",
+      "data": {
+        "questionId": "q015",
+        "sourceQuestionId": "susasa_1947525",
+        "category": "hotel",
+        "order": 15,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "힐튼 공식 예약 후 영수증 금액과 카드 승인 금액이 다르게 보이면, 가장 먼저 확인할 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "호텔이 무조건 이중 결제했으니 즉시 예약을 취소한다"
+          },
+          {
+            "id": "b",
+            "text": "가승인·디파짓·매입 금액과 최종 청구 금액을 구분해 본다"
+          },
+          {
+            "id": "c",
+            "text": "영수증보다 카드 앱 승인 금액만 최종 금액으로 본다"
+          },
+          {
+            "id": "d",
+            "text": "해외 호텔은 체크아웃 후 금액 정산이 절대 바뀌지 않는다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "공홈예약",
+          "영수증",
+          "디파짓"
+        ],
+        "sourceArticleIds": [
+          1947525
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1947525?boardtype=L&menuid=890&referrerAllArticles=false&page=311"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q016",
+      "data": {
+        "questionId": "q016",
+        "sourceQuestionId": "susasa_1949341",
+        "category": "hotel",
+        "order": 16,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "이미지처럼 롯데 힐튼 카드 실적은 넘긴 것 같은데 무료숙박권이 안 보이면, 가장 먼저 점검할 것은 무엇일까요?",
+        "imageUrl": "https://cafeptthumb-phinf.pstatic.net/MjAyNTExMjJfMTY1/MDAxNzYzNzc1NDk4MTA4.VNWQyargtQtJa73Ur43qqpvz8YgXfyKhF12IRF-nm4og.AS-g07_8Y3VJtDJRvVD3cDHd96F3AbjiWSYpvJ3xlBog.JPEG/IMG%EF%BC%BF5104.jpg?type=w800",
+        "choices": [
+          {
+            "id": "a",
+            "text": "연회비·결제대금 처리 여부와 숙박권 일괄 지급 시점을 확인한다"
+          },
+          {
+            "id": "b",
+            "text": "800만원을 쓰면 숙박권이 결제 즉시 앱에 떠야 한다"
+          },
+          {
+            "id": "c",
+            "text": "포인트가 들어오면 숙박권도 같은 날 반드시 들어온다"
+          },
+          {
+            "id": "d",
+            "text": "숙박권이 늦으면 힐튼 계정을 새로 만들면 바로 해결된다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "롯데힐튼",
+          "무료숙박권",
+          "실적",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1949341
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1949341?boardtype=L&menuid=890&referrerAllArticles=false&page=271"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q017",
+      "data": {
+        "questionId": "q017",
+        "sourceQuestionId": "susasa_1952732",
+        "category": "hotel",
+        "order": 17,
+        "score": 5,
+        "difficulty": "normal",
+        "question": "아멕스 MR을 힐튼 포인트나 아코르 포인트로 전환할 때, 숫자만 보고 판단하면 위험한 이유는 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "힐튼 포인트가 숫자로 많으면 항상 현금 가치도 더 높다"
+          },
+          {
+            "id": "b",
+            "text": "아코르 포인트는 호텔 예약에 사용할 수 없다"
+          },
+          {
+            "id": "c",
+            "text": "MR은 호텔 포인트로 넘기면 다시 항공 마일로 자동 복구된다"
+          },
+          {
+            "id": "d",
+            "text": "프로그램별 포인트 가치와 사용처가 달라 실제 환산가를 봐야 한다"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "MR",
+          "포인트전환",
+          "아코르",
+          "포인트가치"
+        ],
+        "sourceArticleIds": [
+          1952732
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1952732?boardtype=L&menuid=890&referrerAllArticles=false&page=195"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q018",
+      "data": {
+        "questionId": "q018",
+        "sourceQuestionId": "manual_sydney_bonus_points",
+        "category": "hotel",
+        "order": 18,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "보너스: 시드니님이 이번 힐튼고사 이벤트로 양도하려는 힐튼 포인트는 몇 포인트일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "20,000포인트"
+          },
+          {
+            "id": "b",
+            "text": "2,000포인트"
+          },
+          {
+            "id": "c",
+            "text": "200,000포인트"
+          },
+          {
+            "id": "d",
+            "text": "마음만 2만 포인트"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "시드니",
+          "보너스",
+          "포인트양도",
+          "이벤트"
+        ],
+        "sourceArticleIds": [
+          "manual_sydney_bonus_points"
+        ],
+        "sourceUrls": [
+          "manual:manual_sydney_bonus_points"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q019",
+      "data": {
+        "questionId": "q019",
+        "sourceQuestionId": "manual_sydney_bonus_children",
+        "category": "hotel",
+        "order": 19,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "보너스: 시드니님을 설명하는 힌트 중 “자녀 수”로 맞는 것은 무엇일까요?",
+        "imageUrl": null,
+        "choices": [
+          {
+            "id": "a",
+            "text": "1명"
+          },
+          {
+            "id": "b",
+            "text": "3명"
+          },
+          {
+            "id": "c",
+            "text": "5명"
+          },
+          {
+            "id": "d",
+            "text": "힐튼 포인트 숫자만큼"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "시드니",
+          "보너스",
+          "자녀",
+          "가족여행"
+        ],
+        "sourceArticleIds": [
+          "manual_sydney_bonus_children"
+        ],
+        "sourceUrls": [
+          "manual:manual_sydney_bonus_children"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/exams/exam_006/questions/q020",
+      "data": {
+        "questionId": "q020",
+        "sourceQuestionId": "manual_sydney_bonus_profile",
+        "category": "hotel",
+        "order": 20,
+        "score": 5,
+        "difficulty": "easy",
+        "question": "보너스: 이미지 속 프로필의 주인공은 누구일까요?",
+        "imageUrl": "https://firebasestorage.googleapis.com/v0/b/mileagethief.firebasestorage.app/o/mock_exam%2Fexam_006%2Fsydney_profile.jpg?alt=media&token=c9148eb1-187e-4ed3-985c-6068c0378435",
+        "choices": [
+          {
+            "id": "a",
+            "text": "콘래드/오사카"
+          },
+          {
+            "id": "b",
+            "text": "월도프/방콕"
+          },
+          {
+            "id": "c",
+            "text": "시드니/아시아나"
+          },
+          {
+            "id": "d",
+            "text": "힐튼/다이아몬드"
+          }
+        ],
+        "tags": [
+          "힐튼",
+          "시드니",
+          "보너스",
+          "프로필",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          "manual_sydney_bonus_profile"
+        ],
+        "sourceUrls": [
+          "manual:manual_sydney_bonus_profile"
+        ]
+      }
+    }
+  ],
+  "answerKeyDocuments": [
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q001",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "주요 식당·해변·투어 동선과 이동 방식을 먼저 본다",
+        "explanation": "렌트 없이 움직인다면 호텔 브랜드보다 실제 동선이 먼저입니다. 힐튼의 라군이나 불꽃놀이는 매력적이지만, 매일 식당과 투어를 오가야 한다면 와이키키 중심 접근성을 같이 봐야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "하와이",
+          "와이키키",
+          "하와이안빌리지",
+          "동선"
+        ],
+        "sourceArticleIds": [
+          1950260
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1950260?boardtype=L&menuid=890&referrerAllArticles=false&page=251"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q002",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "참석 조건과 보상 지급 조건을 확인하고 구매 압박에는 선을 긋는다",
+        "explanation": "설명회 보상은 광고비 성격의 오퍼일 수 있지만, 시간 조건과 보상 지급 조건은 확인해야 합니다. 구매 의사가 없다면 처음부터 선을 정하고, 현장 분위기에 휩쓸려 회원권 계약을 결정하지 않는 편이 안전합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "베케이션클럽",
+          "설명회",
+          "타임쉐어",
+          "오퍼"
+        ],
+        "sourceArticleIds": [
+          1948567
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1948567?boardtype=L&menuid=890&referrerAllArticles=false&page=288"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q003",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "발급월·혜택제공월 기준과 환수 문구를 카드사에 기록으로 확인한다",
+        "explanation": "카드 혜택 환수 조건은 기준월 문구 하나로 결과가 달라질 수 있습니다. 상담 내용도 오류가 있을 수 있으므로 약관, 이벤트 페이지, 이메일 문의처럼 남는 기록으로 확인하는 것이 안전합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "롯데힐튼",
+          "아멕스",
+          "무료숙박권",
+          "환수조건"
+        ],
+        "sourceArticleIds": [
+          1948623
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1948623?boardtype=L&menuid=890&referrerAllArticles=false&page=286"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q004",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "여행 날짜의 기본 객실 가능 여부와 투숙 인원 조건",
+        "explanation": "힐튼 숙박권은 실제로 쓸 수 있는 기본 객실 재고와 인원 조건이 핵심입니다. 숙박권 발급 시점이 여행에 너무 가까우면 원하는 날짜에 방이 없을 수 있고, 3명 이상 투숙은 호텔별 확인이 필요합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "우마나발리",
+          "무료숙박권",
+          "기본객실",
+          "가족여행"
+        ],
+        "sourceArticleIds": [
+          1942968
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1942968?boardtype=L&menuid=890&referrerAllArticles=false&page=420"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q005",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "포인트 차이, 위치, 티어 혜택, 동반 자녀 조건을 함께 본다",
+        "explanation": "포인트 숙박은 브랜드 체험만이 아니라 차감 포인트의 기회비용도 봐야 합니다. 특히 골드와 다이아 혜택, 라운지 이용 가능성, 아이 동반 제한, 이동 동선을 함께 보면 판단이 쉬워집니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "오사카",
+          "콘래드",
+          "월도프",
+          "포인트숙박"
+        ],
+        "sourceArticleIds": [
+          1951687
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1951687?boardtype=L&menuid=890&referrerAllArticles=false&page=221"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q006",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "조식·라운지·업그레이드는 호텔과 재고에 따라 달라진다고 본다",
+        "explanation": "힐튼 다이아 혜택은 호텔별 운영과 객실 재고에 따라 체감 차이가 큽니다. 조식, 라운지, 체크인 동선, 업그레이드 가능성을 함께 보고 성수기에는 보장보다 가능성으로 이해하는 편이 현실적입니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "다이아",
+          "티어혜택",
+          "라운지",
+          "업그레이드"
+        ],
+        "sourceArticleIds": [
+          1954081
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1954081?boardtype=L&menuid=890&referrerAllArticles=false&page=164"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q007",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "식사 만족도, 수영장, 이동 부담, 아이 컨디션을 함께 본다",
+        "explanation": "호캉스 목적이면 객실 가격보다 실제 체류 만족도를 봐야 합니다. 아이가 멀미를 하거나 이동을 줄이고 싶다면 조식, 수영장, 리조트 안에서 보낼 시간, 주변 동선이 중요한 기준이 됩니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "발리",
+          "조식",
+          "호캉스",
+          "가족여행"
+        ],
+        "sourceArticleIds": [
+          1953793
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1953793?boardtype=L&menuid=890&referrerAllArticles=false&page=171"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q008",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "포인트 기본 객실 재고와 유상가를 나눠 보고 대체 호텔도 비교한다",
+        "explanation": "힐튼 포인트나 숙박권은 기본 객실 재고가 중요합니다. 스탠다드룸이 없거나 유상가가 높다면 같은 지역의 힐튼 계열, 다른 브랜드, 날짜 이동까지 같이 비교해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "콘래드발리",
+          "스탠다드룸",
+          "포인트숙박",
+          "유상가"
+        ],
+        "sourceArticleIds": [
+          1955182
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1955182?boardtype=L&menuid=890&referrerAllArticles=false&page=142"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q009",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "브랜드 등급, 위치, 객실 타입, 후기, 취소기한을 함께 본다",
+        "explanation": "신상 호텔은 궁금하고 객실이 매력적일 수 있지만, 검증된 호텔은 서비스와 운영 안정성이 장점입니다. 무료취소 기한 안에서는 위치, 티어 혜택, 객실 타입, 후기를 보고 바꾸는 것이 현실적입니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "방콕",
+          "콘래드",
+          "큐리오",
+          "호텔선택"
+        ],
+        "sourceArticleIds": [
+          1944664
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1944664?boardtype=L&menuid=890&referrerAllArticles=false&page=378"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q010",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "총요금, FHR 크레딧, 티어혜택 중복 가능성, 적립 조건을 비교한다",
+        "explanation": "FHR은 조식, 크레딧, 레이트 체크아웃 같은 혜택이 있을 수 있지만 총요금과 적립 조건을 봐야 합니다. 힐튼 다이아 혜택과 중복되는 부분도 있으므로, 실제 추가 가치가 얼마인지 계산해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "FHR",
+          "다이아",
+          "공홈예약",
+          "혜택중복"
+        ],
+        "sourceArticleIds": [
+          1942086
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1942086?boardtype=L&menuid=890&referrerAllArticles=false&page=442"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q011",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "가까운 사용처와 차감가를 정한 뒤 포인트당 가치를 계산한다",
+        "explanation": "힐튼 포인트는 호텔과 날짜에 따라 가치 편차가 큽니다. 보너스율만 보고 사기보다, 실제 예약할 호텔의 현금가와 포인트 차감가를 비교해 포인트당 비용이 맞을 때 구매하는 것이 좋습니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "포인트구매",
+          "100%보너스",
+          "포인트가치",
+          "차감가"
+        ],
+        "sourceArticleIds": [
+          1949181
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1949181?boardtype=L&menuid=890&referrerAllArticles=false&page=274"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q012",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "공식 규정, 계정 보안, 사기 가능성을 먼저 확인한다",
+        "explanation": "호텔 티어와 계정 혜택은 공식 규정과 계정 보안이 중요합니다. 비공식 거래는 사기, 계정 노출, 혜택 미적용 위험이 있으므로 가격보다 안전성과 공식 경로를 먼저 봐야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "골드",
+          "티어양도",
+          "계정보안",
+          "비공식거래"
+        ],
+        "sourceArticleIds": [
+          1940500
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1940500?boardtype=L&menuid=890&referrerAllArticles=false&page=481"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q013",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "공식 호텔명, 위치, 객실 구조, 이동 동선을 함께 확인한다",
+        "explanation": "같은 힐튼 계열이라도 리조트, 타임쉐어형 숙소, 객실 구조, 이동 동선이 다를 수 있습니다. 지도 이미지와 평점만 보지 말고 공식명과 위치, 가족에게 맞는 객실 형태를 확인해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "빅아일랜드",
+          "킹스랜드",
+          "이미지문항",
+          "호텔비교"
+        ],
+        "sourceArticleIds": [
+          1949521
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1949521?boardtype=L&menuid=890&referrerAllArticles=false&page=267"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q014",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "대상자 조건, 발급 경로, 직전 결제 이력, 행사 기간을 확인한다",
+        "explanation": "카드 이벤트는 발급 경로, 신규 기준, 최근 결제 이력, 행사 기간에 따라 적용 여부가 달라집니다. 특히 “6개월 결제 이력 없음” 같은 조건은 날짜 계산이 중요하므로 이미지보다 약관을 먼저 봐야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "롯데힐튼",
+          "캐시백",
+          "신규이벤트",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1948559
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1948559?boardtype=L&menuid=890&referrerAllArticles=false&page=288"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q015",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "가승인·디파짓·매입 금액과 최종 청구 금액을 구분해 본다",
+        "explanation": "해외 호텔 결제는 가승인, 디파짓, 실매입, 최종 청구가 다르게 보일 수 있습니다. 승인 내역만 보고 단정하지 말고 매입 금액과 청구 금액, 호텔 영수증을 함께 확인하는 것이 좋습니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "공홈예약",
+          "영수증",
+        "디파짓"
+        ],
+        "sourceArticleIds": [
+          1947525
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1947525?boardtype=L&menuid=890&referrerAllArticles=false&page=311"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q016",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "연회비·결제대금 처리 여부와 숙박권 일괄 지급 시점을 확인한다",
+        "explanation": "카드 숙박권은 실적 충족뿐 아니라 연회비와 결제대금 처리, 카드사 지급 일정이 맞아야 보이는 경우가 많습니다. 선결제나 일괄 지급일처럼 운영 기준을 확인하고 필요하면 카드사와 힐튼 양쪽에 문의해야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "롯데힐튼",
+          "무료숙박권",
+          "실적",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          1949341
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1949341?boardtype=L&menuid=890&referrerAllArticles=false&page=271"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q017",
+      "data": {
+        "correctChoiceId": "d",
+        "answerText": "프로그램별 포인트 가치와 사용처가 달라 실제 환산가를 봐야 한다",
+        "explanation": "힐튼은 전환 후 포인트 수가 크게 보일 수 있지만 숙박 차감가에 따라 가치가 달라집니다. 아코르처럼 비교적 고정 가치에 가까운 포인트와는 계산 방식이 다르므로, 전환 비율보다 실제 사용 가치를 봐야 합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "MR",
+          "포인트전환",
+          "아코르",
+          "포인트가치"
+        ],
+        "sourceArticleIds": [
+          1952732
+        ],
+        "sourceUrls": [
+          "https://cafe.naver.com/f-e/cafes/18786605/articles/1952732?boardtype=L&menuid=890&referrerAllArticles=false&page=195"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q018",
+      "data": {
+        "correctChoiceId": "a",
+        "answerText": "20,000포인트",
+        "explanation": "이번 보너스 문제의 정답은 20,000 힐튼 포인트입니다. 실전에서는 포인트를 받거나 양도받을 때 계정 정보와 양도 조건을 정확히 확인하는 것도 중요합니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "시드니",
+          "보너스",
+          "포인트양도",
+          "이벤트"
+        ],
+        "sourceArticleIds": [
+          "manual_sydney_bonus_points"
+        ],
+        "sourceUrls": [
+          "manual:manual_sydney_bonus_points"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q019",
+      "data": {
+        "correctChoiceId": "b",
+        "answerText": "3명",
+        "explanation": "시드니님 특징으로 넣은 힌트는 자녀가 3명이라는 점입니다. 그래서 가족 여행과 호텔 객실 인원 조건을 볼 때도 “몇 명이 함께 묵는지”가 늘 중요한 체크포인트가 됩니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "시드니",
+          "보너스",
+          "자녀",
+          "가족여행"
+        ],
+        "sourceArticleIds": [
+          "manual_sydney_bonus_children"
+        ],
+        "sourceUrls": [
+          "manual:manual_sydney_bonus_children"
+        ]
+      }
+    },
+    {
+      "path": "mockExam/main/answerKeys/exam_006/questions/q020",
+      "data": {
+        "correctChoiceId": "c",
+        "answerText": "시드니/아시아나",
+        "explanation": "이미지의 프로필명은 “시드니/아시아나”입니다. 6회차의 개인 보너스 문제는 앱 업데이트 없이 호텔 카테고리 안에서 재미 요소로만 들어가도록 구성했습니다.",
+        "score": 5,
+        "category": "hotel",
+        "tags": [
+          "힐튼",
+          "시드니",
+          "보너스",
+          "프로필",
+          "이미지문항"
+        ],
+        "sourceArticleIds": [
+          "manual_sydney_bonus_profile"
+        ],
+        "sourceUrls": [
+          "manual:manual_sydney_bonus_profile"
+        ]
+      }
+    }
+  ],
+  "qualityChecklist": {
+    "totalQuestionCount": 20,
+    "answerKeyCount": 20,
+    "categoryCounts": {
+      "hotel": 20
+    },
+    "thematicCounts": {
+      "hiltonSourceQuestions": 17,
+      "sydneyBonusQuestions": 3
+    },
+    "difficultyCounts": {
+      "easy": 10,
+      "normal": 8,
+      "hard": 2
+    },
+    "answerDistribution": {
+      "a": 5,
+      "b": 5,
+      "c": 5,
+      "d": 5
+    },
+    "imageQuestionCount": 4,
+    "scorePerQuestion": 5,
+    "totalScore": 100,
+    "hasSeparatedAnswerKeys": true,
+    "hasNoAnswerInQuestionDocuments": true,
+    "hasSourceForEveryQuestion": true,
+    "usesSingleAppCategory": true,
+    "appCategory": "hotel",
+    "hasManualBonusSources": true,
+    "avoidsPreviousRoundSourceOverlap": true,
+    "firestoreRoot": "mockExam/main",
+    "sourceJsonPath": "docs/exam/susasa_qna_20260601.json",
+    "profileImageStoragePath": "mock_exam/exam_006/sydney_profile.jpg"
+  }
+}
