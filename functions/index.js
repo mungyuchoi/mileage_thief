@@ -7902,21 +7902,45 @@ exports.createWebViewCustomToken = onCall({
 // 클라이언트가 스탬프 잔액/비용을 조작하지 못하도록 해제 비용을 서버가 결정하고
 // users/{uid}/exploreWallet/main.passportStamps 를 트랜잭션으로 차감한다.
 const WORLD_UNLOCK_COSTS = {
-  kr: 0, jp: 3, tw: 3, th: 4, vn: 4, sg: 4, hk: 3, cn: 6,
-  us: 10, fr: 12, gb: 12, it: 12, es: 12, de: 12, au: 14, ae: 10,
+  kr: 0,
+  jp: 3,
+  tw: 3,
+  th: 4,
+  vn: 4,
+  sg: 4,
+  hk: 3,
+  cn: 6,
+  us: 10,
+  fr: 12,
+  gb: 12,
+  it: 12,
+  es: 12,
+  de: 12,
+  au: 14,
+  ae: 10,
 };
 const WORLD_SLOT_BASE = 5;
 const WORLD_SLOT_STEP = 5;
 const WORLD_SLOT_COSTS = [3, 5, 8, 12];
+
+/**
+ * 슬롯 상한값 기준으로 슬롯 해제 비용을 계산한다.
+ *
+ * @param {number} cap 현재 슬롯 상한값
+ * @return {number} 다음 슬롯 해제에 필요한 스탬프
+ */
 function worldSlotUnlockCost(cap) {
-  const times = Math.max(0, Math.round((cap - WORLD_SLOT_BASE) / WORLD_SLOT_STEP));
+  const relative = cap - WORLD_SLOT_BASE;
+  const rounded = Math.round(relative / WORLD_SLOT_STEP);
+  const times = Math.max(0, rounded);
   return WORLD_SLOT_COSTS[Math.min(times, WORLD_SLOT_COSTS.length - 1)];
 }
 
 /** 국가 해제: 비용만큼 스탬프 차감 후 worldUnlocks 문서 기록(트랜잭션). */
 exports.worldUnlockCountry = onCall({region: OAUTH_REGION}, async (request) => {
   const uid = requireAuthUid(request);
-  const countryId = asOptionalString(request.data && request.data.countryId) || "";
+  const countryId =
+    asOptionalString(request.data && request.data.countryId) || "";
   const cost = WORLD_UNLOCK_COSTS[countryId];
   if (cost === undefined) {
     throw new HttpsError("invalid-argument", "알 수 없는 국가입니다.");
@@ -7947,7 +7971,8 @@ exports.worldUnlockCountry = onCall({region: OAUTH_REGION}, async (request) => {
 /** 기록 슬롯 +5 해제: 현재 cap 기준 비용 차감 후 cap 증가(트랜잭션). */
 exports.worldUnlockSlots = onCall({region: OAUTH_REGION}, async (request) => {
   const uid = requireAuthUid(request);
-  const countryId = asOptionalString(request.data && request.data.countryId) || "";
+  const countryId =
+    asOptionalString(request.data && request.data.countryId) || "";
   if (!countryId) {
     throw new HttpsError("invalid-argument", "countryId가 필요합니다.");
   }
@@ -7957,9 +7982,10 @@ exports.worldUnlockSlots = onCall({region: OAUTH_REGION}, async (request) => {
   return db.runTransaction(async (tx) => {
     const slotSnap = await tx.get(slotRef);
     const walletSnap = await tx.get(walletRef);
-    const cap = Number((slotSnap.data() || {}).cap || WORLD_SLOT_BASE) || WORLD_SLOT_BASE;
-    const cost = worldSlotUnlockCost(cap);
     const balance = Number((walletSnap.data() || {}).passportStamps || 0);
+    const cap =
+      Number((slotSnap.data() || {}).cap || WORLD_SLOT_BASE) || WORLD_SLOT_BASE;
+    const cost = worldSlotUnlockCost(cap);
     if (balance < cost) {
       throw new HttpsError("failed-precondition", "스탬프가 부족합니다.");
     }
