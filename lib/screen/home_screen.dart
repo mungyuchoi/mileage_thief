@@ -330,9 +330,14 @@ class _HomeBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
+  /// 제공되면 좌측에 '접기' 핸들(<)을 노출(세계지도 탭 전용).
+  final VoidCallback? onCollapse;
+
   const _HomeBottomNavigationBar({
+    super.key,
     required this.currentIndex,
     required this.onTap,
+    this.onCollapse,
   });
 
   @override
@@ -352,7 +357,25 @@ class _HomeBottomNavigationBar extends StatelessWidget {
         ],
       ),
       child: Row(
-        children: List.generate(_homeTabDestinations.length, (index) {
+        children: [
+          if (onCollapse != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: onCollapse,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 6),
+                  child: Icon(
+                    Icons.chevron_left_rounded,
+                    size: 22,
+                    color: McColors.mutedLight,
+                  ),
+                ),
+              ),
+            ),
+          ...List.generate(_homeTabDestinations.length, (index) {
           final destination = _homeTabDestinations[index];
           final selected = index == currentIndex;
           final selectedAccent = currentIndex == _HomeTab.giftcard.index
@@ -402,6 +425,47 @@ class _HomeBottomNavigationBar extends StatelessWidget {
             ),
           );
         }),
+        ],
+      ),
+    );
+  }
+}
+
+/// 세계지도 탭에서 하단 내비를 접었을 때 좌하단에 남는 '<' 플로팅 버튼.
+/// 탭하면 내비가 다시 펼쳐진다.
+class _CollapsedNavButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CollapsedNavButton({super.key, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: onTap,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            shape: BoxShape.circle,
+            border: Border.all(color: McColors.line, width: 0.8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.chevron_left_rounded,
+            size: 26,
+            color: McColors.accent,
+          ),
+        ),
       ),
     );
   }
@@ -443,8 +507,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   int get _currentIndex => _currentTab.index;
 
+  // 세계지도 탭에서 하단 내비를 '<' 플로팅 버튼으로 축소했는지 여부.
+  bool _worldNavCollapsed = false;
+
   void _selectHomeTab(_HomeTab tab) {
     setState(() {
+      // 세계지도 진입 시 자동 축소, 다른 탭은 항상 펼침.
+      _worldNavCollapsed = tab == _HomeTab.worldMap;
       if (tab != _HomeTab.giftcard) {
         _giftFabOpen = false;
         _isScrolling = false;
@@ -709,6 +778,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _selectTab(int index) {
     final nextTab = _HomeTab.values[index];
     setState(() {
+      // 세계지도 진입 시 자동 축소, 다른 탭은 항상 펼침.
+      _worldNavCollapsed = nextTab == _HomeTab.worldMap;
       if (nextTab == _HomeTab.community) {
         _communityInitialBoardId = 'all';
         _communityInitialBoardName = '전체글';
@@ -1243,15 +1314,41 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildFloatingBottomNav() {
+    final collapsed = _currentTab == _HomeTab.worldMap && _worldNavCollapsed;
+
+    // 펼침 ↔ 축소 전환을 부드럽게. 축소 시 왼쪽 하단 '<' 버튼만 남는다.
     return Positioned(
-      left: 20,
-      right: 20,
+      left: collapsed ? 16 : 20,
+      right: collapsed ? null : 20,
       bottom: 24,
       child: SafeArea(
         top: false,
-        child: _HomeBottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _selectTab,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutBack,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.85, end: 1.0).animate(animation),
+              alignment: Alignment.bottomLeft,
+              child: child,
+            ),
+          ),
+          child: collapsed
+              ? _CollapsedNavButton(
+                  key: const ValueKey('nav-collapsed'),
+                  onTap: () => setState(() => _worldNavCollapsed = false),
+                )
+              : _HomeBottomNavigationBar(
+                  key: const ValueKey('nav-expanded'),
+                  currentIndex: _currentIndex,
+                  // 세계지도 탭에서는 다시 접을 수 있도록 콜백 전달.
+                  onCollapse: _currentTab == _HomeTab.worldMap
+                      ? () => setState(() => _worldNavCollapsed = true)
+                      : null,
+                  onTap: _selectTab,
+                ),
         ),
       ),
     );
