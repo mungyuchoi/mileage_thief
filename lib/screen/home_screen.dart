@@ -510,8 +510,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // 세계지도 탭에서 하단 내비를 '<' 플로팅 버튼으로 축소했는지 여부.
   bool _worldNavCollapsed = false;
 
+  // ── 세계지도(WebView) 세션 유지 ──────────────────────────
+  // 다른 탭에 갔다 와도 로딩 없이 이어서. 추천 유지 시간이 지나면 폐기 후
+  // 다음 진입 시 새로 로드(메모리·배터리 절약).
+  static const Duration _worldMapKeepAlive = Duration(minutes: 5);
+  bool _worldMapAlive = false;
+  Timer? _worldMapTtlTimer;
+  Key _worldMapKey = UniqueKey();
+
+  /// 탭 전환 시 세계지도 WebView를 살릴지/폐기 예약할지 결정.
+  /// [next]로 바뀌기 직전(_currentTab은 아직 이전 탭)에 호출한다.
+  void _handleWorldMapKeepAlive(_HomeTab next) {
+    if (next == _HomeTab.worldMap) {
+      // 진입(또는 복귀): 살리고 폐기 타이머 취소.
+      _worldMapAlive = true;
+      _worldMapTtlTimer?.cancel();
+      _worldMapTtlTimer = null;
+    } else if (_currentTab == _HomeTab.worldMap && _worldMapAlive) {
+      // 세계지도를 떠남: 유지 시간 뒤 폐기(다음 진입 시 새 로드).
+      _worldMapTtlTimer?.cancel();
+      _worldMapTtlTimer = Timer(_worldMapKeepAlive, () {
+        if (!mounted) return;
+        setState(() {
+          _worldMapAlive = false;
+          _worldMapKey = UniqueKey();
+        });
+      });
+    }
+  }
+
   void _selectHomeTab(_HomeTab tab) {
     setState(() {
+      _handleWorldMapKeepAlive(tab);
       // 세계지도 진입 시 자동 축소, 다른 탭은 항상 펼침.
       _worldNavCollapsed = tab == _HomeTab.worldMap;
       if (tab != _HomeTab.giftcard) {
@@ -631,6 +661,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _worldMapTtlTimer?.cancel();
     _giftcardTabController.removeListener(_handleGiftcardTabChanged);
     _giftcardTabController.dispose();
     super.dispose();
@@ -778,6 +809,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _selectTab(int index) {
     final nextTab = _HomeTab.values[index];
     setState(() {
+      _handleWorldMapKeepAlive(nextTab);
       // 세계지도 진입 시 자동 축소, 다른 탭은 항상 펼침.
       _worldNavCollapsed = nextTab == _HomeTab.worldMap;
       if (nextTab == _HomeTab.community) {
@@ -1296,7 +1328,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
         body: Stack(
           children: [
-            Positioned.fill(child: _buildCurrentTabPage()),
+            // 세계지도 외 탭: 현재 탭 페이지.
+            if (_currentTab != _HomeTab.worldMap)
+              Positioned.fill(child: _buildCurrentTabPage()),
+            // 세계지도: 살아있는 동안 트리에 유지(Offstage)해 세션을 보존.
+            // 활성일 때만 표시되고, 유지 시간이 지나면 트리에서 제거되어 폐기된다.
+            if (_worldMapAlive)
+              Positioned.fill(
+                child: Offstage(
+                  offstage: _currentTab != _HomeTab.worldMap,
+                  child: TickerMode(
+                    enabled: _currentTab == _HomeTab.worldMap,
+                    child: KeyedSubtree(
+                      key: _worldMapKey,
+                      child: const WorldMapScreen(),
+                    ),
+                  ),
+                ),
+              ),
             _buildFloatingBottomNav(),
           ],
         ),
@@ -1317,10 +1366,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final collapsed = _currentTab == _HomeTab.worldMap && _worldNavCollapsed;
 
     // 펼침 ↔ 축소 전환을 부드럽게. 축소 시 왼쪽 하단 '<' 버튼만 남는다.
+    // 축소 버튼은 웹뷰(퍼즐 부스터 등) 하단 UI와 겹치지 않게 더 아래로 내린다.
     return Positioned(
       left: collapsed ? 16 : 20,
       right: collapsed ? null : 20,
-      bottom: 24,
+      bottom: collapsed ? 0 : 24,
       child: SafeArea(
         top: false,
         child: AnimatedSwitcher(
@@ -1369,7 +1419,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           onOpenProfile: () => _selectHomeTab(_HomeTab.profile),
         );
       case _HomeTab.worldMap:
-        return const WorldMapScreen();
+        // 세계지도는 body의 Offstage(KeepAlive)에서 렌더하므로 여기선 비움.
+        return const SizedBox.shrink();
       case _HomeTab.giftcard:
         return const SizedBox.shrink();
       case _HomeTab.profile:
