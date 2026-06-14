@@ -20,6 +20,12 @@ const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const cheerio = require("cheerio");
+const dns = require("dns");
+
+// IPv6 우선 해석 시 Cloud Functions(egress IPv4 전용)에서 외부 연결이
+// 10초 connect 타임아웃(UND_ERR_CONNECT_TIMEOUT)으로 멈추는 문제 방지.
+// OpenSky(auth.opensky-network.org 등) 호출 안정화를 위해 IPv4 우선.
+dns.setDefaultResultOrder("ipv4first");
 
 // Firebase Admin SDK 초기화
 admin.initializeApp();
@@ -8054,9 +8060,41 @@ function snapLiveBbox(b) {
 // OpenSky OAuth2 client_credentials 토큰(선택). 환경변수 있으면 인증, 없으면 익명.
 //   functions/.env 에 OPENSKY_CLIENT_ID / OPENSKY_CLIENT_SECRET 설정.
 let openSkyToken = {value: null, exp: 0};
+
+/**
+ * AbortSignal 타임아웃 + 재시도가 적용된 fetch.
+ * connect 행오버(UND_ERR_CONNECT_TIMEOUT) 등 일시 오류를 흡수한다.
+ *
+ * @param {string|URL} url 대상 URL
+ * @param {Object} options fetch 옵션
+ * @param {number} timeoutMs 시도당 타임아웃(ms)
+ * @param {number} retries 추가 재시도 횟수
+ * @return {Promise<Response>} fetch 응답
+ */
+async function fetchWithTimeout(url, options, timeoutMs, retries) {
+  const opts = options || {};
+  const ms = typeof timeoutMs === "number" ? timeoutMs : 7000;
+  const limit = typeof retries === "number" ? retries : 1;
+  let lastErr;
+  for (let attempt = 0; attempt <= limit; attempt++) {
+    try {
+      return await globalThis.fetch(url, {
+        ...opts,
+        signal: AbortSignal.timeout(ms),
+      });
+    } catch (err) {
+      lastErr = err;
+      const code = err && err.code ? err.code : String(err);
+      logger.warn(`OpenSky fetch 재시도 ${attempt + 1}: ${code}`);
+    }
+  }
+  throw lastErr;
+}
+
 /**
  * OpenSky OAuth2 client_credentials 토큰을 가져온다.
  * env: OPENSKY_CLIENT_ID / OPENSKY_CLIENT_SECRET
+ * 실패 시 throw 하지 않고 null(익명 폴백)을 반환한다.
  *
  * @return {Promise<string|null>} 액세스 토큰
  */
@@ -8070,25 +8108,31 @@ async function getOpenSkyToken() {
   const tokenUrl =
     "https://auth.opensky-network.org/auth/realms/opensky-network/" +
     "protocol/openid-connect/token";
-  const res = await globalThis.fetch(tokenUrl, {
-    method: "POST",
-    headers: {"Content-Type": "application/x-www-form-urlencoded"},
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: id,
-      client_secret: secret,
-    }),
-  });
-  if (!res.ok) {
-    logger.error("OpenSky token error", res.status);
+  try {
+    const res = await fetchWithTimeout(tokenUrl, {
+      method: "POST",
+      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: id,
+        client_secret: secret,
+      }),
+    }, 7000, 1);
+    if (!res.ok) {
+      logger.error("OpenSky token error", res.status);
+      return null;
+    }
+    const j = await res.json();
+    openSkyToken = {
+      value: j.access_token,
+      exp: Date.now() + Math.max(60, (j.expires_in || 1800) - 60) * 1000,
+    };
+    return openSkyToken.value;
+  } catch (err) {
+    const code = err && err.code ? err.code : String(err);
+    logger.warn(`OpenSky 토큰 실패, 익명 폴백: ${code}`);
     return null;
   }
-  const j = await res.json();
-  openSkyToken = {
-    value: j.access_token,
-    exp: Date.now() + Math.max(60, (j.expires_in || 1800) - 60) * 1000,
-  };
-  return openSkyToken.value;
 }
 
 /**
@@ -8130,7 +8174,7 @@ exports.liveFlights = onCall({
     const token = await getOpenSkyToken();
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const res = await globalThis.fetch(url, {headers});
+    const res = await fetchWithTimeout(url, {headers}, 8000, 1);
     if (!res.ok) {
       logger.warn(`OpenSky ${res.status} (auth=${Boolean(token)})`);
       // 한도 초과(429)·인증(401) 등 — 캐시 있으면 옛 데이터라도 반환
@@ -8177,8 +8221,16 @@ exports.liveFlights = onCall({
   } catch (error) {
     if (error instanceof HttpsError) throw error;
     if (cached) return {...cached.data, cached: true, stale: true};
+    const code = error && error.code ? error.code : "network";
     logger.error("liveFlights error", error);
-    throw new HttpsError("unavailable", "실시간 항공 데이터를 가져오지 못했습니다.");
+    // 네트워크 실패 등은 throw 대신 빈 결과로 응답(웹은 안내 토스트만).
+    return {
+      flights: [],
+      time: Math.floor(now / 1000),
+      bbox,
+      cached: false,
+      error: code,
+    };
   }
 });
 

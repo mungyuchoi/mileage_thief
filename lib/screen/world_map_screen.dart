@@ -1,9 +1,13 @@
+import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import '../services/opensky_live_service.dart';
 import '../services/world_share_service.dart';
 
 /// milecatch 웹(세계지도 게임)을 임베드하는 탭.
@@ -118,6 +122,97 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
     controller.addJavaScriptHandler(
       handlerName: 'nav.exitToNative',
       callback: (args) async => {'ok': true},
+    );
+
+    // liveFlights.fetch → 디바이스에서 OpenSky 직접 조회.
+    // 웹은 { bbox: {lamin,lomin,lamax,lomax}, key } 를 넘긴다.
+    // 결과를 Firestore(flightsLive/{key})에 단일 JSON으로 캐시하고 웹에 반환.
+    controller.addJavaScriptHandler(
+      handlerName: 'liveFlights.fetch',
+      callback: (args) async {
+        try {
+          final payload = (args.isNotEmpty && args.first is Map)
+              ? Map<String, dynamic>.from(args.first as Map)
+              : <String, dynamic>{};
+          final bbox = (payload['bbox'] is Map)
+              ? Map<String, dynamic>.from(payload['bbox'] as Map)
+              : <String, dynamic>{};
+          final key = (payload['key'] ?? '').toString();
+
+          int asInt(dynamic v) =>
+              (v is num) ? v.round() : int.tryParse('$v') ?? 0;
+
+          final docRef = key.isEmpty
+              ? null
+              : FirebaseFirestore.instance.collection('flightsLive').doc(key);
+
+          // 10분 가드 + 동시 호출 디듀프:
+          // 여러 유저가 거의 동시에 불러도, 직전에 누군가 10분 내 갱신했으면
+          // OpenSky를 부르지 않고 캐시를 그대로 반환한다.
+          const freshMs = 10 * 60 * 1000;
+          if (docRef != null) {
+            try {
+              final existing = await docRef.get();
+              final data = existing.data();
+              final ts = data?['updatedAt'];
+              if (data != null && ts is Timestamp) {
+                final ageMs =
+                    DateTime.now().difference(ts.toDate()).inMilliseconds;
+                if (ageMs < freshMs) {
+                  final cachedStr = (data['flights'] ?? '[]').toString();
+                  return {
+                    'flights': jsonDecode(cachedStr),
+                    'time': data['time'],
+                    'cached': true,
+                  };
+                }
+              }
+            } catch (e) {
+              debugPrint('[WorldMap] flightsLive 신선도 확인 실패: $e');
+            }
+          }
+
+          final result = await OpenSkyLiveService.fetchStates(
+            lamin: asInt(bbox['lamin']),
+            lomin: asInt(bbox['lomin']),
+            lamax: asInt(bbox['lomax']),
+            lomax: asInt(bbox['lomax']),
+          );
+          final flights = (result['flights'] as List?) ?? const [];
+
+          // Firestore 캐시(웹 전용 유저가 read). 단일 JSON 문자열 → write 1회.
+          if (key.isNotEmpty) {
+            try {
+              await FirebaseFirestore.instance
+                  .collection('flightsLive')
+                  .doc(key)
+                  .set({
+                'flights': jsonEncode(flights),
+                'count': flights.length,
+                'time': result['time'],
+                'bbox': {
+                  'lamin': asInt(bbox['lamin']),
+                  'lomin': asInt(bbox['lomin']),
+                  'lamax': asInt(bbox['lamax']),
+                  'lomax': asInt(bbox['lomax']),
+                },
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+            } catch (e) {
+              debugPrint('[WorldMap] flightsLive 캐시 write 실패: $e');
+            }
+          }
+
+          return {
+            'flights': flights,
+            'time': result['time'],
+            if (result['error'] != null) 'error': result['error'],
+          };
+        } catch (e) {
+          debugPrint('[WorldMap] liveFlights.fetch 실패: $e');
+          return {'flights': <dynamic>[], 'error': e.toString()};
+        }
+      },
     );
   }
 }

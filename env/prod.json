@@ -1,4 +1,6 @@
 {
   "NAVER_CLIENT_ID": "4JrNi52IPPJPktn043ei",
-  "KAKAO_REST_API_KEY": "db87f3aac5fbf90680c5649bd678f10d"
+  "KAKAO_REST_API_KEY": "db87f3aac5fbf90680c5649bd678f10d",
+  "OPENSKY_CLIENT_ID": "mungyuchoi-api-client",
+  "OPENSKY_CLIENT_SECRET": "m8l9JlnbC8RP66gfXm2GezszIgoUYc7k"
 }
