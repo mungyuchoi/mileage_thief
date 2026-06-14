@@ -1810,7 +1810,7 @@ function communityLabelDefaults(type, targetId) {
 /**
  * 클라이언트에서 전달한 커뮤니티 라벨 한 개를 정규화한다.
  * @param {unknown} raw
- * @return {Object|null}
+ * @return {Object | null}
  */
 function normalizeCommunityLabel(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -7919,6 +7919,8 @@ const WORLD_UNLOCK_COSTS = {
   au: 14,
   ae: 10,
 };
+// 큐레이션 외 모든 나라 기본 해제 비용(클라 worldMapData.ts와 동일해야 함).
+const WORLD_DEFAULT_UNLOCK_COST = 8;
 const WORLD_SLOT_BASE = 5;
 const WORLD_SLOT_STEP = 5;
 const WORLD_SLOT_COSTS = [3, 5, 8, 12];
@@ -7941,10 +7943,12 @@ exports.worldUnlockCountry = onCall({region: OAUTH_REGION}, async (request) => {
   const uid = requireAuthUid(request);
   const countryId =
     asOptionalString(request.data && request.data.countryId) || "";
-  const cost = WORLD_UNLOCK_COSTS[countryId];
-  if (cost === undefined) {
+  // 유효한 2글자 국가 코드만 허용(전 세계 지원).
+  if (!/^[a-z]{2}$/.test(countryId)) {
     throw new HttpsError("invalid-argument", "알 수 없는 국가입니다.");
   }
+  const cost = WORLD_UNLOCK_COSTS[countryId] !== undefined ?
+    WORLD_UNLOCK_COSTS[countryId] : WORLD_DEFAULT_UNLOCK_COST;
   const db = admin.firestore();
   const walletRef = db.doc(`users/${uid}/exploreWallet/main`);
   const unlockRef = db.doc(`users/${uid}/worldUnlocks/${countryId}`);
@@ -7998,6 +8002,184 @@ exports.worldUnlockSlots = onCall({region: OAUTH_REGION}, async (request) => {
     }, {merge: true});
     return {cap: nextCap, passportStamps: nextBalance};
   });
+});
+
+// ── 실시간 항공(OpenSky) 프록시 + bbox 메모리 캐시 ──────────────
+// CORS 없는 OpenSky를 서버(함수)에서 호출. bbox를 그리드로 스냅해 캐시 적중률↑.
+// 캐시는 함수 인스턴스 메모리(아래 변수)에만 — Firestore/호스팅 사용 안 함.
+const LIVE_FLIGHT_TTL_MS = 10 * 60 * 1000; // 10분
+const LIVE_FLIGHT_MAX_SPAN = 12; // bbox 한 변 최대 12도(면적 제한)
+const LIVE_FLIGHT_MAX = 500; // 응답 항공기 수 상한
+const liveFlightCache = new Map(); // key → { data, fetchedAt }
+
+/**
+ * bbox 값을 안전하게 정수로 스냅하고 OpenSky API 범위를 제한한다.
+ *
+ * @param {Object} b - bbox 원시 입력
+ * @return {Object|null}
+ */
+function snapLiveBbox(b) {
+  const rawLamin = Number(b.lamin);
+  const rawLomin = Number(b.lomin);
+  const rawLamax = Number(b.lamax);
+  const rawLomax = Number(b.lomax);
+  if (![rawLamin, rawLomin, rawLamax, rawLomax].every(Number.isFinite)) {
+    return null;
+  }
+  // 화면 중앙을 기준으로 면적을 제한해
+  // 모서리 오탐(빈 바다) 문제를 줄인다.
+  const cLat = (rawLamin + rawLamax) / 2;
+  const cLng = (rawLomin + rawLomax) / 2;
+  const halfLat = Math.min(
+      Math.abs(rawLamax - rawLamin) / 2,
+      LIVE_FLIGHT_MAX_SPAN / 2,
+  );
+  const halfLng = Math.min(
+      Math.abs(rawLomax - rawLomin) / 2,
+      LIVE_FLIGHT_MAX_SPAN / 2,
+  );
+  let lamin = Math.floor(cLat - halfLat);
+  let lamax = Math.ceil(cLat + halfLat);
+  let lomin = Math.floor(cLng - halfLng);
+  let lomax = Math.ceil(cLng + halfLng);
+  if (lamax <= lamin) lamax = lamin + 1;
+  if (lomax <= lomin) lomax = lomin + 1;
+  lamin = Math.max(-90, lamin);
+  lamax = Math.min(90, lamax);
+  lomin = Math.max(-180, lomin);
+  lomax = Math.min(180, lomax);
+  return {lamin, lomin, lamax, lomax};
+}
+
+// OpenSky OAuth2 client_credentials 토큰(선택). 환경변수 있으면 인증, 없으면 익명.
+//   functions/.env 에 OPENSKY_CLIENT_ID / OPENSKY_CLIENT_SECRET 설정.
+let openSkyToken = {value: null, exp: 0};
+/**
+ * OpenSky OAuth2 client_credentials 토큰을 가져온다.
+ * env: OPENSKY_CLIENT_ID / OPENSKY_CLIENT_SECRET
+ *
+ * @return {Promise<string|null>} 액세스 토큰
+ */
+async function getOpenSkyToken() {
+  const id = process.env.OPENSKY_CLIENT_ID;
+  const secret = process.env.OPENSKY_CLIENT_SECRET;
+  if (!id || !secret) return null; // 익명
+  if (openSkyToken.value && Date.now() < openSkyToken.exp) {
+    return openSkyToken.value;
+  }
+  const tokenUrl =
+    "https://auth.opensky-network.org/auth/realms/opensky-network/" +
+    "protocol/openid-connect/token";
+  const res = await globalThis.fetch(tokenUrl, {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: id,
+      client_secret: secret,
+    }),
+  });
+  if (!res.ok) {
+    logger.error("OpenSky token error", res.status);
+    return null;
+  }
+  const j = await res.json();
+  openSkyToken = {
+    value: j.access_token,
+    exp: Date.now() + Math.max(60, (j.expires_in || 1800) - 60) * 1000,
+  };
+  return openSkyToken.value;
+}
+
+/**
+ * 실시간 항공기 리스트를 캐시 포함으로 반환한다.
+ *
+ * @param {Object} request Cloud Functions 요청
+ * @returns {{
+ *   flights: Array,
+ *   time: number,
+ *   bbox: Object,
+ *   cached: boolean,
+ *   stale?: boolean,
+ * }}
+ */
+exports.liveFlights = onCall({
+  region: OAUTH_REGION,
+  timeoutSeconds: 20,
+}, async (request) => {
+  const bbox = snapLiveBbox((request.data && request.data.bbox) || {});
+  if (!bbox) {
+    throw new HttpsError("invalid-argument", "유효한 bbox가 필요합니다.");
+  }
+  const key = `${bbox.lamin},${bbox.lomin},${bbox.lamax},${bbox.lomax}`;
+  const now = Date.now();
+
+  const cached = liveFlightCache.get(key);
+  if (cached && now - cached.fetchedAt < LIVE_FLIGHT_TTL_MS) {
+    return {...cached.data, cached: true};
+  }
+
+  try {
+    const url = new URL("https://opensky-network.org/api/states/all");
+    url.searchParams.set("lamin", String(bbox.lamin));
+    url.searchParams.set("lomin", String(bbox.lomin));
+    url.searchParams.set("lamax", String(bbox.lamax));
+    url.searchParams.set("lomax", String(bbox.lomax));
+
+    const headers = {Accept: "application/json"};
+    const token = await getOpenSkyToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await globalThis.fetch(url, {headers});
+    if (!res.ok) {
+      logger.warn(`OpenSky ${res.status} (auth=${Boolean(token)})`);
+      // 한도 초과(429)·인증(401) 등 — 캐시 있으면 옛 데이터라도 반환
+      if (cached) {
+        return {...cached.data, cached: true, stale: true};
+      }
+      // 비어 있는 결과로 응답(웹은 0대 표시, 에러 토스트는 안 띄움)
+      return {
+        flights: [],
+        time: Math.floor(now / 1000),
+        bbox,
+        cached: false,
+        error: res.status,
+      };
+    }
+    const json = await res.json();
+    const states = Array.isArray(json.states) ? json.states : [];
+    const flights = [];
+    for (const s of states) {
+      const lng = s[5];
+      const lat = s[6];
+      const onGround = s[8];
+      if (onGround || typeof lat !== "number" || typeof lng !== "number") {
+        continue;
+      }
+      flights.push({
+        id: s[0],
+        callsign: (s[1] || "").trim(),
+        country: s[2] || "",
+        lat,
+        lng,
+        heading: typeof s[10] === "number" ? s[10] : 0,
+        alt: typeof s[13] === "number" ?
+          s[13] :
+          (typeof s[7] === "number" ? s[7] : null),
+        vel: typeof s[9] === "number" ? s[9] : null,
+      });
+      if (flights.length >= LIVE_FLIGHT_MAX) break;
+    }
+
+    const data = {flights, time: json.time || Math.floor(now / 1000), bbox};
+    liveFlightCache.set(key, {data, fetchedAt: now});
+    return {...data, cached: false};
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    if (cached) return {...cached.data, cached: true, stale: true};
+    logger.error("liveFlights error", error);
+    throw new HttpsError("unavailable", "실시간 항공 데이터를 가져오지 못했습니다.");
+  }
 });
 
 /**
