@@ -8010,6 +8010,465 @@ exports.worldUnlockSlots = onCall({region: OAUTH_REGION}, async (request) => {
   });
 });
 
+// ── 호텔 캐치: 호텔 추가(hotels) ────────────────────────────────
+// hotels/{id} 생성 + 기여자 초기화 + 추가자 기여도/스탬프(+3).
+const HOTEL_BRANDS = ["marriott", "hilton", "accor", "ihg", "hyatt", "other"];
+const HOTEL_ADD_REWARD = 3;
+
+exports.addHotel = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const data = request.data || {};
+  const name = (asOptionalString(data.name) || "").trim();
+  if (name.length < 1) {
+    throw new HttpsError("invalid-argument", "호텔 이름이 필요합니다.");
+  }
+  const brand = HOTEL_BRANDS.includes(data.brand) ? data.brand : "other";
+  const lat = Number(data.lat);
+  const lng = Number(data.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new HttpsError("invalid-argument", "위치가 올바르지 않습니다.");
+  }
+  const countryCode = (asOptionalString(data.countryCode) || "").toLowerCase();
+  if (!/^[a-z]{2}$/.test(countryCode)) {
+    throw new HttpsError("invalid-argument", "국가 코드가 올바르지 않습니다.");
+  }
+  const city = asOptionalString(data.city) || "";
+  const rawStars = Number(data.stars);
+  const stars = Number.isFinite(rawStars) ?
+    Math.max(0, Math.min(5, Math.round(rawStars))) : 0;
+  const description = (asOptionalString(data.description) || "").slice(0, 500);
+  const coverImageUrl = asOptionalString(data.coverImageUrl) || "";
+
+  const token = (request.auth && request.auth.token) || {};
+  const nick = asOptionalString(token.name) || "여행자";
+  const photo = asOptionalString(token.picture) || "";
+
+  const db = admin.firestore();
+  const hotelRef = db.collection("hotels").doc();
+  const walletRef = db.doc(`users/${uid}/exploreWallet/main`);
+  const contribRef = hotelRef.collection("contributors").doc(uid);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  const batch = db.batch();
+  batch.set(hotelRef, {
+    name, brand, lat, lng, countryCode, city,
+    stars, description, coverImageUrl,
+    pointHotelId: null,
+    topContributorUid: uid,
+    topContributorName: nick,
+    topContributorPhoto: photo,
+    topContributorScore: HOTEL_ADD_REWARD,
+    lastContribAt: now,
+    totalQuizCount: 0,
+    totalTipCount: 0,
+    createdBy: uid,
+    createdAt: now,
+  });
+  batch.set(contribRef, {
+    uid,
+    displayName: nick,
+    photoURL: photo,
+    score: HOTEL_ADD_REWARD,
+    breakdown: {
+      added: 1,
+      quizCreated: 0,
+      quizSolved: 0,
+      tipCreated: 0,
+      stayVerified: 0,
+    },
+    updatedAt: now,
+  });
+  batch.set(walletRef, {
+    passportStamps:
+      admin.firestore.FieldValue.increment(HOTEL_ADD_REWARD),
+  }, {merge: true});
+  await batch.commit();
+  // 퍼스트 캐치: 이 나라 첫 호텔이면 발굴자에게 알림
+  try {
+    const snap = await db.collection("hotels")
+        .where("countryCode", "==", countryCode).limit(2).get();
+    if (snap.size <= 1) {
+      const msg = `${countryCode.toUpperCase()} 첫 호텔을 발굴했어요!`;
+      await sendPushToUser(uid, "🏆 퍼스트 캐치", msg,
+          {type: "firstCatch", hotelId: hotelRef.id});
+      await writeNotif(uid, "firstCatch", hotelRef.id, msg);
+    }
+  } catch (e) {
+    logger.warn("firstCatch 확인 실패", e);
+  }
+  return {hotelId: hotelRef.id, reward: HOTEL_ADD_REWARD};
+});
+
+// ── 호텔 캐치: 퀴즈 풀기 / 기여도 트리거 ─────────────────────────
+const QUIZ_SOLVE_REWARD = 2; // 풀이자 스탬프
+const QUIZ_AUTHOR_REWARD = 1; // 출제자 스탬프
+const QUIZ_SOLVE_SCORE = 1; // 풀이 기여 점수
+const CONTRIB_WEIGHT = {quiz: 2, tip: 1, add: 3};
+
+/**
+ * 퀴즈 정답 비교(유형별).
+ * @param {string} type 퀴즈 유형(ox|mcq|short)
+ * @param {*} stored 저장된 정답
+ * @param {*} given 사용자가 제출한 답
+ * @return {boolean} 정답 여부
+ */
+function quizIsCorrect(type, stored, given) {
+  if (type === "ox") return Boolean(given) === Boolean(stored);
+  if (type === "mcq") return Number(given) === Number(stored);
+  return String(given).trim().toLowerCase() ===
+    String(stored).trim().toLowerCase();
+}
+
+exports.solveQuiz = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const d = request.data || {};
+  const hotelId = asOptionalString(d.hotelId) || "";
+  const quizId = asOptionalString(d.quizId) || "";
+  if (!hotelId || !quizId) {
+    throw new HttpsError("invalid-argument", "hotelId/quizId가 필요합니다.");
+  }
+  const token = (request.auth && request.auth.token) || {};
+  const nick = asOptionalString(token.name) || "여행자";
+  const photo = asOptionalString(token.picture) || "";
+  const db = admin.firestore();
+  const quizRef = db.doc(`hotels/${hotelId}/quizzes/${quizId}`);
+  const hotelRef = db.doc(`hotels/${hotelId}`);
+  const solvedRef = db.doc(`users/${uid}/quizSolved/${quizId}`);
+  const solverWalletRef = db.doc(`users/${uid}/exploreWallet/main`);
+  const solverContribRef = db.doc(`hotels/${hotelId}/contributors/${uid}`);
+  const inc = admin.firestore.FieldValue.increment;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  const result = await db.runTransaction(async (tx) => {
+    let kingAlertUid = null;
+    let kingAlertKind = "";
+    let hotelName = "";
+    const solvedSnap = await tx.get(solvedRef);
+    if (solvedSnap.exists) {
+      throw new HttpsError("already-exists", "이미 푼 퀴즈입니다.");
+    }
+    const quizSnap = await tx.get(quizRef);
+    if (!quizSnap.exists) {
+      throw new HttpsError("not-found", "퀴즈를 찾을 수 없습니다.");
+    }
+    const quiz = quizSnap.data() || {};
+    if (quiz.authorUid === uid) {
+      throw new HttpsError("failed-precondition", "본인 퀴즈는 풀 수 없어요.");
+    }
+    const correct = quizIsCorrect(quiz.type, quiz.answer, d.answer);
+
+    let authorWalletRef = null;
+    let hotelSnap = null;
+    let contribSnap = null;
+    if (correct) {
+      authorWalletRef = quiz.authorUid ?
+        db.doc(`users/${quiz.authorUid}/exploreWallet/main`) : null;
+      hotelSnap = await tx.get(hotelRef);
+      contribSnap = await tx.get(solverContribRef);
+    }
+
+    tx.set(solvedRef, {isCorrect: correct, hotelId, solvedAt: now},
+        {merge: true});
+    tx.set(quizRef, {
+      solveCount: inc(1),
+      correctCount: inc(correct ? 1 : 0),
+    }, {merge: true});
+
+    if (correct) {
+      tx.set(solverWalletRef, {
+        passportStamps: inc(QUIZ_SOLVE_REWARD),
+      }, {merge: true});
+      if (authorWalletRef) {
+        tx.set(authorWalletRef, {
+          passportStamps: inc(QUIZ_AUTHOR_REWARD),
+        }, {merge: true});
+      }
+      const prevScore = Number((contribSnap.data() || {}).score || 0);
+      const newScore = prevScore + QUIZ_SOLVE_SCORE;
+      tx.set(solverContribRef, {
+        uid, displayName: nick, photoURL: photo,
+        score: newScore,
+        breakdown: {quizSolved: inc(1)},
+        updatedAt: now,
+      }, {merge: true});
+      const hotel = hotelSnap.data() || {};
+      const topScore = Number(hotel.topContributorScore || 0);
+      const prevKing = hotel.topContributorUid || "";
+      if (prevKing && prevKing !== uid && newScore > topScore) {
+        kingAlertUid = prevKing;
+        kingAlertKind = "dethroned";
+      } else if (prevKing && prevKing !== uid &&
+                 newScore >= topScore - KING_THREAT_MARGIN) {
+        kingAlertUid = prevKing;
+        kingAlertKind = "threat";
+      }
+      if (prevKing === uid || newScore > topScore) {
+        tx.set(hotelRef, {
+          topContributorUid: uid,
+          topContributorName: nick,
+          topContributorPhoto: photo,
+          topContributorScore: newScore,
+        }, {merge: true});
+      }
+      hotelName = asOptionalString(hotel.name) || "이 호텔";
+    }
+
+    return {
+      isCorrect: correct,
+      correctAnswer: quiz.answer,
+      explanation: asOptionalString(quiz.explanation) || "",
+      reward: correct ? QUIZ_SOLVE_REWARD : 0,
+      kingAlertUid, kingAlertKind, hotelName,
+    };
+  });
+
+  if (result.kingAlertUid) {
+    const msg = result.kingAlertKind === "dethroned" ?
+      `${result.hotelName} 기여왕 자리를 빼앗겼어요!` :
+      `${result.hotelName} 기여왕 자리가 위협받고 있어요!`;
+    await sendPushToUser(result.kingAlertUid, "👑 왕좌 알림", msg,
+        {type: "kingThreat", hotelId});
+    await writeNotif(result.kingAlertUid, "kingThreat", hotelId, msg);
+  }
+  return {
+    isCorrect: result.isCorrect,
+    correctAnswer: result.correctAnswer,
+    explanation: result.explanation,
+    reward: result.reward,
+  };
+});
+
+exports.addHotelContrib = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const d = request.data || {};
+  const hotelId = asOptionalString(d.hotelId) || "";
+  const kind = asOptionalString(d.kind) || "";
+  if (!hotelId || !CONTRIB_WEIGHT[kind]) {
+    throw new HttpsError("invalid-argument", "잘못된 요청입니다.");
+  }
+  const token = (request.auth && request.auth.token) || {};
+  const nick = asOptionalString(token.name) || "여행자";
+  const photo = asOptionalString(token.picture) || "";
+  const db = admin.firestore();
+  const hotelRef = db.doc(`hotels/${hotelId}`);
+  const contribRef = db.doc(`hotels/${hotelId}/contributors/${uid}`);
+  const inc = admin.firestore.FieldValue.increment;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const weight = CONTRIB_WEIGHT[kind];
+
+  const result = await db.runTransaction(async (tx) => {
+    let kingAlertUid = null;
+    let kingAlertKind = "";
+    const hotelSnap = await tx.get(hotelRef);
+    if (!hotelSnap.exists) {
+      throw new HttpsError("not-found", "호텔을 찾을 수 없습니다.");
+    }
+    const contribSnap = await tx.get(contribRef);
+    const prevScore = Number((contribSnap.data() || {}).score || 0);
+    const newScore = prevScore + weight;
+
+    const hotelPatch = {lastContribAt: now};
+    if (kind === "quiz") hotelPatch.totalQuizCount = inc(1);
+    if (kind === "tip") hotelPatch.totalTipCount = inc(1);
+
+    const breakdown = {};
+    if (kind === "quiz") breakdown.quizCreated = inc(1);
+    if (kind === "tip") breakdown.tipCreated = inc(1);
+
+    tx.set(contribRef, {
+      uid, displayName: nick, photoURL: photo,
+      score: newScore, breakdown, updatedAt: now,
+    }, {merge: true});
+
+    const hotel = hotelSnap.data() || {};
+    const topScore = Number(hotel.topContributorScore || 0);
+    const prevKing = hotel.topContributorUid || "";
+    if (prevKing && prevKing !== uid && newScore > topScore) {
+      kingAlertUid = prevKing;
+      kingAlertKind = "dethroned";
+    } else if (prevKing && prevKing !== uid &&
+               newScore >= topScore - KING_THREAT_MARGIN) {
+      kingAlertUid = prevKing;
+      kingAlertKind = "threat";
+    }
+    if (prevKing === uid || newScore > topScore) {
+      hotelPatch.topContributorUid = uid;
+      hotelPatch.topContributorName = nick;
+      hotelPatch.topContributorPhoto = photo;
+      hotelPatch.topContributorScore = newScore;
+    }
+    tx.set(hotelRef, hotelPatch, {merge: true});
+    return {
+      ok: true, score: newScore,
+      kingAlertUid, kingAlertKind,
+      hotelName: asOptionalString(hotel.name) || "이 호텔",
+    };
+  });
+
+  // 커밋 후: 왕좌 알림 + 신규기여 알림(이 호텔 기여자들에게)
+  if (result.kingAlertUid) {
+    const msg = result.kingAlertKind === "dethroned" ?
+      `${result.hotelName} 기여왕 자리를 빼앗겼어요!` :
+      `${result.hotelName} 기여왕 자리가 위협받고 있어요!`;
+    await sendPushToUser(result.kingAlertUid, "👑 왕좌 알림", msg,
+        {type: "kingThreat", hotelId});
+    await writeNotif(result.kingAlertUid, "kingThreat", hotelId, msg);
+  }
+  try {
+    const cSnap = await db.collection(`hotels/${hotelId}/contributors`)
+        .orderBy("score", "desc").limit(NEW_CONTRIB_FANOUT).get();
+    const what = kind === "tip" ? "꿀팁" : "퀴즈";
+    const msg = `${result.hotelName}에 새 ${what}이 올라왔어요`;
+    await Promise.all(cSnap.docs
+        .map((doc) => doc.id)
+        .filter((u) => u && u !== uid)
+        .map(async (u) => {
+          await sendPushToUser(u, "✨ 새 정보", msg,
+              {type: "newContrib", hotelId});
+          await writeNotif(u, "newContrib", hotelId, msg);
+        }));
+  } catch (e) {
+    logger.warn("newContrib 알림 실패", e);
+  }
+  return {ok: true, score: result.score};
+});
+
+// 꿀팁 좋아요 토글 — 좋아요 전환 시 작성자에게 스탬프 +1(멱등).
+exports.likeTip = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const d = request.data || {};
+  const hotelId = asOptionalString(d.hotelId) || "";
+  const tipId = asOptionalString(d.tipId) || "";
+  if (!hotelId || !tipId) {
+    throw new HttpsError("invalid-argument", "hotelId/tipId가 필요합니다.");
+  }
+  const db = admin.firestore();
+  const tipRef = db.doc(`hotels/${hotelId}/tips/${tipId}`);
+  const likeRef = db.doc(`users/${uid}/tipLikes/${tipId}`);
+  const inc = admin.firestore.FieldValue.increment;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  return db.runTransaction(async (tx) => {
+    const tipSnap = await tx.get(tipRef);
+    if (!tipSnap.exists) {
+      throw new HttpsError("not-found", "꿀팁을 찾을 수 없습니다.");
+    }
+    const likeSnap = await tx.get(likeRef);
+    const liked = (likeSnap.data() || {}).liked === true;
+    const next = !liked;
+    const tip = tipSnap.data() || {};
+    const prevCount = Number(tip.likeCount || 0);
+    const nextCount = Math.max(0, prevCount + (next ? 1 : -1));
+    tx.set(tipRef, {likeCount: nextCount}, {merge: true});
+    tx.set(likeRef,
+        {liked: next, hotelId, tipId, updatedAt: now}, {merge: true});
+    if (next && tip.authorUid && tip.authorUid !== uid) {
+      tx.set(db.doc(`users/${tip.authorUid}/exploreWallet/main`),
+          {passportStamps: inc(1)}, {merge: true});
+    }
+    return {liked: next, likeCount: nextCount};
+  });
+});
+
+// ✨신호 소멸: 호텔을 본 시각 기록.
+exports.markHotelSeen = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const hotelId = asOptionalString((request.data || {}).hotelId) || "";
+  if (!hotelId) {
+    throw new HttpsError("invalid-argument", "hotelId가 필요합니다.");
+  }
+  await admin.firestore()
+      .doc(`users/${uid}/hotelSeen/${hotelId}`)
+      .set({
+        lastSeenAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+  return {ok: true};
+});
+
+// ── 호텔 캐치: FCM 푸시 ─────────────────────────────────────────
+const KING_THREAT_MARGIN = 3; // 1위 점수와 이 차이 이내면 "근접" 경고
+const NEW_CONTRIB_FANOUT = 20; // 신규기여 알림 최대 수신자
+
+/**
+ * 유저의 등록 FCM 토큰으로 알림 발송(무효 토큰 정리).
+ * @param {string} uid 대상 유저
+ * @param {string} title 제목
+ * @param {string} body 본문
+ * @param {Object} data 데이터 페이로드
+ * @return {Promise<void>}
+ */
+async function sendPushToUser(uid, title, body, data) {
+  try {
+    const db = admin.firestore();
+    const tokenSet = new Set();
+    // 1) 기존 단일 토큰 필드(notification_service 가 users/{uid}.fcmToken 저장)
+    const userSnap = await db.doc(`users/${uid}`).get();
+    const ft = userSnap.exists ? (userSnap.data() || {}).fcmToken : null;
+    if (typeof ft === "string" && ft) tokenSet.add(ft);
+    // 2) 멀티 토큰 서브컬렉션(registerPushToken)
+    const snap = await db.collection(`users/${uid}/fcmTokens`).get();
+    snap.docs.forEach((doc) => {
+      if (doc.id) tokenSet.add(doc.id);
+    });
+    const tokens = [...tokenSet];
+    if (tokens.length === 0) return;
+    const payload = {};
+    Object.keys(data || {}).forEach((k) => {
+      payload[k] = String((data || {})[k]);
+    });
+    const res = await admin.messaging().sendEachForMulticast({
+      tokens,
+      notification: {title, body},
+      data: payload,
+    });
+    res.responses.forEach((r, i) => {
+      const code = r.error && r.error.code;
+      if (!r.success &&
+          code === "messaging/registration-token-not-registered") {
+        db.doc(`users/${uid}/fcmTokens/${tokens[i]}`).delete()
+            .catch(() => {});
+      }
+    });
+  } catch (e) {
+    logger.warn("push 발송 실패", e);
+  }
+}
+
+/**
+ * 인앱 알림 문서 기록.
+ * @param {string} uid 대상 유저
+ * @param {string} type 알림 유형
+ * @param {string} hotelId 호텔 ID
+ * @param {string} message 메시지
+ * @return {Promise<void>}
+ */
+async function writeNotif(uid, type, hotelId, message) {
+  try {
+    await admin.firestore()
+        .collection(`users/${uid}/notifications`)
+        .add({
+          type, hotelId, message, read: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+  } catch (e) {
+    logger.warn("notif 기록 실패", e);
+  }
+}
+
+// FCM 토큰 등록(앱에서 호출).
+exports.registerPushToken = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const token = asOptionalString((request.data || {}).token) || "";
+  if (!token) {
+    throw new HttpsError("invalid-argument", "token이 필요합니다.");
+  }
+  const platform = asOptionalString((request.data || {}).platform) || "";
+  await admin.firestore().doc(`users/${uid}/fcmTokens/${token}`).set({
+    platform,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+  return {ok: true};
+});
+
 // ── 실시간 항공(OpenSky) 프록시 + bbox 메모리 캐시 ──────────────
 // CORS 없는 OpenSky를 서버(함수)에서 호출. bbox를 그리드로 스냅해 캐시 적중률↑.
 // 캐시는 함수 인스턴스 메모리(아래 변수)에만 — Firestore/호스팅 사용 안 함.

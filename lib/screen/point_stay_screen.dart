@@ -10,6 +10,7 @@ import '../models/community_label_model.dart';
 import '../models/marriott_stay_record.dart';
 import '../models/point_hotel_model.dart';
 import '../services/analytics_service.dart';
+import '../services/hotel_catch_service.dart';
 import '../services/marriott_stay_service.dart';
 import '../services/point_hotel_service.dart';
 import '../widgets/admob_banner.dart';
@@ -22,6 +23,7 @@ import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
 import 'marriott_stay_list_screen.dart';
 import 'marriott_stay_form_screen.dart';
+import 'hotel_quiz_manage_screen.dart';
 import 'point_hotel_detail_screen.dart';
 import 'user_scrap_upload_screen.dart';
 
@@ -38,6 +40,7 @@ enum _PointStayCreateAction {
   blog,
   cafe,
   hotelRequest,
+  hotelQuiz,
 }
 
 class _PointStayTabConfig {
@@ -393,7 +396,93 @@ class _PointStayScreenState extends State<PointStayScreen>
       case _PointStayCreateAction.hotelRequest:
         await _openHotelRequestDialog();
         break;
+      case _PointStayCreateAction.hotelQuiz:
+        await _openHotelQuizPicker();
+        break;
     }
+  }
+
+  /// 호텔 퀴즈: 잠금 해제한 나라의 호텔 목록 → 선택 → 퀴즈 작성 화면.
+  Future<void> _openHotelQuizPicker() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(msg: '로그인이 필요합니다.');
+      return;
+    }
+    final db = FirebaseFirestore.instance;
+    final unlockSnap = await db
+        .collection('users')
+        .doc(user.uid)
+        .collection('worldUnlocks')
+        .get();
+    final unlocked =
+        unlockSnap.docs.map((d) => d.id.toLowerCase()).toSet();
+    if (unlocked.isEmpty) {
+      Fluttertoast.showToast(msg: '먼저 세계지도에서 나라를 해제해주세요.');
+      return;
+    }
+    final hotelSnap = await db.collection('hotels').get();
+    final hotels = hotelSnap.docs
+        .where((d) {
+          final cc =
+              ((d.data()['countryCode'] as String?) ?? '').toLowerCase();
+          return unlocked.contains(cc);
+        })
+        .map((d) => HotelCatchHotel.fromDoc(d.id, d.data()))
+        .toList();
+    if (!mounted) return;
+    if (hotels.isEmpty) {
+      Fluttertoast.showToast(msg: '해제한 나라에 등록된 호텔이 없어요.');
+      return;
+    }
+    final picked = await showModalBottomSheet<HotelCatchHotel>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                '호텔 퀴즈 내기 · 호텔 선택',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+              ),
+            ),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: hotels.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final h = hotels[i];
+                  return ListTile(
+                    leading: const Icon(Icons.apartment_outlined),
+                    title: Text(h.name.isEmpty ? '이름 없는 호텔' : h.name),
+                    subtitle: Text(h.city),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).pop(h),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<bool>(
+        builder: (_) => HotelQuizManageScreen(
+          hotelId: picked.id,
+          hotelName: picked.name,
+        ),
+      ),
+    );
   }
 
   Future<void> _openPointStayScrapUpload(
@@ -1995,6 +2084,13 @@ class _PointStayFloatingActionMenu extends StatelessWidget {
                       onTap: () =>
                           onAction(_PointStayCreateAction.hotelRequest),
                     ),
+                    _PointStayFabAction(
+                      label: '호텔 퀴즈',
+                      icon: Icons.quiz_outlined,
+                      accentColor: accentColor,
+                      onTap: () =>
+                          onAction(_PointStayCreateAction.hotelQuiz),
+                    ),
                     const SizedBox(height: 8),
                   ],
                 )
@@ -2111,6 +2207,12 @@ class _PointStayCreateActionSheet extends StatelessWidget {
             icon: Icons.hotel_outlined,
             accentColor: accentColor,
             onTap: () => onSelected(_PointStayCreateAction.hotelRequest),
+          ),
+          _PointStayActionTile(
+            label: '호텔 퀴즈',
+            icon: Icons.quiz_outlined,
+            accentColor: accentColor,
+            onTap: () => onSelected(_PointStayCreateAction.hotelQuiz),
           ),
         ],
       ),

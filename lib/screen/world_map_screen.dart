@@ -9,6 +9,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import '../services/opensky_live_service.dart';
 import '../services/world_share_service.dart';
+import 'hotel_quiz_manage_screen.dart';
 
 /// milecatch 웹(세계지도 게임)을 임베드하는 탭.
 ///
@@ -212,6 +213,41 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
           debugPrint('[WorldMap] liveFlights.fetch 실패: $e');
           return {'flights': <dynamic>[], 'error': e.toString()};
         }
+      },
+    );
+
+    // hotelQuiz.manage → 웹뷰를 벗어나지 않고 네이티브 퀴즈 관리 시트를 띄움
+    // (리스트/수정/삭제 + OX·객관식·주관식 작성). 지도는 시트 뒤에 그대로 유지.
+    controller.addJavaScriptHandler(
+      handlerName: 'hotelQuiz.manage',
+      callback: (args) async {
+        if (!mounted) return {'ok': false};
+        final payload = (args.isNotEmpty && args.first is Map)
+            ? Map<String, dynamic>.from(args.first as Map)
+            : <String, dynamic>{};
+        final hotelId = (payload['hotelId'] ?? '').toString();
+        final hotelName = (payload['hotelName'] ?? '').toString();
+        if (hotelId.isEmpty) return {'ok': false};
+        await showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          useRootNavigator: true,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => Padding(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(ctx).padding.top + 44,
+            ),
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
+              child: HotelQuizManageScreen(
+                hotelId: hotelId,
+                hotelName: hotelName,
+              ),
+            ),
+          ),
+        );
+        return {'ok': true};
       },
     );
   }
