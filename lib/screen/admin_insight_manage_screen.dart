@@ -16,6 +16,9 @@ class AdminUserManageScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // lastActiveAt가 없는 기존 유저가 목록에서 누락되지 않도록,
+    // fetch는 대부분 보유한 lastLoginAt 기준으로 하고(최근 200명),
+    // 화면 정렬은 lastActiveAt(없으면 lastLoginAt) 기준으로 재정렬한다.
     final stream = FirebaseFirestore.instance
         .collection('users')
         .orderBy('lastLoginAt', descending: true)
@@ -34,10 +37,23 @@ class AdminUserManageScreen extends StatelessWidget {
           }
           if (!snapshot.hasData) return const _AdminLoading();
 
-          final docs = snapshot.data!.docs;
+          final docs = snapshot.data!.docs.toList();
           if (docs.isEmpty) {
             return const _AdminEmpty(message: '사용자 데이터가 없습니다.');
           }
+
+          // 최근 접속순: lastActiveAt 우선, 없으면 lastLoginAt로 보정.
+          int recencyMillis(QueryDocumentSnapshot<Map<String, dynamic>> d) {
+            final data = d.data();
+            final active = data['lastActiveAt'];
+            final login = data['lastLoginAt'];
+            final ts = active is Timestamp
+                ? active
+                : (login is Timestamp ? login : null);
+            return ts?.millisecondsSinceEpoch ?? 0;
+          }
+
+          docs.sort((a, b) => recencyMillis(b).compareTo(recencyMillis(a)));
 
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
@@ -100,72 +116,104 @@ class AdminPostManageScreen extends StatelessWidget {
 class AdminStatsDashboardScreen extends StatelessWidget {
   const AdminStatsDashboardScreen({super.key});
 
+  // 개별 카운트 쿼리가 실패해도 대시보드 전체가 죽지 않도록,
+  // 각 집계를 독립적으로 try/catch 하여 실패 시 0으로 대체한다.
+  Future<int> _safeCount(Query<Object?> query) async {
+    try {
+      final snap = await query.count().get();
+      return snap.count ?? 0;
+    } catch (e) {
+      debugPrint('통계 카운트 실패: $e');
+      return 0;
+    }
+  }
+
   Future<Map<String, int>> _loadCounts() async {
     final firestore = FirebaseFirestore.instance;
 
-    final postSnapshotFuture = firestore.collectionGroup('posts').get();
-    final resolved = await Future.wait<AggregateQuerySnapshot>([
-      firestore.collection('users').count().get(),
-      firestore
-          .collection('users')
-          .where('isBanned', isEqualTo: true)
-          .count()
-          .get(),
-      firestore
-          .collection('reports')
-          .doc('posts')
-          .collection('posts')
-          .count()
-          .get(),
-      firestore
-          .collection('reports')
-          .doc('comments')
-          .collection('comments')
-          .count()
-          .get(),
-      firestore
-          .collection('reports')
-          .doc('chat_messages')
-          .collection('messages')
-          .count()
-          .get(),
-      firestore.collection('contests').count().get(),
-      firestore
-          .collection('cards')
-          .doc('catalog')
-          .collection('cardProducts')
-          .count()
-          .get(),
-    ]);
-    final postSnapshot = await postSnapshotFuture;
-    final postDocs = postSnapshot.docs.where(_isCommunityPostDoc).toList();
-    var visiblePosts = 0;
-    var hiddenPosts = 0;
-    var deletedPosts = 0;
-    var notices = 0;
-    for (final doc in postDocs) {
-      final data = doc.data();
-      final isDeleted = data['isDeleted'] == true;
-      final isHidden = data['isHidden'] == true;
-      if (isDeleted) deletedPosts++;
-      if (isHidden) hiddenPosts++;
-      if (!isDeleted) visiblePosts++;
-      if (_string(data['boardId']) == 'notice') notices++;
+    // 게시글 집계(컬렉션 그룹)도 독립적으로 실패 처리한다.
+    Future<Map<String, int>> loadPostStats() async {
+      try {
+        final postSnapshot = await firestore.collectionGroup('posts').get();
+        final postDocs =
+            postSnapshot.docs.where(_isCommunityPostDoc).toList();
+        var visiblePosts = 0;
+        var hiddenPosts = 0;
+        var deletedPosts = 0;
+        var notices = 0;
+        for (final doc in postDocs) {
+          final data = doc.data();
+          final isDeleted = data['isDeleted'] == true;
+          final isHidden = data['isHidden'] == true;
+          if (isDeleted) deletedPosts++;
+          if (isHidden) hiddenPosts++;
+          if (!isDeleted) visiblePosts++;
+          if (_string(data['boardId']) == 'notice') notices++;
+        }
+        return {
+          'posts': postDocs.length,
+          'visiblePosts': visiblePosts,
+          'hiddenPosts': hiddenPosts,
+          'deletedPosts': deletedPosts,
+          'notices': notices,
+        };
+      } catch (e) {
+        debugPrint('게시글 통계 실패: $e');
+        return {
+          'posts': 0,
+          'visiblePosts': 0,
+          'hiddenPosts': 0,
+          'deletedPosts': 0,
+          'notices': 0,
+        };
+      }
     }
 
+    final results = await Future.wait<Object>([
+      _safeCount(firestore.collection('users')),
+      _safeCount(
+        firestore.collection('users').where('isBanned', isEqualTo: true),
+      ),
+      _safeCount(
+        firestore.collection('reports').doc('posts').collection('posts'),
+      ),
+      _safeCount(
+        firestore
+            .collection('reports')
+            .doc('comments')
+            .collection('comments'),
+      ),
+      _safeCount(
+        firestore
+            .collection('reports')
+            .doc('chat_messages')
+            .collection('messages'),
+      ),
+      _safeCount(firestore.collection('contests')),
+      _safeCount(
+        firestore
+            .collection('cards')
+            .doc('catalog')
+            .collection('cardProducts'),
+      ),
+      loadPostStats(),
+    ]);
+
+    final postStats = results[7] as Map<String, int>;
+
     return <String, int>{
-      'users': resolved[0].count ?? 0,
-      'bannedUsers': resolved[1].count ?? 0,
-      'posts': postDocs.length,
-      'visiblePosts': visiblePosts,
-      'hiddenPosts': hiddenPosts,
-      'deletedPosts': deletedPosts,
-      'postReports': resolved[2].count ?? 0,
-      'commentReports': resolved[3].count ?? 0,
-      'chatReports': resolved[4].count ?? 0,
-      'contests': resolved[5].count ?? 0,
-      'cards': resolved[6].count ?? 0,
-      'notices': notices,
+      'users': results[0] as int,
+      'bannedUsers': results[1] as int,
+      'posts': postStats['posts'] ?? 0,
+      'visiblePosts': postStats['visiblePosts'] ?? 0,
+      'hiddenPosts': postStats['hiddenPosts'] ?? 0,
+      'deletedPosts': postStats['deletedPosts'] ?? 0,
+      'postReports': results[2] as int,
+      'commentReports': results[3] as int,
+      'chatReports': results[4] as int,
+      'contests': results[5] as int,
+      'cards': results[6] as int,
+      'notices': postStats['notices'] ?? 0,
     };
   }
 
@@ -511,7 +559,8 @@ class _AdminUserCard extends StatelessWidget {
     final isBanned = data['isBanned'] == true;
     final grade =
         _firstNonEmpty([data['displayGrade'], data['grade'], '등급 없음']);
-    final lastLoginAt = _date(data['lastLoginAt']);
+    final lastLoginAt =
+        _date(data['lastActiveAt']) ?? _date(data['lastLoginAt']);
 
     return _AdminCard(
       child: Column(

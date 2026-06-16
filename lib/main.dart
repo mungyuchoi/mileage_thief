@@ -3,6 +3,8 @@ import 'package:mileage_thief/screen/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/user_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/notification_service.dart';
@@ -240,10 +242,11 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // 프레임 이후에 무거운 초기화 실행 (앱 진입 지연 방지)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -257,6 +260,8 @@ class _MyAppState extends State<MyApp> {
         unawaited(AnalyticsService.instance.logAction('app_open'));
         await NotificationService().initialize();
         NotificationService().setupTokenRefresh();
+        // 앱 진입 시 최근 접속 시간 기록 (관리자 정렬용)
+        _touchLastActive();
       } catch (e) {
         debugPrint('NotificationService init error: $e');
       }
@@ -266,6 +271,29 @@ class _MyAppState extends State<MyApp> {
         debugPrint('BranchService init error: $e');
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // 백그라운드에서 포그라운드로 복귀할 때 최근 접속 시간 갱신.
+    // 화면/네비게이션 스택은 건드리지 않는다(상태 보존).
+    if (state == AppLifecycleState.resumed) {
+      _touchLastActive();
+    }
+  }
+
+  void _touchLastActive() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) {
+      unawaited(UserService.updateLastActive(uid));
+    }
   }
 
   @override

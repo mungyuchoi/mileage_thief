@@ -24,6 +24,7 @@ import '../services/remote_config_service.dart';
 import 'giftcard_map_screen.dart';
 import 'giftcard_rates_screen.dart';
 import '../services/notice_preference_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:mileage_thief/screen/asiana_screen.dart' as asiana;
 import 'giftcard_deals_screen.dart';
 import 'giftcard_info_screen.dart';
@@ -480,6 +481,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // GlobalKey for old AirportScreen removed
+  // 백그라운드 복귀 시 OS가 앱 프로세스를 종료(메모리/배터리 정책)하면
+  // 콜드 스타트로 첫 탭으로 초기화된다. 마지막 탭을 저장해 두고 복원한다.
+  static const String _lastTabPrefKey = 'home_last_tab_index';
   _HomeTab _currentTab = _HomeTab.usefulInfo;
   final DatabaseReference _versionReference =
       FirebaseDatabase.instance.ref("VERSION");
@@ -550,11 +554,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
       _currentTab = tab;
     });
+    _persistLastTab(tab);
     unawaited(AnalyticsService.instance.logTabSelected(
       'home',
       _homeTabAnalyticsName(tab),
       source: 'guide',
     ));
+  }
+
+  // 마지막 탭을 영구 저장(프로세스 종료 후 복원용).
+  void _persistLastTab(_HomeTab tab) {
+    unawaited(() async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(_lastTabPrefKey, tab.index);
+      } catch (e) {
+        debugPrint('마지막 탭 저장 실패: $e');
+      }
+    }());
+  }
+
+  // 콜드 스타트 시 마지막 탭을 복원. 첫 프레임 이후 1회만 수행한다.
+  Future<void> _restoreLastTab() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final index = prefs.getInt(_lastTabPrefKey);
+      if (index == null) return;
+      if (index < 0 || index >= _HomeTab.values.length) return;
+      final tab = _HomeTab.values[index];
+      if (!mounted || tab == _currentTab) return;
+      _selectHomeTab(tab);
+    } catch (e) {
+      debugPrint('마지막 탭 복원 실패: $e');
+    }
   }
 
   void _openCommunityTab({String? boardId, String? boardName}) {
@@ -573,6 +605,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _isScrolling = false;
       _currentTab = _HomeTab.community;
     });
+    _persistLastTab(_HomeTab.community);
     unawaited(AnalyticsService.instance.logTabSelected(
       'home',
       'community',
@@ -620,6 +653,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _isScrolling = false;
       _currentTab = _HomeTab.community;
     });
+    _persistLastTab(_HomeTab.community);
     unawaited(AnalyticsService.instance.logTabSelected(
       'home',
       'community',
@@ -652,6 +686,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       NotificationService().markNavigationReady();
+      // 콜드 스타트(프로세스 종료 복귀) 시 마지막 탭 복원.
+      unawaited(_restoreLastTab());
     });
     getVersion();
     _loadVersionFirebase();
@@ -822,6 +858,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
       _currentTab = nextTab;
     });
+    _persistLastTab(nextTab);
     unawaited(AnalyticsService.instance.logTabSelected(
       'home',
       _homeTabAnalyticsName(nextTab),

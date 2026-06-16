@@ -8038,6 +8038,8 @@ exports.addHotel = onCall({region: OAUTH_REGION}, async (request) => {
     Math.max(0, Math.min(5, Math.round(rawStars))) : 0;
   const description = (asOptionalString(data.description) || "").slice(0, 500);
   const coverImageUrl = asOptionalString(data.coverImageUrl) || "";
+  // 선택: 커스텀 마커 아이콘 URL(지금은 미사용, 추후 활용 여지)
+  const iconUrl = asOptionalString(data.iconUrl) || null;
 
   const token = (request.auth && request.auth.token) || {};
   const nick = asOptionalString(token.name) || "여행자";
@@ -8053,6 +8055,7 @@ exports.addHotel = onCall({region: OAUTH_REGION}, async (request) => {
   batch.set(hotelRef, {
     name, brand, lat, lng, countryCode, city,
     stars, description, coverImageUrl,
+    iconUrl,
     pointHotelId: null,
     topContributorUid: uid,
     topContributorName: nick,

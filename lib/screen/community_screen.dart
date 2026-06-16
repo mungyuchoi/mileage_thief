@@ -1476,52 +1476,132 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
-  // 초기 게시글 로드
+  // 차단 유저 목록 조회 (초기/차분 로드 공통)
+  Future<List<String>> _fetchBlockedUids() async {
+    final user = AuthService.currentUser;
+    if (user == null) return const <String>[];
+    try {
+      final blockedSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('blocked')
+          .get();
+      return blockedSnapshot.docs.map((doc) => doc.id).toList();
+    } catch (e) {
+      print('차단 목록 로드 오류: $e');
+      return const <String>[];
+    }
+  }
+
+  // 쿼리 결과를 _posts에 반영 (페이지네이션 기준은 필터 전 원본).
+  void _applyInitialDocs(List<QueryDocumentSnapshot> allDocs) {
+    final filteredDocs = allDocs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return data['isHidden'] != true;
+    }).toList();
+
+    _safeSetState(() {
+      _posts = filteredDocs;
+      if (allDocs.isNotEmpty) {
+        _lastDocument = allDocs.last; // 마지막 문서는 필터 전 원본 기준
+      }
+      _hasMoreData = allDocs.length == _postsPerPage; // 원본 개수 기준
+      _isInitialLoading = false;
+    });
+  }
+
+  // 캐시로 표시 중인 목록에서 가장 최근 createdAt을 구한다(차분 기준).
+  Timestamp? _newestCreatedAt() {
+    Timestamp? newest;
+    for (final doc in _posts) {
+      final data = doc.data() as Map<String, dynamic>?;
+      final ts = data?['createdAt'];
+      if (ts is Timestamp) {
+        if (newest == null || ts.compareTo(newest) > 0) {
+          newest = ts;
+        }
+      }
+    }
+    return newest;
+  }
+
+  // 서버에서 받은 "더 최근" 글들을 기존 목록 맨 앞에 병합(중복/숨김/차단 제외).
+  void _mergeNewerDocs(
+    List<QueryDocumentSnapshot> docs,
+    List<String> blockedUids,
+  ) {
+    if (docs.isEmpty) return;
+    final existingPaths = _posts.map((d) => d.reference.path).toSet();
+    final additions = <QueryDocumentSnapshot>[];
+    for (final doc in docs) {
+      if (existingPaths.contains(doc.reference.path)) continue;
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['isHidden'] == true) continue;
+      final authorUid = data['author']?['uid'];
+      if (authorUid != null && blockedUids.contains(authorUid)) continue;
+      additions.add(doc);
+    }
+    if (additions.isEmpty) return;
+    // 서버 결과는 createdAt desc 정렬이므로 그대로 앞에 붙이면 최신순 유지.
+    _safeSetState(() {
+      _posts = [...additions, ..._posts];
+    });
+  }
+
+  // 초기 게시글 로드 — 로컬 캐시 즉시 표시 후 서버로 최신화.
+  // 1) Firestore 디스크 캐시(Source.cache)에서 바로 그려 체감 지연 제거.
+  // 2) 캐시가 있으면 마지막 createdAt 이후 "새 글만" 차분 fetch해서 병합.
+  //    캐시가 없으면(첫 진입) 서버에서 상위 N개를 받아 전체 표시.
   Future<void> _loadInitialPosts() async {
     try {
-      _safeSetState(() {
-        _isInitialLoading = true;
-      });
-
-      // 차단 유저 제외 처리
-      List<String> blockedUids = [];
-      final user = AuthService.currentUser;
-      if (user != null) {
-        final blockedSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('blocked')
-            .get();
-        blockedUids = blockedSnapshot.docs.map((doc) => doc.id).toList();
-      }
+      final blockedUids = await _fetchBlockedUids();
 
       Query query = _getQuery();
       if (blockedUids.isNotEmpty) {
         query = query.where('author.uid', whereNotIn: blockedUids);
       }
-      query = query.limit(_postsPerPage);
+      final limited = query.limit(_postsPerPage);
 
-      final querySnapshot = await query.get();
-
-      // 원본 쿼리 결과와 필터 적용 결과를 구분해 페이지네이션 기준을 원본으로 잡는다
-      final allDocs = querySnapshot.docs;
-      final filteredDocs = allDocs.where((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return data['isHidden'] != true;
-      }).toList();
-
-      _safeSetState(() {
-        _posts = filteredDocs;
-        if (allDocs.isNotEmpty) {
-          _lastDocument = allDocs.last; // 마지막 문서는 필터 전 원본 기준
+      // 1) 로컬(디스크) 캐시에서 즉시 표시 — 네트워크 대기 없음.
+      var shownFromCache = false;
+      try {
+        final cacheSnap =
+            await limited.get(const GetOptions(source: Source.cache));
+        if (cacheSnap.docs.isNotEmpty) {
+          _applyInitialDocs(cacheSnap.docs);
+          shownFromCache = true;
         }
-        _hasMoreData = allDocs.length == _postsPerPage; // 더보기 여부도 원본 개수 기준
-        _isInitialLoading = false; // 로딩 완료
-      });
+      } catch (_) {
+        // 캐시에 해당 쿼리 결과가 없음 — 서버 로드로 진행.
+      }
+
+      // 캐시가 비어 있으면 로딩 인디케이터 유지.
+      if (!shownFromCache) {
+        _safeSetState(() => _isInitialLoading = true);
+      }
+
+      // 2-a) 캐시 표시 성공: 마지막 createdAt 이후 "새 글만" 차분 fetch.
+      if (shownFromCache) {
+        final newestTs = _newestCreatedAt();
+        if (newestTs != null) {
+          // whereNotIn(author.uid)과 createdAt 범위 동시 사용은 제약이 있어
+          // 차분 쿼리에는 차단 필터를 빼고 클라이언트에서 거른다.
+          final diffSnap = await _getQuery()
+              .where('createdAt', isGreaterThan: newestTs)
+              .get(const GetOptions(source: Source.server));
+          _mergeNewerDocs(diffSnap.docs, blockedUids);
+          return;
+        }
+      }
+
+      // 2-b) 캐시가 없었던 경우: 서버에서 상위 N개를 받아 전체 표시.
+      final serverSnap =
+          await limited.get(const GetOptions(source: Source.server));
+      _applyInitialDocs(serverSnap.docs);
     } catch (e) {
       print('초기 게시글 로드 오류: $e');
       _safeSetState(() {
-        _isInitialLoading = false; // 오류 발생 시에도 로딩 상태 해제
+        _isInitialLoading = false; // 오류 시에도 로딩 상태 해제
       });
     }
   }

@@ -41,6 +41,13 @@ service cloud.firestore {
         allow read: if true;
         allow write: if false;
       }
+
+      // 리뷰: 누구나 읽기, 본인(doc id == uid)만 작성/수정/삭제
+      match /reviews/{uid} {
+        allow read: if true;
+        allow create, update, delete: if request.auth != null
+          && request.auth.uid == uid;
+      }
     }
 
     // ===== 유저 서브컬렉션 =====
@@ -60,6 +67,10 @@ service cloud.firestore {
     match /users/{uid}/tipLikes/{tipId} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
+    }
+    // 내 리뷰 미러(본인 모음)
+    match /users/{uid}/hotelReviews/{hotelId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
     }
     match /users/{uid}/notifications/{notifId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;

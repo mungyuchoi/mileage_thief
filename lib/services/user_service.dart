@@ -69,6 +69,7 @@ class UserService {
       'joinedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
       'lastLoginAt': FieldValue.serverTimestamp(),
+      'lastActiveAt': FieldValue.serverTimestamp(),
       'postsCount': 0,
       'commentCount': 0,
       'likesReceived': 0,
@@ -150,6 +151,7 @@ class UserService {
           'displayName': resolvedDisplayName,
           'photoURL': user.photoURL,
           'lastLoginAt': FieldValue.serverTimestamp(),
+          'lastActiveAt': FieldValue.serverTimestamp(),
           'fcmToken': fcmToken ?? existingData['fcmToken'] ?? '',
         };
 
@@ -233,10 +235,25 @@ class UserService {
     try {
       await _firestore.collection(_usersCollection).doc(uid).update({
         'lastLoginAt': FieldValue.serverTimestamp(),
+        'lastActiveAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
       print('마지막 로그인 시간 업데이트 오류: $e');
       rethrow;
+    }
+  }
+
+  // 마지막 접속(앱 진입/포그라운드 복귀) 시간 업데이트.
+  // 정렬용 lastActiveAt만 갱신하며, 실패해도 앱 흐름을 막지 않는다.
+  static Future<void> updateLastActive(String uid) async {
+    if (uid.isEmpty) return;
+    try {
+      await _firestore.collection(_usersCollection).doc(uid).set(
+        {'lastActiveAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      print('마지막 접속 시간 업데이트 오류: $e');
     }
   }
 
