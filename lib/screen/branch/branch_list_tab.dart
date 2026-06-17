@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../const/colors.dart';
+import '../../utils/firestore_cache_first.dart';
 import 'branch_detail_screen.dart';
 
 class BranchListTab extends StatefulWidget {
@@ -22,8 +23,9 @@ class _BranchListTabState extends State<BranchListTab> {
 
   Future<Map<String, String>> _loadGiftcardNames() async {
     try {
+      // 디스크 캐시 우선 → 없으면 서버.
       final snap =
-          await FirebaseFirestore.instance.collection('giftcards').get();
+          await cacheFirstGet(FirebaseFirestore.instance.collection('giftcards'));
       final Map<String, String> m = <String, String>{};
       for (final d in snap.docs) {
         final data = d.data();
@@ -53,11 +55,11 @@ class _BranchListTabState extends State<BranchListTab> {
 
     // 2) 없으면 branches/{branchId}/giftcardRates_current 문서 목록으로 추론 (doc.id == giftcardId)
     try {
-      final snap = await FirebaseFirestore.instance
+      // 디스크 캐시 우선 → 없으면 서버.
+      final snap = await cacheFirstGet(FirebaseFirestore.instance
           .collection('branches')
           .doc(branchId)
-          .collection('giftcardRates_current')
-          .get();
+          .collection('giftcardRates_current'));
       return snap.docs
           .map((d) => d.id)
           .where((e) => e.trim().isNotEmpty)

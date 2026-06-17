@@ -387,42 +387,74 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
   void _loadSections({bool force = false}) {
     _bestPostsFuture = _cached(
       'bestPosts',
-      _fetchBestPosts,
+      () => _loadPostsCacheFirst(
+        'bestPosts',
+        (s) => _fetchBestPosts(source: s),
+        (docs) => _bestPostsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _popularPostsFuture = _cached(
       'popularPosts',
-      _fetchPopularPosts,
+      () => _loadPostsCacheFirst(
+        'popularPosts',
+        (s) => _fetchPopularPosts(source: s),
+        (docs) => _popularPostsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _newsPostsFuture = _cached(
       'newsPosts',
-      () => _fetchPostsByBoard('news', limit: 8),
+      () => _loadPostsCacheFirst(
+        'newsPosts',
+        (s) => _fetchPostsByBoard('news', limit: 8, source: s),
+        (docs) => _newsPostsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _aeroRoutesNewsFuture = _cached(
       'aeroRoutesNewsPosts',
-      () => _fetchPostsByBoard('aeroroute_news', limit: 8),
+      () => _loadPostsCacheFirst(
+        'aeroRoutesNewsPosts',
+        (s) => _fetchPostsByBoard('aeroroute_news', limit: 8, source: s),
+        (docs) => _aeroRoutesNewsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _secretFlyingNewsFuture = _cached(
       'secretFlyingNewsPosts',
-      () => _fetchPostsByBoard('secretflying_news', limit: 8),
+      () => _loadPostsCacheFirst(
+        'secretFlyingNewsPosts',
+        (s) => _fetchPostsByBoard('secretflying_news', limit: 8, source: s),
+        (docs) => _secretFlyingNewsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _workingHolidayNewsFuture = _cached(
       'workingHolidayNewsPosts',
-      () => _fetchPostsByBoard('workingholiday_news', limit: 8),
+      () => _loadPostsCacheFirst(
+        'workingHolidayNewsPosts',
+        (s) => _fetchPostsByBoard('workingholiday_news', limit: 8, source: s),
+        (docs) => _workingHolidayNewsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _benefitPostsFuture = _cached(
       'benefitPosts',
-      () => _fetchPostsByBoard('deal', limit: 8),
+      () => _loadPostsCacheFirst(
+        'benefitPosts',
+        (s) => _fetchPostsByBoard('deal', limit: 8, source: s),
+        (docs) => _benefitPostsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _noticePostsFuture = _cached(
       'noticePosts',
-      () => _fetchPostsByBoard('notice', limit: 6),
+      () => _loadPostsCacheFirst(
+        'noticePosts',
+        (s) => _fetchPostsByBoard('notice', limit: 6, source: s),
+        (docs) => _noticePostsFuture = Future.value(docs),
+      ),
       force: force,
     );
     _boardsFuture = _cached(
@@ -480,6 +512,49 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     bool force = false,
   }) {
     return _UsefulInfoMemoryCache.get<T>(key, loader, force: force);
+  }
+
+  // 진행 중인 섹션별 서버 백그라운드 갱신 추적 (중복 호출 방지).
+  final Set<String> _postSectionRefreshInFlight = {};
+
+  // 게시글 섹션 cache-first 로더 — 커뮤니티 탭과 동일한 전략.
+  // 1) Firestore 디스크 캐시(Source.cache)에서 즉시 표시해 네트워크 대기를 없앤다.
+  // 2) 캐시가 있으면 서버에서 최신 데이터를 백그라운드로 받아 화면을 갱신한다.
+  // 3) 캐시가 없으면(첫 진입) 서버에서 받아 그대로 표시한다.
+  Future<_PostDocs> _loadPostsCacheFirst(
+    String sectionKey,
+    Future<_PostDocs> Function(Source source) run,
+    void Function(_PostDocs docs) assign,
+  ) async {
+    try {
+      final cached = await run(Source.cache);
+      if (cached.isNotEmpty) {
+        unawaited(_refreshPostSectionFromServer(sectionKey, run, assign));
+        return cached;
+      }
+    } catch (_) {
+      // 캐시에 해당 쿼리 결과가 없음 — 서버 로드로 진행.
+    }
+    return run(Source.server);
+  }
+
+  Future<void> _refreshPostSectionFromServer(
+    String sectionKey,
+    Future<_PostDocs> Function(Source source) run,
+    void Function(_PostDocs docs) assign,
+  ) async {
+    if (_postSectionRefreshInFlight.contains(sectionKey)) return;
+    _postSectionRefreshInFlight.add(sectionKey);
+    try {
+      final fresh = await run(Source.server);
+      _UsefulInfoMemoryCache.put<_PostDocs>(sectionKey, fresh);
+      if (!mounted) return;
+      setState(() => assign(fresh));
+    } catch (_) {
+      // 캐시가 이미 화면에 있으므로 백그라운드 갱신 실패는 조용히 무시한다.
+    } finally {
+      _postSectionRefreshInFlight.remove(sectionKey);
+    }
   }
 
   Future<_GuideAds> _loadGuideAds({bool force = false}) async {
@@ -809,11 +884,12 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     );
   }
 
-  Future<_PostDocs> _fetchBestPosts() async {
+  Future<_PostDocs> _fetchBestPosts({Source source = Source.serverAndCache}) async {
+    final getOptions = GetOptions(source: source);
     final metaDoc = await FirebaseFirestore.instance
         .collection('meta')
         .doc('bestPosts')
-        .get();
+        .get(getOptions);
     final List<dynamic> idsDynamic = metaDoc.data()?['postIds'] ?? [];
     final postIds = idsDynamic.map((e) => e.toString()).take(10).toList();
     if (postIds.isEmpty) return [];
@@ -822,7 +898,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
         .collectionGroup('posts')
         .where('postId', whereIn: postIds)
         .where('isDeleted', isEqualTo: false)
-        .get();
+        .get(getOptions);
 
     final docs = snapshot.docs.where(_isVisiblePost).toList()
       ..sort((a, b) =>
@@ -830,19 +906,21 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
     return docs;
   }
 
-  Future<_PostDocs> _fetchPopularPosts() async {
+  Future<_PostDocs> _fetchPopularPosts(
+      {Source source = Source.serverAndCache}) async {
     final snapshot = await FirebaseFirestore.instance
         .collectionGroup('posts')
         .where('isDeleted', isEqualTo: false)
         .orderBy('likesCount', descending: true)
         .limit(10)
-        .get();
+        .get(GetOptions(source: source));
     return snapshot.docs.where(_isVisiblePost).toList();
   }
 
   Future<_PostDocs> _fetchPostsByBoard(
     String boardId, {
     int limit = 8,
+    Source source = Source.serverAndCache,
   }) async {
     final snapshot = await FirebaseFirestore.instance
         .collectionGroup('posts')
@@ -850,7 +928,7 @@ class _UsefulInfoScreenState extends State<UsefulInfoScreen> {
         .where('isDeleted', isEqualTo: false)
         .orderBy('createdAt', descending: true)
         .limit(limit)
-        .get();
+        .get(GetOptions(source: source));
     return snapshot.docs.where(_isVisiblePost).toList();
   }
 

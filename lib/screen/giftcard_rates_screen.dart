@@ -14,6 +14,7 @@ import '../models/community_label_model.dart';
 import '../models/giftcard_deal_model.dart';
 import '../services/analytics_service.dart';
 import '../services/giftcard_deal_service.dart';
+import '../utils/firestore_cache_first.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
@@ -406,11 +407,10 @@ class GiftcardRatesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      future: FirebaseFirestore.instance
+    return CacheFirstQuery(
+      query: FirebaseFirestore.instance
           .collection('giftcards')
-          .orderBy('sortOrder', descending: false)
-          .get(),
+          .orderBy('sortOrder', descending: false),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           if (snapshot.hasError) {

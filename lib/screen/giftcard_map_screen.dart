@@ -148,13 +148,37 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
 
   Future<void> _loadMonthlyMarkers() async {
     if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
-    });
+    _isLoading = true;
+    try {
+      // 커뮤니티/가이드 탭과 동일한 cache-first 2단 전략.
+      // 1) 디스크 캐시에서 즉시 그려 네트워크 대기를 없앤다. (쓰기·마커이미지 생략)
+      await _buildMonthlyMarkers(
+        source: Source.cache,
+        allowWrites: false,
+        loadMarkerImages: false,
+      );
+      // 2) 서버에서 최신본을 받아 정식 동작(쓰기·마커이미지 포함)으로 갱신한다.
+      await _buildMonthlyMarkers(
+        source: Source.server,
+        allowWrites: true,
+        loadMarkerImages: true,
+      );
+    } finally {
+      _isLoading = false;
+    }
+  }
+
+  Future<bool> _buildMonthlyMarkers({
+    required Source source,
+    required bool allowWrites,
+    required bool loadMarkerImages,
+  }) async {
+    var hasContent = false;
     try {
       final String monthKey = DateFormat('yyyyMM').format(_selectedMonth);
-      final branchesSnap =
-          await FirebaseFirestore.instance.collection('branches').get();
+      final branchesSnap = await FirebaseFirestore.instance
+          .collection('branches')
+          .get(GetOptions(source: source));
       // 기존 마커 초기화 후 지점별 기본 마커를 즉시 추가
       setState(() {
         _markers.clear();
@@ -183,10 +207,16 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
             .doc(doc.id)
             .collection('rates_monthly')
             .doc(monthKey);
-        final ratesDoc = await ratesRef.get();
+        DocumentSnapshot<Map<String, dynamic>> ratesDoc;
+        try {
+          ratesDoc = await ratesRef.get(GetOptions(source: source));
+        } catch (_) {
+          continue; // 캐시 패스에서 이 달 문서가 없으면 건너뛴다.
+        }
         if (!ratesDoc.exists) {
           continue; // 이번 달 데이터 없으면 마커 표시 안함
         }
+        hasContent = true;
 
         final Map<String, dynamic> ratesData =
             Map<String, dynamic>.from(ratesDoc.data() as Map);
@@ -236,22 +266,25 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         final int branchTotal = ranked.fold<int>(
             0, (sum, u) => sum + ((u['sellTotal'] as num?)?.toInt() ?? 0));
 
-        // 저장된 top3와 다르면 업데이트(베스트 effort)
-        try {
-          final Map<String, dynamic>? f0 = (ratesData['firstUser'] is Map)
-              ? Map<String, dynamic>.from(ratesData['firstUser'] as Map)
-              : null;
-          if (f0?['uid'] != firstUser?['uid'] ||
-              (ratesData['secondUser'] as Map?)?['uid'] != secondUser?['uid'] ||
-              (ratesData['thirdUser'] as Map?)?['uid'] != thirdUser?['uid']) {
-            await ratesRef.set({
-              'firstUser': firstUser,
-              'secondUser': secondUser,
-              'thirdUser': thirdUser,
-              'updatedAt': FieldValue.serverTimestamp()
-            }, SetOptions(merge: true));
-          }
-        } catch (_) {}
+        // 저장된 top3와 다르면 업데이트(베스트 effort) — 서버 패스에서만 수행.
+        if (allowWrites) {
+          try {
+            final Map<String, dynamic>? f0 = (ratesData['firstUser'] is Map)
+                ? Map<String, dynamic>.from(ratesData['firstUser'] as Map)
+                : null;
+            if (f0?['uid'] != firstUser?['uid'] ||
+                (ratesData['secondUser'] as Map?)?['uid'] !=
+                    secondUser?['uid'] ||
+                (ratesData['thirdUser'] as Map?)?['uid'] != thirdUser?['uid']) {
+              await ratesRef.set({
+                'firstUser': firstUser,
+                'secondUser': secondUser,
+                'thirdUser': thirdUser,
+                'updatedAt': FieldValue.serverTimestamp()
+              }, SetOptions(merge: true));
+            }
+          } catch (_) {}
+        }
 
         final String branchName = (data['name'] as String?) ?? doc.id;
         final String snippet = (firstUser != null)
@@ -302,7 +335,7 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
         );
         debugPrint(
             '[Map] ${doc.id}: loading marker icon from ${markerPhoto.length > 120 ? markerPhoto.substring(0, 120) + '...' : markerPhoto}');
-        if (markerPhoto.isNotEmpty) {
+        if (loadMarkerImages && markerPhoto.isNotEmpty) {
           _getCircleMarkerFromUrl(markerPhoto).then((BitmapDescriptor icon) {
             if (!mounted) return;
             setState(() {
@@ -350,13 +383,8 @@ class _GiftcardMapScreenState extends State<GiftcardMapScreen> {
           .sort((a, b) => ((b['sellTotal'] as int) - (a['sellTotal'] as int)));
     } catch (_) {
       // silent fail for now
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
+    return hasContent;
   }
 
   Future<BitmapDescriptor> _getCircleMarkerFromUrl(String url,

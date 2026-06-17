@@ -130,90 +130,63 @@ class AdminStatsDashboardScreen extends StatelessWidget {
 
   Future<Map<String, int>> _loadCounts() async {
     final firestore = FirebaseFirestore.instance;
+    final posts = firestore.collectionGroup('posts');
 
-    // 게시글 집계(컬렉션 그룹)도 독립적으로 실패 처리한다.
-    Future<Map<String, int>> loadPostStats() async {
-      try {
-        final postSnapshot = await firestore.collectionGroup('posts').get();
-        final postDocs =
-            postSnapshot.docs.where(_isCommunityPostDoc).toList();
-        var visiblePosts = 0;
-        var hiddenPosts = 0;
-        var deletedPosts = 0;
-        var notices = 0;
-        for (final doc in postDocs) {
-          final data = doc.data();
-          final isDeleted = data['isDeleted'] == true;
-          final isHidden = data['isHidden'] == true;
-          if (isDeleted) deletedPosts++;
-          if (isHidden) hiddenPosts++;
-          if (!isDeleted) visiblePosts++;
-          if (_string(data['boardId']) == 'notice') notices++;
-        }
-        return {
-          'posts': postDocs.length,
-          'visiblePosts': visiblePosts,
-          'hiddenPosts': hiddenPosts,
-          'deletedPosts': deletedPosts,
-          'notices': notices,
-        };
-      } catch (e) {
-        debugPrint('게시글 통계 실패: $e');
-        return {
-          'posts': 0,
-          'visiblePosts': 0,
-          'hiddenPosts': 0,
-          'deletedPosts': 0,
-          'notices': 0,
-        };
-      }
-    }
-
-    final results = await Future.wait<Object>([
-      _safeCount(firestore.collection('users')),
+    // 게시글 통계는 절대 전체 문서를 가져오지 않는다.
+    // 과거에는 collectionGroup('posts').get()으로 모든 글을 메모리에 올려
+    // 직렬화 단계에서 OOM(네이티브 크래시)이 발생했다.
+    // 서버측 count() 집계로 대체한다(문서 전송 없이 개수만 수신).
+    // 신고 문서(reports/posts/posts)는 isDeleted/isHidden 필드가 없어
+    // 해당 필터 카운트에서 자연히 제외된다.
+    final results = await Future.wait<int>([
+      _safeCount(firestore.collection('users')), // 0
       _safeCount(
         firestore.collection('users').where('isBanned', isEqualTo: true),
-      ),
+      ), // 1
       _safeCount(
         firestore.collection('reports').doc('posts').collection('posts'),
-      ),
+      ), // 2
       _safeCount(
         firestore
             .collection('reports')
             .doc('comments')
             .collection('comments'),
-      ),
+      ), // 3
       _safeCount(
         firestore
             .collection('reports')
             .doc('chat_messages')
             .collection('messages'),
-      ),
-      _safeCount(firestore.collection('contests')),
+      ), // 4
+      _safeCount(firestore.collection('contests')), // 5
       _safeCount(
         firestore
             .collection('cards')
             .doc('catalog')
             .collection('cardProducts'),
-      ),
-      loadPostStats(),
+      ), // 6
+      _safeCount(posts.where('isDeleted', isEqualTo: false)), // 7 노출 글
+      _safeCount(posts.where('isDeleted', isEqualTo: true)), // 8 삭제 글
+      _safeCount(posts.where('isHidden', isEqualTo: true)), // 9 숨김 글
+      _safeCount(posts.where('boardId', isEqualTo: 'notice')), // 10 공지
     ]);
 
-    final postStats = results[7] as Map<String, int>;
+    final visiblePosts = results[7];
+    final deletedPosts = results[8];
 
     return <String, int>{
-      'users': results[0] as int,
-      'bannedUsers': results[1] as int,
-      'posts': postStats['posts'] ?? 0,
-      'visiblePosts': postStats['visiblePosts'] ?? 0,
-      'hiddenPosts': postStats['hiddenPosts'] ?? 0,
-      'deletedPosts': postStats['deletedPosts'] ?? 0,
-      'postReports': results[2] as int,
-      'commentReports': results[3] as int,
-      'chatReports': results[4] as int,
-      'contests': results[5] as int,
-      'cards': results[6] as int,
-      'notices': postStats['notices'] ?? 0,
+      'users': results[0],
+      'bannedUsers': results[1],
+      'posts': visiblePosts + deletedPosts,
+      'visiblePosts': visiblePosts,
+      'hiddenPosts': results[9],
+      'deletedPosts': deletedPosts,
+      'postReports': results[2],
+      'commentReports': results[3],
+      'chatReports': results[4],
+      'contests': results[5],
+      'cards': results[6],
+      'notices': results[10],
     };
   }
 
@@ -346,7 +319,13 @@ class _AdminPeriodStatsScreenState extends State<AdminPeriodStatsScreen> {
     final firestore = FirebaseFirestore.instance;
     final from = DateTime.now().subtract(Duration(days: _days));
     final fromTs = Timestamp.fromDate(from);
-    final postSnapshotFuture = firestore.collectionGroup('posts').get();
+    // 기간 내 글만 서버측에서 필터링해 가져온다.
+    // (과거에는 전체 글을 받아 클라이언트에서 거르다 OOM 발생.)
+    // 신고 문서는 createdAt이 없어 이 쿼리에서 자동 제외된다.
+    final postSnapshotFuture = firestore
+        .collectionGroup('posts')
+        .where('createdAt', isGreaterThanOrEqualTo: fromTs)
+        .get();
 
     final countFuture = Future.wait<AggregateQuerySnapshot>([
       firestore
@@ -493,8 +472,13 @@ class AdminPopularContentScreen extends StatelessWidget {
   const AdminPopularContentScreen({super.key});
 
   Future<List<_PostAdminEntry>> _loadPosts() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collectionGroup('posts').get();
+    // 전체 글을 메모리에 올리면 OOM이 발생하므로 최근 글로 범위를 제한한다.
+    // 최근 글 중에서 인기 점수로 정렬한다(관리자 인기글 뷰 용도).
+    final snapshot = await FirebaseFirestore.instance
+        .collectionGroup('posts')
+        .orderBy('createdAt', descending: true)
+        .limit(300)
+        .get();
     final posts = snapshot.docs
         .where(_isCommunityPostDoc)
         .where((doc) {
