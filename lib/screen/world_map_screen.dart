@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -6,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../services/opensky_live_service.dart';
 import '../services/world_share_service.dart';
@@ -107,6 +110,37 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
           countryNameKo: (payload['countryNameKo'] ?? '').toString(),
         );
         return {'ok': postId != null, 'postId': postId ?? ''};
+      },
+    );
+
+    // share.image → 웹에서 만든 이미지(dataURL PNG)를 네이티브 공유 시트로 공유
+    controller.addJavaScriptHandler(
+      handlerName: 'share.image',
+      callback: (args) async {
+        try {
+          final payload = (args.isNotEmpty && args.first is Map)
+              ? Map<String, dynamic>.from(args.first as Map)
+              : <String, dynamic>{};
+          final dataUrl = (payload['dataUrl'] ?? '').toString();
+          final fileName = (payload['fileName'] ?? 'milecatch.png').toString();
+          final text = (payload['text'] ?? '').toString();
+
+          final comma = dataUrl.indexOf(',');
+          if (comma < 0) return {'ok': false, 'error': 'invalid dataUrl'};
+          final bytes = base64Decode(dataUrl.substring(comma + 1));
+
+          final dir = await getTemporaryDirectory();
+          final file = File('${dir.path}/$fileName');
+          await file.writeAsBytes(bytes, flush: true);
+
+          await SharePlus.instance.share(
+            ShareParams(files: [XFile(file.path)], text: text),
+          );
+          return {'ok': true};
+        } catch (e) {
+          debugPrint('[WorldMap] share.image 실패: $e');
+          return {'ok': false, 'error': e.toString()};
+        }
       },
     );
 

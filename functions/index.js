@@ -8010,6 +8010,67 @@ exports.worldUnlockSlots = onCall({region: OAUTH_REGION}, async (request) => {
   });
 });
 
+// ── 세계지도 이벤트 보상: 1회 멱등 지급 ──────────────────────────
+// 커뮤니티 게시글 이미지 버튼 → /explore?event=ID 진입 시 호출.
+// users/{uid}/eventClaims/{eventId} 로 1회만 지급(여러 번 눌러도 1회).
+// 코드 기본값 + events/{eventId} 문서로 운영 중 on/off·금액 조정 가능.
+const EVENT_REWARDS = {
+  welcome2026: {amount: 100, enabled: true},
+};
+
+exports.claimEventReward = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const eventId = asOptionalString(request.data && request.data.eventId) || "";
+  if (!/^[a-zA-Z0-9_-]{1,40}$/.test(eventId)) {
+    throw new HttpsError("invalid-argument", "알 수 없는 이벤트입니다.");
+  }
+  const db = admin.firestore();
+  const claimRef = db.doc(`users/${uid}/eventClaims/${eventId}`);
+  const walletRef = db.doc(`users/${uid}/exploreWallet/main`);
+  const eventRef = db.doc(`events/${eventId}`);
+  return db.runTransaction(async (tx) => {
+    // 트랜잭션: 읽기 → 판정 → 쓰기(원자적). 동시 호출/중복 탭도 1회만.
+    const claimSnap = await tx.get(claimRef);
+    const walletSnap = await tx.get(walletRef);
+    const eventSnap = await tx.get(eventRef);
+    const balance = Number((walletSnap.data() || {}).passportStamps || 0);
+
+    // 이미 받았으면 멱등 종료(추가 지급 없음).
+    if (claimSnap.exists) {
+      return {already: true, amount: 0, passportStamps: balance};
+    }
+
+    // 코드 기본값 + Firestore events 문서(운영 토글) 병합.
+    const cfg = EVENT_REWARDS[eventId] || null;
+    const evt = eventSnap.exists ? (eventSnap.data() || {}) : {};
+    const enabled = evt.enabled !== undefined ?
+      evt.enabled === true :
+      (cfg ? cfg.enabled === true : false);
+    const amount = Number.isFinite(Number(evt.amount)) ?
+      Number(evt.amount) :
+      (cfg ? Number(cfg.amount) : 0);
+
+    // 기간 제한(옵션): events 문서에 endAt(Timestamp)이 있으면 만료 검사.
+    let expired = false;
+    if (evt.endAt && typeof evt.endAt.toMillis === "function") {
+      expired = Date.now() > evt.endAt.toMillis();
+    }
+
+    if (!enabled || expired || !(amount > 0)) {
+      throw new HttpsError(
+          "failed-precondition", "종료되었거나 존재하지 않는 이벤트입니다.");
+    }
+
+    const next = balance + amount;
+    tx.set(walletRef, {passportStamps: next}, {merge: true});
+    tx.set(claimRef, {
+      claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+      amount: amount,
+    }, {merge: true});
+    return {already: false, amount: amount, passportStamps: next};
+  });
+});
+
 // ── 호텔 캐치: 호텔 추가(hotels) ────────────────────────────────
 // hotels/{id} 생성 + 기여자 초기화 + 추가자 기여도/스탬프(+3).
 const HOTEL_BRANDS = ["marriott", "hilton", "accor", "ihg", "hyatt", "other"];

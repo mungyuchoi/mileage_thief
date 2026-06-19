@@ -256,6 +256,117 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
     }
   }
 
+  // 관리자용 스탬프 주기 다이얼로그 (세계지도 탐험 스탬프)
+  void _showGiveStampsDialog() {
+    final TextEditingController amountController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text(
+            '스탬프 주기',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${userProfile!['displayName'] ?? '사용자'}님에게 세계지도 스탬프를 주시겠습니까?',
+                style: const TextStyle(color: Colors.black),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.approval, size: 22, color: Colors.black87),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        hintText: '스탬프 개수 입력',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        hintStyle: TextStyle(color: Colors.grey),
+                      ),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소', style: TextStyle(color: Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final amount = int.tryParse(amountController.text);
+                if (amount == null || amount <= 0) {
+                  Fluttertoast.showToast(
+                    msg: '올바른 숫자를 입력해주세요.',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                  );
+                  return;
+                }
+                Navigator.of(context).pop();
+                await _giveStamps(amount);
+              },
+              child: const Text(
+                '주기',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 스탬프 주기 실행 — users/{uid}/exploreWallet/main.passportStamps 증가(원자적).
+  Future<void> _giveStamps(int amount) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userUid)
+          .collection('exploreWallet')
+          .doc('main')
+          .set(
+        {'passportStamps': FieldValue.increment(amount)},
+        SetOptions(merge: true),
+      );
+
+      Fluttertoast.showToast(
+        msg: '${userProfile!['displayName'] ?? '사용자'}님에게 스탬프 $amount개를 주었습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    } catch (e) {
+      print('스탬프 주기 오류: $e');
+      Fluttertoast.showToast(
+        msg: '스탬프 주기 중 오류가 발생했습니다.',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  }
+
   Future<void> _toggleFollow() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -501,6 +612,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
                 height: 24,
               ),
               tooltip: '땅콩 주기',
+            ),
+          // 관리자인 경우에만 스탬프 주기 버튼 표시 (세계지도 탐험 스탬프)
+          if (isAdmin)
+            IconButton(
+              onPressed: _showGiveStampsDialog,
+              icon: const Icon(Icons.approval, color: Colors.black, size: 24),
+              tooltip: '스탬프 주기',
             ),
           PopupMenuButton<String>(
             onSelected: (value) {
