@@ -1407,7 +1407,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Positioned(
       left: collapsed ? 16 : 20,
       right: collapsed ? null : 20,
-      bottom: collapsed ? 0 : 24,
+      bottom: collapsed ? 5 : 24,
       child: SafeArea(
         top: false,
         child: AnimatedSwitcher(
