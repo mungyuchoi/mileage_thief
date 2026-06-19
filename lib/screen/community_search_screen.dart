@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../const/colors.dart';
 import '../services/category_service.dart';
 import 'community_detail_screen.dart';
+import 'user_profile_screen.dart';
 
 class CommunitySearchScreen extends StatefulWidget {
   const CommunitySearchScreen({Key? key}) : super(key: key);
@@ -20,6 +21,7 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   List<DocumentSnapshot> _searchResults = [];
   bool _isSearching = false;
   String _selectedBoardFilter = 'all';
+  String _searchMode = 'post'; // 'post'(게시글) | 'user'(유저)
   List<Map<String, dynamic>> boards = [];
   bool isLoadingBoards = true;
 
@@ -74,43 +76,66 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
     });
 
     try {
-      // Firestore 쿼리 생성
-      Query baseQuery = FirebaseFirestore.instance.collectionGroup('posts');
-
-      // 게시판 필터 적용
-      if (_selectedBoardFilter != 'all') {
-        baseQuery = baseQuery.where('boardId', isEqualTo: _selectedBoardFilter);
+      if (_searchMode == 'user') {
+        await _performUserSearch(query.trim());
+      } else {
+        await _performPostSearch(query);
       }
-
-      baseQuery = baseQuery
-          .where('isDeleted', isEqualTo: false)
-          .where('isHidden', isEqualTo: false)
-          .orderBy('createdAt', descending: true)
-          .limit(50); // 검색 결과 제한
-
-      final querySnapshot = await baseQuery.get();
-
-      // 클라이언트 사이드에서 제목과 내용 필터링
-      final filteredResults = querySnapshot.docs.where((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        final title = (data['title'] ?? '').toLowerCase();
-        final content =
-            _removeHtmlTags(data['contentHtml'] ?? '').toLowerCase();
-        final searchQuery = query.toLowerCase();
-
-        return title.contains(searchQuery) || content.contains(searchQuery);
-      }).toList();
-
-      setState(() {
-        _searchResults = filteredResults;
-        _isSearching = false;
-      });
     } catch (e) {
       print('검색 오류: $e');
       setState(() {
         _isSearching = false;
       });
     }
+  }
+
+  // 게시글 검색
+  Future<void> _performPostSearch(String query) async {
+    // Firestore 쿼리 생성
+    Query baseQuery = FirebaseFirestore.instance.collectionGroup('posts');
+
+    // 게시판 필터 적용
+    if (_selectedBoardFilter != 'all') {
+      baseQuery = baseQuery.where('boardId', isEqualTo: _selectedBoardFilter);
+    }
+
+    baseQuery = baseQuery
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .orderBy('createdAt', descending: true)
+        .limit(50); // 검색 결과 제한
+
+    final querySnapshot = await baseQuery.get();
+
+    // 클라이언트 사이드에서 제목과 내용 필터링
+    final filteredResults = querySnapshot.docs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      final title = (data['title'] ?? '').toLowerCase();
+      final content = _removeHtmlTags(data['contentHtml'] ?? '').toLowerCase();
+      final searchQuery = query.toLowerCase();
+
+      return title.contains(searchQuery) || content.contains(searchQuery);
+    }).toList();
+
+    if (!mounted) return;
+    setState(() {
+      _searchResults = filteredResults;
+      _isSearching = false;
+    });
+  }
+
+  // 유저 검색 — 닉네임(displayName) 접두 매칭
+  Future<void> _performUserSearch(String query) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .orderBy('displayName')
+        .startAt([query]).endAt(['$query']).limit(30).get();
+
+    if (!mounted) return;
+    setState(() {
+      _searchResults = snapshot.docs;
+      _isSearching = false;
+    });
   }
 
   // HTML 태그 제거
@@ -204,7 +229,7 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          '게시글 검색',
+          '검색',
           style: McTextStyles.appBarTitle,
         ),
       ),
@@ -244,8 +269,22 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
             ),
           ),
 
-          // 게시판 필터
+          // 검색 카테고리(게시글 / 유저)
           Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 2),
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                _buildModeChip('post', '게시글'),
+                const SizedBox(width: 8),
+                _buildModeChip('user', '유저'),
+              ],
+            ),
+          ),
+
+          // 게시판 필터 (게시글 검색일 때만 노출)
+          if (_searchMode == 'post')
+            Container(
             height: 46,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: ListView.builder(
@@ -355,6 +394,9 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                                   separatorBuilder: (context, index) =>
                                       const SizedBox(height: 10),
                                   itemBuilder: (context, index) {
+                                    if (_searchMode == 'user') {
+                                      return _buildUserResultItem(index);
+                                    }
                                     final post = _searchResults[index].data()
                                         as Map<String, dynamic>;
                                     final createdAt =
@@ -463,6 +505,89 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
                           ),
           ),
         ],
+      ),
+    );
+  }
+
+  // 검색 카테고리 칩 (게시글 / 유저)
+  Widget _buildModeChip(String mode, String label) {
+    final selected = _searchMode == mode;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) {
+        if (_searchMode == mode) return;
+        setState(() {
+          _searchMode = mode;
+          _searchResults = [];
+        });
+        if (_searchController.text.trim().length >= 2) {
+          _performSearch(_searchController.text);
+        }
+      },
+      selectedColor: McColors.accentSoft,
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: selected ? McColors.accent : McColors.line,
+        width: selected ? 1.2 : 0.8,
+      ),
+      showCheckmark: false,
+      labelStyle: TextStyle(
+        color: selected ? McColors.accent : McColors.muted,
+        fontSize: 13,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      ),
+    );
+  }
+
+  // 유저 검색 결과 1건
+  Widget _buildUserResultItem(int index) {
+    final doc = _searchResults[index];
+    final data = doc.data() as Map<String, dynamic>;
+    final displayName = (data['displayName'] ?? '사용자').toString();
+    final photoURL = (data['photoURL'] ?? '').toString();
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 0.5,
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfileScreen(userUid: doc.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: McColors.field,
+                backgroundImage:
+                    photoURL.isNotEmpty ? NetworkImage(photoURL) : null,
+                child: photoURL.isEmpty
+                    ? const Icon(Icons.person, color: McColors.mutedLight)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _highlightSearchText(
+                  displayName,
+                  _searchController.text,
+                  baseStyle: McTextStyles.bodyStrong,
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: McColors.mutedLight),
+            ],
+          ),
+        ),
       ),
     );
   }

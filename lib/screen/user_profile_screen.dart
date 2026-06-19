@@ -334,6 +334,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
 
+      // 주의: 오프라인 영속성이 켜져 있으면 set()은 로컬 커밋 시점에 resolve 되고
+      // 서버 권한 거부(PERMISSION_DENIED)는 백그라운드에서 롤백될 수 있다.
+      // 영속성이 꺼져 있거나 온라인 즉시 거부되는 경우엔 여기서 catch로 빠진다.
       await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.userUid)
@@ -344,8 +347,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
         SetOptions(merge: true),
       );
 
+      final targetName = (userProfile?['displayName'] ?? '사용자').toString();
       Fluttertoast.showToast(
-        msg: '${userProfile!['displayName'] ?? '사용자'}님에게 스탬프 $amount개를 주었습니다.',
+        msg: '$targetName님에게 스탬프 $amount개를 주었습니다.',
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -355,12 +359,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> with SingleTicker
       );
     } catch (e) {
       print('스탬프 주기 오류: $e');
+      // 실제 원인(권한 거부 등)을 화면에 그대로 노출해 디버깅을 돕는다.
       Fluttertoast.showToast(
-        msg: '스탬프 주기 중 오류가 발생했습니다.',
-        toastLength: Toast.LENGTH_SHORT,
+        msg: '스탬프 주기 실패: $e',
+        toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.grey[800],
+        timeInSecForIosWeb: 4,
+        backgroundColor: Colors.red[700],
         textColor: Colors.white,
         fontSize: 16.0,
       );
