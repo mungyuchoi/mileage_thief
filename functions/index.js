@@ -8764,3 +8764,314 @@ exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from Firebase Functions!");
 });
+
+// ===== 탐험 랭킹 — 집계 카운터 (Step 1: 증분 트리거 + 1회 백필) =====
+// 평소 유저 동작마다 users/{uid}.lb.*(전체) / lbW.*(이번 주) 를 유지한다.
+// 클라 직접 쓰기(cityUnlocks/hotelAchievements)와 함수 쓰기(worldUnlocks/
+// quizSolved) 모두를 안정적으로 집계하려고 Firestore 트리거로 구현했다.
+// 일일 집계(Step 2)는 이 카운터를 orderBy+limit 로 상위 N만 읽어 캐시한다.
+
+const LB_REGION = OAUTH_REGION;
+const LB_FIELDS = [
+  "country", "city", "hotelStars",
+  "quizSolved", "quizCorrect", "stampLifetime", "game",
+];
+
+/**
+ * KST 기준 ISO 주차 키(예: "2026-W25"). 주간 랭킹 리셋 기준.
+ * @return {string} 주차 키
+ */
+function currentWeekKeyKst() {
+  const kst = new Date(Date.now() + 9 * 3600 * 1000);
+  const d = new Date(Date.UTC(
+      kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()));
+  const dayNum = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round(
+      ((d.getTime() - firstThursday.getTime()) / 86400000 -
+        3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+/**
+ * 유저 집계 카운터를 증분한다(전체 lb.* + 주간 lbW.*).
+ * 주간은 weekKey가 바뀌면 0으로 리셋 후 이번 델타만 반영한다.
+ * @param {string} uid 대상 유저
+ * @param {Object} deltas 필드별 증감 {country:1, ...}
+ * @return {Promise<void>}
+ */
+async function bumpLeaderboardCounters(uid, deltas) {
+  const entries = Object.entries(deltas || {})
+      .filter((pair) => Number(pair[1]));
+  if (!uid || entries.length === 0) return;
+  const db = admin.firestore();
+  const userRef = db.doc(`users/${uid}`);
+  const inc = admin.firestore.FieldValue.increment;
+  const weekKey = currentWeekKeyKst();
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    const lbW = (snap.data() || {}).lbW || {};
+    const weekReset = lbW.weekKey !== weekKey;
+    const update = {};
+    for (const pair of entries) {
+      update[`lb.${pair[0]}`] = inc(pair[1]);
+    }
+    if (weekReset) {
+      const fresh = {weekKey};
+      for (const f of LB_FIELDS) {
+        fresh[f] = 0;
+      }
+      for (const pair of entries) {
+        fresh[pair[0]] = Math.max(0, Number(pair[1]));
+      }
+      update.lbW = fresh;
+    } else {
+      for (const pair of entries) {
+        update[`lbW.${pair[0]}`] = inc(pair[1]);
+      }
+    }
+    tx.set(userRef, update, {merge: true});
+  });
+}
+
+// 국가 해제 → country +1
+exports.lbOnWorldUnlock = onDocumentCreated({
+  document: "users/{uid}/worldUnlocks/{countryId}",
+  region: LB_REGION,
+}, (event) => bumpLeaderboardCounters(event.params.uid, {country: 1}));
+
+// 도시 해제 → city +1
+exports.lbOnCityUnlock = onDocumentCreated({
+  document: "users/{uid}/cityUnlocks/{cityId}",
+  region: LB_REGION,
+}, (event) => bumpLeaderboardCounters(event.params.uid, {city: 1}));
+
+// 퀴즈 풀이(생성=재시도 없음) → quizSolved +1, 정답이면 quizCorrect +1
+exports.lbOnQuizSolved = onDocumentCreated({
+  document: "users/{uid}/quizSolved/{quizId}",
+  region: LB_REGION,
+}, (event) => {
+  const snap = event.data;
+  const data = (snap && snap.data()) || {};
+  return bumpLeaderboardCounters(event.params.uid, {
+    quizSolved: 1,
+    quizCorrect: data.isCorrect === true ? 1 : 0,
+  });
+});
+
+// 호텔 별 변동 → hotelStars += (after - before) (재풀이 업그레이드 대응)
+exports.lbOnHotelAchievement = onDocumentWritten({
+  document: "users/{uid}/hotelAchievements/{poiId}",
+  region: LB_REGION,
+}, (event) => {
+  const ch = event.data || {};
+  const before = ch.before && ch.before.exists ?
+    Number(ch.before.data().stars || 0) : 0;
+  const after = ch.after && ch.after.exists ?
+    Number(ch.after.data().stars || 0) : 0;
+  return bumpLeaderboardCounters(
+      event.params.uid, {hotelStars: after - before});
+});
+
+// 여권 스탬프 누적 획득 → 잔액 증가분만 stampLifetime 누적(소비는 무시)
+exports.lbOnStampWallet = onDocumentWritten({
+  document: "users/{uid}/exploreWallet/main",
+  region: LB_REGION,
+}, (event) => {
+  const ch = event.data || {};
+  const before = ch.before && ch.before.exists ?
+    Number(ch.before.data().passportStamps || 0) : 0;
+  const after = ch.after && ch.after.exists ?
+    Number(ch.after.data().passportStamps || 0) : 0;
+  const delta = after - before;
+  if (delta <= 0) return null;
+  return bumpLeaderboardCounters(event.params.uid, {stampLifetime: delta});
+});
+
+// 미니퍼즐 진행 → game += 깬 판 수(currentLevelNumber 증가분)
+// currentLevelNumber = 다음 플레이할 판(1-based) → 클리어 수 = level - 1.
+exports.lbOnPuzzleProgress = onDocumentWritten({
+  document: "users/{uid}/explorePuzzleProgress/main",
+  region: LB_REGION,
+}, (event) => {
+  const ch = event.data || {};
+  const before = ch.before && ch.before.exists ?
+    Number(ch.before.data().currentLevelNumber || 1) : 1;
+  const after = ch.after && ch.after.exists ?
+    Number(ch.after.data().currentLevelNumber || 1) : 1;
+  const delta = Math.max(0, after - before);
+  if (delta <= 0) return null;
+  return bumpLeaderboardCounters(event.params.uid, {game: delta});
+});
+
+// ── 1회 백필: 기존 유저의 lb.* 카운터를 현재 데이터로 채운다 ─────────
+// 관리자만 호출. 대량이면 startAfter로 페이지를 나눠 여러 번 호출한다.
+// 반환의 nextStartAfter 가 null 이 될 때까지 반복 호출하면 된다.
+exports.lbBackfill = onCall({
+  region: LB_REGION,
+  timeoutSeconds: 540,
+  memory: "512MiB",
+}, async (request) => {
+  const uid = requireAuthUid(request);
+  const db = admin.firestore();
+  const me = await db.doc(`users/${uid}`).get();
+  if (!hasAdminRole((me.data() || {}).roles)) {
+    throw new HttpsError("permission-denied", "관리자만 실행할 수 있습니다.");
+  }
+  const data = request.data || {};
+  const pageSize = Math.min(Math.max(Number(data.pageSize) || 200, 1), 400);
+  const startAfter = asOptionalString(data.startAfter) || "";
+  const weekKey = currentWeekKeyKst();
+  const idPath = admin.firestore.FieldPath.documentId();
+
+  let q = db.collection("users").orderBy(idPath).limit(pageSize);
+  if (startAfter) {
+    q = q.startAfter(startAfter);
+  }
+  const users = await q.get();
+
+  let processed = 0;
+  let lastId = startAfter;
+  for (const userDoc of users.docs) {
+    const u = userDoc.id;
+    lastId = u;
+    const base = `users/${u}`;
+    const results = await Promise.all([
+      db.collection(`${base}/worldUnlocks`).count().get(),
+      db.collection(`${base}/cityUnlocks`).count().get(),
+      db.collection(`${base}/quizSolved`).count().get(),
+      db.collection(`${base}/quizSolved`)
+          .where("isCorrect", "==", true).count().get(),
+      db.collection(`${base}/hotelAchievements`).get(),
+      db.doc(`${base}/exploreWallet/main`).get(),
+      db.doc(`${base}/explorePuzzleProgress/main`).get(),
+    ]);
+    let hotelStars = 0;
+    results[4].forEach((h) => {
+      hotelStars += Number((h.data() || {}).stars || 0);
+    });
+    const wallet = results[5].data() || {};
+    const puzzle = results[6].data() || {};
+    const lb = {
+      country: results[0].data().count || 0,
+      city: results[1].data().count || 0,
+      quizSolved: results[2].data().count || 0,
+      quizCorrect: results[3].data().count || 0,
+      hotelStars: hotelStars,
+      stampLifetime: Number(wallet.passportStamps || 0),
+      game: Math.max(0, Number(puzzle.currentLevelNumber || 1) - 1),
+    };
+    const lbW = {weekKey};
+    for (const f of LB_FIELDS) {
+      lbW[f] = 0;
+    }
+    await userDoc.ref.set({lb, lbW}, {merge: true});
+    processed += 1;
+  }
+  return {
+    processed,
+    nextStartAfter: users.size === pageSize ? lastId : null,
+    done: users.size < pageSize,
+  };
+});
+
+// ===== 탐험 랭킹 — Step 2: 스케줄 집계 → leaderboards 캐시 문서 =====
+// 카운터(lb.* / lbW.*)를 orderBy+limit 로 상위 N명만 읽어
+// leaderboards/{category}_{scope} 문서 1개에 박아둔다(클라는 이것만 읽음).
+const {onSchedule} = require("firebase-functions/v2/scheduler");
+
+const LB_TOP_N = 100;
+// 화면 카테고리 ↔ 카운터 필드 매핑.
+const LB_CATEGORIES = [
+  {key: "country", field: "country"},
+  {key: "city", field: "city"},
+  {key: "hotel", field: "hotelStars"},
+  {key: "quiz", field: "quizSolved"},
+  {key: "stamp", field: "stampLifetime"},
+  {key: "game", field: "game"},
+];
+
+/**
+ * 한 (카테고리 × 스코프)의 상위 N명을 읽어 leaderboards 문서에 기록한다.
+ * @param {string} categoryKey country|city|hotel|quiz|stamp
+ * @param {string} field 카운터 필드명(country/hotelStars/...)
+ * @param {string} scope "all" | "weekly"
+ * @param {string} weekKey 주간 키(weekly 전용)
+ * @return {Promise<number>} 기록한 엔트리 수
+ */
+async function aggregateLeaderboard(categoryKey, field, scope, weekKey) {
+  const db = admin.firestore();
+  const prefix = scope === "weekly" ? "lbW" : "lb";
+  const metricPath = `${prefix}.${field}`;
+  let q = db.collection("users");
+  if (scope === "weekly") {
+    q = q.where("lbW.weekKey", "==", weekKey);
+  }
+  q = q.where(metricPath, ">", 0)
+      .orderBy(metricPath, "desc")
+      .limit(LB_TOP_N);
+  const snap = await q.get();
+  const entries = [];
+  let rank = 0;
+  snap.forEach((doc) => {
+    const u = doc.data() || {};
+    const metric = (scope === "weekly" ? u.lbW : u.lb) || {};
+    rank += 1;
+    entries.push({
+      uid: doc.id,
+      name: mockExamDisplayName(u),
+      photoURL: mockExamPhotoUrl(u),
+      value: Number(metric[field] || 0),
+      rank,
+    });
+  });
+  await db.doc(`leaderboards/${categoryKey}_${scope}`).set({
+    category: categoryKey,
+    scope,
+    field,
+    weekKey: scope === "weekly" ? weekKey : null,
+    count: entries.length,
+    entries,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return entries.length;
+}
+
+/**
+ * 전체 leaderboards 재생성(모든 카테고리 × all/weekly).
+ * @return {Promise<Object>} 문서별 엔트리 수 요약
+ */
+async function rebuildAllLeaderboards() {
+  const weekKey = currentWeekKeyKst();
+  const summary = {};
+  for (const cat of LB_CATEGORIES) {
+    summary[`${cat.key}_all`] =
+      await aggregateLeaderboard(cat.key, cat.field, "all", weekKey);
+    summary[`${cat.key}_weekly`] =
+      await aggregateLeaderboard(cat.key, cat.field, "weekly", weekKey);
+  }
+  return summary;
+}
+
+// 매일 06:00 KST — 전체/주간 랭킹 캐시를 한 번에 재생성.
+exports.lbAggregateDaily = onSchedule({
+  schedule: "0 6 * * *",
+  timeZone: "Asia/Seoul",
+  region: LB_REGION,
+}, async () => {
+  const summary = await rebuildAllLeaderboards();
+  logger.info("leaderboards rebuilt (daily)", summary);
+});
+
+// 수동 재생성(관리자) — 백필/인덱스 직후 즉시 만들거나 검수할 때.
+exports.lbAggregateNow = onCall({region: LB_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const db = admin.firestore();
+  const me = await db.doc(`users/${uid}`).get();
+  if (!hasAdminRole((me.data() || {}).roles)) {
+    throw new HttpsError("permission-denied", "관리자만 실행할 수 있습니다.");
+  }
+  const summary = await rebuildAllLeaderboards();
+  return {ok: true, summary};
+});

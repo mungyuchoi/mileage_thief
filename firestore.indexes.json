@@ -24,6 +24,54 @@
         { "fieldPath": "isDeleted", "order": "ASCENDING" },
         { "fieldPath": "postId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
+        { "fieldPath": "lbW.country", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
+        { "fieldPath": "lbW.city", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
+        { "fieldPath": "lbW.hotelStars", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
+        { "fieldPath": "lbW.quizSolved", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
+        { "fieldPath": "lbW.stampLifetime", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
+        { "fieldPath": "lbW.game", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
