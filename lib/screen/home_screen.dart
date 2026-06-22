@@ -31,6 +31,8 @@ import 'giftcard_info_screen.dart';
 import 'giftcard_settlement_screen.dart';
 import 'my_card_dashboard_screen.dart';
 import 'notification_settings_screen.dart';
+import 'language_settings_screen.dart';
+import '../l10n/app_locale.dart';
 import 'useful_info_screen.dart';
 import 'world_map_screen.dart';
 import 'user_scrap_upload_screen.dart';
@@ -1606,6 +1608,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                                 builder: (_) =>
                                     const NotificationSettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _MileageSettingSection(
+                      children: [
+                        _MileageSettingActionTile(
+                          icon: Icons.language_rounded,
+                          title: L10n.t('settings.language'),
+                          subtitle: L10n.t('settings.language.sub'),
+                          onTap: () {
+                            Navigator.push(
+                              settingsContext,
+                              MaterialPageRoute(
+                                builder: (_) => const LanguageSettingsScreen(),
                               ),
                             );
                           },

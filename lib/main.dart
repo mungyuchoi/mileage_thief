@@ -12,6 +12,8 @@ import 'services/notification_preference_service.dart';
 import 'services/branch_service.dart';
 import 'services/share_intent_service.dart';
 import 'services/analytics_service.dart';
+import 'services/language_service.dart';
+import 'l10n/app_locale.dart';
 import 'screen/splash_screen.dart';
 import 'screen/community_board_select_screen.dart';
 import 'screen/community_chat_screen.dart';
@@ -247,6 +249,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 로그인되면 사용자의 언어 설정으로 동기화.
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) {
+        unawaited(LanguageService.syncFromFirestore());
+      }
+    });
     // 프레임 이후에 무거운 초기화 실행 (앱 진입 지연 방지)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -262,6 +270,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         NotificationService().setupTokenRefresh();
         // 앱 진입 시 최근 접속 시간 기록 (관리자 정렬용)
         _touchLastActive();
+        // 언어 설정 로드(캐시 → users/{uid}.language)
+        unawaited(LanguageService.init());
       } catch (e) {
         debugPrint('NotificationService init error: $e');
       }
@@ -298,7 +308,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: appLanguage,
+      builder: (context, lang, _) => _buildApp(lang),
+    );
+  }
+
+  Widget _buildApp(String lang) {
     return MaterialApp(
+      locale: Locale(lang),
       navigatorKey: navigatorKey,
       navigatorObservers: [AnalyticsService.routeObserver],
       debugShowCheckedModeBanner: false,

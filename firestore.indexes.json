@@ -4,75 +4,143 @@
       "collectionGroup": "posts",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "isDeleted", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "isDeleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "posts",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "boardId", "order": "ASCENDING" },
-        { "fieldPath": "isDeleted", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "boardId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isDeleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "posts",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "isDeleted", "order": "ASCENDING" },
-        { "fieldPath": "postId", "order": "ASCENDING" }
+        {
+          "fieldPath": "isDeleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "postId",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.country", "order": "DESCENDING" }
+        {
+          "fieldPath": "lbW.weekKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lbW.country",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.city", "order": "DESCENDING" }
+        {
+          "fieldPath": "lbW.weekKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lbW.city",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.hotel", "order": "DESCENDING" }
+        {
+          "fieldPath": "lbW.weekKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lbW.hotel",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.quiz", "order": "DESCENDING" }
+        {
+          "fieldPath": "lbW.weekKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lbW.quiz",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.stampLifetime", "order": "DESCENDING" }
+        {
+          "fieldPath": "lbW.weekKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lbW.stampLifetime",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.game", "order": "DESCENDING" }
+        {
+          "fieldPath": "lbW.weekKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lbW.game",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "contributors",
+      "fieldPath": "uid",
+      "indexes": [
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ]
 }

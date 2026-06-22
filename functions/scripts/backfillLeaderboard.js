@@ -18,6 +18,10 @@ const db = admin.firestore();
 const DRY = process.argv.includes("--dry");
 const PAGE = 300;
 
+// 백필 성능/호환성 이슈 회피: contributors는 컬렉션 그룹 인덱스 없이도
+// hotels/{hotelId}/contributors/{uid} 문서 단위로 직접 집계.
+const hotelCachePromise = db.collection("hotels").select().get();
+
 const LB_FIELDS = [
   "country", "city", "hotel", "quiz", "stampLifetime", "game",
 ];
@@ -39,29 +43,38 @@ function currentWeekKeyKst() {
 // 유저 1명의 현재 누적 점수를 집계(count() 사용 → 유저당 read 최소).
 async function userStats(uid) {
   const base = `users/${uid}`;
+  const hotelSnap = await hotelCachePromise;
+  const contribRefs = hotelSnap.docs.map((h) =>
+    db.doc(`hotels/${h.id}/contributors/${uid}`).get(),
+  );
   const r = await Promise.all([
     db.collection(`${base}/worldUnlocks`).count().get(),
     db.collection(`${base}/cityUnlocks`).count().get(),
-    db.collectionGroup("contributors").where("uid", "==", uid).get(),
+    ...contribRefs,
     db.doc(`${base}/exploreWallet/main`).get(),
     db.doc(`${base}/explorePuzzleProgress/main`).get(),
   ]);
   // 호텔=등록+출제+꿀팁, 퀴즈=출제+정답 (모든 호텔 contributor breakdown 합산)
   let hotel = 0;
   let quiz = 0;
-  r[2].forEach((cdoc) => {
+  const contribDocs = r.slice(2, 2 + contribRefs.length);
+  contribDocs.forEach((cdoc) => {
+    if (!cdoc.exists) return;
     const bk = (cdoc.data() || {}).breakdown || {};
     const n = (x) => Number(x || 0);
     hotel += n(bk.added) + n(bk.quizCreated) + n(bk.tipCreated);
     quiz += n(bk.quizCreated) + n(bk.quizSolved);
   });
-  const puzzle = r[4].data() || {};
+  // wallet/puzzle 는 contribRefs(N개) 뒤에 오므로 동적 인덱스로 읽어야 한다.
+  const walletDoc = r[2 + contribRefs.length];
+  const puzzleDoc = r[2 + contribRefs.length + 1];
+  const puzzle = puzzleDoc.data() || {};
   return {
     country: r[0].data().count || 0,
     city: r[1].data().count || 0,
     hotel: hotel,
     quiz: quiz,
-    stampLifetime: Number((r[3].data() || {}).passportStamps || 0),
+    stampLifetime: Number((walletDoc.data() || {}).passportStamps || 0),
     game: Math.max(0, Number(puzzle.currentLevelNumber || 1) - 1),
   };
 }
