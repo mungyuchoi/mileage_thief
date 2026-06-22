@@ -249,12 +249,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // 로그인되면 사용자의 언어 설정으로 동기화.
-    FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (user != null) {
-        unawaited(LanguageService.syncFromFirestore());
-      }
-    });
     // 프레임 이후에 무거운 초기화 실행 (앱 진입 지연 방지)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -272,6 +266,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         _touchLastActive();
         // 언어 설정 로드(캐시 → users/{uid}.language)
         unawaited(LanguageService.init());
+        // 로그인되면 사용자의 언어 설정으로 동기화. (Firebase 초기화 이후 등록)
+        FirebaseAuth.instance.authStateChanges().listen((user) {
+          if (user != null) {
+            unawaited(LanguageService.syncFromFirestore());
+          }
+        });
       } catch (e) {
         debugPrint('NotificationService init error: $e');
       }
