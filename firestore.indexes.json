@@ -46,7 +46,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.hotelStars", "order": "DESCENDING" }
+        { "fieldPath": "lbW.hotel", "order": "DESCENDING" }
       ]
     },
     {
@@ -54,7 +54,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "lbW.weekKey", "order": "ASCENDING" },
-        { "fieldPath": "lbW.quizSolved", "order": "DESCENDING" }
+        { "fieldPath": "lbW.quiz", "order": "DESCENDING" }
       ]
     },
     {

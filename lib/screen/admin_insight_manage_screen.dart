@@ -617,6 +617,7 @@ class _AdminUserCard extends StatelessWidget {
             children: [
               _InfoPill(text: grade),
               _InfoPill(text: '땅콩 ${_int(data['peanutCount'])}'),
+              _StampInfoPill(uid: uid),
               _InfoPill(text: '글 ${_int(data['postsCount'])}'),
               _InfoPill(text: '댓글 ${_int(data['commentCount'])}'),
               _InfoPill(text: '최근 ${_formatDate(lastLoginAt)}'),
@@ -1142,6 +1143,32 @@ class _InfoPill extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
+    );
+  }
+}
+
+// 스탬프 개수 칩 — 세계지도 여권 스탬프는 users/{uid}/exploreWallet/main 에 저장되어
+// 유저 문서에는 없으므로, 카드별로 비동기 조회해 동일한 _InfoPill 스타일로 표시한다.
+class _StampInfoPill extends StatelessWidget {
+  const _StampInfoPill({required this.uid});
+
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('exploreWallet')
+          .doc('main')
+          .get(),
+      builder: (context, snapshot) {
+        final label = snapshot.hasData
+            ? '스탬프 ${_int(snapshot.data!.data()?['passportStamps'])}'
+            : '스탬프 …';
+        return _InfoPill(text: label);
+      },
     );
   }
 }

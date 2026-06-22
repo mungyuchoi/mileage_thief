@@ -19,8 +19,8 @@ const TOP_N = 100;
 const CATEGORIES = [
   {key: "country", field: "country"},
   {key: "city", field: "city"},
-  {key: "hotel", field: "hotelStars"},
-  {key: "quiz", field: "quizSolved"},
+  {key: "hotel", field: "hotel"},
+  {key: "quiz", field: "quiz"},
   {key: "stamp", field: "stampLifetime"},
   {key: "game", field: "game"},
 ];

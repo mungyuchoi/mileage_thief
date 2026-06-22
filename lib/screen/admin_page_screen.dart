@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import 'ad_manage_screen.dart';
 import 'admin_category_manage_screen.dart';
+import 'admin_coupon_manage_screen.dart';
 import 'admin_giftcard_deal_source_screen.dart';
 import 'admin_hotel_request_manage_screen.dart';
 import 'admin_insight_manage_screen.dart';
@@ -191,6 +192,12 @@ class _AdminPageScreenState extends State<AdminPageScreen> {
                       description: '매일 수집할 상품권 구매 링크와 가격 이력을 관리합니다.',
                       icon: Icons.add_link_rounded,
                       onTap: () => _open(const AdminGiftcardDealSourceScreen()),
+                    ),
+                    _AdminMenuTile(
+                      title: '쿠폰 관리',
+                      description: '세계지도 스탬프 쿠폰을 발행하고 사용 현황을 확인합니다.',
+                      icon: Icons.confirmation_number_outlined,
+                      onTap: () => _open(const AdminCouponManageScreen()),
                     ),
                   ],
                 ),

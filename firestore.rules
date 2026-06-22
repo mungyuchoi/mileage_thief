@@ -87,5 +87,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 쿠폰 마스터 — 코드 노출 방지를 위해 관리자만 읽기, 생성/수정은 Function만
+    match /coupons/{code} {
+      allow read: if request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin', 'owner']);
+      allow write: if false;
+    }
+    // 쿠폰 사용 기록 — 본인 읽기만, 지급/기록은 Function만(1인 1회 멱등)
+    match /users/{uid}/couponRedemptions/{code} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
   }
 }

@@ -19,8 +19,7 @@ const DRY = process.argv.includes("--dry");
 const PAGE = 300;
 
 const LB_FIELDS = [
-  "country", "city", "hotelStars",
-  "quizSolved", "quizCorrect", "stampLifetime", "game",
+  "country", "city", "hotel", "quiz", "stampLifetime", "game",
 ];
 
 // KST 기준 ISO 주차 키 (index.js 의 currentWeekKeyKst 와 동일 로직).
@@ -43,25 +42,26 @@ async function userStats(uid) {
   const r = await Promise.all([
     db.collection(`${base}/worldUnlocks`).count().get(),
     db.collection(`${base}/cityUnlocks`).count().get(),
-    db.collection(`${base}/quizSolved`).count().get(),
-    db.collection(`${base}/quizSolved`)
-        .where("isCorrect", "==", true).count().get(),
-    db.collection(`${base}/hotelAchievements`).get(),
+    db.collectionGroup("contributors").where("uid", "==", uid).get(),
     db.doc(`${base}/exploreWallet/main`).get(),
     db.doc(`${base}/explorePuzzleProgress/main`).get(),
   ]);
-  let hotelStars = 0;
-  r[4].forEach((h) => {
-    hotelStars += Number((h.data() || {}).stars || 0);
+  // 호텔=등록+출제+꿀팁, 퀴즈=출제+정답 (모든 호텔 contributor breakdown 합산)
+  let hotel = 0;
+  let quiz = 0;
+  r[2].forEach((cdoc) => {
+    const bk = (cdoc.data() || {}).breakdown || {};
+    const n = (x) => Number(x || 0);
+    hotel += n(bk.added) + n(bk.quizCreated) + n(bk.tipCreated);
+    quiz += n(bk.quizCreated) + n(bk.quizSolved);
   });
-  const puzzle = r[6].data() || {};
+  const puzzle = r[4].data() || {};
   return {
     country: r[0].data().count || 0,
     city: r[1].data().count || 0,
-    quizSolved: r[2].data().count || 0,
-    quizCorrect: r[3].data().count || 0,
-    hotelStars: hotelStars,
-    stampLifetime: Number((r[5].data() || {}).passportStamps || 0),
+    hotel: hotel,
+    quiz: quiz,
+    stampLifetime: Number((r[3].data() || {}).passportStamps || 0),
     game: Math.max(0, Number(puzzle.currentLevelNumber || 1) - 1),
   };
 }

@@ -8071,6 +8071,101 @@ exports.claimEventReward = onCall({region: OAUTH_REGION}, async (request) => {
   });
 });
 
+// ── 쿠폰: 스탬프 지급 코드 ───────────────────────────────────────
+// coupons/{CODE} = {code, stampAmount, maxRedemptions(0=무제한), redeemedCount,
+//   active, memo, expiresAt?, createdBy, createdAt}
+// 사용자: users/{uid}/couponRedemptions/{CODE} 로 1인 1회 멱등.
+const COUPON_CODE_RE = /^[A-Z0-9_-]{3,32}$/;
+
+/** 쿠폰 사용(스탬프 지급) — 1인 1회. 코드는 대문자 정규화. */
+exports.redeemCoupon = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  const code = (asOptionalString(request.data && request.data.code) || "")
+      .trim().toUpperCase();
+  if (!COUPON_CODE_RE.test(code)) {
+    throw new HttpsError("invalid-argument", "쿠폰 코드를 확인해주세요.");
+  }
+  const db = admin.firestore();
+  const couponRef = db.doc(`coupons/${code}`);
+  const redeemRef = db.doc(`users/${uid}/couponRedemptions/${code}`);
+  const walletRef = db.doc(`users/${uid}/exploreWallet/main`);
+  return db.runTransaction(async (tx) => {
+    const couponSnap = await tx.get(couponRef);
+    const redeemSnap = await tx.get(redeemRef);
+    const walletSnap = await tx.get(walletRef);
+
+    if (!couponSnap.exists) {
+      throw new HttpsError("not-found", "존재하지 않는 쿠폰이에요.");
+    }
+    if (redeemSnap.exists) {
+      throw new HttpsError("already-exists", "이미 사용한 쿠폰이에요.");
+    }
+    const c = couponSnap.data() || {};
+    if (c.active === false) {
+      throw new HttpsError("failed-precondition", "사용 중지된 쿠폰이에요.");
+    }
+    const amount = Math.floor(Number(c.stampAmount || 0));
+    if (!(amount > 0)) {
+      throw new HttpsError("failed-precondition", "잘못된 쿠폰이에요.");
+    }
+    const maxRedemptions = Math.floor(Number(c.maxRedemptions || 0));
+    const redeemedCount = Math.floor(Number(c.redeemedCount || 0));
+    if (maxRedemptions > 0 && redeemedCount >= maxRedemptions) {
+      throw new HttpsError("resource-exhausted", "쿠폰이 모두 소진됐어요.");
+    }
+    if (c.expiresAt && typeof c.expiresAt.toMillis === "function" &&
+        Date.now() > c.expiresAt.toMillis()) {
+      throw new HttpsError("failed-precondition", "만료된 쿠폰이에요.");
+    }
+
+    const balance = Number((walletSnap.data() || {}).passportStamps || 0);
+    const next = balance + amount;
+    tx.set(walletRef, {passportStamps: next}, {merge: true});
+    tx.set(redeemRef, {
+      code, amount,
+      redeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+    tx.set(couponRef, {
+      redeemedCount: admin.firestore.FieldValue.increment(1),
+      lastRedeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+    return {ok: true, amount, passportStamps: next};
+  });
+});
+
+/** 쿠폰 생성(관리자) — 코드 중복 금지. */
+exports.createCoupon = onCall({region: OAUTH_REGION}, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireCardAdmin(uid);
+  const data = request.data || {};
+  const code = (asOptionalString(data.code) || "").trim().toUpperCase();
+  if (!COUPON_CODE_RE.test(code)) {
+    throw new HttpsError("invalid-argument", "코드는 영문/숫자 3~32자여야 합니다.");
+  }
+  const stampAmount = Math.floor(Number(data.stampAmount || 0));
+  if (!(stampAmount > 0) || stampAmount > 100000) {
+    throw new HttpsError("invalid-argument", "스탬프 수량이 올바르지 않습니다.");
+  }
+  const maxRedemptions = Math.max(
+      0,
+      Math.floor(Number(data.maxRedemptions || 0)),
+  );
+  const memo = (asOptionalString(data.memo) || "").slice(0, 100);
+  const db = admin.firestore();
+  const ref = db.doc(`coupons/${code}`);
+  const snap = await ref.get();
+  if (snap.exists) {
+    throw new HttpsError("already-exists", "이미 존재하는 코드입니다.");
+  }
+  await ref.set({
+    code, stampAmount, maxRedemptions, memo,
+    active: true, redeemedCount: 0,
+    createdBy: uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return {ok: true, code};
+});
+
 // ── 호텔 캐치: 호텔 추가(hotels) ────────────────────────────────
 // hotels/{id} 생성 + 기여자 초기화 + 추가자 기여도/스탬프(+3).
 const HOTEL_BRANDS = ["marriott", "hilton", "accor", "ihg", "hyatt", "other"];
@@ -8773,8 +8868,7 @@ exports.helloWorld = onRequest((request, response) => {
 
 const LB_REGION = OAUTH_REGION;
 const LB_FIELDS = [
-  "country", "city", "hotelStars",
-  "quizSolved", "quizCorrect", "stampLifetime", "game",
+  "country", "city", "hotel", "quiz", "stampLifetime", "game",
 ];
 
 /**
@@ -8811,27 +8905,30 @@ async function bumpLeaderboardCounters(uid, deltas) {
   const weekKey = currentWeekKeyKst();
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(userRef);
-    const lbW = (snap.data() || {}).lbW || {};
-    const weekReset = lbW.weekKey !== weekKey;
-    const update = {};
+    const prevWeek = (snap.data() || {}).lbW || {};
+    const weekReset = prevWeek.weekKey !== weekKey;
+    // 중첩 객체로 만들어야 한다. set({merge:true})는 점(dot) 키를 경로가 아니라
+    // 이름에 점이 든 literal 필드로 취급하므로, 반드시 {lb:{...}} 형태로 쓴다.
+    const lb = {};
     for (const pair of entries) {
-      update[`lb.${pair[0]}`] = inc(pair[1]);
+      lb[pair[0]] = inc(pair[1]);
     }
+    let lbW;
     if (weekReset) {
-      const fresh = {weekKey};
+      lbW = {weekKey};
       for (const f of LB_FIELDS) {
-        fresh[f] = 0;
+        lbW[f] = 0;
       }
       for (const pair of entries) {
-        fresh[pair[0]] = Math.max(0, Number(pair[1]));
+        lbW[pair[0]] = Math.max(0, Number(pair[1]));
       }
-      update.lbW = fresh;
     } else {
+      lbW = {};
       for (const pair of entries) {
-        update[`lbW.${pair[0]}`] = inc(pair[1]);
+        lbW[pair[0]] = inc(pair[1]);
       }
     }
-    tx.set(userRef, update, {merge: true});
+    tx.set(userRef, {lb, lbW}, {merge: true});
   });
 }
 
@@ -8847,31 +8944,30 @@ exports.lbOnCityUnlock = onDocumentCreated({
   region: LB_REGION,
 }, (event) => bumpLeaderboardCounters(event.params.uid, {city: 1}));
 
-// 퀴즈 풀이(생성=재시도 없음) → quizSolved +1, 정답이면 quizCorrect +1
-exports.lbOnQuizSolved = onDocumentCreated({
-  document: "users/{uid}/quizSolved/{quizId}",
-  region: LB_REGION,
-}, (event) => {
-  const snap = event.data;
-  const data = (snap && snap.data()) || {};
-  return bumpLeaderboardCounters(event.params.uid, {
-    quizSolved: 1,
-    quizCorrect: data.isCorrect === true ? 1 : 0,
-  });
-});
-
-// 호텔 별 변동 → hotelStars += (after - before) (재풀이 업그레이드 대응)
-exports.lbOnHotelAchievement = onDocumentWritten({
-  document: "users/{uid}/hotelAchievements/{poiId}",
+// 호텔·퀴즈 랭킹은 "기여(contribution)" 기반.
+// hotels/{id}/contributors/{uid}.breakdown 에 등록(added)/퀴즈출제(quizCreated)/
+// 꿀팁(tipCreated)/정답풀이(quizSolved) 가 누적된다(모든 기여 함수가 여기에 씀).
+//   hotel = added + quizCreated + tipCreated   (등록+출제+꿀팁 합산)
+//   quiz  = quizCreated + quizSolved           (출제+정답)
+// 한 트리거에서 breakdown 변동분으로 둘 다 실시간 집계.
+exports.lbOnHotelContrib = onDocumentWritten({
+  document: "hotels/{hotelId}/contributors/{uid}",
   region: LB_REGION,
 }, (event) => {
   const ch = event.data || {};
-  const before = ch.before && ch.before.exists ?
-    Number(ch.before.data().stars || 0) : 0;
-  const after = ch.after && ch.after.exists ?
-    Number(ch.after.data().stars || 0) : 0;
-  return bumpLeaderboardCounters(
-      event.params.uid, {hotelStars: after - before});
+  const bd = (snap) => (snap && snap.exists ?
+    (snap.data() || {}).breakdown || {} : {});
+  const b = bd(ch.before);
+  const a = bd(ch.after);
+  const num = (x) => Number(x || 0);
+  const hotelBefore = num(b.added) + num(b.quizCreated) + num(b.tipCreated);
+  const hotelAfter = num(a.added) + num(a.quizCreated) + num(a.tipCreated);
+  const quizBefore = num(b.quizCreated) + num(b.quizSolved);
+  const quizAfter = num(a.quizCreated) + num(a.quizSolved);
+  const deltas = {};
+  if (hotelAfter - hotelBefore) deltas.hotel = hotelAfter - hotelBefore;
+  if (quizAfter - quizBefore) deltas.quiz = quizAfter - quizBefore;
+  return bumpLeaderboardCounters(event.params.uid, deltas);
 });
 
 // 여권 스탬프 누적 획득 → 잔액 증가분만 stampLifetime 누적(소비는 무시)
@@ -8940,25 +9036,26 @@ exports.lbBackfill = onCall({
     const results = await Promise.all([
       db.collection(`${base}/worldUnlocks`).count().get(),
       db.collection(`${base}/cityUnlocks`).count().get(),
-      db.collection(`${base}/quizSolved`).count().get(),
-      db.collection(`${base}/quizSolved`)
-          .where("isCorrect", "==", true).count().get(),
-      db.collection(`${base}/hotelAchievements`).get(),
+      db.collectionGroup("contributors").where("uid", "==", u).get(),
       db.doc(`${base}/exploreWallet/main`).get(),
       db.doc(`${base}/explorePuzzleProgress/main`).get(),
     ]);
-    let hotelStars = 0;
-    results[4].forEach((h) => {
-      hotelStars += Number((h.data() || {}).stars || 0);
+    // 호텔/퀴즈: 모든 호텔의 내 contributor breakdown 합산.
+    let hotel = 0;
+    let quiz = 0;
+    results[2].forEach((cdoc) => {
+      const bk = (cdoc.data() || {}).breakdown || {};
+      const n = (x) => Number(x || 0);
+      hotel += n(bk.added) + n(bk.quizCreated) + n(bk.tipCreated);
+      quiz += n(bk.quizCreated) + n(bk.quizSolved);
     });
-    const wallet = results[5].data() || {};
-    const puzzle = results[6].data() || {};
+    const wallet = results[3].data() || {};
+    const puzzle = results[4].data() || {};
     const lb = {
       country: results[0].data().count || 0,
       city: results[1].data().count || 0,
-      quizSolved: results[2].data().count || 0,
-      quizCorrect: results[3].data().count || 0,
-      hotelStars: hotelStars,
+      hotel: hotel,
+      quiz: quiz,
       stampLifetime: Number(wallet.passportStamps || 0),
       game: Math.max(0, Number(puzzle.currentLevelNumber || 1) - 1),
     };
@@ -8986,8 +9083,8 @@ const LB_TOP_N = 100;
 const LB_CATEGORIES = [
   {key: "country", field: "country"},
   {key: "city", field: "city"},
-  {key: "hotel", field: "hotelStars"},
-  {key: "quiz", field: "quizSolved"},
+  {key: "hotel", field: "hotel"},
+  {key: "quiz", field: "quiz"},
   {key: "stamp", field: "stampLifetime"},
   {key: "game", field: "game"},
 ];
@@ -9054,14 +9151,14 @@ async function rebuildAllLeaderboards() {
   return summary;
 }
 
-// 매일 06:00 KST — 전체/주간 랭킹 캐시를 한 번에 재생성.
+// 매일 06:00~22:00 KST, 2시간 간격(6/8/.../22시 = 하루 9회) 랭킹 캐시 재생성.
 exports.lbAggregateDaily = onSchedule({
-  schedule: "0 6 * * *",
+  schedule: "0 6-22/2 * * *",
   timeZone: "Asia/Seoul",
   region: LB_REGION,
 }, async () => {
   const summary = await rebuildAllLeaderboards();
-  logger.info("leaderboards rebuilt (daily)", summary);
+  logger.info("leaderboards rebuilt", summary);
 });
 
 // 수동 재생성(관리자) — 백필/인덱스 직후 즉시 만들거나 검수할 때.
