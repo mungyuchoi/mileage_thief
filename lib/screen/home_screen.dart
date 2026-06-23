@@ -523,6 +523,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _worldMapAlive = false;
   Timer? _worldMapTtlTimer;
   Key _worldMapKey = UniqueKey();
+  // 세계지도 웹뷰 reload(refresh 버튼)용. 흰 화면으로 멈췄을 때 강제 재로딩.
+  final GlobalKey<WorldMapScreenState> _worldMapStateKey =
+      GlobalKey<WorldMapScreenState>();
 
   /// 탭 전환 시 세계지도 WebView를 살릴지/폐기 예약할지 결정.
   /// [next]로 바뀌기 직전(_currentTab은 아직 이전 탭)에 호출한다.
@@ -1380,11 +1383,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     enabled: _currentTab == _HomeTab.worldMap,
                     child: KeyedSubtree(
                       key: _worldMapKey,
-                      child: const WorldMapScreen(),
+                      child: WorldMapScreen(key: _worldMapStateKey),
                     ),
                   ),
                 ),
               ),
+            // 세계지도 탭 + 하단 내비가 펼쳐진(전체 탭) 상태에서만 노출.
+            // 웹뷰가 흰 화면으로 멈췄을 때 좌하단 refresh 버튼으로 재로딩.
+            if (_currentTab == _HomeTab.worldMap && !_worldNavCollapsed)
+              _buildWorldMapRefreshButton(),
             _buildFloatingBottomNav(),
           ],
         ),
@@ -1397,6 +1404,44 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               )
             : null,
+      ),
+    );
+  }
+
+  Widget _buildWorldMapRefreshButton() {
+    return Positioned(
+      left: 20,
+      bottom: 97,
+      child: SafeArea(
+        top: false,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => _worldMapStateKey.currentState?.reloadWebView(),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.94),
+                shape: BoxShape.circle,
+                border: Border.all(color: McColors.line, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.refresh_rounded,
+                size: 24,
+                color: McColors.accent,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

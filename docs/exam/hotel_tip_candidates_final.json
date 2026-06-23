@@ -1,0 +1,1335 @@
+{
+  "generatedAt": "2026-06-23T09:02:57.706Z",
+  "mode": "final-approved-json",
+  "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+  "authorNickname": "마일캐치",
+  "notes": [
+    "이 파일은 승인 최종본입니다.",
+    "generateHotelTipsFromQna.js --apply-approved 로 실행하면 approved=true 호텔과 꿀팁이 Firestore에 반영됩니다.",
+    "신규 호텔 10개는 좌표(lat/lng)가 채워져 있습니다.",
+    "기존 호텔(JW 메리어트 제주, 힐튼 하와이안 빌리지) 꿀팁도 approved=true 입니다."
+  ],
+  "summary": {
+    "newHotelCandidates": 10,
+    "newHotelTipCandidates": 31,
+    "existingHotelTipCandidates": 8,
+    "totalTipCandidates": 39
+  },
+  "existingHotelTips": [
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_d8c9e75180f34e4e",
+      "hotelId": "nRyOZ4pW7R1Gufyywaal",
+      "hotelName": "JW 메리어트 제주 리조트 &스파",
+      "tag": "upgrade",
+      "content": "JW 메리어트 제주 리조트 &스파는 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963485?boardtype=L&menuid=890&referrerAllArticles=false&page=14",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1963485",
+        "sourceFile": "susasa_qna_20260528.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963485?boardtype=L&menuid=890&referrerAllArticles=false&page=14",
+        "title": "본보이 포인트로 숙박시 추천하는곳은?",
+        "writtenAt": "2026-05-13T12:09:01.820Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_9974ce640cb5719b",
+      "hotelId": "nRyOZ4pW7R1Gufyywaal",
+      "hotelName": "JW 메리어트 제주 리조트 &스파",
+      "tag": "parents",
+      "content": "JW 메리어트 제주 리조트 &스파는 가족 동반이라면 수영장, 키즈 프로그램, 조식 동선, 침대 구성 같은 실사용 조건을 먼저 확인하는 편이 좋습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963064?boardtype=L&menuid=890&referrerAllArticles=false&page=21",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1963064",
+        "sourceFile": "susasa_qna_20260528.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963064?boardtype=L&menuid=890&referrerAllArticles=false&page=21",
+        "title": "호텔 내에 키즈 프로그램(1시간 내외) 잘 되어있는 곳 추천좀 부탁드려요",
+        "writtenAt": "2026-05-06T13:04:28.920Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_009e6f856d8943d7",
+      "hotelId": "nRyOZ4pW7R1Gufyywaal",
+      "hotelName": "JW 메리어트 제주 리조트 &스파",
+      "tag": "general",
+      "content": "JW 메리어트 제주 리조트 &스파는 체크인/체크아웃, 조식, 라운지, 주차, 예약 변경 조건처럼 현장에서 체감되는 운영 정보를 미리 확인해두는 것이 좋습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962824?boardtype=L&menuid=890&referrerAllArticles=false&page=25",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1962824",
+        "sourceFile": "susasa_qna_20260528.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962824?boardtype=L&menuid=890&referrerAllArticles=false&page=25",
+        "title": "jw메리어트 제주 브런치 로얄 조식을 각각 다른날 먹는게 가능 할까요",
+        "writtenAt": "2026-05-03T05:57:40.527Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_2b1f171ae4ef8938",
+      "hotelId": "nRyOZ4pW7R1Gufyywaal",
+      "hotelName": "JW 메리어트 제주 리조트 &스파",
+      "tag": "value",
+      "content": "JW 메리어트 제주 리조트 &스파는 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1959774?boardtype=L&menuid=890&referrerAllArticles=false&page=66",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1959774",
+        "sourceFile": "susasa_qna_20260528.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1959774?boardtype=L&menuid=890&referrerAllArticles=false&page=66",
+        "title": "제리엇 본보이카드 바우처 질문있습니다 (JW 메리어트 제주)",
+        "writtenAt": "2026-03-24T02:51:21.150Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_517a5b239636068d",
+      "hotelId": "tVcRQe7corFc8cW3MHNT",
+      "hotelName": "힐튼 하와이안 빌리지",
+      "tag": "parents",
+      "content": "힐튼 하와이안 빌리지는 가족 동반이라면 수영장, 키즈 프로그램, 조식 동선, 침대 구성 같은 실사용 조건을 먼저 확인하는 편이 좋습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963009?boardtype=L&menuid=890&referrerAllArticles=false&page=22",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1963009",
+        "sourceFile": "susasa_qna_20260528.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963009?boardtype=L&menuid=890&referrerAllArticles=false&page=22",
+        "title": "하와이 손녀와 첫 여행시 관광지 추천 부탁합니다",
+        "writtenAt": "2026-05-06T01:18:10.130Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_fbf448d093c7451f",
+      "hotelId": "tVcRQe7corFc8cW3MHNT",
+      "hotelName": "힐튼 하와이안 빌리지",
+      "tag": "upgrade",
+      "content": "힐튼 하와이안 빌리지는 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953547?boardtype=L&menuid=890&referrerAllArticles=false&page=176",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1953547",
+        "sourceFile": "susasa_qna_20260529.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953547?boardtype=L&menuid=890&referrerAllArticles=false&page=176",
+        "title": "하와이 숙소 어디가 좋을까요?",
+        "writtenAt": "2026-01-12T06:19:09.780Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_fb83062a6b6940b3",
+      "hotelId": "tVcRQe7corFc8cW3MHNT",
+      "hotelName": "힐튼 하와이안 빌리지",
+      "tag": "view",
+      "content": "힐튼 하와이안 빌리지는 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1945761?boardtype=L&menuid=890&referrerAllArticles=false&page=352",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1945761",
+        "sourceFile": "susasa_qna_20260601.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1945761?boardtype=L&menuid=890&referrerAllArticles=false&page=352",
+        "title": "하와이 숙소와 헬기투어",
+        "writtenAt": "2025-10-07T08:09:48.830Z"
+      }
+    },
+    {
+      "approved": true,
+      "mode": "existingHotelTip",
+      "tipId": "qna_tip_fb17cddfcce56125",
+      "hotelId": "tVcRQe7corFc8cW3MHNT",
+      "hotelName": "힐튼 하와이안 빌리지",
+      "tag": "value",
+      "content": "힐튼 하와이안 빌리지는 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+      "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1944801?boardtype=L&menuid=890&referrerAllArticles=false&page=375",
+      "imageUrls": [],
+      "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+      "authorNickname": "마일캐치",
+      "source": {
+        "articleId": "1944801",
+        "sourceFile": "susasa_qna_20260601.json",
+        "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1944801?boardtype=L&menuid=890&referrerAllArticles=false&page=375",
+        "title": "12월 하와이vs발리vs방콕 고민됩니다!!",
+        "writtenAt": "2025-09-25T09:46:07.620Z"
+      }
+    }
+  ],
+  "newHotelCandidates": [
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_ac295161fae8db62",
+      "name": "제주 신라호텔",
+      "brand": "other",
+      "countryCode": "kr",
+      "city": "제주",
+      "lat": 33.247476,
+      "lng": 126.406888,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 32,
+      "sourceTitles": [
+        {
+          "articleId": "1963819",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963819?boardtype=L&menuid=890&referrerAllArticles=false&page=8",
+          "title": "신라호텔 두부 구입처가 알고싶어요..",
+          "writtenAt": "2026-05-19T07:36:43.117Z"
+        },
+        {
+          "articleId": "1963295",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963295?boardtype=L&menuid=890&referrerAllArticles=false&page=17",
+          "title": "아기데리고 제주도 호캉스..렌트카 안하는거 어떨까요?",
+          "writtenAt": "2026-05-11T00:42:06.903Z"
+        },
+        {
+          "articleId": "1963064",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963064?boardtype=L&menuid=890&referrerAllArticles=false&page=21",
+          "title": "호텔 내에 키즈 프로그램(1시간 내외) 잘 되어있는 곳 추천좀 부탁드려요",
+          "writtenAt": "2026-05-06T13:04:28.920Z"
+        },
+        {
+          "articleId": "1962797",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962797?boardtype=L&menuid=890&referrerAllArticles=false&page=25",
+          "title": "제주도 렌트 문의드려요~",
+          "writtenAt": "2026-05-02T15:44:51.200Z"
+        },
+        {
+          "articleId": "1957864",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1957864?boardtype=L&menuid=890&referrerAllArticles=false&page=96",
+          "title": "제주도 조식나오는 가성비 숙소 있을까요?(세돌아기 부모님동행)",
+          "writtenAt": "2026-02-28T21:55:30.750Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_0b2ad9bfdd046dfe",
+          "hotelId": "qna_hotel_ac295161fae8db62",
+          "hotelName": "제주 신라호텔",
+          "tag": "parents",
+          "content": "제주 신라호텔은 가족 동반이라면 수영장, 키즈 프로그램, 조식 동선, 침대 구성 같은 실사용 조건을 먼저 확인하는 편이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963819?boardtype=L&menuid=890&referrerAllArticles=false&page=8",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1963819",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963819?boardtype=L&menuid=890&referrerAllArticles=false&page=8",
+            "title": "신라호텔 두부 구입처가 알고싶어요..",
+            "writtenAt": "2026-05-19T07:36:43.117Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_0dac90a7e39dd9ee",
+          "hotelId": "qna_hotel_ac295161fae8db62",
+          "hotelName": "제주 신라호텔",
+          "tag": "value",
+          "content": "제주 신라호텔은 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962797?boardtype=L&menuid=890&referrerAllArticles=false&page=25",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1962797",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962797?boardtype=L&menuid=890&referrerAllArticles=false&page=25",
+            "title": "제주도 렌트 문의드려요~",
+            "writtenAt": "2026-05-02T15:44:51.200Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_c1cfb8123dfc733c",
+          "hotelId": "qna_hotel_ac295161fae8db62",
+          "hotelName": "제주 신라호텔",
+          "tag": "view",
+          "content": "제주 신라호텔은 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1957864?boardtype=L&menuid=890&referrerAllArticles=false&page=96",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1957864",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1957864?boardtype=L&menuid=890&referrerAllArticles=false&page=96",
+            "title": "제주도 조식나오는 가성비 숙소 있을까요?(세돌아기 부모님동행)",
+            "writtenAt": "2026-02-28T21:55:30.750Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_64c384e6d232a76a",
+          "hotelId": "qna_hotel_ac295161fae8db62",
+          "hotelName": "제주 신라호텔",
+          "tag": "upgrade",
+          "content": "제주 신라호텔은 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953901?boardtype=L&menuid=890&referrerAllArticles=false&page=168",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1953901",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953901?boardtype=L&menuid=890&referrerAllArticles=false&page=168",
+            "title": "3월 3대 제주도 가족여행 숙소 고민입니다 ~",
+            "writtenAt": "2026-01-16T06:23:53.313Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_2752207feac0e424",
+      "name": "서울 신라호텔",
+      "brand": "other",
+      "countryCode": "kr",
+      "city": "서울",
+      "lat": 37.5558605,
+      "lng": 127.0051493,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 29,
+      "sourceTitles": [
+        {
+          "articleId": "1963819",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963819?boardtype=L&menuid=890&referrerAllArticles=false&page=8",
+          "title": "신라호텔 두부 구입처가 알고싶어요..",
+          "writtenAt": "2026-05-19T07:36:43.117Z"
+        },
+        {
+          "articleId": "1961724",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961724?boardtype=L&menuid=890&referrerAllArticles=false&page=40",
+          "title": "혹시 얼마전 프리즘 라이브때 서울신라 예약하신분 있으실까요???",
+          "writtenAt": "2026-04-18T12:43:05.313Z"
+        },
+        {
+          "articleId": "1960735",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1960735?boardtype=L&menuid=890&referrerAllArticles=false&page=53",
+          "title": "현아플 FHR 예약 체크인시 배우자가 가도되나요 ?",
+          "writtenAt": "2026-04-05T12:55:53.353Z"
+        },
+        {
+          "articleId": "1955220",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1955220?boardtype=L&menuid=890&referrerAllArticles=false&page=142",
+          "title": "호텔 뷔페 입문 도와주세요 !",
+          "writtenAt": "2026-01-31T12:09:58.207Z"
+        },
+        {
+          "articleId": "1953929",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953929?boardtype=L&menuid=890&referrerAllArticles=false&page=168",
+          "title": "파크하얏트 서울 삼아플 25만원 바우쳐 FHR OR 프리베 중복가능",
+          "writtenAt": "2026-01-16T11:22:09.963Z"
+        },
+        {
+          "articleId": "1963137",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963137?boardtype=L&menuid=890&referrerAllArticles=false&page=20",
+          "title": "서울 신라호텔 헬스장 가보신분들",
+          "writtenAt": "2026-05-07T16:10:50.553Z"
+        },
+        {
+          "articleId": "1961926",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961926?boardtype=L&menuid=890&referrerAllArticles=false&page=37",
+          "title": "남자친구와 단둘이 쉬러가기 좋은 호텔 추천 부탁드려요~!",
+          "writtenAt": "2026-04-21T08:29:07.973Z"
+        },
+        {
+          "articleId": "1960863",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1960863?boardtype=L&menuid=890&referrerAllArticles=false&page=51",
+          "title": "엄마랑 호캉스 호텔 추천 부탁드려요.",
+          "writtenAt": "2026-04-07T00:06:37.263Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_affe4719e83793ea",
+          "hotelId": "qna_hotel_2752207feac0e424",
+          "hotelName": "서울 신라호텔",
+          "tag": "parents",
+          "content": "서울 신라호텔은 가족 동반이라면 수영장, 키즈 프로그램, 조식 동선, 침대 구성 같은 실사용 조건을 먼저 확인하는 편이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963819?boardtype=L&menuid=890&referrerAllArticles=false&page=8",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1963819",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963819?boardtype=L&menuid=890&referrerAllArticles=false&page=8",
+            "title": "신라호텔 두부 구입처가 알고싶어요..",
+            "writtenAt": "2026-05-19T07:36:43.117Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_7aae22a4e705b2fb",
+          "hotelId": "qna_hotel_2752207feac0e424",
+          "hotelName": "서울 신라호텔",
+          "tag": "value",
+          "content": "서울 신라호텔은 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961724?boardtype=L&menuid=890&referrerAllArticles=false&page=40",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1961724",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961724?boardtype=L&menuid=890&referrerAllArticles=false&page=40",
+            "title": "혹시 얼마전 프리즘 라이브때 서울신라 예약하신분 있으실까요???",
+            "writtenAt": "2026-04-18T12:43:05.313Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_7b9725368ed0d909",
+          "hotelId": "qna_hotel_2752207feac0e424",
+          "hotelName": "서울 신라호텔",
+          "tag": "view",
+          "content": "서울 신라호텔은 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1955220?boardtype=L&menuid=890&referrerAllArticles=false&page=142",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1955220",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1955220?boardtype=L&menuid=890&referrerAllArticles=false&page=142",
+            "title": "호텔 뷔페 입문 도와주세요 !",
+            "writtenAt": "2026-01-31T12:09:58.207Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_f7b34bae899c6376",
+          "hotelId": "qna_hotel_2752207feac0e424",
+          "hotelName": "서울 신라호텔",
+          "tag": "general",
+          "content": "서울 신라호텔은 체크인/체크아웃, 조식, 라운지, 주차, 예약 변경 조건처럼 현장에서 체감되는 운영 정보를 미리 확인해두는 것이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953571?boardtype=L&menuid=890&referrerAllArticles=false&page=176",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1953571",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953571?boardtype=L&menuid=890&referrerAllArticles=false&page=176",
+            "title": "서울 호텔라운지 중에 소개팅 하기에 적합한 곳 추천해주실 수 있나요?",
+            "writtenAt": "2026-01-12T11:31:58.263Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_f7142bdf995da5c6",
+      "name": "파르나스 제주",
+      "brand": "ihg",
+      "countryCode": "kr",
+      "city": "제주",
+      "lat": 33.2446396,
+      "lng": 126.4058406,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 11,
+      "sourceTitles": [
+        {
+          "articleId": "1964098",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1964098?boardtype=L&menuid=890&referrerAllArticles=false&page=3",
+          "title": "공홈과 아고다에서 예약한 게 서비스 차이가 있글을까요?",
+          "writtenAt": "2026-05-24T01:15:17.690Z"
+        },
+        {
+          "articleId": "1964068",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1964068?boardtype=L&menuid=890&referrerAllArticles=false&page=4",
+          "title": "제주 파르나스 룸 (아고다) 뭐가 다른지 궁금해요",
+          "writtenAt": "2026-05-23T04:20:44.210Z"
+        },
+        {
+          "articleId": "1961681",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961681?boardtype=L&menuid=890&referrerAllArticles=false&page=41",
+          "title": "파르나스 제주 디럭스킹(구관)이 그렇게 별로인가요???",
+          "writtenAt": "2026-04-17T09:50:50.330Z"
+        },
+        {
+          "articleId": "1955729",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1955729?boardtype=L&menuid=890&referrerAllArticles=false&page=132",
+          "title": "제주 파르나스 신화월드 신화관 질문이요",
+          "writtenAt": "2026-02-05T06:13:28.250Z"
+        },
+        {
+          "articleId": "1954871",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1954871?boardtype=L&menuid=890&referrerAllArticles=false&page=147",
+          "title": "제주 파르나스 vs 그랜드조선 vs 해비치",
+          "writtenAt": "2026-01-27T23:56:03.453Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_583bae8938e06cc5",
+          "hotelId": "qna_hotel_f7142bdf995da5c6",
+          "hotelName": "파르나스 제주",
+          "tag": "upgrade",
+          "content": "파르나스 제주는 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1964098?boardtype=L&menuid=890&referrerAllArticles=false&page=3",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1964098",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1964098?boardtype=L&menuid=890&referrerAllArticles=false&page=3",
+            "title": "공홈과 아고다에서 예약한 게 서비스 차이가 있글을까요?",
+            "writtenAt": "2026-05-24T01:15:17.690Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_b86ebb442754d1e6",
+          "hotelId": "qna_hotel_f7142bdf995da5c6",
+          "hotelName": "파르나스 제주",
+          "tag": "parents",
+          "content": "파르나스 제주는 가족 동반이라면 수영장, 키즈 프로그램, 조식 동선, 침대 구성 같은 실사용 조건을 먼저 확인하는 편이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1955729?boardtype=L&menuid=890&referrerAllArticles=false&page=132",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1955729",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1955729?boardtype=L&menuid=890&referrerAllArticles=false&page=132",
+            "title": "제주 파르나스 신화월드 신화관 질문이요",
+            "writtenAt": "2026-02-05T06:13:28.250Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_535e9f9f07f99138",
+          "hotelId": "qna_hotel_f7142bdf995da5c6",
+          "hotelName": "파르나스 제주",
+          "tag": "general",
+          "content": "파르나스 제주는 체크인/체크아웃, 조식, 라운지, 주차, 예약 변경 조건처럼 현장에서 체감되는 운영 정보를 미리 확인해두는 것이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1941950?boardtype=L&menuid=890&referrerAllArticles=false&page=446",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1941950",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1941950?boardtype=L&menuid=890&referrerAllArticles=false&page=446",
+            "title": "파르나스 제주 조식을 런치뷔페로 변경...안되나요?",
+            "writtenAt": "2025-08-27T00:24:22.283Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_734411a5fc112ae0",
+      "name": "페어몬트 서울",
+      "brand": "accor",
+      "countryCode": "kr",
+      "city": "서울",
+      "lat": 37.5251614,
+      "lng": 126.9290253,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 10,
+      "sourceTitles": [
+        {
+          "articleId": "1962873",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962873?boardtype=L&menuid=890&referrerAllArticles=false&page=24",
+          "title": "페어몬트 서울 snu 조회좀 도와주실 수 있을까요? ㅠㅠ",
+          "writtenAt": "2026-05-04T00:39:34.700Z"
+        },
+        {
+          "articleId": "1956686",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1956686?boardtype=L&menuid=890&referrerAllArticles=false&page=116",
+          "title": "아코르 숙박일수가 취소될 수도 있나요?",
+          "writtenAt": "2026-02-15T22:21:37.560Z"
+        },
+        {
+          "articleId": "1951069",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1951069?boardtype=L&menuid=890&referrerAllArticles=false&page=233",
+          "title": "부산 4인가족 아코르 플랫인데 서울 아코르 호텔 어디가 좋을까요?",
+          "writtenAt": "2025-12-13T11:36:10.853Z"
+        },
+        {
+          "articleId": "1950554",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1950554?boardtype=L&menuid=890&referrerAllArticles=false&page=245",
+          "title": "아코르 플러스 스테이플러스 1+1 현실적으로 사용이 어떤지 [답변 완]",
+          "writtenAt": "2025-12-07T06:58:40.353Z"
+        },
+        {
+          "articleId": "1948632",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948632?boardtype=L&menuid=890&referrerAllArticles=false&page=286",
+          "title": "아코르 플러스 멤버쉽 다이닝 할인율 (용산 드래곤시티 푸드 익스체인지)",
+          "writtenAt": "2025-11-13T02:42:50.523Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_f4c06ba572e6652f",
+          "hotelId": "qna_hotel_734411a5fc112ae0",
+          "hotelName": "페어몬트 서울",
+          "tag": "value",
+          "content": "페어몬트 서울은 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962873?boardtype=L&menuid=890&referrerAllArticles=false&page=24",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1962873",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1962873?boardtype=L&menuid=890&referrerAllArticles=false&page=24",
+            "title": "페어몬트 서울 snu 조회좀 도와주실 수 있을까요? ㅠㅠ",
+            "writtenAt": "2026-05-04T00:39:34.700Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_1af7c00ca7b22657",
+          "hotelId": "qna_hotel_734411a5fc112ae0",
+          "hotelName": "페어몬트 서울",
+          "tag": "upgrade",
+          "content": "페어몬트 서울은 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1951069?boardtype=L&menuid=890&referrerAllArticles=false&page=233",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1951069",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1951069?boardtype=L&menuid=890&referrerAllArticles=false&page=233",
+            "title": "부산 4인가족 아코르 플랫인데 서울 아코르 호텔 어디가 좋을까요?",
+            "writtenAt": "2025-12-13T11:36:10.853Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_5ffd9bd0cdffd21d",
+          "hotelId": "qna_hotel_734411a5fc112ae0",
+          "hotelName": "페어몬트 서울",
+          "tag": "general",
+          "content": "페어몬트 서울은 체크인/체크아웃, 조식, 라운지, 주차, 예약 변경 조건처럼 현장에서 체감되는 운영 정보를 미리 확인해두는 것이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948632?boardtype=L&menuid=890&referrerAllArticles=false&page=286",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1948632",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948632?boardtype=L&menuid=890&referrerAllArticles=false&page=286",
+            "title": "아코르 플러스 멤버쉽 다이닝 할인율 (용산 드래곤시티 푸드 익스체인지)",
+            "writtenAt": "2025-11-13T02:42:50.523Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_3084f4375656e681",
+          "hotelId": "qna_hotel_734411a5fc112ae0",
+          "hotelName": "페어몬트 서울",
+          "tag": "view",
+          "content": "페어몬트 서울은 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1940981?boardtype=L&menuid=890&referrerAllArticles=false&page=470",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1940981",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1940981?boardtype=L&menuid=890&referrerAllArticles=false&page=470",
+            "title": "서울에서 이그제큐티브(라운지) 괜찮은 호텔 질문 드립니다",
+            "writtenAt": "2025-08-17T07:00:09.760Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_8e58fcb31d3cb8af",
+      "name": "그랜드 하얏트 서울",
+      "brand": "hyatt",
+      "countryCode": "kr",
+      "city": "서울",
+      "lat": 37.5395783,
+      "lng": 126.9976508,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 11,
+      "sourceTitles": [
+        {
+          "articleId": "1963269",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963269?boardtype=L&menuid=890&referrerAllArticles=false&page=18",
+          "title": "서울 그랜드 하얏트 가격 이 가격이 정상이나요?!ㅠㅠㅠ",
+          "writtenAt": "2026-05-10T08:15:49.257Z"
+        },
+        {
+          "articleId": "1953180",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953180?boardtype=L&menuid=890&referrerAllArticles=false&page=185",
+          "title": "그랜드 하얏트 서울 vs 인터컨티넨탈 그랜드 파르나스 아래 조건이면 어느쪽을 추천 하시나요?",
+          "writtenAt": "2026-01-08T01:53:09.610Z"
+        },
+        {
+          "articleId": "1951113",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1951113?boardtype=L&menuid=890&referrerAllArticles=false&page=232",
+          "title": "식사 없이 상견례 가능한 서울 호텔 있을까요?",
+          "writtenAt": "2025-12-14T07:09:25.783Z"
+        },
+        {
+          "articleId": "1949801",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949801?boardtype=L&menuid=890&referrerAllArticles=false&page=261",
+          "title": "그랜드하얏트 서울 vs 웨스틴 파르나스 서울",
+          "writtenAt": "2025-11-27T11:42:13.147Z"
+        },
+        {
+          "articleId": "1947343",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1947343?boardtype=L&menuid=890&referrerAllArticles=false&page=315",
+          "title": "아이와 연말 느낌 가장 잘 나는 호텔 어디가 좋을까요?",
+          "writtenAt": "2025-10-27T02:49:14.777Z"
+        },
+        {
+          "articleId": "1952003",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1952003?boardtype=L&menuid=890&referrerAllArticles=false&page=213",
+          "title": "만삭 임산부가 초등 아이 둘을 데리고 제주를 가야한다면…",
+          "writtenAt": "2025-12-25T05:50:10.157Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_821f04fdad8f9738",
+          "hotelId": "qna_hotel_8e58fcb31d3cb8af",
+          "hotelName": "그랜드 하얏트 서울",
+          "tag": "value",
+          "content": "그랜드 하얏트 서울은 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963269?boardtype=L&menuid=890&referrerAllArticles=false&page=18",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1963269",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963269?boardtype=L&menuid=890&referrerAllArticles=false&page=18",
+            "title": "서울 그랜드 하얏트 가격 이 가격이 정상이나요?!ㅠㅠㅠ",
+            "writtenAt": "2026-05-10T08:15:49.257Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_268c4971437c27ac",
+          "hotelId": "qna_hotel_8e58fcb31d3cb8af",
+          "hotelName": "그랜드 하얏트 서울",
+          "tag": "upgrade",
+          "content": "그랜드 하얏트 서울은 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953180?boardtype=L&menuid=890&referrerAllArticles=false&page=185",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1953180",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953180?boardtype=L&menuid=890&referrerAllArticles=false&page=185",
+            "title": "그랜드 하얏트 서울 vs 인터컨티넨탈 그랜드 파르나스 아래 조건이면 어느쪽을 추천 하시나요?",
+            "writtenAt": "2026-01-08T01:53:09.610Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_dbabb260751cd3e6",
+          "hotelId": "qna_hotel_8e58fcb31d3cb8af",
+          "hotelName": "그랜드 하얏트 서울",
+          "tag": "view",
+          "content": "그랜드 하얏트 서울은 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949801?boardtype=L&menuid=890&referrerAllArticles=false&page=261",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1949801",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949801?boardtype=L&menuid=890&referrerAllArticles=false&page=261",
+            "title": "그랜드하얏트 서울 vs 웨스틴 파르나스 서울",
+            "writtenAt": "2025-11-27T11:42:13.147Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_108370f2222377e8",
+      "name": "쉐라톤 와이키키",
+      "brand": "marriott",
+      "countryCode": "us",
+      "city": "하와이",
+      "lat": 21.27762,
+      "lng": -157.8302445,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 5,
+      "sourceTitles": [
+        {
+          "articleId": "1945761",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1945761?boardtype=L&menuid=890&referrerAllArticles=false&page=352",
+          "title": "하와이 숙소와 헬기투어",
+          "writtenAt": "2025-10-07T08:09:48.830Z"
+        },
+        {
+          "articleId": "1942211",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1942211?boardtype=L&menuid=890&referrerAllArticles=false&page=439",
+          "title": "쉐라톤와이키키....룸 업글......해줄까요?ㅠㅠ",
+          "writtenAt": "2025-08-29T07:38:23.050Z"
+        },
+        {
+          "articleId": "1941951",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1941951?boardtype=L&menuid=890&referrerAllArticles=false&page=446",
+          "title": "쉐라톤와이키키. 룸 선택 어떤게 좋을까요..??ㅠ",
+          "writtenAt": "2025-08-27T00:25:18.267Z"
+        },
+        {
+          "articleId": "1939633",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1939633?boardtype=L&menuid=890&referrerAllArticles=false&page=499",
+          "title": "쉐라톤 와이키키·힐튼 하와이안빌리지 BRG 성공해보신 분들 질문 (오션뷰 기준 추천도 부탁드려요)",
+          "writtenAt": "2025-08-04T06:30:49.823Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_4090cda3fb6b3df6",
+          "hotelId": "qna_hotel_108370f2222377e8",
+          "hotelName": "쉐라톤 와이키키",
+          "tag": "view",
+          "content": "쉐라톤 와이키키는 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1945761?boardtype=L&menuid=890&referrerAllArticles=false&page=352",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1945761",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1945761?boardtype=L&menuid=890&referrerAllArticles=false&page=352",
+            "title": "하와이 숙소와 헬기투어",
+            "writtenAt": "2025-10-07T08:09:48.830Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_038095b053b1a238",
+          "hotelId": "qna_hotel_108370f2222377e8",
+          "hotelName": "쉐라톤 와이키키",
+          "tag": "upgrade",
+          "content": "쉐라톤 와이키키는 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1942211?boardtype=L&menuid=890&referrerAllArticles=false&page=439",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1942211",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1942211?boardtype=L&menuid=890&referrerAllArticles=false&page=439",
+            "title": "쉐라톤와이키키....룸 업글......해줄까요?ㅠㅠ",
+            "writtenAt": "2025-08-29T07:38:23.050Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_f583251e49029f9c",
+      "name": "콘래드 서울",
+      "brand": "hilton",
+      "countryCode": "kr",
+      "city": "서울",
+      "lat": 37.5253892,
+      "lng": 126.9266335,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 4,
+      "sourceTitles": [
+        {
+          "articleId": "1960222",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1960222?boardtype=L&menuid=890&referrerAllArticles=false&page=60",
+          "title": "롯데힐튼카드 궁금합니다.",
+          "writtenAt": "2026-03-30T02:02:48.040Z"
+        },
+        {
+          "articleId": "1953539",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953539?boardtype=L&menuid=890&referrerAllArticles=false&page=177",
+          "title": "콘래드 서울 플레임즈 힐튼 티어 할인 가능 여부",
+          "writtenAt": "2026-01-12T05:18:21.400Z"
+        },
+        {
+          "articleId": "1949114",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949114?boardtype=L&menuid=890&referrerAllArticles=false&page=275",
+          "title": "라운지 그랜드 인터컨이랑 콘래드 중 어디가 더 나을까요?",
+          "writtenAt": "2025-11-19T07:08:20.630Z"
+        },
+        {
+          "articleId": "1942173",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1942173?boardtype=L&menuid=890&referrerAllArticles=false&page=440",
+          "title": "호텔 예약에 대해 조언을 구하고 싶습니다.",
+          "writtenAt": "2025-08-29T02:51:41.320Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_fa8698b4af868c60",
+          "hotelId": "qna_hotel_f583251e49029f9c",
+          "hotelName": "콘래드 서울",
+          "tag": "value",
+          "content": "콘래드 서울은 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1960222?boardtype=L&menuid=890&referrerAllArticles=false&page=60",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1960222",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1960222?boardtype=L&menuid=890&referrerAllArticles=false&page=60",
+            "title": "롯데힐튼카드 궁금합니다.",
+            "writtenAt": "2026-03-30T02:02:48.040Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_d3715b11de779b45",
+          "hotelId": "qna_hotel_f583251e49029f9c",
+          "hotelName": "콘래드 서울",
+          "tag": "upgrade",
+          "content": "콘래드 서울은 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953539?boardtype=L&menuid=890&referrerAllArticles=false&page=177",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1953539",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953539?boardtype=L&menuid=890&referrerAllArticles=false&page=177",
+            "title": "콘래드 서울 플레임즈 힐튼 티어 할인 가능 여부",
+            "writtenAt": "2026-01-12T05:18:21.400Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_a9c440ec352edd29",
+          "hotelId": "qna_hotel_f583251e49029f9c",
+          "hotelName": "콘래드 서울",
+          "tag": "general",
+          "content": "콘래드 서울은 체크인/체크아웃, 조식, 라운지, 주차, 예약 변경 조건처럼 현장에서 체감되는 운영 정보를 미리 확인해두는 것이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949114?boardtype=L&menuid=890&referrerAllArticles=false&page=275",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1949114",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949114?boardtype=L&menuid=890&referrerAllArticles=false&page=275",
+            "title": "라운지 그랜드 인터컨이랑 콘래드 중 어디가 더 나을까요?",
+            "writtenAt": "2025-11-19T07:08:20.630Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_df8a281e3c95fe96",
+      "name": "웨스틴 서울 파르나스",
+      "brand": "marriott",
+      "countryCode": "kr",
+      "city": "서울",
+      "lat": 37.5128251,
+      "lng": 127.0572645,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 4,
+      "sourceTitles": [
+        {
+          "articleId": "1963859",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963859?boardtype=L&menuid=890&referrerAllArticles=false&page=7",
+          "title": "웨스틴 파르나스 예약했어요! 예약자인 제가 못가고 아내만 가는데 가능할까요~?",
+          "writtenAt": "2026-05-20T00:22:28.620Z"
+        },
+        {
+          "articleId": "1948969",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948969?boardtype=L&menuid=890&referrerAllArticles=false&page=278",
+          "title": "서울 강남구쪽 호텔 피트니스 회원권 추천 가능할지~~",
+          "writtenAt": "2025-11-17T13:27:03.843Z"
+        },
+        {
+          "articleId": "1948343",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948343?boardtype=L&menuid=890&referrerAllArticles=false&page=292",
+          "title": "남자친구 생일 호캉스 추천",
+          "writtenAt": "2025-11-09T08:31:21.800Z"
+        },
+        {
+          "articleId": "1947233",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1947233?boardtype=L&menuid=890&referrerAllArticles=false&page=318",
+          "title": "웨스틴 파르나스 포숙 시 유상으로 클럽라운지 이용해보신 분 있으실까요??",
+          "writtenAt": "2025-10-25T07:53:02.877Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_1acae2d07897f561",
+          "hotelId": "qna_hotel_df8a281e3c95fe96",
+          "hotelName": "웨스틴 서울 파르나스",
+          "tag": "value",
+          "content": "웨스틴 서울 파르나스는 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963859?boardtype=L&menuid=890&referrerAllArticles=false&page=7",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1963859",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963859?boardtype=L&menuid=890&referrerAllArticles=false&page=7",
+            "title": "웨스틴 파르나스 예약했어요! 예약자인 제가 못가고 아내만 가는데 가능할까요~?",
+            "writtenAt": "2026-05-20T00:22:28.620Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_aa8a44197a5551fa",
+          "hotelId": "qna_hotel_df8a281e3c95fe96",
+          "hotelName": "웨스틴 서울 파르나스",
+          "tag": "general",
+          "content": "웨스틴 서울 파르나스는 체크인/체크아웃, 조식, 라운지, 주차, 예약 변경 조건처럼 현장에서 체감되는 운영 정보를 미리 확인해두는 것이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948969?boardtype=L&menuid=890&referrerAllArticles=false&page=278",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1948969",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948969?boardtype=L&menuid=890&referrerAllArticles=false&page=278",
+            "title": "서울 강남구쪽 호텔 피트니스 회원권 추천 가능할지~~",
+            "writtenAt": "2025-11-17T13:27:03.843Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_668f7d3ade3c246d",
+          "hotelId": "qna_hotel_df8a281e3c95fe96",
+          "hotelName": "웨스틴 서울 파르나스",
+          "tag": "view",
+          "content": "웨스틴 서울 파르나스는 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948343?boardtype=L&menuid=890&referrerAllArticles=false&page=292",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1948343",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948343?boardtype=L&menuid=890&referrerAllArticles=false&page=292",
+            "title": "남자친구 생일 호캉스 추천",
+            "writtenAt": "2025-11-09T08:31:21.800Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_ba823a06d9158d63",
+          "hotelId": "qna_hotel_df8a281e3c95fe96",
+          "hotelName": "웨스틴 서울 파르나스",
+          "tag": "upgrade",
+          "content": "웨스틴 서울 파르나스는 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1947233?boardtype=L&menuid=890&referrerAllArticles=false&page=318",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1947233",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1947233?boardtype=L&menuid=890&referrerAllArticles=false&page=318",
+            "title": "웨스틴 파르나스 포숙 시 유상으로 클럽라운지 이용해보신 분 있으실까요??",
+            "writtenAt": "2025-10-25T07:53:02.877Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_248b2dc7160407ef",
+      "name": "콘래드 발리",
+      "brand": "hilton",
+      "countryCode": "id",
+      "city": "발리",
+      "lat": -8.7806054,
+      "lng": 115.225233,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 4,
+      "sourceTitles": [
+        {
+          "articleId": "1963337",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963337?boardtype=L&menuid=890&referrerAllArticles=false&page=16",
+          "title": "림바 바이 아야나 or 콘래드 발리 어디로 결정할까요???",
+          "writtenAt": "2026-05-11T07:14:44.110Z"
+        },
+        {
+          "articleId": "1953102",
+          "sourceFile": "susasa_qna_20260529.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953102?boardtype=L&menuid=890&referrerAllArticles=false&page=186",
+          "title": "콘래드발리 포숙(5박)을 거점으로 잡고",
+          "writtenAt": "2026-01-07T06:04:28.880Z"
+        },
+        {
+          "articleId": "1944357",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1944357?boardtype=L&menuid=890&referrerAllArticles=false&page=386",
+          "title": "첫 발리 호텔 - 두가지안 중 조언 부탁드립니다 (힐튼계열)",
+          "writtenAt": "2025-09-21T06:10:34.610Z"
+        },
+        {
+          "articleId": "1941770",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1941770?boardtype=L&menuid=890&referrerAllArticles=false&page=451",
+          "title": "콘래드 발리 포숙 4+1 불가인가요?",
+          "writtenAt": "2025-08-25T05:42:03.930Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_c27e5eedc91eaf1c",
+          "hotelId": "qna_hotel_248b2dc7160407ef",
+          "hotelName": "콘래드 발리",
+          "tag": "upgrade",
+          "content": "콘래드 발리는 객실 업그레이드나 티어 혜택 기대치가 자주 언급됩니다. 예약 채널, 객실 타입, 투숙일 혼잡도에 따라 체감 차이가 날 수 있어 체크인 전 조건 확인이 좋습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963337?boardtype=L&menuid=890&referrerAllArticles=false&page=16",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1963337",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1963337?boardtype=L&menuid=890&referrerAllArticles=false&page=16",
+            "title": "림바 바이 아야나 or 콘래드 발리 어디로 결정할까요???",
+            "writtenAt": "2026-05-11T07:14:44.110Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_eec92681e6982422",
+          "hotelId": "qna_hotel_248b2dc7160407ef",
+          "hotelName": "콘래드 발리",
+          "tag": "value",
+          "content": "콘래드 발리는 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953102?boardtype=L&menuid=890&referrerAllArticles=false&page=186",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1953102",
+            "sourceFile": "susasa_qna_20260529.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1953102?boardtype=L&menuid=890&referrerAllArticles=false&page=186",
+            "title": "콘래드발리 포숙(5박)을 거점으로 잡고",
+            "writtenAt": "2026-01-07T06:04:28.880Z"
+          }
+        }
+      ]
+    },
+    {
+      "approved": true,
+      "candidateHotelId": "qna_hotel_e156160073c745b0",
+      "name": "파크 하얏트 부산",
+      "brand": "hyatt",
+      "countryCode": "kr",
+      "city": "부산",
+      "lat": 35.1565227,
+      "lng": 129.1418521,
+      "stars": 5,
+      "description": "",
+      "coverImageUrl": "",
+      "needsLocation": false,
+      "mentionCount": 4,
+      "sourceTitles": [
+        {
+          "articleId": "1961276",
+          "sourceFile": "susasa_qna_20260528.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961276?boardtype=L&menuid=890&referrerAllArticles=false&page=46",
+          "title": "부산 파라다이스, 시그니엘",
+          "writtenAt": "2026-04-12T07:03:32.027Z"
+        },
+        {
+          "articleId": "1949801",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1949801?boardtype=L&menuid=890&referrerAllArticles=false&page=261",
+          "title": "그랜드하얏트 서울 vs 웨스틴 파르나스 서울",
+          "writtenAt": "2025-11-27T11:42:13.147Z"
+        },
+        {
+          "articleId": "1948107",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948107?boardtype=L&menuid=890&referrerAllArticles=false&page=297",
+          "title": "부산 아가랑 호캉스 시그니엘,파크하얏트 어디가 괜찮을까요?",
+          "writtenAt": "2025-11-06T02:30:50.870Z"
+        },
+        {
+          "articleId": "1947343",
+          "sourceFile": "susasa_qna_20260601.json",
+          "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1947343?boardtype=L&menuid=890&referrerAllArticles=false&page=315",
+          "title": "아이와 연말 느낌 가장 잘 나는 호텔 어디가 좋을까요?",
+          "writtenAt": "2025-10-27T02:49:14.777Z"
+        }
+      ],
+      "tips": [
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_3878d2cbe277b04e",
+          "hotelId": "qna_hotel_e156160073c745b0",
+          "hotelName": "파크 하얏트 부산",
+          "tag": "view",
+          "content": "파크 하얏트 부산은 뷰와 타워, 객실 위치에 따른 만족도 차이를 확인해볼 만합니다. 오션뷰·시티뷰처럼 이름이 비슷한 객실도 실제 전망이 다를 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961276?boardtype=L&menuid=890&referrerAllArticles=false&page=46",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1961276",
+            "sourceFile": "susasa_qna_20260528.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1961276?boardtype=L&menuid=890&referrerAllArticles=false&page=46",
+            "title": "부산 파라다이스, 시그니엘",
+            "writtenAt": "2026-04-12T07:03:32.027Z"
+          }
+        },
+        {
+          "approved": true,
+          "mode": "newHotelTip",
+          "tipId": "qna_tip_fd0718e2eb521e8c",
+          "hotelId": "qna_hotel_e156160073c745b0",
+          "hotelName": "파크 하얏트 부산",
+          "tag": "value",
+          "content": "파크 하얏트 부산은 포인트 숙박, 현금가, 바우처, 조식 포함 여부를 함께 비교하는 것이 좋습니다. 같은 일정이라도 예약 조건에 따라 체감 가치가 달라질 수 있습니다.",
+          "linkUrl": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948107?boardtype=L&menuid=890&referrerAllArticles=false&page=297",
+          "imageUrls": [],
+          "authorUid": "aP3C0N511beyK7QZG9GyChs5oqO2",
+          "authorNickname": "마일캐치",
+          "source": {
+            "articleId": "1948107",
+            "sourceFile": "susasa_qna_20260601.json",
+            "url": "https://cafe.naver.com/f-e/cafes/18786605/articles/1948107?boardtype=L&menuid=890&referrerAllArticles=false&page=297",
+            "title": "부산 아가랑 호캉스 시그니엘,파크하얏트 어디가 괜찮을까요?",
+            "writtenAt": "2025-11-06T02:30:50.870Z"
+          }
+        }
+      ]
+    }
+  ]
+}

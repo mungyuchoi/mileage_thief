@@ -9,10 +9,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/opensky_live_service.dart';
 import '../services/world_share_service.dart';
 import 'hotel_quiz_manage_screen.dart';
+import 'user_profile_screen.dart';
 
 /// milecatch 웹(세계지도 게임)을 임베드하는 탭.
 ///
@@ -28,12 +30,23 @@ class WorldMapScreen extends StatefulWidget {
   static const String webUrl = 'https://milecatch.com/explore';
 
   @override
-  State<WorldMapScreen> createState() => _WorldMapScreenState();
+  WorldMapScreenState createState() => WorldMapScreenState();
 }
 
-class _WorldMapScreenState extends State<WorldMapScreen> {
+class WorldMapScreenState extends State<WorldMapScreen> {
   InAppWebViewController? _controller;
   bool _loading = true;
+
+  /// 외부(홈 화면)에서 웹뷰를 강제로 다시 로드한다.
+  /// 웹뷰가 흰 화면으로 멈췄을 때 복구용 refresh 버튼이 호출한다.
+  void reloadWebView() {
+    final controller = _controller;
+    if (mounted) setState(() => _loading = true);
+    if (controller == null) return;
+    controller.loadUrl(
+      urlRequest: URLRequest(url: WebUri(WorldMapScreen.webUrl)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +154,50 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
           debugPrint('[WorldMap] share.image 실패: $e');
           return {'ok': false, 'error': e.toString()};
         }
+      },
+    );
+
+    // url.openExternal → 외부 브라우저로 URL 열기 (꿀팁 링크 등)
+    controller.addJavaScriptHandler(
+      handlerName: 'url.openExternal',
+      callback: (args) async {
+        try {
+          final payload = (args.isNotEmpty && args.first is Map)
+              ? Map<String, dynamic>.from(args.first as Map)
+              : <String, dynamic>{};
+          final raw = (payload['url'] ?? '').toString().trim();
+          if (raw.isEmpty) return {'ok': false};
+          final url = (raw.startsWith('http://') || raw.startsWith('https://'))
+              ? raw
+              : 'https://$raw';
+          final ok = await launchUrl(
+            Uri.parse(url),
+            mode: LaunchMode.externalApplication, // 외부 브라우저
+          );
+          return {'ok': ok};
+        } catch (e) {
+          debugPrint('[WorldMap] url.openExternal 실패: $e');
+          return {'ok': false, 'error': e.toString()};
+        }
+      },
+    );
+
+    // user.openProfile → 랭킹 등에서 유저 탭 시 프로필 화면 열기
+    controller.addJavaScriptHandler(
+      handlerName: 'user.openProfile',
+      callback: (args) async {
+        if (!mounted) return {'ok': false};
+        final payload = (args.isNotEmpty && args.first is Map)
+            ? Map<String, dynamic>.from(args.first as Map)
+            : <String, dynamic>{};
+        final uid = (payload['uid'] ?? '').toString().trim();
+        if (uid.isEmpty) return {'ok': false};
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => UserProfileScreen(userUid: uid),
+          ),
+        );
+        return {'ok': true};
       },
     );
 

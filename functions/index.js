@@ -8602,11 +8602,23 @@ async function sendPushToUser(uid, title, body, data) {
  */
 async function writeNotif(uid, type, hotelId, message) {
   try {
+    const titleByType = {
+      firstCatch: "퍼스트 캐치",
+      kingThreat: "왕좌 알림",
+      newContrib: "호텔 기여 알림",
+    };
+    const now = admin.firestore.FieldValue.serverTimestamp();
     await admin.firestore()
         .collection(`users/${uid}/notifications`)
         .add({
-          type, hotelId, message, read: false,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          type, hotelId,
+          title: titleByType[type] || "호텔 알림",
+          body: message,
+          message,
+          read: false,
+          isRead: false,
+          createdAt: now,
+          receivedAt: now,
         });
   } catch (e) {
     logger.warn("notif 기록 실패", e);
