@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../helper/AdHelper.dart';
 import '../services/opensky_live_service.dart';
 import '../services/world_share_service.dart';
 import 'hotel_quiz_manage_screen.dart';
@@ -45,6 +49,85 @@ class WorldMapScreenState extends State<WorldMapScreen> {
     if (controller == null) return;
     controller.loadUrl(
       urlRequest: URLRequest(url: WebUri(WorldMapScreen.webUrl)),
+    );
+  }
+
+  /// 보상형 광고: 로드 → 표시 → 끝까지 시청(보상 획득) 여부 반환.
+  Future<Map<String, dynamic>> _showRewardedAd() {
+    final completer = Completer<Map<String, dynamic>>();
+    var earned = false;
+    void done(bool completed) {
+      if (!completer.isCompleted) {
+        completer.complete(
+            {'ok': completed, 'completed': completed, 'type': 'rewarded'});
+      }
+    }
+
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              done(earned);
+            },
+            onAdFailedToShowFullScreenContent: (ad, err) {
+              ad.dispose();
+              done(false);
+            },
+          );
+          ad.show(onUserEarnedReward: (ad, reward) => earned = true);
+        },
+        onAdFailedToLoad: (err) {
+          debugPrint('[WorldMap] rewarded load 실패: ${err.message}');
+          done(false);
+        },
+      ),
+    );
+    return completer.future.timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => {'ok': false, 'completed': false, 'type': 'rewarded'},
+    );
+  }
+
+  /// 전면 광고: 로드 → 표시 → 닫음(시청) 여부 반환.
+  Future<Map<String, dynamic>> _showInterstitialAd() {
+    final completer = Completer<Map<String, dynamic>>();
+    void done(bool completed) {
+      if (!completer.isCompleted) {
+        completer.complete(
+            {'ok': completed, 'completed': completed, 'type': 'interstitial'});
+      }
+    }
+
+    InterstitialAd.load(
+      adUnitId: AdHelper.frontBannerAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              done(true);
+            },
+            onAdFailedToShowFullScreenContent: (ad, err) {
+              ad.dispose();
+              done(false);
+            },
+          );
+          ad.show();
+        },
+        onAdFailedToLoad: (err) {
+          debugPrint('[WorldMap] interstitial load 실패: ${err.message}');
+          done(false);
+        },
+      ),
+    );
+    return completer.future.timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => {'ok': false, 'completed': false, 'type': 'interstitial'},
     );
   }
 
@@ -198,6 +281,33 @@ class WorldMapScreenState extends State<WorldMapScreen> {
           ),
         );
         return {'ok': true};
+      },
+    );
+
+    // app.getInfo → 앱 버전(웹의 광고 지원 게이팅용: 2.2.63+)
+    controller.addJavaScriptHandler(
+      handlerName: 'app.getInfo',
+      callback: (args) async {
+        try {
+          final info = await PackageInfo.fromPlatform();
+          return {'version': info.version, 'build': info.buildNumber};
+        } catch (e) {
+          debugPrint('[WorldMap] app.getInfo 실패: $e');
+          return {'version': ''};
+        }
+      },
+    );
+
+    // ad.show → 전면/보상형 광고 로드 후 표시. 결과(completed) 반환.
+    controller.addJavaScriptHandler(
+      handlerName: 'ad.show',
+      callback: (args) async {
+        final payload = (args.isNotEmpty && args.first is Map)
+            ? Map<String, dynamic>.from(args.first as Map)
+            : <String, dynamic>{};
+        final type = (payload['type'] ?? 'rewarded').toString();
+        if (type == 'interstitial') return _showInterstitialAd();
+        return _showRewardedAd();
       },
     );
 
