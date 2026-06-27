@@ -85,6 +85,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
   bool _saving = false;
   bool _completed = false;
   bool _recountChecked = false;
+  bool _createSalesOnComplete = true;
 
   @override
   void initState() {
@@ -218,6 +219,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       if (faceValue <= 0 || qty <= 0 || sellUnit <= 0) continue;
       lines.add(
         GiftcardSettlementLineInput(
+          lotId: line.lotId,
           giftcardId: giftcardId,
           giftcardName: _giftcardName(giftcardId),
           faceValue: faceValue,
@@ -236,6 +238,43 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       lines: _currentLineInputs(),
       actualDepositTotal: actual,
     );
+  }
+
+  bool _isCompleteLineDraft(_SettlementLineDraft line) {
+    return line.giftcardId != null &&
+        line.giftcardId!.isNotEmpty &&
+        line.faceValue > 0 &&
+        line.qty > 0 &&
+        line.sellUnit > 0;
+  }
+
+  List<_SettlementLineDraft> _completeLineDrafts() {
+    return _lines.where(_isCompleteLineDraft).toList();
+  }
+
+  List<_SettlementLineDraft> _saleLinkableLineDrafts() {
+    return _completeLineDrafts()
+        .where((line) => line.lotId != null && line.lotId!.isNotEmpty)
+        .toList();
+  }
+
+  bool get _canCreateSalesWithCurrentLines {
+    final completeLines = _completeLineDrafts();
+    if (completeLines.isEmpty) return false;
+    return completeLines.every(
+      (line) => line.lotId != null && line.lotId!.isNotEmpty,
+    );
+  }
+
+  int _saleCreationExpectedTotal(List<_SettlementLineDraft> lines) {
+    var total = 0;
+    for (final line in lines) {
+      total += GiftcardSettlementCalculator.lineTotal(
+        qty: line.qty,
+        sellUnit: line.sellUnit,
+      );
+    }
+    return total;
   }
 
   Future<void> _pickSettlementDate() async {
@@ -399,6 +438,9 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     );
     if (selectedId == null || !mounted) return;
     setState(() {
+      if (line.giftcardId != selectedId) {
+        line.lotId = null;
+      }
       line.giftcardId = selectedId;
     });
     await _applyCurrentRate(line);
@@ -481,6 +523,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       if (giftcardId.isEmpty || faceValue <= 0 || qty <= 0) continue;
       lots.add(
         _PurchaseLotOption(
+          lotId: doc.id,
           giftcardId: giftcardId,
           giftcardName: _giftcardName(giftcardId),
           faceValue: faceValue,
@@ -694,6 +737,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         _lines.add(line);
       }
       line.giftcardId = lot.giftcardId;
+      line.lotId = lot.lotId;
       line.setFaceValue(lot.faceValue);
       line.qtyController.text = lot.qty.toString();
       if (sellUnit > 0) {
@@ -735,6 +779,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       _editingSettlementId = null;
       _completed = false;
       _recountChecked = false;
+      _createSalesOnComplete = true;
       _actualDepositController.clear();
       _memoController.clear();
     });
@@ -777,6 +822,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       if (item is! Map) continue;
       final map = Map<String, dynamic>.from(item);
       final line = _SettlementLineDraft(
+        lotId: map['lotId'] as String?,
         giftcardId: map['giftcardId'] as String?,
         faceValue: _asInt(map['faceValue']),
         qty: _asInt(map['qty']),
@@ -803,6 +849,7 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       _settlementDate = _asDate(data['settlementDate']);
       _completed = data['status'] == 'completed';
       _recountChecked = data['recountChecked'] == true;
+      _createSalesOnComplete = data['createSalesOnComplete'] != false;
       _actualDepositController.text = data['actualDepositTotal'] == null
           ? ''
           : _asInt(data['actualDepositTotal']).toString();
@@ -829,6 +876,22 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
     if (_completed && _asInt(_actualDepositController.text) <= 0) {
       Fluttertoast.showToast(msg: '실제 입금액을 입력해주세요.');
       return;
+    }
+
+    final saleLinkableLines = _saleLinkableLineDrafts();
+    final shouldCreateSales = _completed &&
+        _createSalesOnComplete &&
+        _canCreateSalesWithCurrentLines;
+    if (shouldCreateSales && branch == null) {
+      Fluttertoast.showToast(msg: '판매 기록 생성을 위해 지점을 선택해주세요.');
+      return;
+    }
+    if (shouldCreateSales) {
+      final lotIds = saleLinkableLines.map((line) => line.lotId!).toSet();
+      if (lotIds.length != saleLinkableLines.length) {
+        Fluttertoast.showToast(msg: '같은 구매목록은 한 번만 판매 기록으로 만들 수 있습니다.');
+        return;
+      }
     }
 
     for (final line in _lines) {
@@ -884,10 +947,12 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         'actualDepositTotal': actualDepositTotal,
         'difference': actualDepositTotal == null ? 0 : summary.difference,
         'totalQuantity': summary.totalQuantity,
+        'createSalesOnComplete': shouldCreateSales,
         'lineItems': lineInputs
             .map(
               (line) => <String, dynamic>{
                 'giftcardId': line.giftcardId,
+                'lotId': line.lotId,
                 'giftcardNameSnapshot': line.giftcardName,
                 'faceValue': line.faceValue,
                 'qty': line.qty,
@@ -908,17 +973,48 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
       };
 
       await ref.set(payload, SetOptions(merge: true));
+      if (shouldCreateSales) {
+        try {
+          final saleIds = await _createSalesFromSettlement(
+            uid: user.uid,
+            settlementId: docId,
+            branch: branch!,
+            lines: saleLinkableLines,
+          );
+          await ref.set(
+            <String, dynamic>{
+              'salesLinked': true,
+              'saleIds': saleIds,
+              'salesLinkedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        } catch (e) {
+          if (!mounted) return;
+          setState(() {
+            _editingSettlementId = docId;
+          });
+          Fluttertoast.showToast(msg: '정산은 저장했지만 판매 기록 생성에 실패했습니다: $e');
+          return;
+        }
+      }
       AnalyticsService.instance.logAction('giftcard_settlement_saved', params: {
         'screen': 'giftcard_settlement',
         'entity_id': docId,
         'mode': _editingSettlementId == null ? 'create' : 'edit',
         'status': _completed ? 'completed' : 'planned',
         'expected_total': summary.expectedTotal,
+        'sales_linked': shouldCreateSales,
         'qty_bucket': AnalyticsService.quantityBucket(summary.totalQuantity),
       });
       if (!mounted) return;
       Fluttertoast.showToast(
-          msg: _completed ? '정산 기록이 완료되었습니다.' : '정산 예정이 저장되었습니다.');
+        msg: shouldCreateSales
+            ? '정산과 판매 기록이 저장되었습니다.'
+            : _completed
+                ? '정산 기록이 완료되었습니다.'
+                : '정산 예정이 저장되었습니다.',
+      );
       if (widget.popOnSave) {
         didPopAfterSave = true;
         Navigator.pop(context, true);
@@ -942,6 +1038,165 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
         });
       }
     }
+  }
+
+  String _settlementSaleId(String settlementId, String lotId) {
+    final raw = 'settlement_sale_${settlementId}_$lotId';
+    return raw.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+  }
+
+  Future<int> _loadRulePerMile(
+    String uid,
+    String cardId,
+    String payType,
+  ) async {
+    if (cardId.isEmpty) return 0;
+    final cardDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('cards')
+        .doc(cardId)
+        .get();
+    if (!cardDoc.exists) return 0;
+    final data = cardDoc.data();
+    if (data == null) return 0;
+    return (payType == '신용')
+        ? (data['creditPerMileKRW'] as num?)?.toInt() ?? 0
+        : (data['checkPerMileKRW'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<List<String>> _createSalesFromSettlement({
+    required String uid,
+    required String settlementId,
+    required _BranchOption branch,
+    required List<_SettlementLineDraft> lines,
+  }) async {
+    final saleIds = <String>[];
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final lotsRef = userRef.collection('lots');
+    final salesRef = userRef.collection('sales');
+
+    for (final line in lines) {
+      final lotId = line.lotId;
+      if (lotId == null || lotId.isEmpty) continue;
+
+      final lotRef = lotsRef.doc(lotId);
+      final saleId = _settlementSaleId(settlementId, lotId);
+      final saleRef = salesRef.doc(saleId);
+
+      final lotDoc = await lotRef.get();
+      if (!lotDoc.exists || lotDoc.data() == null) {
+        throw Exception('구매목록을 찾지 못했습니다.');
+      }
+      final lot = lotDoc.data()!;
+      final saleDoc = await saleRef.get();
+      final isNewSale = !saleDoc.exists;
+      final status = (lot['status'] as String?) ?? 'open';
+      if (isNewSale && status != 'open') {
+        throw Exception('이미 판매된 구매목록이 포함되어 있습니다.');
+      }
+
+      final lotQty = _asInt(lot['qty']);
+      final qty = line.qty;
+      if (isNewSale && (lotQty <= 0 || qty > lotQty)) {
+        throw Exception('판매 수량이 구매목록 수량보다 많습니다.');
+      }
+
+      final faceValue =
+          line.faceValue > 0 ? line.faceValue : _asInt(lot['faceValue']);
+      final buyUnit = _asInt(lot['buyUnit']);
+      final sellUnit = line.sellUnit;
+      final buyTotal = buyUnit * qty;
+      final sellTotal = sellUnit * qty;
+      final discount =
+          faceValue <= 0 ? 0.0 : 100 * (1 - (sellUnit / faceValue));
+
+      final cardId = (lot['cardId'] as String?) ?? '';
+      final payType = (lot['payType'] as String?) ?? '신용';
+      final storedMilePerKRW =
+          (lot['mileRuleUsedPerMileKRW'] as num?)?.toInt() ?? 0;
+      final milePerKRW = storedMilePerKRW > 0
+          ? storedMilePerKRW
+          : await _loadRulePerMile(uid, cardId, payType);
+      final miles = milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round();
+      final profit = sellTotal - buyTotal;
+      final costPerMile = miles == 0 ? 0 : (-profit / miles);
+
+      final salePayload = <String, dynamic>{
+        'lotId': lotId,
+        'settlementId': settlementId,
+        'sellDate': Timestamp.fromDate(_settlementDate),
+        'sellUnit': sellUnit,
+        'discount': double.parse(discount.toStringAsFixed(2)),
+        'sellTotal': sellTotal,
+        'buyTotal': buyTotal,
+        'qty': qty,
+        'mileRuleUsedPerMileKRW': milePerKRW,
+        'miles': miles,
+        'profit': profit,
+        'costPerMile': double.parse(costPerMile.toStringAsFixed(2)),
+        'branchId': branch.id,
+        'branchNameSnapshot': branch.name,
+        'memo': line.memoController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (isNewSale) 'createdAt': FieldValue.serverTimestamp(),
+      };
+      await saleRef.set(salePayload, SetOptions(merge: true));
+
+      if (isNewSale) {
+        if (qty < lotQty) {
+          final remainingQty = lotQty - qty;
+          final remainingLotId = 'lot_${saleId}_remaining';
+          final remainingMiles = milePerKRW == 0
+              ? 0
+              : ((buyUnit * remainingQty) / milePerKRW).round();
+
+          await lotRef.update({
+            'qty': qty,
+            'mileRuleUsedPerMileKRW': milePerKRW,
+            'miles': miles,
+            'status': 'sold',
+            'trade': true,
+            'settlementId': settlementId,
+            'settlementSaleId': saleId,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+          await lotsRef.doc(remainingLotId).set({
+            'faceValue': faceValue,
+            'buyDate': lot['buyDate'],
+            'payType': payType,
+            'buyUnit': buyUnit,
+            'discount': (lot['discount'] as num?)?.toDouble() ?? 0,
+            'qty': remainingQty,
+            'cardId': cardId,
+            'mileRuleUsedPerMileKRW': milePerKRW,
+            'miles': remainingMiles,
+            'status': 'open',
+            'giftcardId': lot['giftcardId'],
+            'memo': lot['memo'] ?? '',
+            'whereToBuyId': lot['whereToBuyId'],
+            'sourceLotId': lotId,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } else {
+          await lotRef.update({
+            'mileRuleUsedPerMileKRW': milePerKRW,
+            'miles': miles,
+            'status': 'sold',
+            'trade': true,
+            'settlementId': settlementId,
+            'settlementSaleId': saleId,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      saleIds.add(saleId);
+    }
+
+    return saleIds;
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>>? _historyStream() {
@@ -1177,6 +1432,8 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
               onChanged: (_) => setState(() {}),
             ),
             _buildRecountCheckRow(),
+            if (_canCreateSalesWithCurrentLines)
+              _buildSalesCreationOption(summary),
           ],
           TextField(
             controller: _memoController,
@@ -1243,6 +1500,89 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
             ),
             onPressed: _showRecountInfoDialog,
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalesCreationOption(GiftcardSettlementSummary summary) {
+    final lines = _saleLinkableLineDrafts();
+    final expectedTotal = _saleCreationExpectedTotal(lines);
+    final totalQty = lines.fold<int>(0, (total, line) => total + line.qty);
+    final lotIdText = lines.map((line) => line.lotId!).join(', ');
+    final branchName = _selectedBranch?.name ?? _noBranchLabel;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GiftcardColors.accentBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchListTile.adaptive(
+            value: _createSalesOnComplete,
+            activeThumbColor: GiftcardColors.accent,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              '판매 기록도 함께 생성',
+              style: McTextStyles.bodyStrong,
+            ),
+            subtitle: const Text(
+              '구매목록을 판매 완료 처리하고 판매 내역에 저장합니다.',
+              style: McTextStyles.meta,
+            ),
+            onChanged: (value) {
+              setState(() {
+                _createSalesOnComplete = value;
+              });
+            },
+          ),
+          if (_createSalesOnComplete) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _SummaryPill(
+                  icon: Icons.receipt_long_outlined,
+                  label: '판매 기록 ${lines.length}건',
+                ),
+                _SummaryPill(
+                  icon: Icons.confirmation_number_outlined,
+                  label: '총 $totalQty장',
+                ),
+                _SummaryPill(
+                  icon: Icons.payments_outlined,
+                  label: '예상 ${_formatWon(expectedTotal)}',
+                ),
+                _ActionSummaryPill(
+                  icon: Icons.storefront_outlined,
+                  label: branchName == _noBranchLabel
+                      ? _noBranchLabel
+                      : '지점 $branchName',
+                  onTap: _branches.isEmpty ? null : _openBranchSheet,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '연결 lotId: $lotIdText',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: McTextStyles.meta,
+            ),
+            if (summary.expectedTotal != expectedTotal) ...[
+              const SizedBox(height: 6),
+              const Text(
+                '구매목록으로 불러온 행만 판매 기록으로 생성됩니다.',
+                style: McTextStyles.meta,
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -1351,6 +1691,9 @@ class _GiftcardSettlementScreenState extends State<GiftcardSettlementScreen> {
                   onChanged: (value) {
                     if (value == null) return;
                     setState(() {
+                      if (value != line.faceValue) {
+                        line.lotId = null;
+                      }
                       line.setFaceValue(value);
                     });
                   },
@@ -1779,6 +2122,34 @@ class _SummaryPill extends StatelessWidget {
   }
 }
 
+class _ActionSummaryPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _ActionSummaryPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: _SummaryPill(
+          icon: icon,
+          label: label,
+          color: onTap == null ? McColors.muted : GiftcardColors.accent,
+        ),
+      ),
+    );
+  }
+}
+
 class _MiniPill extends StatelessWidget {
   final String label;
 
@@ -1910,6 +2281,7 @@ class _GiftcardOption {
 }
 
 class _PurchaseLotOption {
+  final String lotId;
   final String giftcardId;
   final String giftcardName;
   final int faceValue;
@@ -1920,6 +2292,7 @@ class _PurchaseLotOption {
   final String whereToBuyId;
 
   const _PurchaseLotOption({
+    required this.lotId,
     required this.giftcardId,
     required this.giftcardName,
     required this.faceValue,
@@ -1936,6 +2309,7 @@ class _PurchaseLotOption {
 class _SettlementLineDraft {
   static const List<int> faceValueOptions = <int>[10000, 50000, 100000, 500000];
 
+  String? lotId;
   String? giftcardId;
   final TextEditingController faceValueController;
   final TextEditingController qtyController;
@@ -1944,6 +2318,7 @@ class _SettlementLineDraft {
   final TextEditingController memoController;
 
   _SettlementLineDraft({
+    this.lotId,
     this.giftcardId,
     int faceValue = 100000,
     int qty = 1,

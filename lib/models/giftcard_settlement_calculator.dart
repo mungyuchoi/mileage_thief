@@ -1,4 +1,5 @@
 class GiftcardSettlementLineInput {
+  final String? lotId;
   final String giftcardId;
   final String giftcardName;
   final int faceValue;
@@ -7,6 +8,7 @@ class GiftcardSettlementLineInput {
   final String memo;
 
   const GiftcardSettlementLineInput({
+    this.lotId,
     required this.giftcardId,
     required this.giftcardName,
     required this.faceValue,

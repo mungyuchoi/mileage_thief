@@ -28,7 +28,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
   List<Map<String, dynamic>> _openLots = [];
   Map<String, dynamic>? _existingSale;
   // 지점 선택
-  List<Map<String, dynamic>> _branches = [];
+  List<Map<String, String>> _branches = [];
   bool _branchesLoading = false;
   String? _selectedBranchId;
 
@@ -128,12 +128,12 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           await FirebaseFirestore.instance.collection('branches').get();
       final list = snap.docs.map((d) {
         final data = d.data();
-        return {
+        return <String, String>{
           'id': d.id,
           'name': (data['name'] as String?) ?? d.id,
         };
       }).toList()
-        ..sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+        ..sort((a, b) => a['name']!.compareTo(b['name']!));
       setState(() {
         _branches = list;
       });
@@ -163,6 +163,28 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         );
   }
 
+  String _formatDateValue(dynamic value) {
+    if (value is Timestamp) {
+      final d = value.toDate();
+      return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    }
+    return '';
+  }
+
+  String _selectedLotLabel() {
+    final lot = _selectedLot;
+    if (lot == null || lot.isEmpty) return '판매할 구매 내역을 선택해주세요';
+
+    final giftcardId = (lot['giftcardId'] as String?) ?? '상품권';
+    final faceValue = _formatWonValue(lot['faceValue']);
+    final buyUnit = _formatWonValue(lot['buyUnit']);
+    final qty = _intValue(lot['qty']);
+    final date = _formatDateValue(lot['buyDate']);
+    final dateText = date.isEmpty ? '' : ' · $date';
+
+    return '$giftcardId · 액면 ${faceValue}원 · 매입 ${buyUnit}원 x $qty$dateText';
+  }
+
   void _onLotChanged(String? lotId) {
     setState(() {
       _selectedLotId = lotId;
@@ -176,6 +198,170 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         _qtyController.text = '0';
       }
     });
+  }
+
+  Future<void> _showLotPicker() async {
+    if (widget.editSaleId != null || _openLots.isEmpty) return;
+    FocusScope.of(context).unfocus();
+
+    final selectedId = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE1E4EC),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: kToolbarHeight,
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '구매 내역 선택',
+                          style: TextStyle(
+                            color: Color(0xFF1F1F28),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: '닫기',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF1F1F28),
+                          size: 26,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _openLots.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final lot = _openLots[index];
+                      final lotId = lot['lotId'] as String;
+                      final giftcardId =
+                          (lot['giftcardId'] as String?) ?? '상품권';
+                      final faceValue = _formatWonValue(lot['faceValue']);
+                      final buyUnit = _formatWonValue(lot['buyUnit']);
+                      final qty = _intValue(lot['qty']);
+                      final date = _formatDateValue(lot['buyDate']);
+                      final memo = (lot['memo'] as String?)?.trim() ?? '';
+                      final isSelected = lotId == _selectedLotId;
+
+                      return InkWell(
+                        onTap: () => Navigator.pop(context, lotId),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? GiftcardColors.accent.withValues(alpha: 0.08)
+                                : const Color(0xFFF7F8FC),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? GiftcardColors.accent
+                                  : const Color(0xFFE8ECF4),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      giftcardId,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? GiftcardColors.accent
+                                            : const Color(0xFF1F1F28),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                  if (date.isNotEmpty)
+                                    Text(
+                                      date,
+                                      style: const TextStyle(
+                                        color: Color(0xFF757B88),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  _LotInfoChip(label: '액면', value: '$faceValue원'),
+                                  _LotInfoChip(label: '매입', value: '$buyUnit원'),
+                                  _LotInfoChip(label: '수량', value: '$qty장'),
+                                ],
+                              ),
+                              if (memo.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  memo,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF6D7280),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selectedId != null && mounted) {
+      _onLotChanged(selectedId);
+    }
   }
 
   void _onSellUnitChanged() {
@@ -663,11 +849,11 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
 
     final branch = _branches.firstWhere(
       (b) => b['id'] == branchId,
-      orElse: () => <String, dynamic>{},
+      orElse: () => <String, String>{},
     );
     if (branch.isEmpty) return branchId;
 
-    return (branch['name'] as String?) ?? branchId;
+    return branch['name'] ?? branchId;
   }
 
   Future<void> _showBranchPicker() async {
@@ -688,14 +874,9 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        final branchItems = [
+        final List<Map<String, String>> branchItems = [
           <String, String>{'id': '', 'name': '선택 안 함'},
-          ..._branches.map(
-            (b) => <String, String>{
-              'id': b['id'] as String,
-              'name': b['name'] as String,
-            },
-          ),
+          ..._branches,
         ];
 
         return SafeArea(
@@ -716,13 +897,31 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  '지점 선택',
-                  style: TextStyle(
-                    color: Color(0xFF1F1F28),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: kToolbarHeight,
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '지점 선택',
+                          style: TextStyle(
+                            color: Color(0xFF1F1F28),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: '닫기',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF1F1F28),
+                          size: 26,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -828,46 +1027,39 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                       const Text('구매 선택(Lot)',
                           style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        value: _selectedLotId,
-                        dropdownColor: Colors.white,
-                        style: const TextStyle(color: Colors.black),
-                        iconEnabledColor: Colors.black54,
-                        items: _openLots.map((l) {
-                          final ts = l['buyDate'];
-                          String dateLabel = '';
-                          if (ts is Timestamp) {
-                            final d = ts.toDate();
-                            dateLabel =
-                                '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-                          }
-                          final memo = l['memo'] as String?;
-                          final memoText =
-                              (memo != null && memo.trim().isNotEmpty)
-                                  ? '  $memo'
-                                  : '';
-                          return DropdownMenuItem<String>(
-                            value: l['lotId'] as String,
-                            child: Text(
-                              '${l['giftcardId'] ?? ''}  액면 ${_formatWonValue(l['faceValue'])}원  매입 ${_formatWonValue(l['buyUnit'])}원 x ${l['qty']}  |  $dateLabel$memoText',
-                              style: const TextStyle(color: Colors.black),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: widget.editSaleId != null
-                            ? null
-                            : (v) => _onLotChanged(v),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black26)),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: GiftcardColors.accent, width: 1.5)),
-                          filled: true,
-                          fillColor: Colors.white,
+                      InkWell(
+                        onTap: widget.editSaleId != null ? null : _showLotPicker,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 15),
+                          decoration: BoxDecoration(
+                            color: widget.editSaleId != null
+                                ? const Color(0xFFF5F6FA)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFCFD3DD)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _selectedLotLabel(),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1F1F28),
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.keyboard_arrow_down_rounded,
+                                  color: Color(0xFF757B88)),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1045,6 +1237,47 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                       color: Colors.white, fontWeight: FontWeight.w600)),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LotInfoChip extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _LotInfoChip({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE1E5EE)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(
+            color: Color(0xFF1F1F28),
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: const TextStyle(
+                color: Color(0xFF7A808E),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            TextSpan(text: value),
+          ],
         ),
       ),
     );
