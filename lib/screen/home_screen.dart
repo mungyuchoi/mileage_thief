@@ -29,7 +29,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'giftcard_deals_screen.dart';
 import 'giftcard_info_screen.dart';
 import 'giftcard_settlement_screen.dart';
-import 'my_card_dashboard_screen.dart';
+import '../branch/card_manage.dart';
 import 'notification_settings_screen.dart';
 import 'language_settings_screen.dart';
 import '../l10n/app_locale.dart';
@@ -969,13 +969,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 await Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const MyCardDashboardScreen()));
+                        builder: (_) => const CardManagePage()));
               }
             },
             itemBuilder: (context) => const [
               PopupMenuItem(
                 value: 'manage_cards',
-                child: Text('내 카드'),
+                child: Text('카드 설정'),
               ),
             ],
           );
@@ -998,7 +998,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     await Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const MyCardDashboardScreen()));
+                            builder: (_) => const CardManagePage()));
                     break;
                   case 'manage_where_to_buy':
                     await Navigator.push(
@@ -1011,7 +1011,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'manage_cards',
-                  child: Text('내 카드'),
+                  child: Text('카드 설정'),
                 ),
                 if (hasWhereToBuy)
                   const PopupMenuItem(

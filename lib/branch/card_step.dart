@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../models/user_point_model.dart';
+
 class CardStepPage extends StatefulWidget {
   final String? editCardId;
   const CardStepPage({super.key, this.editCardId});
@@ -19,11 +21,19 @@ class _CardStepPageState extends State<CardStepPage> {
   final TextEditingController _checkPerMileController = TextEditingController();
   final TextEditingController _targetSpendController = TextEditingController();
   final TextEditingController _memoController = TextEditingController();
+  final TextEditingController _pointRateController = TextEditingController();
 
   String? _error;
   bool _saving = false;
   String? _cardType; // 'credit' 또는 'check'
+  // 적립 타입: 'mile'(기본, 기존 마일리지 흐름) | 'point'(카드사 포인트)
+  String _rewardType = 'mile';
+  String? _pointProgram; // PointBrand id (예: samsung_card, woori_card)
   bool get _isEdit => widget.editCardId != null;
+
+  // 카드사 포인트 프로그램 목록(에셋 포함) — 프로필 '내 대표 포인트'와 동일 카탈로그 재사용.
+  List<PointBrand> get _pointBrands =>
+      PointBrandCatalog.byCategory(PointCategory.card);
 
   @override
   void initState() {
@@ -56,6 +66,12 @@ class _CardStepPageState extends State<CardStepPage> {
       _targetSpendController.text =
           targetSpend > 0 ? targetSpend.toString() : '';
       _memoController.text = (data['memo'] as String?) ?? '';
+      // 적립 타입 복원 (rewardType 없는 기존 카드는 'mile'로 간주 → 하위호환)
+      _rewardType = (data['rewardType'] as String?) == 'point' ? 'point' : 'mile';
+      _pointProgram = data['pointProgram'] as String?;
+      final pointRate = (data['pointRatePercent'] as num?)?.toDouble();
+      _pointRateController.text =
+          (pointRate != null && pointRate > 0) ? _trimRate(pointRate) : '';
       // 기존 데이터가 있으면 둘 중 값이 있는 것을 선택, 둘 다 있으면 신용카드 기본 선택
       if (creditValue > 0 && checkValue > 0) {
         _cardType = 'credit'; // 기본값
@@ -75,6 +91,7 @@ class _CardStepPageState extends State<CardStepPage> {
     _checkPerMileController.dispose();
     _targetSpendController.dispose();
     _memoController.dispose();
+    _pointRateController.dispose();
     super.dispose();
   }
 
@@ -86,6 +103,19 @@ class _CardStepPageState extends State<CardStepPage> {
     } catch (_) {
       return null;
     }
+  }
+
+  // 적립율(%) 파싱 — 소수점 허용 (예: "1.5")
+  double? _parseRate(String v) {
+    final cleaned = v.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (cleaned.isEmpty) return null;
+    return double.tryParse(cleaned);
+  }
+
+  // 1.0 -> "1", 1.5 -> "1.5" 로 표기 정리
+  String _trimRate(double v) {
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toString();
   }
 
   Future<void> _onSubmit() async {
@@ -118,23 +148,40 @@ class _CardStepPageState extends State<CardStepPage> {
       });
       return;
     }
-    if (_cardType == null) {
-      setState(() {
-        _error = '카드 타입을 선택하세요.';
-      });
-      return;
-    }
-    if (_cardType == 'credit' && (credit == null || credit <= 0)) {
-      setState(() {
-        _error = '신용카드 1마일당 원가를 정수로 입력하세요.';
-      });
-      return;
-    }
-    if (_cardType == 'check' && (check == null || check <= 0)) {
-      setState(() {
-        _error = '체크카드 1마일당 원가를 정수로 입력하세요.';
-      });
-      return;
+    final pointRate = _parseRate(_pointRateController.text.trim());
+    if (_rewardType == 'mile') {
+      if (_cardType == null) {
+        setState(() {
+          _error = '카드 타입을 선택하세요.';
+        });
+        return;
+      }
+      if (_cardType == 'credit' && (credit == null || credit <= 0)) {
+        setState(() {
+          _error = '신용카드 1마일당 원가를 정수로 입력하세요.';
+        });
+        return;
+      }
+      if (_cardType == 'check' && (check == null || check <= 0)) {
+        setState(() {
+          _error = '체크카드 1마일당 원가를 정수로 입력하세요.';
+        });
+        return;
+      }
+    } else {
+      // 포인트 카드: 신용/체크 구분 없음(공통). 프로그램 + 적립율 필수.
+      if (_pointProgram == null) {
+        setState(() {
+          _error = '포인트 프로그램을 선택하세요.';
+        });
+        return;
+      }
+      if (pointRate == null || pointRate <= 0) {
+        setState(() {
+          _error = '적립율(%)을 입력하세요. 예: 1 또는 1.5';
+        });
+        return;
+      }
     }
 
     if (_saving) return;
@@ -149,8 +196,13 @@ class _CardStepPageState extends State<CardStepPage> {
           .doc(cardId)
           .set({
         'name': name,
-        'creditPerMileKRW': _cardType == 'credit' ? credit : 0,
-        'checkPerMileKRW': _cardType == 'check' ? check : 0,
+        'rewardType': _rewardType,
+        'creditPerMileKRW':
+            _rewardType == 'mile' && _cardType == 'credit' ? credit : 0,
+        'checkPerMileKRW':
+            _rewardType == 'mile' && _cardType == 'check' ? check : 0,
+        'pointProgram': _rewardType == 'point' ? _pointProgram : null,
+        'pointRatePercent': _rewardType == 'point' ? pointRate : null,
         'targetSpendKRW': targetSpend,
         'statementCycle': 'calendar_month',
         'memo': _memoController.text.trim().isEmpty
@@ -188,6 +240,70 @@ class _CardStepPageState extends State<CardStepPage> {
           _saving = false;
         });
     }
+  }
+
+  // 포인트 프로그램 브랜드 로고(에셋) — 없으면 fallback, 그것도 없으면 카드 아이콘.
+  Widget _brandLogo(PointBrand brand, double size) {
+    final fb = brand.fallbackAssetPath;
+    Widget icon() => Icon(Icons.credit_card_rounded,
+        size: size, color: const Color(0xFF74512D));
+    return Image.asset(
+      brand.assetPath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => fb == null
+          ? icon()
+          : Image.asset(
+              fb,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => icon(),
+            ),
+    );
+  }
+
+  // 카드사 포인트 프로그램 선택(에셋으로 구분).
+  Widget _buildPointProgramSelector() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _pointBrands.map((brand) {
+        final selected = _pointProgram == brand.id;
+        return InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => _pointProgram = brand.id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFFF3ECE4) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    selected ? const Color(0xFF74512D) : const Color(0xFFE6E6E9),
+                width: selected ? 1.6 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _brandLogo(brand, 24),
+                const SizedBox(width: 8),
+                Text(
+                  brand.name,
+                  style: TextStyle(
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color:
+                        selected ? const Color(0xFF74512D) : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -305,6 +421,50 @@ class _CardStepPageState extends State<CardStepPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // 적립 타입 (기본 마일리지 → 기존 흐름 무변경 / 포인트 → 카드사 포인트)
+                    const Row(
+                      children: [
+                        Text('적립 타입',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        SizedBox(width: 4),
+                        Text('필수',
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('마일리지'),
+                            value: 'mile',
+                            groupValue: _rewardType,
+                            activeColor: const Color(0xFF74512D),
+                            onChanged: (String? value) {
+                              setState(() => _rewardType = value ?? 'mile');
+                            },
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('포인트'),
+                            value: 'point',
+                            groupValue: _rewardType,
+                            activeColor: const Color(0xFF74512D),
+                            onChanged: (String? value) {
+                              setState(() => _rewardType = value ?? 'mile');
+                            },
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // ── 마일리지 전용 입력(신용/체크 + 1마일 원가) ──
+                    if (_rewardType == 'mile') ...[
                     const Row(
                       children: [
                         Text('카드 타입',
@@ -469,6 +629,57 @@ class _CardStepPageState extends State<CardStepPage> {
                             horizontal: 16, vertical: 14),
                       ),
                     ),
+                    ],
+                    // ── 포인트 전용 입력(프로그램 + 적립율) ──
+                    if (_rewardType == 'point') ...[
+                      const Row(
+                        children: [
+                          Text('포인트 프로그램',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          SizedBox(width: 4),
+                          Text('필수',
+                              style:
+                                  TextStyle(color: Colors.red, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      _buildPointProgramSelector(),
+                      const SizedBox(height: 16),
+                      const Row(
+                        children: [
+                          Text('적립율 (%)',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          SizedBox(width: 4),
+                          Text('필수',
+                              style:
+                                  TextStyle(color: Colors.red, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _pointRateController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                          hintText: '예: 1 또는 1.5',
+                          suffixText: '%',
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE6E6E9)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: Color(0xFF74512D), width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     const Text('월 목표 실적 (선택)',
                         style: TextStyle(fontWeight: FontWeight.w600)),

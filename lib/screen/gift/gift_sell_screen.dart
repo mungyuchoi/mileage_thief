@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../const/colors.dart';
+import '../../models/user_point_model.dart';
 import '../../services/analytics_service.dart';
 
 class GiftSellScreen extends StatefulWidget {
@@ -171,6 +172,12 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
     return '';
   }
 
+  // 포인트 프로그램 표시명 (없으면 '포인트')
+  String _pointProgramName(dynamic programId) {
+    if (programId is! String || programId.isEmpty) return '포인트';
+    return PointBrandCatalog.find(programId)?.name ?? '포인트';
+  }
+
   String _selectedLotLabel() {
     final lot = _selectedLot;
     if (lot == null || lot.isEmpty) return '판매할 구매 내역을 선택해주세요';
@@ -330,6 +337,13 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
                                   _LotInfoChip(label: '액면', value: '$faceValue원'),
                                   _LotInfoChip(label: '매입', value: '$buyUnit원'),
                                   _LotInfoChip(label: '수량', value: '$qty장'),
+                                  if (lot['rewardType'] == 'point')
+                                    _LotInfoChip(
+                                      label: _pointProgramName(
+                                          lot['pointProgram']),
+                                      value:
+                                          '${_intValue(lot['points'])}P 적립',
+                                    ),
                                 ],
                               ),
                               if (memo.isNotEmpty) ...[
@@ -515,16 +529,34 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
       final sellTotal = qty * sellUnit;
       final discount = 100 * (1 - (sellUnit / faceValue));
 
-      // 판매/lot 분할 시에는 구매 lot에 저장된 스냅샷 규칙을 우선 사용한다.
-      final int storedMilePerKRW =
-          (_selectedLot!['mileRuleUsedPerMileKRW'] as num?)?.toInt() ?? 0;
-      final milePerKRW = storedMilePerKRW > 0
-          ? storedMilePerKRW
-          : await _loadRulePerMile(uid, _selectedLot!['cardId'] as String,
-              _selectedLot!['payType'] as String);
-      final miles = milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round();
       final profit = sellTotal - buyTotal;
-      final costPerMile = miles == 0 ? 0 : (-profit / miles);
+      final bool isPointLot = _selectedLot?['rewardType'] == 'point';
+      final String? pointProgram = _selectedLot?['pointProgram'] as String?;
+      final double pointRate =
+          (_selectedLot?['pointRatePercent'] as num?)?.toDouble() ?? 0;
+
+      int milePerKRW = 0;
+      int miles = 0;
+      num costPerMile = 0;
+      int points = 0;
+      num costPerPoint = 0;
+
+      if (isPointLot) {
+        // 포인트 lot: 마일 계산 생략. 적립 포인트는 구매 시 확정 적립율을
+        // 판매분(buyTotal) 기준으로 비례 산출. 차익/회수만 계산한다.
+        points = pointRate <= 0 ? 0 : (buyTotal * pointRate / 100).round();
+        costPerPoint = points == 0 ? 0 : (-profit / points);
+      } else {
+        // 마일 lot: 기존 로직 그대로 (lot 스냅샷 규칙 우선).
+        final int storedMilePerKRW =
+            (_selectedLot!['mileRuleUsedPerMileKRW'] as num?)?.toInt() ?? 0;
+        milePerKRW = storedMilePerKRW > 0
+            ? storedMilePerKRW
+            : await _loadRulePerMile(uid, _selectedLot!['cardId'] as String,
+                _selectedLot!['payType'] as String);
+        miles = milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round();
+        costPerMile = miles == 0 ? 0 : (-profit / miles);
+      }
 
       final salesRef = FirebaseFirestore.instance
           .collection('users')
@@ -544,6 +576,11 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
         'miles': miles,
         'profit': profit,
         'costPerMile': double.parse(costPerMile.toStringAsFixed(2)),
+        'rewardType': isPointLot ? 'point' : 'mile',
+        'pointProgram': isPointLot ? pointProgram : null,
+        'points': isPointLot ? points : 0,
+        'costPerPoint':
+            isPointLot ? double.parse(costPerPoint.toStringAsFixed(2)) : 0,
         'updatedAt': FieldValue.serverTimestamp(),
       };
       if (_selectedBranchId != null && _selectedBranchId!.isNotEmpty) {
@@ -568,19 +605,24 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           final originalLotTotalBuy = originalLotBuyUnit * qty;
           final originalLotMiles =
               milePerKRW == 0 ? 0 : (originalLotTotalBuy / milePerKRW).round();
+          final remainingQty = totalQty - qty;
+          final int remainingPoints = (isPointLot && pointRate > 0)
+              ? ((originalLotBuyUnit * remainingQty) * pointRate / 100).round()
+              : 0;
 
           // 1. 원본 lot 업데이트: qty를 판매 수량으로 변경, status를 sold로 변경
           await originalLotRef.update({
             'qty': qty,
             'mileRuleUsedPerMileKRW': milePerKRW,
             'miles': originalLotMiles,
+            // 포인트 lot은 판매분 적립 포인트로 보정.
+            if (isPointLot) 'points': points,
             'status': 'sold',
             'trade': true, // 판매 완료 시 교환 완료로 처리
             'updatedAt': FieldValue.serverTimestamp(),
           });
 
-          // 2. 새로운 lot 생성: 나머지 수량
-          final remainingQty = totalQty - qty;
+          // 2. 새로운 lot 생성: 나머지 수량 (적립 타입/포인트 필드 보존)
           final newLotId = 'lot_${DateTime.now().millisecondsSinceEpoch}';
           final newLotData = {
             'faceValue': faceValue,
@@ -590,6 +632,10 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
             'discount': (_selectedLot!['discount'] as num?)?.toDouble() ?? 0,
             'qty': remainingQty,
             'cardId': _selectedLot!['cardId'],
+            'rewardType': isPointLot ? 'point' : 'mile',
+            'pointProgram': isPointLot ? pointProgram : null,
+            'pointRatePercent': isPointLot ? pointRate : null,
+            'points': remainingPoints,
             'mileRuleUsedPerMileKRW': milePerKRW,
             'miles': milePerKRW == 0
                 ? 0
@@ -606,6 +652,7 @@ class _GiftSellScreenState extends State<GiftSellScreen> {
           await originalLotRef.update({
             'mileRuleUsedPerMileKRW': milePerKRW,
             'miles': miles,
+            if (isPointLot) 'points': points,
             'status': 'sold',
             'trade': true, // 판매 완료 시 교환 완료로 처리
             'updatedAt': FieldValue.serverTimestamp(),

@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
 import '../../const/colors.dart';
+import '../../models/user_point_model.dart';
 import '../../services/analytics_service.dart';
 import '../../services/card_transaction_service.dart';
 
@@ -891,6 +892,82 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
     return val;
   }
 
+  // 현재 선택된 카드의 원본 데이터(메모리 캐시).
+  Map<String, dynamic>? get _selectedCardData {
+    for (final c in _cards) {
+      if (c['cardId'] == _selectedCardId) return c;
+    }
+    return null;
+  }
+
+  // 선택 카드의 적립 타입 (rewardType 없으면 mile → 하위호환)
+  String get _selectedRewardType =>
+      _selectedCardData?['rewardType'] == 'point' ? 'point' : 'mile';
+
+  String _trimRate(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+  // 포인트 카드 선택 시: 결제수단(신용/체크) 대신 적립 포인트 자동계산 안내.
+  Widget _buildPointBuyInfo() {
+    final card = _selectedCardData;
+    final programId = card?['pointProgram'] as String?;
+    final brand = programId == null ? null : PointBrandCatalog.find(programId);
+    final rate = (card?['pointRatePercent'] as num?)?.toDouble() ?? 0;
+    final points = rate <= 0 ? 0 : (_totalBuy * rate / 100).round();
+    final fmt = NumberFormat('#,###');
+    Widget logo() {
+      final fb = brand?.fallbackAssetPath;
+      Widget icon() =>
+          Icon(Icons.card_giftcard, color: GiftcardColors.accent, size: 26);
+      if (brand == null) return icon();
+      return Image.asset(
+        brand.assetPath,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => fb == null
+            ? icon()
+            : Image.asset(fb, fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => icon()),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF6EC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GiftcardColors.accent.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 32, height: 32, child: logo()),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${brand?.name ?? '카드사 포인트'} 적립',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, color: Colors.black87)),
+                const SizedBox(height: 2),
+                Text(
+                  '적립율 ${_trimRate(rate)}% · 매입 ${fmt.format(_totalBuy)}원 기준',
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text('+${fmt.format(points)}P',
+              style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: GiftcardColors.accent)),
+        ],
+      ),
+    );
+  }
+
   Future<void> _save() async {
     setState(() {
       _error = null;
@@ -945,27 +1022,52 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
           widget.editLotId ?? 'lot_${DateTime.now().millisecondsSinceEpoch}';
       final String status = _existingLot?['status'] ?? 'open';
 
-      // 기존 lot에 스냅샷이 있으면 유지하고, 없을 때만 현재 카드 규칙으로 보정한다.
-      final int? existingMilePerKRW =
-          (_existingLot?['mileRuleUsedPerMileKRW'] as num?)?.toInt();
       final String cardId = _selectedCardId as String;
-      final int milePerKRW =
-          existingMilePerKRW ?? await _loadRulePerMile(uid, cardId, _payType);
       final int buyTotal = buyUnit * qty;
-      final int? existingMiles = (_existingLot?['miles'] as num?)?.toInt();
-      final int miles = existingMiles ??
-          (milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round());
+      final bool isPointCard = _selectedRewardType == 'point';
+
+      // 기존 lot에 스냅샷이 있으면 유지하고, 없을 때만 현재 카드 규칙으로 보정한다.
+      int milePerKRW = 0;
+      int miles = 0;
+      int points = 0;
+      double pointRate = 0;
+      String? pointProgram;
+      String payTypeToSave = _payType;
+
+      if (isPointCard) {
+        // 포인트 카드: 결제수단 공통(point), 적립 포인트 = 매입가 × 적립율(구매 시 확정).
+        payTypeToSave = 'point';
+        final card = _selectedCardData;
+        pointProgram = card?['pointProgram'] as String?;
+        pointRate = (card?['pointRatePercent'] as num?)?.toDouble() ?? 0;
+        final int? existingPoints = (_existingLot?['points'] as num?)?.toInt();
+        points = existingPoints ??
+            (pointRate <= 0 ? 0 : (buyTotal * pointRate / 100).round());
+      } else {
+        // 마일리지 카드: 기존 로직 그대로.
+        final int? existingMilePerKRW =
+            (_existingLot?['mileRuleUsedPerMileKRW'] as num?)?.toInt();
+        milePerKRW =
+            existingMilePerKRW ?? await _loadRulePerMile(uid, cardId, _payType);
+        final int? existingMiles = (_existingLot?['miles'] as num?)?.toInt();
+        miles = existingMiles ??
+            (milePerKRW == 0 ? 0 : (buyTotal / milePerKRW).round());
+      }
 
       final data = {
         'faceValue': faceValue,
         'buyDate': Timestamp.fromDate(_buyDate),
-        'payType': _payType,
+        'payType': payTypeToSave,
         'buyUnit': buyUnit,
         'discount': double.parse(_formatDiscount(discount)),
         'qty': qty,
         'cardId': _selectedCardId,
+        'rewardType': isPointCard ? 'point' : 'mile',
         'mileRuleUsedPerMileKRW': milePerKRW,
         'miles': miles,
+        'pointProgram': isPointCard ? pointProgram : null,
+        'pointRatePercent': isPointCard ? pointRate : null,
+        'points': isPointCard ? points : 0,
         'status': status,
         'giftcardId': _selectedGiftcardId,
         'whereToBuyId': _selectedWhereToBuyId,
@@ -1438,8 +1540,40 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                                     ? (c['cardId'] as String).trim()
                                     : '카드'));
                             final isSelected = cardId == _selectedCardId;
+                            final bool isPointCard =
+                                c['rewardType'] == 'point';
                             return ChoiceChip(
-                              label: Text(cardName),
+                              label: isPointCard
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(cardName),
+                                        const SizedBox(width: 5),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? Colors.white24
+                                                : GiftcardColors.accent
+                                                    .withValues(alpha: 0.12),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'P',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : GiftcardColors.accent,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Text(cardName),
                               selected: isSelected,
                               showCheckmark: false,
                               selectedColor: GiftcardColors.accent,
@@ -1504,36 +1638,48 @@ class _GiftBuyScreenState extends State<GiftBuyScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('결제 수단',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black)),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          ChoiceChip(
-                            label: const Text('신용'),
-                            selected: _payType == '신용',
-                            selectedColor: GiftcardColors.accent,
-                            labelStyle: TextStyle(
-                                color: _payType == '신용'
-                                    ? Colors.white
-                                    : Colors.black87),
-                            onSelected: (v) => setState(() => _payType = '신용'),
-                          ),
-                          ChoiceChip(
-                            label: const Text('체크'),
-                            selected: _payType == '체크',
-                            selectedColor: GiftcardColors.accent,
-                            labelStyle: TextStyle(
-                                color: _payType == '체크'
-                                    ? Colors.white
-                                    : Colors.black87),
-                            onSelected: (v) => setState(() => _payType = '체크'),
-                          ),
-                        ],
-                      ),
+                      if (_selectedRewardType == 'point') ...[
+                        // 포인트 카드: 신용/체크 구분 없음(공통) → 적립 포인트 안내만 표시
+                        const Text('적립 포인트',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black)),
+                        const SizedBox(height: 6),
+                        _buildPointBuyInfo(),
+                      ] else ...[
+                        const Text('결제 수단',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black)),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('신용'),
+                              selected: _payType == '신용',
+                              selectedColor: GiftcardColors.accent,
+                              labelStyle: TextStyle(
+                                  color: _payType == '신용'
+                                      ? Colors.white
+                                      : Colors.black87),
+                              onSelected: (v) =>
+                                  setState(() => _payType = '신용'),
+                            ),
+                            ChoiceChip(
+                              label: const Text('체크'),
+                              selected: _payType == '체크',
+                              selectedColor: GiftcardColors.accent,
+                              labelStyle: TextStyle(
+                                  color: _payType == '체크'
+                                      ? Colors.white
+                                      : Colors.black87),
+                              onSelected: (v) =>
+                                  setState(() => _payType = '체크'),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       const Text('구매일',
                           style: TextStyle(

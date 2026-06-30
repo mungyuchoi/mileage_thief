@@ -218,6 +218,15 @@ class PointBrandCatalog {
       pointLabel: '포인트',
       sortOrder: 50,
     ),
+    PointBrand(
+      id: 'woori_card',
+      category: PointCategory.card,
+      name: '우리카드',
+      assetPath: 'asset/img/woori.webp',
+      fallbackAssetPath: 'asset/icon/card.png',
+      pointLabel: '포인트',
+      sortOrder: 60,
+    ),
   ];
 
   static List<PointBrand> byCategory(String category) {

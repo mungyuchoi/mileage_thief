@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mileage_thief/const/colors.dart';
+import 'package:mileage_thief/models/user_point_model.dart';
 import 'package:mileage_thief/helper/AdHelper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -318,6 +319,7 @@ enum _DashboardSection {
   segment,
   periodHeader,
   kpis,
+  points,
   loadingStrip,
   banner,
   brandDistribution,
@@ -386,6 +388,11 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
   int _cachedSumMiles = 0;
   int _cachedOpenQty = 0;
   double _cachedAvgCostPerMile = 0;
+  // 포인트(카드사 적립) 집계 — 마일과 분리. 프로그램별 + 카드별 실적.
+  Map<String, int> _cachedProgramPoints = <String, int>{}; // program → 누적 적립
+  Map<String, double> _cachedProgramPointCost =
+      <String, double>{}; // program → 원/포인트(낮을수록 우수)
+  Map<String, int> _cachedCardSpend = <String, int>{}; // cardId → 매입 누계(실적)
   List<MapEntry<String, int>> _brandAmountEntries = <MapEntry<String, int>>[];
   List<MapEntry<String, int>> _brandCountEntries = <MapEntry<String, int>>[];
   List<MapEntry<String, int>> _brandRemainEntries = <MapEntry<String, int>>[];
@@ -1339,6 +1346,12 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     int weightedBuyTotal = 0;
     int weightedQtyTotal = 0;
 
+    // 포인트(카드사 적립) 집계 — 프로그램별 + 카드별 실적.
+    final Map<String, int> programPoints = {};
+    final Map<String, int> cardSpend = {};
+    final Map<String, int> programSoldPoints = {};
+    final Map<String, int> programSoldProfit = {};
+
     for (final lot in _lots) {
       final qty = _asInt(lot['qty']);
       final buyUnit = _asInt(lot['buyUnit']);
@@ -1348,6 +1361,17 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
 
       sumBuy += buyUnit * qty;
       sumMiles += _effectiveLotMiles(lot);
+      // 카드별 매입 누계(실적) — 모든 카드 집계, 표시는 실적목표 있는 카드만.
+      final lotCardId = (lot['cardId'] as String?) ?? '';
+      if (lotCardId.isNotEmpty) {
+        cardSpend[lotCardId] = (cardSpend[lotCardId] ?? 0) + buyUnit * qty;
+      }
+      // 포인트 적립(구매 시 확정) — 프로그램별 합산.
+      final lotPoints = _effectiveLotPoints(lot);
+      if (lotPoints > 0) {
+        final program = (lot['pointProgram'] as String?) ?? 'etc';
+        programPoints[program] = (programPoints[program] ?? 0) + lotPoints;
+      }
       brandAmount[brand] = (brandAmount[brand] ?? 0) + (buyUnit * qty);
       brandCount[brand] = (brandCount[brand] ?? 0) + qty;
       brandTotalQty[brand] = (brandTotalQty[brand] ?? 0) + qty;
@@ -1381,6 +1405,15 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         sumSell += _asInt(s['sellTotal']);
         sumProfit += _asInt(s['profit']);
         sumSoldMiles += _asInt(s['miles']);
+
+        // 포인트 효율(판매 후) — 프로그램별 누적 포인트/손익으로 원/포인트 산출.
+        if (s['rewardType'] == 'point') {
+          final program = (s['pointProgram'] as String?) ?? 'etc';
+          programSoldPoints[program] =
+              (programSoldPoints[program] ?? 0) + _asInt(s['points']);
+          programSoldProfit[program] =
+              (programSoldProfit[program] ?? 0) + _asInt(s['profit']);
+        }
 
         final d = s['sellDate'];
         if (d is Timestamp) {
@@ -1525,6 +1558,18 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     _cachedSumSell = sumSell;
     _cachedSumProfit = sumProfit;
     _cachedSumMiles = sumMiles;
+
+    // 포인트 캐시 확정
+    _cachedProgramPoints = programPoints;
+    _cachedCardSpend = cardSpend;
+    final Map<String, double> programCost = {};
+    programSoldPoints.forEach((program, pts) {
+      if (pts > 0) {
+        final profit = programSoldProfit[program] ?? 0;
+        programCost[program] = -profit / pts; // 손실 ÷ 포인트 = 원/포인트
+      }
+    });
+    _cachedProgramPointCost = programCost;
     _cachedOpenQty = openQty;
     _cachedAvgCostPerMile = sumSoldMiles == 0 ? 0 : (-sumProfit / sumSoldMiles);
     _brandAmountEntries = brandAmountEntries;
@@ -1570,7 +1615,26 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
     return double.tryParse(v.toString()) ?? 0;
   }
 
+  // 포인트 카드/적립이 있으면 true → 대시보드 포인트 섹션 노출.
+  bool get _hasPointData =>
+      _cachedProgramPoints.values.any((v) => v > 0) ||
+      _cards.values.any((c) => c['rewardType'] == 'point');
+
+  // 포인트 lot의 적립 포인트 (구매 시 확정). 마일 lot은 0.
+  int _effectiveLotPoints(Map<String, dynamic> lot) {
+    if (lot['rewardType'] != 'point') return 0;
+    final stored = _asInt(lot['points']);
+    if (stored > 0) return stored;
+    final rate = (lot['pointRatePercent'] as num?)?.toDouble() ?? 0;
+    if (rate <= 0) return 0;
+    final buyTotal = _asInt(lot['buyUnit']) * _asInt(lot['qty']);
+    if (buyTotal <= 0) return 0;
+    return (buyTotal * rate / 100).round();
+  }
+
   int _effectiveLotMiles(Map<String, dynamic> lot) {
+    // 포인트 lot은 마일에 포함하지 않는다(단위 분리).
+    if (lot['rewardType'] == 'point') return 0;
     final storedMiles = _asInt(lot['miles']);
     if (storedMiles > 0) return storedMiles;
 
@@ -1834,6 +1898,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
       _DashboardSection.segment,
       _DashboardSection.periodHeader,
       _DashboardSection.kpis,
+      // 포인트 카드/적립이 있을 때만 노출 (마일 전용 사용자는 영향 없음)
+      if (_hasPointData) _DashboardSection.points,
       if (_loading && !_hasInfoData) _DashboardSection.loadingStrip,
       _DashboardSection.banner,
     ];
@@ -1864,6 +1930,8 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
         return _loading && !_hasInfoData
             ? _buildKpiSkeletonRows()
             : _buildDashboardKpiRows();
+      case _DashboardSection.points:
+        return _buildPointSummarySection();
       case _DashboardSection.loadingStrip:
         return const Padding(
           padding: EdgeInsets.only(top: 10, bottom: 2),
@@ -2134,6 +2202,145 @@ class _GiftcardInfoScreenState extends State<GiftcardInfoScreen>
           ],
         ),
       ],
+    );
+  }
+
+  // ── 카드사 포인트 + 실적 섹션 (포인트 카드/적립 있을 때만) ──
+  Widget _buildPointSummarySection() {
+    final programEntries = _cachedProgramPoints.entries
+        .where((e) => e.value > 0)
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final spendCards = _cards.entries
+        .where((e) => _asInt(e.value['targetSpendKRW']) > 0)
+        .toList();
+
+    return _advancedDashboardSection(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(
+            title: '카드사 포인트',
+            description:
+                '카드사 포인트 적립을 프로그램별로 합산해 보여줘요. 마일과 단위가 달라 분리 집계하며, 효율(원/포인트)은 판매 완료 건 기준이에요.',
+          ),
+          const SizedBox(height: 10),
+          if (programEntries.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Text('아직 적립된 포인트가 없어요.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF8A8F9A))),
+            )
+          else
+            ...programEntries.map((e) => _buildProgramPointRow(e.key, e.value)),
+          if (spendCards.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text('실적 달성',
+                style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: Color(0xFF1F1F28))),
+            const SizedBox(height: 8),
+            ...spendCards.map((e) => _buildSpendGaugeRow(e.key, e.value)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgramPointRow(String program, int points) {
+    final brand = PointBrandCatalog.find(program);
+    final cost = _cachedProgramPointCost[program];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(width: 26, height: 26, child: _pointBrandLogo(brand)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(brand?.name ?? program,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, color: Color(0xFF1F1F28))),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('${_won.format(points)} P',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: GiftcardColors.accent)),
+              if (cost != null)
+                Text('원/P ${cost.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFF8A8F9A))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpendGaugeRow(String cardId, Map<String, dynamic> card) {
+    final spent = _cachedCardSpend[cardId] ?? 0;
+    final target = _asInt(card['targetSpendKRW']);
+    final double ratio =
+        target <= 0 ? 0.0 : (spent / target).clamp(0.0, 1.0).toDouble();
+    final pct = (ratio * 100).round();
+    final name = (card['name'] as String?)?.trim().isNotEmpty == true
+        ? card['name'] as String
+        : cardId;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F1F28))),
+              ),
+              Text('${_won.format(spent)} / ${_won.format(target)}원 ($pct%)',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF596172))),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFF0F1F5),
+              color: ratio >= 1.0
+                  ? const Color(0xFF2F8F63)
+                  : GiftcardColors.accent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pointBrandLogo(PointBrand? brand) {
+    Widget icon() => const Icon(Icons.credit_card_rounded,
+        size: 22, color: GiftcardColors.accent);
+    if (brand == null) return icon();
+    final fb = brand.fallbackAssetPath;
+    return Image.asset(
+      brand.assetPath,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => fb == null
+          ? icon()
+          : Image.asset(fb, fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => icon()),
     );
   }
 
