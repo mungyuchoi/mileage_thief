@@ -12,6 +12,7 @@ import 'services/notification_preference_service.dart';
 import 'services/branch_service.dart';
 import 'services/share_intent_service.dart';
 import 'services/analytics_service.dart';
+import 'services/auth_session_monitor.dart';
 import 'services/language_service.dart';
 import 'l10n/app_locale.dart';
 import 'screen/splash_screen.dart';
@@ -266,6 +267,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         _touchLastActive();
         // 언어 설정 로드(캐시 → users/{uid}.language)
         unawaited(LanguageService.init());
+        // 세션 소실 모니터링(로그인 유지 이슈 추적). Firebase 초기화 이후 등록.
+        AuthSessionMonitor.start();
         // 로그인되면 사용자의 언어 설정으로 동기화. (Firebase 초기화 이후 등록)
         FirebaseAuth.instance.authStateChanges().listen((user) {
           if (user != null) {

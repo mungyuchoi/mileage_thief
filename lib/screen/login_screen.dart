@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../helper/AdHelper.dart';
 import '../services/auth_service.dart';
+import '../services/auth_session_monitor.dart';
 import '../services/user_service.dart';
 import '../services/fcm_service.dart';
 import '../services/analytics_service.dart';
@@ -570,6 +571,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogout() async {
     try {
+      // 의도한 로그아웃임을 기록(세션 소실 모니터 오탐 방지)
+      await AuthSessionMonitor.markSignedOutIntentionally();
       await AuthService.signOut();
       await AnalyticsService.instance.clearUserId();
       await AnalyticsService.instance
