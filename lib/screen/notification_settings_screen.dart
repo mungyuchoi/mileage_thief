@@ -245,6 +245,65 @@ class _NotificationSettingsScreenState
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  const _NotificationSectionLabel('상품권 알림'),
+                  const SizedBox(height: 6),
+                  _NotificationSection(
+                    children: [
+                      _NotificationSwitchTile(
+                        icon: Icons.trending_up_outlined,
+                        title: '시세 급변동 속보',
+                        subtitle: '주요 상품권 매입가가 크게 움직였을 때',
+                        value: _enabled(
+                            NotificationPreferenceService.giftcardPriceSurge),
+                        busy: _savingKey ==
+                            NotificationPreferenceService.giftcardPriceSurge,
+                        onChanged: (value) => _setPreference(
+                          NotificationPreferenceService.giftcardPriceSurge,
+                          value,
+                        ),
+                      ),
+                      _NotificationSwitchTile(
+                        icon: Icons.emoji_events_outlined,
+                        title: '30일 최고가',
+                        subtitle: '매입가가 최근 30일 최고가에 도달했을 때',
+                        value: _enabled(
+                            NotificationPreferenceService.giftcardHigh30d),
+                        busy: _savingKey ==
+                            NotificationPreferenceService.giftcardHigh30d,
+                        onChanged: (value) => _setPreference(
+                          NotificationPreferenceService.giftcardHigh30d,
+                          value,
+                        ),
+                      ),
+                      _NotificationSwitchTile(
+                        icon: Icons.credit_card_outlined,
+                        title: '상테크 수익률',
+                        subtitle: '내 카드 적립율 기준 수익이 플러스일 때',
+                        value: _enabled(
+                            NotificationPreferenceService.giftcardSangtech),
+                        busy: _savingKey ==
+                            NotificationPreferenceService.giftcardSangtech,
+                        onChanged: (value) => _setPreference(
+                          NotificationPreferenceService.giftcardSangtech,
+                          value,
+                        ),
+                      ),
+                      _NotificationSwitchTile(
+                        icon: Icons.receipt_long_outlined,
+                        title: '주간 시세 브리핑',
+                        subtitle: '매주 금요일 상품권 시세 요약',
+                        value: _enabled(
+                            NotificationPreferenceService.giftcardWeeklyBrief),
+                        busy: _savingKey ==
+                            NotificationPreferenceService.giftcardWeeklyBrief,
+                        onChanged: (value) => _setPreference(
+                          NotificationPreferenceService.giftcardWeeklyBrief,
+                          value,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 6),

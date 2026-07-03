@@ -16,6 +16,10 @@ class NotificationPreferenceService {
   static const String radarFlightDeal = 'radar_flight_deal';
   static const String radarGiftcard = 'radar_giftcard';
   static const String radarBenefitNews = 'radar_benefit_news';
+  static const String giftcardPriceSurge = 'giftcard_price_surge';
+  static const String giftcardHigh30d = 'giftcard_high_30d';
+  static const String giftcardSangtech = 'giftcard_sangtech';
+  static const String giftcardWeeklyBrief = 'giftcard_weekly_brief';
 
   static const Map<String, bool> defaultPreferences = {
     communityPostLike: true,
@@ -28,6 +32,10 @@ class NotificationPreferenceService {
     radarFlightDeal: true,
     radarGiftcard: true,
     radarBenefitNews: true,
+    giftcardPriceSurge: true,
+    giftcardHigh30d: true,
+    giftcardSangtech: true,
+    giftcardWeeklyBrief: true,
   };
 
   static const Map<String, String> _legacyKeys = {
@@ -171,6 +179,11 @@ class NotificationPreferenceService {
     if (type == 'giftcard_deal') {
       return (preferences[radarAll] ?? true) &&
           (preferences[radarGiftcard] ?? true);
+    }
+
+    // 상품권 푸시(P1~P4): type == preference key (1:1 대응)
+    if (type != null && defaultPreferences.containsKey(type)) {
+      return preferences[type] ?? true;
     }
 
     return true;

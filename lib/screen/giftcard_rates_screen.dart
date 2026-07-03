@@ -18,6 +18,7 @@ import '../utils/firestore_cache_first.dart';
 import '../widgets/segment_tab_bar.dart';
 import 'community_detail_screen.dart';
 import 'community_post_create_simple_screen.dart';
+import 'gift/gift_sell_screen.dart';
 import 'giftcard_deals_screen.dart';
 
 // 추천 대시보드 땅콩 안내 다이얼로그 "다시 보지 않기" 플래그
@@ -693,15 +694,31 @@ class _RecommendEntryCard extends StatelessWidget {
   }
 }
 
+/// 상테크 수익률 계산용 내 카드 항목
+class _SangtechCardEntry {
+  final String name;
+  final double ratePct;
+
+  const _SangtechCardEntry({required this.name, required this.ratePct});
+}
+
 /// 2단계: 특정 브랜드 선택 시, 상품권 상세 탭 화면
 class GiftcardBrandRatesPage extends StatefulWidget {
   final String giftcardId;
   final String giftcardName;
 
+  /// 진입 시 선택할 탭(0 피드/1 특가/2 시세/3 정보). 푸시 딥링크용.
+  final int? initialTabIndex;
+
+  /// 푸시 딥링크 컨텍스트: 'surge' | 'high30d' | 'sangtech'
+  final String? highlight;
+
   const GiftcardBrandRatesPage({
     super.key,
     required this.giftcardId,
     required this.giftcardName,
+    this.initialTabIndex,
+    this.highlight,
   });
 
   @override
@@ -720,10 +737,14 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
   Map<String, dynamic>? _giftcard;
   List<Map<String, dynamic>> _rateRows = <Map<String, dynamic>>[];
   List<_GiftcardFeedPost> _feedPosts = <_GiftcardFeedPost>[];
+  List<_SangtechCardEntry> _myCards = <_SangtechCardEntry>[];
   bool _isLoadingGiftcard = true;
   bool _isLoadingRates = true;
   bool _isLoadingFeed = true;
   int _selectedTabIndex = 0;
+
+  // 상테크 계산용 1마일 가치(원). Functions 상수와 동일하게 유지.
+  static const double _mileValueKrw = 15;
 
   String get _effectiveGiftcardName {
     final fromDoc = _string(_giftcard?['name']);
@@ -741,16 +762,28 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
     AnalyticsService.instance.logScreenView(
       'giftcard_rates',
       screenClass: 'GiftcardBrandRatesPage',
-      source: 'screen_init',
-      parameters: {'giftcard_id': widget.giftcardId},
+      source: widget.highlight != null ? 'push_deep_link' : 'screen_init',
+      parameters: {
+        'giftcard_id': widget.giftcardId,
+        if (widget.highlight != null) 'highlight': widget.highlight!,
+      },
     );
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    final int initialIndex = widget.initialTabIndex == null
+        ? 0
+        : widget.initialTabIndex!.clamp(0, _tabs.length - 1).toInt();
+    _selectedTabIndex = initialIndex;
+    _tabController = TabController(
+      length: _tabs.length,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
     _tabController.addListener(_handleTabChanged);
     _dealsStream = GiftcardDealService.watchDeals();
     _initialDeals = GiftcardDealService.peekDeals();
     _loadGiftcard();
     _loadRateRows();
     _loadFeedPosts();
+    _loadMyCards();
   }
 
   @override
@@ -797,6 +830,53 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
       if (!mounted) return;
       setState(() => _isLoadingGiftcard = false);
     }
+  }
+
+  /// 내 카드(users/{uid}/cards) 로드 → 상테크 수익률 계산용.
+  Future<void> _loadMyCards() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('cards')
+          .limit(10)
+          .get();
+      final entries = <_SangtechCardEntry>[];
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final rate = _cardRewardRatePct(data);
+        if (rate == null) continue;
+        entries.add(_SangtechCardEntry(
+          name: _string(data['name']).isEmpty ? '내 카드' : _string(data['name']),
+          ratePct: rate,
+        ));
+      }
+      entries.sort((a, b) => b.ratePct.compareTo(a.ratePct));
+      if (!mounted) return;
+      setState(() => _myCards = entries);
+    } catch (e) {
+      debugPrint('내 카드 로드 오류: $e');
+    }
+  }
+
+  /// 카드 문서 → 적립율(%) 환산. Functions giftcardCardRewardRatePct 와 동일 로직.
+  double? _cardRewardRatePct(Map<String, dynamic> card) {
+    final rewardType = _string(card['rewardType']);
+    if (rewardType == 'point') {
+      final rate = _num(card['pointRatePercent'])?.toDouble();
+      return (rate != null && rate > 0) ? rate : null;
+    }
+    if (rewardType == 'mile') {
+      final credit = _num(card['creditPerMileKRW'])?.toDouble() ?? 0;
+      final check = _num(card['checkPerMileKRW'])?.toDouble() ?? 0;
+      final perMile = credit > 0 ? credit : check;
+      if (perMile > 0) {
+        return (_mileValueKrw / perMile) * 100;
+      }
+    }
+    return null;
   }
 
   Future<void> _loadRateRows() async {
@@ -1101,6 +1181,8 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
                 padding: EdgeInsets.fromLTRB(16, 16, 16, contentBottomPadding),
                 children: [
                   _buildHeroCard(),
+                  ..._buildHighlightBanner(),
+                  ..._buildSangtechSection(),
                   const SizedBox(height: 12),
                   ScrollableUnderlineTabBar(
                     controller: _tabController,
@@ -1128,6 +1210,199 @@ class _GiftcardBrandRatesPageState extends State<GiftcardBrandRatesPage>
       default:
         return _buildFeedTab();
     }
+  }
+
+  /// 푸시 딥링크(surge/high30d)로 진입했을 때 컨텍스트 배너.
+  List<Widget> _buildHighlightBanner() {
+    final highlight = widget.highlight;
+    if (highlight != 'surge' && highlight != 'high30d') {
+      return const <Widget>[];
+    }
+    final bool isHigh30d = highlight == 'high30d';
+    return [
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: GiftcardColors.accentSoft,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: GiftcardColors.accentBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isHigh30d
+                      ? Icons.emoji_events_outlined
+                      : Icons.trending_up_outlined,
+                  color: GiftcardColors.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isHigh30d
+                        ? '최근 30일 중 매입가가 가장 높아요'
+                        : '매입가가 크게 움직여서 알려드렸어요',
+                    style: const TextStyle(
+                      color: McColors.ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isHigh30d
+                  ? '갖고 있는 상품권이 있다면 지금 파는 게 유리할 수 있어요. 아래 시세 탭에서 지점별 매입가를 비교해보세요.'
+                  : '아래 시세 탭에서 지점별 매입가를 확인해보세요.',
+              style: McTextStyles.meta,
+            ),
+            if (isHigh30d) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: GiftcardColors.accent,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    AnalyticsService.instance
+                        .logAction('giftcard_sell_cta', params: {
+                      'screen': 'giftcard_rates',
+                      'giftcard_id': widget.giftcardId,
+                      'source': 'high30d_banner',
+                    });
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const GiftSellScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.sell_outlined, size: 18),
+                  label: const Text('판매 등록하기'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ];
+  }
+
+  /// 내 카드 기준 상테크 수익률 카드.
+  /// 카드가 등록된 유저에게 항상 노출, highlight=='sangtech'면 강조.
+  List<Widget> _buildSangtechSection() {
+    final bool emphasized = widget.highlight == 'sangtech';
+    final price = _num(_giftcard?['bestSellPrice'])?.toDouble();
+
+    if (_myCards.isEmpty) {
+      if (!emphasized) return const <Widget>[];
+      // 딥링크로 왔는데 카드가 없으면 등록 유도
+      return [
+        const SizedBox(height: 12),
+        _GiftcardSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '💳 상테크 수익률',
+                style: TextStyle(
+                  color: McColors.ink,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '상품권 구매 등록에서 카드를 등록하면 내 카드 적립율 기준 실질 수익률을 계산해드려요.',
+                style: McTextStyles.meta,
+              ),
+            ],
+          ),
+        ),
+      ];
+    }
+
+    if (price == null || price <= 0) return const <Widget>[];
+
+    final double sellRatePct = (price / 100000) * 100;
+    final double spreadPct = 100 - sellRatePct;
+    final bestCard = _myCards.first;
+    final double netPct = bestCard.ratePct - spreadPct;
+    final bool positive = netPct > 0;
+    final Color netColor =
+        positive ? const Color(0xFF15803D) : const Color(0xFFB91C1C);
+
+    return [
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: emphasized ? GiftcardColors.accent : Colors.black12,
+            width: emphasized ? 1.4 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.credit_card_outlined,
+                  color: GiftcardColors.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '내 카드 상테크 수익률',
+                    style: TextStyle(
+                      color: McColors.ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${positive ? '+' : ''}${netPct.toStringAsFixed(2)}%',
+                  style: TextStyle(
+                    color: netColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${bestCard.name} 적립 ${bestCard.ratePct.toStringAsFixed(2)}% − '
+              '매입 스프레드 ${spreadPct.toStringAsFixed(2)}%'
+              ' (매입가 ${_fmtPrice(price)} 기준)',
+              style: McTextStyles.meta,
+            ),
+            if (positive) ...[
+              const SizedBox(height: 4),
+              Text(
+                '지금 이 카드로 사서 바로 팔면 이론상 플러스예요.',
+                style: McTextStyles.meta.copyWith(
+                  color: netColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ];
   }
 
   Widget _buildHeroCard() {

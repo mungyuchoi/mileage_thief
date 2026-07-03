@@ -8553,9 +8553,10 @@ const NEW_CONTRIB_FANOUT = 20; // 신규기여 알림 최대 수신자
  * @param {string} title 제목
  * @param {string} body 본문
  * @param {Object} data 데이터 페이로드
+ * @param {Object} [options] 추가 옵션({androidChannelId} 등)
  * @return {Promise<void>}
  */
-async function sendPushToUser(uid, title, body, data) {
+async function sendPushToUser(uid, title, body, data, options = {}) {
   try {
     const db = admin.firestore();
     const tokenSet = new Set();
@@ -8574,11 +8575,18 @@ async function sendPushToUser(uid, title, body, data) {
     Object.keys(data || {}).forEach((k) => {
       payload[k] = String((data || {})[k]);
     });
-    const res = await admin.messaging().sendEachForMulticast({
+    const message = {
       tokens,
       notification: {title, body},
       data: payload,
-    });
+    };
+    // 백그라운드 수신 시 OS 채널별 on/off 가 동작하도록 안드로이드 채널 지정
+    if (options.androidChannelId) {
+      message.android = {
+        notification: {channelId: options.androidChannelId},
+      };
+    }
+    const res = await admin.messaging().sendEachForMulticast(message);
     res.responses.forEach((r, i) => {
       const code = r.error && r.error.code;
       if (!r.success &&
@@ -9183,4 +9191,456 @@ exports.lbAggregateNow = onCall({region: LB_REGION}, async (request) => {
   }
   const summary = await rebuildAllLeaderboards();
   return {ok: true, summary};
+});
+
+// ── 상품권 푸시(P1~P4): hasGift 세그먼트 ───────────────────────
+// P1 시세 급변동 속보 / P2 30일 최고가 / P3 상테크 수익률 / P4 주간 브리핑.
+// 대상: users.hasGift == true + 알림 설정(notificationPreferences) ON 유저.
+
+const GIFTCARD_PUSH_REGION = "asia-northeast3";
+const GIFTCARD_FACE_VALUE = 100000; // 시세 기준 액면가(10만원권)
+const GIFTCARD_SURGE_THRESHOLD_PCT = 0.5; // P1 급변동 임계값(%)
+const GIFTCARD_HISTORY_KEEP_DAYS = 45; // 시세 히스토리 보존 일수
+const GIFTCARD_HIGH30D_COOLDOWN_DAYS = 7; // P2 종목별 재발송 쿨다운
+const GIFTCARD_SANGTECH_COOLDOWN_DAYS = 7; // P3 유저별 재발송 쿨다운
+const GIFTCARD_MILE_VALUE_KRW = 15; // P3 상테크 계산용 1마일 가치(원)
+const GIFTCARD_PUSH_FANOUT_CHUNK = 20; // 세그먼트 발송 동시 처리 수
+
+// Flutter NotificationPreferenceService 키와 1:1 대응.
+const GIFTCARD_PUSH_PREF_KEYS = {
+  giftcard_price_surge: "giftcard_price_surge",
+  giftcard_high_30d: "giftcard_high_30d",
+  giftcard_sangtech: "giftcard_sangtech",
+  giftcard_weekly_brief: "giftcard_weekly_brief",
+};
+
+// type → Android 알림 채널 ID(Flutter NotificationService 채널과 동일).
+const GIFTCARD_PUSH_CHANNELS = {
+  giftcard_price_surge: "giftcard_price_surge_notifications",
+  giftcard_high_30d: "giftcard_high_30d_notifications",
+  giftcard_sangtech: "giftcard_sangtech_notifications",
+  giftcard_weekly_brief: "giftcard_weekly_brief_notifications",
+};
+
+/**
+ * KST 기준 날짜 키(YYYY-MM-DD).
+ * @param {Date} [d] 기준 시각(기본 now)
+ * @return {string}
+ */
+function kstDateKey(d = new Date()) {
+  return new Date(d.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+/**
+ * bestSellPrice(10만원권 매입가) → 매입률(%).
+ * @param {number} price
+ * @return {number}
+ */
+function giftcardSellRatePct(price) {
+  return (price / GIFTCARD_FACE_VALUE) * 100;
+}
+
+/**
+ * hasGift 세그먼트 중 해당 알림 설정이 켜진 유저 uid 목록.
+ * @param {string} prefKey notificationPreferences 키
+ * @return {Promise<string[]>}
+ */
+async function listGiftcardPushTargets(prefKey) {
+  const db = admin.firestore();
+  const snap = await db.collection("users")
+      .where("hasGift", "==", true).get();
+  const uids = [];
+  snap.forEach((doc) => {
+    const data = doc.data() || {};
+    if (isNotificationPreferenceEnabled(data, prefKey)) {
+      uids.push(doc.id);
+    }
+  });
+  return uids;
+}
+
+/**
+ * 상품권 인앱 알림함 기록(users/{uid}/notifications).
+ * @param {string} uid
+ * @param {string} type
+ * @param {string} giftcardId
+ * @param {string} title
+ * @param {string} body
+ * @return {Promise<void>}
+ */
+async function writeGiftcardNotif(uid, type, giftcardId, title, body) {
+  try {
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    await admin.firestore()
+        .collection(`users/${uid}/notifications`)
+        .add({
+          type, giftcardId, title, body,
+          message: body,
+          read: false,
+          isRead: false,
+          createdAt: now,
+        });
+  } catch (e) {
+    logger.warn("상품권 인앱 알림 기록 실패", e);
+  }
+}
+
+/**
+ * hasGift 세그먼트에 청크 단위로 푸시 발송 + 알림함 기록.
+ * @param {string} type 알림 타입(= pref/채널 키의 근원)
+ * @param {string} title 제목
+ * @param {string} body 본문
+ * @param {Object} data 딥링크 payload(type/channelId 는 자동 주입)
+ * @return {Promise<number>} 발송 대상 수
+ */
+async function sendGiftcardPushToSegment(type, title, body, data) {
+  const prefKey = GIFTCARD_PUSH_PREF_KEYS[type];
+  const channelId = GIFTCARD_PUSH_CHANNELS[type];
+  const uids = await listGiftcardPushTargets(prefKey);
+  const payload = {
+    ...data,
+    type,
+    channelId,
+    notificationTitle: title,
+    notificationBody: body,
+  };
+  for (let i = 0; i < uids.length; i += GIFTCARD_PUSH_FANOUT_CHUNK) {
+    const chunk = uids.slice(i, i + GIFTCARD_PUSH_FANOUT_CHUNK);
+    await Promise.all(chunk.map(async (uid) => {
+      await sendPushToUser(uid, title, body, payload,
+          {androidChannelId: channelId});
+      await writeGiftcardNotif(
+          uid, type, String(data.giftcardId || ""), title, body);
+    }));
+  }
+  return uids.length;
+}
+
+/**
+ * P1: 시세 급변동 속보.
+ * giftcards/{id}.bestSellPrice 가 직전값 대비 임계값 이상 변동하면
+ * hasGift 세그먼트에 즉시 발송. 종목당 KST 하루 1회 제한.
+ */
+exports.onGiftcardPriceSurgePush = onDocumentWritten({
+  document: "giftcards/{giftcardId}",
+  region: GIFTCARD_PUSH_REGION,
+}, async (event) => {
+  try {
+    const {giftcardId} = event.params;
+    const after = event.data.after;
+    if (!after.exists || !event.data.before.exists) return;
+
+    const beforeData = event.data.before.data() || {};
+    const afterData = after.data() || {};
+    const prev = asOptionalNumber(beforeData.bestSellPrice);
+    const curr = asOptionalNumber(afterData.bestSellPrice);
+    if (!prev || !curr || prev <= 0 || curr <= 0 || prev === curr) return;
+
+    const changePct = ((curr - prev) / prev) * 100;
+    if (Math.abs(changePct) < GIFTCARD_SURGE_THRESHOLD_PCT) return;
+
+    // 종목당 KST 하루 1회 제한(자기 자신 재트리거는 가격 동일로 걸러짐).
+    const today = kstDateKey();
+    if (afterData.surgeNotifiedDate === today) return;
+    await after.ref.set({surgeNotifiedDate: today}, {merge: true});
+
+    const name = asOptionalString(afterData.name) || giftcardId;
+    const branch = asOptionalString(afterData.bestSellBranchName) || "";
+    const rising = changePct > 0;
+    const title = rising ? `📈 ${name} 매입가 급등` : `📉 ${name} 매입가 급락`;
+    const sign = rising ? "+" : "";
+    const body = `${formatWon(curr)} (${sign}${changePct.toFixed(2)}%)` +
+      (branch ? ` · ${branch}` : "");
+
+    const sent = await sendGiftcardPushToSegment(
+        "giftcard_price_surge", title, body, {
+          giftcardId,
+          giftcardName: name,
+          highlight: "surge",
+        });
+    logger.info(`상품권 급변동 푸시: ${giftcardId} ${changePct.toFixed(2)}% ` +
+      `→ ${sent}명`);
+  } catch (error) {
+    logger.error(`상품권 급변동 푸시 오류: ${error.message}`, error);
+  }
+});
+
+/**
+ * 종목별 일별 시세 스냅샷 갱신 + 오래된 항목 정리.
+ * giftcardRateHistory/{giftcardId} = { days: {"YYYY-MM-DD": price} }
+ * @param {string} giftcardId
+ * @param {number} price 오늘 bestSellPrice
+ * @return {Promise<Object>} 갱신 후 days 맵
+ */
+async function upsertGiftcardDailyHistory(giftcardId, price) {
+  const db = admin.firestore();
+  const ref = db.doc(`giftcardRateHistory/${giftcardId}`);
+  const snap = await ref.get();
+  const days = snap.exists ? {...(snap.data() || {}).days} : {};
+  const today = kstDateKey();
+  days[today] = price;
+  const cutoff = kstDateKey(
+      new Date(Date.now() - GIFTCARD_HISTORY_KEEP_DAYS * 86400000));
+  Object.keys(days).forEach((key) => {
+    if (key < cutoff) delete days[key];
+  });
+  await ref.set({
+    days,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return days;
+}
+
+/**
+ * P2: 30일 최고가 알림. 매일 10:30 KST.
+ * 오늘 bestSellPrice 가 직전 30일 최고가를 넘으면 발송(종목별 7일 쿨다운,
+ * 하루 최대 2종목 — 상승률 큰 순).
+ */
+exports.giftcardHigh30dPush = onSchedule({
+  schedule: "30 10 * * *",
+  timeZone: "Asia/Seoul",
+  region: GIFTCARD_PUSH_REGION,
+}, async () => {
+  const db = admin.firestore();
+  const snap = await db.collection("giftcards").get();
+  const today = kstDateKey();
+  const candidates = [];
+
+  for (const doc of snap.docs) {
+    const data = doc.data() || {};
+    const price = asOptionalNumber(data.bestSellPrice);
+    if (!price || price <= 0) continue;
+
+    const days = await upsertGiftcardDailyHistory(doc.id, price);
+    const prevPrices = Object.entries(days)
+        .filter(([date]) => date !== today)
+        .map(([, value]) => Number(value) || 0);
+    if (prevPrices.length < 7) continue; // 히스토리 축적 전에는 미발송
+
+    const prevMax = Math.max(...prevPrices);
+    if (price <= prevMax) continue;
+
+    const notifiedAt = data.high30dNotifiedAt &&
+      typeof data.high30dNotifiedAt.toDate === "function" ?
+        data.high30dNotifiedAt.toDate() : null;
+    if (notifiedAt && (Date.now() - notifiedAt.getTime()) <
+        GIFTCARD_HIGH30D_COOLDOWN_DAYS * 86400000) {
+      continue;
+    }
+
+    candidates.push({
+      giftcardId: doc.id,
+      ref: doc.ref,
+      name: asOptionalString(data.name) || doc.id,
+      branch: asOptionalString(data.bestSellBranchName) || "",
+      price,
+      gainPct: ((price - prevMax) / prevMax) * 100,
+    });
+  }
+
+  candidates.sort((a, b) => b.gainPct - a.gainPct);
+  for (const item of candidates.slice(0, 2)) {
+    const title = `💰 ${item.name} 30일 최고가`;
+    const body = `매입가 ${formatWon(item.price)} — 갖고 있다면 지금이 기회` +
+      (item.branch ? ` · ${item.branch}` : "");
+    const sent = await sendGiftcardPushToSegment(
+        "giftcard_high_30d", title, body, {
+          giftcardId: item.giftcardId,
+          giftcardName: item.name,
+          highlight: "high30d",
+        });
+    await item.ref.set({
+      high30dNotifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+    logger.info(`상품권 30일 최고가 푸시: ${item.giftcardId} → ${sent}명`);
+  }
+});
+
+/**
+ * 카드 문서(users/{uid}/cards/{cardId}) → 적립율(%) 환산.
+ * point: pointRatePercent 그대로 / mile: 마일가치(원) ÷ N원당1마일 × 100.
+ * @param {Object} card
+ * @return {number|null}
+ */
+function giftcardCardRewardRatePct(card) {
+  const rewardType = asOptionalString(card.rewardType);
+  if (rewardType === "point") {
+    const rate = asOptionalNumber(card.pointRatePercent);
+    return rate && rate > 0 ? rate : null;
+  }
+  if (rewardType === "mile") {
+    const perMile = asOptionalNumber(card.creditPerMileKRW) ||
+      asOptionalNumber(card.checkPerMileKRW);
+    if (perMile && perMile > 0) {
+      return (GIFTCARD_MILE_VALUE_KRW / perMile) * 100;
+    }
+  }
+  return null;
+}
+
+/**
+ * P3: 상테크 수익률 알림. 월·목 11:00 KST.
+ * 유저 등록 카드의 적립율 − 매입 스프레드가 플러스인 조합이 있으면
+ * 개인화 발송(유저별 7일 쿨다운).
+ */
+exports.giftcardSangtechPush = onSchedule({
+  schedule: "0 11 * * 1,4",
+  timeZone: "Asia/Seoul",
+  region: GIFTCARD_PUSH_REGION,
+}, async () => {
+  const db = admin.firestore();
+
+  // 1) 스프레드가 가장 낮은(매입률 최고) 종목 찾기
+  const giftSnap = await db.collection("giftcards").get();
+  let best = null;
+  giftSnap.forEach((doc) => {
+    const data = doc.data() || {};
+    const price = asOptionalNumber(data.bestSellPrice);
+    if (!price || price <= 0) return;
+    const spreadPct = 100 - giftcardSellRatePct(price);
+    if (!best || spreadPct < best.spreadPct) {
+      best = {
+        giftcardId: doc.id,
+        name: asOptionalString(data.name) || doc.id,
+        price,
+        spreadPct,
+      };
+    }
+  });
+  if (!best) return;
+
+  // 2) 대상 유저 순회: 카드 적립율과 조합해 순수익 계산
+  const userSnap = await db.collection("users")
+      .where("hasGift", "==", true).get();
+  const targets = userSnap.docs.filter((doc) =>
+    isNotificationPreferenceEnabled(doc.data() || {},
+        GIFTCARD_PUSH_PREF_KEYS.giftcard_sangtech));
+
+  let sent = 0;
+  for (let i = 0; i < targets.length; i += GIFTCARD_PUSH_FANOUT_CHUNK) {
+    const chunk = targets.slice(i, i + GIFTCARD_PUSH_FANOUT_CHUNK);
+    await Promise.all(chunk.map(async (userDoc) => {
+      const userData = userDoc.data() || {};
+      const notifiedAt = userData.giftcardSangtechNotifiedAt &&
+        typeof userData.giftcardSangtechNotifiedAt.toDate === "function" ?
+          userData.giftcardSangtechNotifiedAt.toDate() : null;
+      if (notifiedAt && (Date.now() - notifiedAt.getTime()) <
+          GIFTCARD_SANGTECH_COOLDOWN_DAYS * 86400000) {
+        return;
+      }
+
+      const cardsSnap = await userDoc.ref.collection("cards")
+          .limit(10).get();
+      let bestCard = null;
+      cardsSnap.forEach((cardDoc) => {
+        const card = cardDoc.data() || {};
+        const rate = giftcardCardRewardRatePct(card);
+        if (rate === null) return;
+        if (!bestCard || rate > bestCard.rate) {
+          bestCard = {
+            name: asOptionalString(card.name) || "내 카드",
+            rate,
+          };
+        }
+      });
+      if (!bestCard) return;
+
+      const netPct = bestCard.rate - best.spreadPct;
+      if (netPct <= 0) return;
+
+      const title = "💳 상테크 타이밍";
+      const body = `${bestCard.name} × ${best.name} 조합, 지금 실질 수익 ` +
+        `+${netPct.toFixed(2)}% (적립 ${bestCard.rate.toFixed(2)}% − ` +
+        `스프레드 ${best.spreadPct.toFixed(2)}%)`;
+      const payload = {
+        giftcardId: best.giftcardId,
+        giftcardName: best.name,
+        highlight: "sangtech",
+        type: "giftcard_sangtech",
+        channelId: GIFTCARD_PUSH_CHANNELS.giftcard_sangtech,
+        notificationTitle: title,
+        notificationBody: body,
+      };
+      await sendPushToUser(userDoc.id, title, body, payload, {
+        androidChannelId: GIFTCARD_PUSH_CHANNELS.giftcard_sangtech,
+      });
+      await writeGiftcardNotif(
+          userDoc.id, "giftcard_sangtech", best.giftcardId, title, body);
+      await userDoc.ref.set({
+        giftcardSangtechNotifiedAt:
+          admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+      sent += 1;
+    }));
+  }
+  logger.info(`상테크 푸시: ${best.giftcardId} 기준 → ${sent}명`);
+});
+
+/**
+ * P4: 주간 시세 브리핑. 금요일 10:00 KST.
+ * giftcardRateHistory 로 주간 변동을 집계해 giftcardWeeklyBriefs/{weekKey}
+ * 문서를 만들고, 최대 변동 종목을 카피로 세그먼트 발송.
+ */
+exports.giftcardWeeklyBriefPush = onSchedule({
+  schedule: "0 10 * * 5",
+  timeZone: "Asia/Seoul",
+  region: GIFTCARD_PUSH_REGION,
+}, async () => {
+  const db = admin.firestore();
+  const giftSnap = await db.collection("giftcards").get();
+  const today = kstDateKey();
+  const weekAgo = kstDateKey(new Date(Date.now() - 7 * 86400000));
+  const items = [];
+
+  for (const doc of giftSnap.docs) {
+    const data = doc.data() || {};
+    const price = asOptionalNumber(data.bestSellPrice);
+    if (!price || price <= 0) continue;
+
+    const days = await upsertGiftcardDailyHistory(doc.id, price);
+    // 7일 전(없으면 그 이전 가장 가까운 날) 가격
+    const pastDates = Object.keys(days)
+        .filter((date) => date <= weekAgo && date !== today)
+        .sort()
+        .reverse();
+    const prevPrice = pastDates.length > 0 ?
+      Number(days[pastDates[0]]) || null : null;
+    const changePct = prevPrice && prevPrice > 0 ?
+      ((price - prevPrice) / prevPrice) * 100 : null;
+
+    items.push({
+      giftcardId: doc.id,
+      name: asOptionalString(data.name) || doc.id,
+      price,
+      prevPrice,
+      changePct,
+      sellRatePct: giftcardSellRatePct(price),
+      bestSellBranchName: asOptionalString(data.bestSellBranchName) || "",
+    });
+  }
+  if (items.length === 0) return;
+
+  items.sort((a, b) =>
+    Math.abs(b.changePct || 0) - Math.abs(a.changePct || 0));
+
+  const weekKey = currentWeekKeyKst();
+  await db.doc(`giftcardWeeklyBriefs/${weekKey}`).set({
+    weekKey,
+    items,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const top = items.find((item) => item.changePct !== null);
+  const title = "🧾 주간 상품권 시세 브리핑";
+  const body = top ?
+    `이번 주 ${top.name} ${top.changePct >= 0 ? "+" : ""}` +
+      `${top.changePct.toFixed(2)}% — 주간 변동 한눈에 보기` :
+    "이번 주 상품권 시세 요약이 도착했어요";
+  const sent = await sendGiftcardPushToSegment(
+      "giftcard_weekly_brief", title, body, {
+        giftcardId: top ? top.giftcardId : "",
+        giftcardName: top ? top.name : "",
+        weekKey,
+      });
+  logger.info(`주간 브리핑 푸시: ${weekKey} → ${sent}명`);
 });

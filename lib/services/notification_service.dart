@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 
+import '../screen/giftcard_rates_screen.dart';
+import '../screen/giftcard_weekly_brief_screen.dart';
 import '../screen/radar_notification_screen.dart';
 import 'analytics_service.dart';
 import 'notification_preference_service.dart';
@@ -66,6 +68,38 @@ class NotificationService {
     '마일캐치 레이더 알림',
     description: '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.',
     importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel giftcardPriceSurgeChannel =
+      AndroidNotificationChannel(
+    'giftcard_price_surge_notifications',
+    '상품권 시세 급변동',
+    description: '주요 상품권 매입가가 크게 움직였을 때 속보를 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel giftcardHigh30dChannel =
+      AndroidNotificationChannel(
+    'giftcard_high_30d_notifications',
+    '상품권 30일 최고가',
+    description: '상품권 매입가가 최근 30일 최고가에 도달하면 알림을 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel giftcardSangtechChannel =
+      AndroidNotificationChannel(
+    'giftcard_sangtech_notifications',
+    '상테크 수익률',
+    description: '내 카드 적립율 기준 상테크 수익이 플러스일 때 알림을 받습니다.',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel giftcardWeeklyBriefChannel =
+      AndroidNotificationChannel(
+    'giftcard_weekly_brief_notifications',
+    '주간 상품권 브리핑',
+    description: '매주 금요일 상품권 시세 요약을 받습니다.',
+    importance: Importance.defaultImportance,
   );
 
   /// FCM 초기화
@@ -144,6 +178,14 @@ class NotificationService {
           .createNotificationChannel(commentReplyChannel);
       await androidImplementation.createNotificationChannel(commentLikeChannel);
       await androidImplementation.createNotificationChannel(radarChannel);
+      await androidImplementation
+          .createNotificationChannel(giftcardPriceSurgeChannel);
+      await androidImplementation
+          .createNotificationChannel(giftcardHigh30dChannel);
+      await androidImplementation
+          .createNotificationChannel(giftcardSangtechChannel);
+      await androidImplementation
+          .createNotificationChannel(giftcardWeeklyBriefChannel);
     }
   }
 
@@ -357,6 +399,30 @@ class NotificationService {
       return;
     }
 
+    // 상품권 푸시 P1(급변동)/P2(30일 최고가)/P3(상테크) → 종목 상세 랜딩
+    if (type == 'giftcard_price_surge' ||
+        type == 'giftcard_high_30d' ||
+        type == 'giftcard_sangtech') {
+      final giftcardId = data['giftcardId']?.toString().trim() ?? '';
+      if (giftcardId.isEmpty) {
+        print('상품권 시세 딥링크 데이터 누락: $data');
+        _showErrorToast('상품권 정보를 찾을 수 없습니다.');
+        return;
+      }
+      _navigateToGiftcardRates(
+        giftcardId: giftcardId,
+        giftcardName: data['giftcardName']?.toString() ?? '',
+        highlight: data['highlight']?.toString(),
+      );
+      return;
+    }
+
+    // 상품권 푸시 P4(주간 브리핑) → 브리핑 랜딩
+    if (type == 'giftcard_weekly_brief') {
+      _navigateToGiftcardWeeklyBrief(data['weekKey']?.toString());
+      return;
+    }
+
     final postId = data['postId'];
     final date = data['date'];
     final boardId = data['boardId'] ?? 'free'; // 게시판 ID
@@ -412,6 +478,8 @@ class NotificationService {
       data['date'],
       data['commentId'],
       data['dealId'] ?? data['giftcardDealId'],
+      data['giftcardId'],
+      data['weekKey'],
     ].map((value) => value?.toString() ?? '').join('|');
     final now = DateTime.now();
 
@@ -491,6 +559,38 @@ class NotificationService {
     });
   }
 
+  /// 상품권 종목 상세로 이동 (P1/P2/P3 딥링크).
+  /// highlight 에 따라 배너/상테크 섹션이 강조되고 시세 탭으로 진입한다.
+  void _navigateToGiftcardRates({
+    required String giftcardId,
+    required String giftcardName,
+    String? highlight,
+  }) {
+    _runNavigationWhenReady(() {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => GiftcardBrandRatesPage(
+            giftcardId: giftcardId,
+            giftcardName: giftcardName,
+            initialTabIndex: 2,
+            highlight: highlight,
+          ),
+        ),
+      );
+    });
+  }
+
+  /// 주간 상품권 브리핑으로 이동 (P4 딥링크).
+  void _navigateToGiftcardWeeklyBrief(String? weekKey) {
+    _runNavigationWhenReady(() {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => GiftcardWeeklyBriefScreen(weekKey: weekKey),
+        ),
+      );
+    });
+  }
+
   /// FCM 토큰 저장
   Future<void> _saveFCMToken() async {
     try {
@@ -551,6 +651,14 @@ class NotificationService {
         return '댓글 좋아요 알림';
       case 'radar_notifications':
         return '마일캐치 레이더 알림';
+      case 'giftcard_price_surge_notifications':
+        return '상품권 시세 급변동';
+      case 'giftcard_high_30d_notifications':
+        return '상품권 30일 최고가';
+      case 'giftcard_sangtech_notifications':
+        return '상테크 수익률';
+      case 'giftcard_weekly_brief_notifications':
+        return '주간 상품권 브리핑';
       default:
         return '알림';
     }
@@ -569,6 +677,14 @@ class NotificationService {
         return '내 댓글에 좋아요가 눌렸을 때 알림을 받습니다.';
       case 'radar_notifications':
         return '저장한 레이더 조건에 맞는 좌석/특가/혜택 알림을 받습니다.';
+      case 'giftcard_price_surge_notifications':
+        return '주요 상품권 매입가가 크게 움직였을 때 속보를 받습니다.';
+      case 'giftcard_high_30d_notifications':
+        return '상품권 매입가가 최근 30일 최고가에 도달하면 알림을 받습니다.';
+      case 'giftcard_sangtech_notifications':
+        return '내 카드 적립율 기준 상테크 수익이 플러스일 때 알림을 받습니다.';
+      case 'giftcard_weekly_brief_notifications':
+        return '매주 금요일 상품권 시세 요약을 받습니다.';
       default:
         return '알림';
     }
