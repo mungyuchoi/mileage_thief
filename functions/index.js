@@ -9198,6 +9198,9 @@ exports.lbAggregateNow = onCall({region: LB_REGION}, async (request) => {
 // 대상: users.hasGift == true + 알림 설정(notificationPreferences) ON 유저.
 
 const GIFTCARD_PUSH_REGION = "asia-northeast3";
+// 운영 중지: false인 동안 hasGift 대상 상품권 푸시(P1~P4)는
+// FCM 발송, 인앱 알림 기록, 쿨다운/브리핑 갱신을 모두 건너뛴다.
+const GIFTCARD_PUSH_ENABLED = false;
 const GIFTCARD_FACE_VALUE = 100000; // 시세 기준 액면가(10만원권)
 const GIFTCARD_SURGE_THRESHOLD_PCT = 0.5; // P1 급변동 임계값(%)
 const GIFTCARD_HISTORY_KEEP_DAYS = 45; // 시세 히스토리 보존 일수
@@ -9294,6 +9297,8 @@ async function writeGiftcardNotif(uid, type, giftcardId, title, body) {
  * @return {Promise<number>} 발송 대상 수
  */
 async function sendGiftcardPushToSegment(type, title, body, data) {
+  if (!GIFTCARD_PUSH_ENABLED) return 0;
+
   const prefKey = GIFTCARD_PUSH_PREF_KEYS[type];
   const channelId = GIFTCARD_PUSH_CHANNELS[type];
   const uids = await listGiftcardPushTargets(prefKey);
@@ -9325,6 +9330,8 @@ exports.onGiftcardPriceSurgePush = onDocumentWritten({
   document: "giftcards/{giftcardId}",
   region: GIFTCARD_PUSH_REGION,
 }, async (event) => {
+  if (!GIFTCARD_PUSH_ENABLED) return;
+
   try {
     const {giftcardId} = event.params;
     const after = event.data.after;
@@ -9401,6 +9408,8 @@ exports.giftcardHigh30dPush = onSchedule({
   timeZone: "Asia/Seoul",
   region: GIFTCARD_PUSH_REGION,
 }, async () => {
+  if (!GIFTCARD_PUSH_ENABLED) return;
+
   const db = admin.firestore();
   const snap = await db.collection("giftcards").get();
   const today = kstDateKey();
@@ -9488,6 +9497,8 @@ exports.giftcardSangtechPush = onSchedule({
   timeZone: "Asia/Seoul",
   region: GIFTCARD_PUSH_REGION,
 }, async () => {
+  if (!GIFTCARD_PUSH_ENABLED) return;
+
   const db = admin.firestore();
 
   // 1) 스프레드가 가장 낮은(매입률 최고) 종목 찾기
@@ -9586,6 +9597,8 @@ exports.giftcardWeeklyBriefPush = onSchedule({
   timeZone: "Asia/Seoul",
   region: GIFTCARD_PUSH_REGION,
 }, async () => {
+  if (!GIFTCARD_PUSH_ENABLED) return;
+
   const db = admin.firestore();
   const giftSnap = await db.collection("giftcards").get();
   const today = kstDateKey();
